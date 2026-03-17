@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Flower2, Loader2 } from 'lucide-react'
@@ -11,6 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
+
+import { loginRequest } from '@/lib/auth/api'
+import { setAuthSession, isAuthenticated } from '@/lib/auth/storage'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -23,23 +26,37 @@ export default function LoginPage() {
     rememberMe: false,
   })
 
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.replace('/dashboard')
+    }
+  }, [router])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setIsLoading(true)
 
-    // Simulate API call - replace with actual JWT auth integration
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const result = await loginRequest({
+        email: formData.email.trim(),
+        password: formData.password,
+      })
 
-      // Mock validation - replace with actual API call
-      if (formData.email === 'admin@blossom.edu' && formData.password === 'password') {
-        router.push('/dashboard')
+      setAuthSession(result.data.token, result.data.usuario)
+      router.replace('/dashboard')
+    } catch (err: any) {
+      if (err?.statusCode === 400) {
+        setError('Revisá los datos ingresados.')
+      } else if (err?.statusCode === 401) {
+        setError('Usuario o contraseña incorrectos.')
+      } else if (err?.statusCode === 403) {
+        setError('Tu usuario está inactivo o no tiene permisos.')
+      } else if (err?.statusCode === 423) {
+        setError('Tu cuenta está bloqueada temporalmente. Intentá más tarde.')
       } else {
-        setError('Invalid email or password. Please try again.')
+        setError(err?.message || 'Ocurrió un error al iniciar sesión.')
       }
-    } catch {
-      setError('An error occurred. Please try again later.')
     } finally {
       setIsLoading(false)
     }
@@ -48,7 +65,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        {/* Logo and branding */}
         <div className="flex flex-col items-center mb-8">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground mb-4">
             <Flower2 className="size-8" />
@@ -59,11 +75,12 @@ export default function LoginPage() {
 
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Welcome back</CardTitle>
+            <CardTitle className="text-xl">Bienvenido</CardTitle>
             <CardDescription>
-              Sign in to your account to continue
+              Iniciá sesión para continuar
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit}>
               <FieldGroup>
@@ -74,11 +91,11 @@ export default function LoginPage() {
                 )}
 
                 <Field>
-                  <FieldLabel htmlFor="email">Email address</FieldLabel>
+                  <FieldLabel htmlFor="email">Email</FieldLabel>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="admin@blossom.edu"
+                    placeholder="admin@sosa.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
@@ -88,20 +105,13 @@ export default function LoginPage() {
                 </Field>
 
                 <Field>
-                  <div className="flex items-center justify-between">
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Link
-                      href="/forgot-password"
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
+                  <FieldLabel htmlFor="password">Contraseña</FieldLabel>
+
                   <div className="relative">
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
+                      placeholder="Ingresá tu contraseña"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       required
@@ -123,7 +133,7 @@ export default function LoginPage() {
                         <Eye className="size-4 text-muted-foreground" />
                       )}
                       <span className="sr-only">
-                        {showPassword ? 'Hide password' : 'Show password'}
+                        {showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                       </span>
                     </Button>
                   </div>
@@ -142,7 +152,7 @@ export default function LoginPage() {
                     htmlFor="remember"
                     className="text-sm text-muted-foreground cursor-pointer"
                   >
-                    Remember me for 30 days
+                    Recordarme
                   </label>
                 </div>
 
@@ -150,36 +160,22 @@ export default function LoginPage() {
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 size-4 animate-spin" />
-                      Signing in...
+                      Ingresando...
                     </>
                   ) : (
-                    'Sign in'
+                    'Ingresar'
                   )}
                 </Button>
               </FieldGroup>
             </form>
 
-            <div className="mt-6 text-center text-sm text-muted-foreground">
-              <p>
-                Demo credentials:{' '}
-                <code className="rounded bg-muted px-1 py-0.5 text-xs">admin@blossom.edu</code>
-                {' / '}
-                <code className="rounded bg-muted px-1 py-0.5 text-xs">password</code>
-              </p>
+            <div className="mt-6 text-center text-sm">
+              <Link href="/forgot-password" className="text-primary hover:underline">
+                ¿Olvidaste tu contraseña?
+              </Link>
             </div>
           </CardContent>
         </Card>
-
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          By signing in, you agree to our{' '}
-          <Link href="/terms" className="underline hover:text-foreground">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="underline hover:text-foreground">
-            Privacy Policy
-          </Link>
-        </p>
       </div>
     </div>
   )
