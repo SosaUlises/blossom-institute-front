@@ -89,7 +89,7 @@ export default function LoginPage() {
             </div>
         </div>
 
-        <div className="flex min-h-screen items-center justify-center px-6 py-10">
+        <div className="flex min-h-screen items-center justify-center px-6 py-10 bg-[#f7f8fc] bg-slate-50">
           <div className="w-full max-w-md">
             <div className="mb-8 flex flex-col items-center text-center">
               <div className="overflow-hidden rounded-full border border-primary/10 bg-white shadow-lg shadow-primary/5">
@@ -98,7 +98,7 @@ export default function LoginPage() {
                   alt="Blossom Institute"
                   width={96}
                   height={96}
-                  className="h-48 w-48 object-cover"
+                  className="h-35 w-35 object-cover"
                   priority
                 />
               </div>
@@ -108,7 +108,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <Card className="border-border/70 bg-white/92 shadow-2xl shadow-primary/5 backdrop-blur-sm">
+          <Card className="border border-slate-200/80 bg-white/95 shadow-[0_30px_80px_-20px_rgba(30,42,68,0.35)] backdrop-blur-md">
               <CardHeader className="space-y-2 pb-4 text-center">
                 <CardTitle className="text-2xl font-bold text-foreground">
                   Bienvenido
