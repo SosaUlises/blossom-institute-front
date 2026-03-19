@@ -29,8 +29,6 @@ export function StatCard({
     >
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
-
-          {/* TEXT */}
           <div className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {title}
@@ -47,12 +45,12 @@ export function StatCard({
                   trend.isPositive ? 'text-green-600' : 'text-red-600'
                 )}
               >
-                {trend.isPositive ? '+' : ''}{trend.value}% vs last month
+                {trend.isPositive ? '+' : ''}
+                {trend.value}% vs último período
               </p>
             )}
           </div>
 
-          {/* ICON */}
           <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-inner">
             <Icon className="size-5" />
           </div>

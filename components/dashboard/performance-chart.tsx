@@ -1,59 +1,72 @@
 'use client'
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { performanceChartData } from '@/lib/placeholder-data'
+import type { DashboardAverageGradeByCourse } from '@/lib/dashboard/types'
 
-const colors = [
-  'hsl(var(--primary))',
-  'hsl(var(--primary) / 0.8)',
-  'hsl(var(--primary) / 0.6)',
-  'hsl(var(--primary) / 0.4)',
-  'hsl(var(--primary) / 0.3)',
-]
+interface PerformanceChartProps {
+  data: DashboardAverageGradeByCourse[]
+}
 
-export function PerformanceChart() {
+export function PerformanceChart({ data }: PerformanceChartProps) {
   return (
     <Card className="border-border/60 bg-white/95 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Academic Performance</CardTitle>
-        <CardDescription>Average grades by subject this semester</CardDescription>
+        <CardTitle className="text-sm font-semibold tracking-tight">
+          Promedio de calificaciones por curso
+        </CardTitle>
+        <CardDescription>
+          Rendimiento académico general según evaluaciones registradas
+        </CardDescription>
       </CardHeader>
+
       <CardContent>
-        <div className="h-64">
+        <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={performanceChartData} layout="vertical" barSize={20}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
+            <BarChart data={data} layout="vertical" barSize={18} margin={{ left: 8, right: 16 }}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                className="stroke-muted"
+                horizontal={false}
+              />
               <XAxis
                 type="number"
-                domain={[0, 100]}
+                domain={[0, 10]}
                 tickLine={false}
                 axisLine={false}
                 className="text-xs fill-muted-foreground"
               />
               <YAxis
-                dataKey="subject"
+                dataKey="cursoNombre"
                 type="category"
                 tickLine={false}
                 axisLine={false}
                 className="text-xs fill-muted-foreground"
-                width={80}
+                width={110}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: '0.5rem',
+                  borderRadius: '1rem',
                   fontSize: '0.875rem',
                 }}
-                labelStyle={{ fontWeight: 600 }}
-                formatter={(value: number) => [`${value}%`, 'Average']}
+                formatter={(value: number) => [value.toFixed(2), 'Promedio']}
               />
-              <Bar dataKey="average" radius={[0, 4, 4, 0]}>
-                {performanceChartData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                ))}
-              </Bar>
+              <Bar
+                dataKey="averageGrade"
+                radius={[0, 8, 8, 0]}
+                fill="hsl(var(--primary))"
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

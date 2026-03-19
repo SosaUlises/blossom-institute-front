@@ -48,6 +48,7 @@ export async function verifyToken(token: string): Promise<SessionData | null> {
     const { payload } = await jwtVerify(token, secret, {
       issuer: process.env.JWT_ISSUER,
       audience: process.env.JWT_AUDIENCE,
+      clockTolerance: 10,
     })
 
     const user: SessionUser = {
@@ -63,7 +64,8 @@ export async function verifyToken(token: string): Promise<SessionData | null> {
       user,
       payload,
     }
-  } catch {
+  } catch (error) {
+    console.error('JWT verify error:', error)
     return null
   }
 }

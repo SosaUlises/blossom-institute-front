@@ -1,53 +1,61 @@
-import { Clock, MapPin, Users } from 'lucide-react'
+import { CalendarDays, Clock3, GraduationCap } from 'lucide-react'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { upcomingClasses } from '@/lib/placeholder-data'
+import type { DashboardUpcomingClass } from '@/lib/dashboard/types'
 
-export function UpcomingClassesCard() {
+interface UpcomingClassesCardProps {
+  items: DashboardUpcomingClass[]
+}
+
+export function UpcomingClassesCard({ items }: UpcomingClassesCardProps) {
   return (
-    <Card>
+    <Card className="border-border/60 bg-white/95 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Upcoming Classes</CardTitle>
+        <CardTitle className="text-sm font-semibold tracking-tight">
+          Próximas clases
+        </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        <ScrollArea className="h-80">
-          <div className="space-y-1 px-6 pb-6">
-            {upcomingClasses.map((classItem) => (
-              <div
-                key={classItem.id}
-                className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-medium">{classItem.courseName}</h4>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      {classItem.teacherName}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1">
-                    <Clock className="size-3 text-primary" />
-                    <span className="text-xs font-medium text-primary">
-                      {classItem.time}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                  {classItem.room && (
-                    <div className="flex items-center gap-1">
-                      <MapPin className="size-3" />
-                      <span>{classItem.room}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <Users className="size-3" />
-                    <span>{classItem.studentsCount} students</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+
+      <CardContent className="space-y-3">
+        {items.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
+            No hay clases próximas registradas.
           </div>
-        </ScrollArea>
+        ) : (
+          items.map((item, index) => (
+            <div
+              key={`${item.cursoId}-${index}`}
+              className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/70 p-4"
+            >
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <GraduationCap className="size-4" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">{item.cursoNombre}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{item.profesorNombre}</p>
+
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarDays className="size-3.5" />
+                    {item.diaSemana}
+                  </span>
+
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock3 className="size-3.5" />
+                    {item.horaInicio.slice(0, 5)}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-xs font-medium text-primary">
+                  Próxima: {format(new Date(item.proximaClase), "EEE d 'de' MMM, HH:mm", { locale: es })}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
       </CardContent>
     </Card>
   )

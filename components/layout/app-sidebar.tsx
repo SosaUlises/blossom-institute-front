@@ -1,7 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard,
   Users,
@@ -34,7 +36,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { SessionUser } from '@/lib/auth/session'
-import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 const mainNavItems = [
@@ -80,6 +81,11 @@ interface AppSidebarProps {
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const fullName = `${user.nombre} ${user.apellido}`.trim()
   const initials = `${user.nombre?.charAt(0) ?? ''}${user.apellido?.charAt(0) ?? ''}`.toUpperCase()
@@ -146,7 +152,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       )}
                     >
                       <Link href={item.url} className="flex items-center gap-3">
-                        <item.icon className={cn('size-4 shrink-0', isActive ? 'text-primary-foreground' : 'text-slate-500')} />
+                        <item.icon
+                          className={cn(
+                            'size-4 shrink-0',
+                            isActive ? 'text-primary-foreground' : 'text-slate-500'
+                          )}
+                        />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -182,7 +193,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       )}
                     >
                       <Link href={item.url} className="flex items-center gap-3">
-                        <item.icon className={cn('size-4 shrink-0', isActive ? 'text-primary-foreground' : 'text-slate-500')} />
+                        <item.icon
+                          className={cn(
+                            'size-4 shrink-0',
+                            isActive ? 'text-primary-foreground' : 'text-slate-500'
+                          )}
+                        />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -195,62 +211,85 @@ export function AppSidebar({ user }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-slate-200/80 p-3">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-3 text-left shadow-sm transition hover:bg-slate-50">
-              <Avatar className="size-10 ring-1 ring-primary/10">
-                <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
-                <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+        {!mounted ? (
+          <div className="flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-3 shadow-sm">
+            <Avatar className="size-10 ring-1 ring-primary/10">
+              <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
+              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
 
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900">
-                  {fullName}
-                </p>
-                <p className="truncate text-xs text-slate-500">
-                  {user.email}
-                </p>
-              </div>
-            </button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent
-            align="start"
-            side="top"
-            className="w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.25)]"
-          >
-            <div className="mb-2 rounded-xl bg-slate-50 px-3 py-2">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-900">
                 {fullName}
               </p>
               <p className="truncate text-xs text-slate-500">
                 {user.email}
               </p>
-              <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">
-                {user.roles.join(', ')}
-              </p>
             </div>
+          </div>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-3 text-left shadow-sm transition hover:bg-slate-50"
+              >
+                <Avatar className="size-10 ring-1 ring-primary/10">
+                  <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
+                  <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
 
-            <DropdownMenuItem asChild className="rounded-xl px-3 py-2 text-sm">
-              <Link href="/dashboard/settings">
-                <Settings className="mr-2 size-4" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {fullName}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
+                    {user.email}
+                  </p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
 
-            <DropdownMenuSeparator className="my-2 bg-slate-200" />
-
-            <DropdownMenuItem
-              onClick={handleLogout}
-              className="rounded-xl px-3 py-2 text-sm text-red-600 focus:text-red-600"
+            <DropdownMenuContent
+              align="start"
+              side="top"
+              className="w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.25)]"
             >
-              <LogOut className="mr-2 size-4" />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <div className="mb-2 rounded-xl bg-slate-50 px-3 py-2">
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {fullName}
+                </p>
+                <p className="truncate text-xs text-slate-500">
+                  {user.email}
+                </p>
+                <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">
+                  {user.roles.join(', ')}
+                </p>
+              </div>
+
+              <DropdownMenuItem asChild className="rounded-xl px-3 py-2 text-sm">
+                <Link href="/dashboard/settings">
+                  <Settings className="mr-2 size-4" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator className="my-2 bg-slate-200" />
+
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="rounded-xl px-3 py-2 text-sm text-red-600 focus:text-red-600"
+              >
+                <LogOut className="mr-2 size-4" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </SidebarFooter>
     </Sidebar>
   )
