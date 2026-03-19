@@ -13,9 +13,6 @@ import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
 
-import { loginRequest } from '@/lib/auth/api'
-import { setAuthSession, isAuthenticated } from '@/lib/auth/storage'
-
 export default function LoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -28,9 +25,17 @@ export default function LoginPage() {
   })
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      router.replace('/dashboard')
-    }
+    fetch('/api/auth/me', { method: 'GET', credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) return null
+        return res.json()
+      })
+      .then((data) => {
+        if (data?.success) {
+          router.replace('/dashboard')
+        }
+      })
+      .catch(() => {})
   }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,25 +44,40 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await loginRequest({
-        email: formData.email.trim(),
-        password: formData.password,
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: formData.email.trim(),
+          password: formData.password,
+        }),
       })
 
-      setAuthSession(result.data.token, result.data.usuario)
-      router.replace('/dashboard')
-    } catch (err: any) {
-      if (err?.statusCode === 400) {
-        setError('Revisá los datos ingresados.')
-      } else if (err?.statusCode === 401) {
-        setError('Usuario o contraseña incorrectos.')
-      } else if (err?.statusCode === 403) {
-        setError('Tu usuario está inactivo o no tiene permisos.')
-      } else if (err?.statusCode === 423) {
-        setError('Tu cuenta está bloqueada temporalmente. Intentá más tarde.')
-      } else {
-        setError(err?.message || 'Ocurrió un error al iniciar sesión.')
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        if (response.status === 400) {
+          setError('Revisá los datos ingresados.')
+        } else if (response.status === 401) {
+          setError('Usuario o contraseña incorrectos.')
+        } else if (response.status === 403) {
+          setError(result.message || 'No tenés permisos para acceder al panel administrativo.')
+        } else if (response.status === 423) {
+          setError('Tu cuenta está bloqueada temporalmente. Intentá más tarde.')
+        } else {
+          setError(result.message || 'Ocurrió un error al iniciar sesión.')
+        }
+
+        return
       }
+
+      router.replace('/dashboard')
+      router.refresh()
+    } catch {
+      setError('Ocurrió un error al iniciar sesión.')
     } finally {
       setIsLoading(false)
     }
@@ -66,54 +86,54 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
-       <div className="relative hidden min-h-screen overflow-hidden lg:flex">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: "url('/bigben.jpg')" }}
-            />
+        <div className="relative hidden min-h-screen overflow-hidden lg:flex">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('/bigben.jpg')" }}
+          />
           <div className="absolute inset-0 bg-black/20" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(198,61,79,0.08),transparent_30%)]" />
 
-            <div className="relative z-10 flex h-full w-full items-end px-16 py-16">
+          <div className="relative z-10 flex h-full w-full items-end px-16 py-16">
               <div className="max-w-lg space-y-4">
                 <p className="text-sm font-medium uppercase tracking-[0.18em] text-white/65">
-                  Blossom Institute
+                     Blossom Institute
                 </p>
                 <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-white">
                   Tu espacio dentro de Blossom
                 </h1>
                 <p className="max-w-md text-base leading-7 text-white/78">
-                  Accedé a una experiencia académica más clara y cercana, diseñada para acompañar el aprendizaje y la organización de toda la comunidad educativa.
+                Accedé a una experiencia académica más clara y cercana, diseñada para acompañar el aprendizaje y la organización de toda la comunidad educativa.
                 </p>
               </div>
             </div>
         </div>
 
-        <div className="flex min-h-screen items-center justify-center px-6 py-10 bg-[#f7f8fc] bg-slate-50">
+        <div className="flex min-h-screen items-center justify-center px-6 py-10">
           <div className="w-full max-w-md">
             <div className="mb-8 flex flex-col items-center text-center">
               <div className="overflow-hidden rounded-full border border-primary/10 bg-white shadow-lg shadow-primary/5">
                 <Image
                   src="/logo-blossom.png"
                   alt="Blossom Institute"
-                  width={96}
-                  height={96}
+                  width={128}
+                  height={128}
                   className="h-35 w-35 object-cover"
                   priority
                 />
               </div>
 
-              <p className="mt-5 text-sm text-muted-foreground">
+              <p className="mt-5 text-sm text-slate-500">
                 Iniciá sesión para acceder al panel administrativo
               </p>
             </div>
 
-          <Card className="border border-slate-200/80 bg-white/95 shadow-[0_30px_80px_-20px_rgba(30,42,68,0.35)] backdrop-blur-md">
+            <Card className="border border-slate-200/80 bg-white/95 shadow-[0_20px_60px_-20px_rgba(30,42,68,0.18)] backdrop-blur-sm">
               <CardHeader className="space-y-2 pb-4 text-center">
                 <CardTitle className="text-2xl font-bold text-foreground">
                   Bienvenido
                 </CardTitle>
-                <CardDescription className="text-sm text-muted-foreground">
+                <CardDescription className="text-sm text-slate-500">
                   Ingresá tus credenciales para continuar
                 </CardDescription>
               </CardHeader>
@@ -140,16 +160,14 @@ export default function LoginPage() {
                         required
                         disabled={isLoading}
                         autoComplete="email"
-                        className="h-12 rounded-xl border-border/70 bg-background/80 px-4 shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/30"
+                        className="h-12 rounded-xl border-border/70 bg-background/80 px-4 text-foreground shadow-sm placeholder:text-slate-400 transition focus-visible:ring-2 focus-visible:ring-primary/30"
                       />
                     </Field>
 
                     <Field>
-                      <div className="flex items-center justify-between">
-                        <FieldLabel htmlFor="password" className="text-sm font-semibold text-foreground">
-                          Contraseña
-                        </FieldLabel>
-                      </div>
+                      <FieldLabel htmlFor="password" className="text-sm font-semibold text-foreground">
+                        Contraseña
+                      </FieldLabel>
 
                       <div className="relative">
                         <Input
@@ -161,7 +179,7 @@ export default function LoginPage() {
                           required
                           disabled={isLoading}
                           autoComplete="current-password"
-                          className="h-12 rounded-xl border-border/70 bg-background/80 px-4 pr-11 shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/30"
+                          className="h-12 rounded-xl border-border/70 bg-background/80 px-4 pr-11 text-foreground shadow-sm placeholder:text-slate-400 transition focus-visible:ring-2 focus-visible:ring-primary/30"
                         />
                         <Button
                           type="button"
@@ -171,11 +189,7 @@ export default function LoginPage() {
                           onClick={() => setShowPassword(!showPassword)}
                           disabled={isLoading}
                         >
-                          {showPassword ? (
-                            <EyeOff className="size-4" />
-                          ) : (
-                            <Eye className="size-4" />
-                          )}
+                          {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                           <span className="sr-only">
                             {showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                           </span>
@@ -193,10 +207,7 @@ export default function LoginPage() {
                           }
                           disabled={isLoading}
                         />
-                        <label
-                          htmlFor="remember"
-                          className="cursor-pointer text-sm text-muted-foreground"
-                        >
+                        <label htmlFor="remember" className="cursor-pointer text-sm text-slate-500">
                           Recordarme
                         </label>
                       </div>

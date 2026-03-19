@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -35,8 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { clearAuthSession, getUser } from '@/lib/auth/storage'
-import type { AuthUser } from '@/lib/auth/types'
+import type { SessionUser } from '@/lib/auth/session'
 
 const mainNavItems = [
   {
@@ -74,31 +72,25 @@ const settingsNavItems = [
   },
 ]
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  user: SessionUser
+}
+
+export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const [user, setUser] = useState<AuthUser | null>(null)
 
-  useEffect(() => {
-    setUser(getUser())
-  }, [])
+  const fullName = `${user.nombre} ${user.apellido}`.trim()
+  const initials = `${user.nombre?.charAt(0) ?? ''}${user.apellido?.charAt(0) ?? ''}`.toUpperCase()
 
-  const fullName = useMemo(() => {
-    if (!user) return 'Usuario'
-    return `${user.nombre} ${user.apellido}`.trim()
-  }, [user])
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    })
 
-  const initials = useMemo(() => {
-    if (!user) return 'US'
-
-    const first = user.nombre?.charAt(0) ?? ''
-    const last = user.apellido?.charAt(0) ?? ''
-    return `${first}${last}`.toUpperCase()
-  }, [user])
-
-  const handleLogout = () => {
-    clearAuthSession()
     router.replace('/login')
+    router.refresh()
   }
 
   return (
@@ -181,9 +173,7 @@ export function AppSidebar() {
 
                   <div className="flex flex-col items-start text-left">
                     <span className="text-sm font-medium">{fullName}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {user?.email ?? 'Sin email'}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{user.email}</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
