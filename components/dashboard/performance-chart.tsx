@@ -5,16 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { performanceChartData } from '@/lib/placeholder-data'
 
 const colors = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
+  'hsl(var(--primary))',
+  'hsl(var(--primary) / 0.8)',
+  'hsl(var(--primary) / 0.6)',
+  'hsl(var(--primary) / 0.4)',
+  'hsl(var(--primary) / 0.3)',
 ]
 
 export function PerformanceChart() {
   return (
-    <Card>
+    <Card className="border-border/60 bg-white/95 shadow-sm">
       <CardHeader>
         <CardTitle className="text-base font-semibold">Academic Performance</CardTitle>
         <CardDescription>Average grades by subject this semester</CardDescription>

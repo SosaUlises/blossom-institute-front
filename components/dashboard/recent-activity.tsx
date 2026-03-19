@@ -30,13 +30,16 @@ const activityColors: Record<RecentActivity['type'], string> = {
 
 export function RecentActivityCard() {
   return (
-    <Card>
+    <Card className="border-border/60 bg-white/95 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
+        <CardTitle className="text-sm font-semibold tracking-tight">
+          Recent activity
+        </CardTitle>
       </CardHeader>
+
       <CardContent className="p-0">
         <ScrollArea className="h-80">
-          <div className="space-y-1 px-6 pb-6">
+          <div className="space-y-2 px-6 pb-6">
             {recentActivities.map((activity) => {
               const Icon = activityIcons[activity.type]
               const colorClass = activityColors[activity.type]
@@ -44,13 +47,16 @@ export function RecentActivityCard() {
               return (
                 <div
                   key={activity.id}
-                  className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-muted/50"
+                  className="flex items-start gap-3 rounded-xl p-3 transition hover:bg-muted/40"
                 >
-                  <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${colorClass}`}>
+                  <div className={`flex size-9 items-center justify-center rounded-xl ${colorClass}`}>
                     <Icon className="size-4" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm leading-relaxed">{activity.description}</p>
+
+                  <div className="flex-1">
+                    <p className="text-sm text-foreground">
+                      {activity.description}
+                    </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                     </p>

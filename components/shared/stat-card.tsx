@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils'
 interface StatCardProps {
   title: string
   value: string | number
-  description?: string
   icon: LucideIcon
   trend?: {
     value: number
@@ -17,36 +16,45 @@ interface StatCardProps {
 export function StatCard({
   title,
   value,
-  description,
   icon: Icon,
   trend,
   className,
 }: StatCardProps) {
   return (
-    <Card className={cn('relative overflow-hidden', className)}>
+    <Card
+      className={cn(
+        'relative overflow-hidden border border-border/60 bg-white/95 shadow-[0_10px_30px_-10px_rgba(30,42,68,0.15)] backdrop-blur-sm transition hover:shadow-[0_20px_50px_-20px_rgba(30,42,68,0.25)]',
+        className
+      )}
+    >
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-muted-foreground">
+
+          {/* TEXT */}
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {title}
-            </span>
-            <span className="text-2xl font-bold tracking-tight">{value}</span>
-            {description && (
-              <span className="text-xs text-muted-foreground">{description}</span>
-            )}
+            </p>
+
+            <p className="text-3xl font-bold tracking-tight text-foreground">
+              {value}
+            </p>
+
             {trend && (
-              <span
+              <p
                 className={cn(
                   'text-xs font-medium',
-                  trend.isPositive ? 'text-success' : 'text-destructive'
+                  trend.isPositive ? 'text-green-600' : 'text-red-600'
                 )}
               >
-                {trend.isPositive ? '+' : ''}{trend.value}% from last month
-              </span>
+                {trend.isPositive ? '+' : ''}{trend.value}% vs last month
+              </p>
             )}
           </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <Icon className="size-5 text-primary" />
+
+          {/* ICON */}
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-inner">
+            <Icon className="size-5" />
           </div>
         </div>
       </CardContent>
