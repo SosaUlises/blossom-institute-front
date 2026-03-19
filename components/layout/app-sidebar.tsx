@@ -1,16 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   Users,
   GraduationCap,
   BookOpen,
   ClipboardList,
-  CalendarCheck,
-  Trophy,
-  BarChart3,
   Settings,
   LogOut,
   Flower2,
@@ -37,6 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import type { SessionUser } from '@/lib/auth/session'
 
 const mainNavItems = [
   {
@@ -64,21 +62,6 @@ const mainNavItems = [
     url: '/dashboard/assignments',
     icon: ClipboardList,
   },
-  {
-    title: 'Attendance',
-    url: '/dashboard/attendance',
-    icon: CalendarCheck,
-  },
-  {
-    title: 'Grades',
-    url: '/dashboard/grades',
-    icon: Trophy,
-  },
-  {
-    title: 'Reports',
-    url: '/dashboard/reports',
-    icon: BarChart3,
-  },
 ]
 
 const settingsNavItems = [
@@ -89,8 +72,26 @@ const settingsNavItems = [
   },
 ]
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  user: SessionUser
+}
+
+export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const fullName = `${user.nombre} ${user.apellido}`.trim()
+  const initials = `${user.nombre?.charAt(0) ?? ''}${user.apellido?.charAt(0) ?? ''}`.toUpperCase()
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    })
+
+    router.replace('/login')
+    router.refresh()
+  }
 
   return (
     <Sidebar>
@@ -105,6 +106,7 @@ export function AppSidebar() {
           </div>
         </div>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
@@ -114,7 +116,10 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.url || (item.url !== '/dashboard' && pathname.startsWith(item.url))}
+                    isActive={
+                      pathname === item.url ||
+                      (item.url !== '/dashboard' && pathname.startsWith(item.url))
+                    }
                     tooltip={item.title}
                   >
                     <Link href={item.url}>
@@ -127,7 +132,9 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
         <SidebarSeparator />
+
         <SidebarGroup>
           <SidebarGroupLabel>System</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -150,6 +157,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -157,36 +165,35 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg" className="cursor-pointer">
                   <Avatar className="size-8">
-                    <AvatarImage src="/avatars/admin.jpg" alt="Admin" />
+                    <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                      AD
+                      {initials}
                     </AvatarFallback>
                   </Avatar>
+
                   <div className="flex flex-col items-start text-left">
-                    <span className="text-sm font-medium">Admin User</span>
-                    <span className="text-xs text-muted-foreground">admin@blossom.edu</span>
+                    <span className="text-sm font-medium">{fullName}</span>
+                    <span className="text-xs text-muted-foreground">{user.email}</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/settings/profile">
-                    <Users className="mr-2 size-4" />
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/settings">
                     <Settings className="mr-2 size-4" />
                     Settings
                   </Link>
                 </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
-                  <Link href="/login">
-                    <LogOut className="mr-2 size-4" />
-                    Sign out
-                  </Link>
+
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut className="mr-2 size-4" />
+                  Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
