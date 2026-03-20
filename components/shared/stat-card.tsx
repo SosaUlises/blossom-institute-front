@@ -23,7 +23,7 @@ export function StatCard({
   return (
     <Card
       className={cn(
-        'relative overflow-hidden border border-border/60 bg-white/95 shadow-[0_10px_30px_-10px_rgba(30,42,68,0.15)] backdrop-blur-sm transition hover:shadow-[0_20px_50px_-20px_rgba(30,42,68,0.25)]',
+        'relative overflow-hidden border border-border/70 bg-card/95 text-card-foreground shadow-[0_10px_30px_-10px_rgba(30,42,68,0.15)] transition hover:shadow-[0_20px_50px_-20px_rgba(30,42,68,0.25)]',
         className
       )}
     >
@@ -42,7 +42,7 @@ export function StatCard({
               <p
                 className={cn(
                   'text-xs font-medium',
-                  trend.isPositive ? 'text-green-600' : 'text-red-600'
+                  trend.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                 )}
               >
                 {trend.isPositive ? '+' : ''}
