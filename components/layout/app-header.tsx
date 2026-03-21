@@ -1,11 +1,13 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
 
 interface AppHeaderProps {
   title: string
@@ -13,6 +15,11 @@ interface AppHeaderProps {
 
 export function AppHeader({ title }: AppHeaderProps) {
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center border-b border-slate-200/70 bg-white/80 px-6 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/80">
@@ -38,11 +45,10 @@ export function AppHeader({ title }: AppHeaderProps) {
           variant="ghost"
           size="icon"
           onClick={() => setTheme('light')}
-          className={
-            theme === 'light'
-              ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
-              : 'text-slate-500 dark:text-slate-400'
-          }
+          className={cn(
+            'text-slate-500 dark:text-slate-400',
+            mounted && theme === 'light' && 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
+          )}
         >
           <Sun className="size-4" />
         </Button>
@@ -51,11 +57,10 @@ export function AppHeader({ title }: AppHeaderProps) {
           variant="ghost"
           size="icon"
           onClick={() => setTheme('dark')}
-          className={
-            theme === 'dark'
-              ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
-              : 'text-slate-500 dark:text-slate-400'
-          }
+          className={cn(
+            'text-slate-500 dark:text-slate-400',
+            mounted && theme === 'dark' && 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
+          )}
         >
           <Moon className="size-4" />
         </Button>

@@ -19,22 +19,6 @@ export interface User {
   updatedAt: string
 }
 
-export interface Student {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  status: Status
-  enrolledCourseId?: string
-  enrolledCourseName?: string
-  dateOfBirth?: string
-  address?: string
-  emergencyContact?: string
-  enrollmentDate: string
-  createdAt: string
-  updatedAt: string
-}
 
 export interface Teacher {
   id: string
@@ -156,7 +140,6 @@ export interface UpcomingClass {
 }
 
 // Form types for creating/editing
-export type StudentFormData = Omit<Student, 'id' | 'createdAt' | 'updatedAt'>
 export type TeacherFormData = Omit<Teacher, 'id' | 'createdAt' | 'updatedAt'>
 export type CourseFormData = Omit<Course, 'id' | 'createdAt' | 'updatedAt' | 'enrolledCount'>
 export type AssignmentFormData = Omit<Assignment, 'id' | 'createdAt' | 'updatedAt' | 'submissionCount'>
