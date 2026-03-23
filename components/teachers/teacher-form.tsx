@@ -1,203 +1,253 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Eye, EyeOff, Loader2, Mail, Phone, User, ShieldCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { courses } from '@/lib/placeholder-data'
-import type { Teacher, Status } from '@/lib/types'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import type { Profesor, CreateProfesorDTO, UpdateProfesorDTO } from '@/lib/teachers/types'
 
 interface TeacherFormProps {
-  teacher?: Teacher
   mode: 'create' | 'edit'
+  initialData?: Profesor
+  onSubmit: (payload: CreateProfesorDTO | UpdateProfesorDTO) => Promise<void>
 }
 
-const specialtyOptions = [
-  'Mathematics',
-  'Physics',
-  'English Literature',
-  'Computer Science',
-  'Biology',
-  'Chemistry',
-  'History',
-  'Art',
-]
+export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
+  const isEdit = mode === 'edit'
 
-export function TeacherForm({ teacher, mode }: TeacherFormProps) {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    firstName: teacher?.firstName || '',
-    lastName: teacher?.lastName || '',
-    email: teacher?.email || '',
-    phone: teacher?.phone || '',
-    specialty: teacher?.specialty || '',
-    bio: teacher?.bio || '',
-    status: teacher?.status || 'active' as Status,
+  const [form, setForm] = useState({
+    nombre: initialData?.nombre ?? '',
+    apellido: initialData?.apellido ?? '',
+    dni: initialData?.dni ? String(initialData.dni) : '',
+    telefono: initialData?.telefono ?? '',
+    email: initialData?.email ?? '',
+    password: '',
   })
+
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+
+  const title = useMemo(
+    () => (isEdit ? 'Actualizar profesor' : 'Crear profesor'),
+    [isEdit]
+  )
+
+  const description = useMemo(
+    () =>
+      isEdit
+        ? ''
+        : '',
+    [isEdit]
+  )
+
+  const handleChange = (field: keyof typeof form, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setIsLoading(true)
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log('Submitting:', formData)
-    router.push('/dashboard/teachers')
+    try {
+      const basePayload = {
+        nombre: form.nombre.trim(),
+        apellido: form.apellido.trim(),
+        dni: Number(form.dni),
+        telefono: form.telefono.trim(),
+        email: form.email.trim(),
+      }
+
+      if (!basePayload.nombre || !basePayload.apellido || !basePayload.email || !basePayload.dni) {
+        throw new Error('Completá los campos obligatorios.')
+      }
+
+      if (Number.isNaN(basePayload.dni)) {
+        throw new Error('El DNI debe ser numérico.')
+      }
+
+      if (isEdit) {
+        const payload: UpdateProfesorDTO = {
+          ...basePayload,
+          ...(form.password.trim() ? { password: form.password.trim() } : {}),
+        }
+
+        await onSubmit(payload)
+      } else {
+        if (!form.password.trim()) {
+          throw new Error('La contraseña es obligatoria.')
+        }
+
+        const payload: CreateProfesorDTO = {
+          ...basePayload,
+          password: form.password.trim(),
+        }
+
+        await onSubmit(payload)
+      }
+    } catch (err: any) {
+      setError(err?.message || 'No se pudo guardar el profesor.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-            <CardDescription>Basic teacher details and contact information</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="firstName">First Name</FieldLabel>
-                  <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    required
-                    disabled={isLoading}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="lastName">Last Name</FieldLabel>
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    required
-                    disabled={isLoading}
-                  />
-                </Field>
-              </div>
+    <Card className="border-border/70 bg-card/95 text-card-foreground shadow-[0_18px_50px_-24px_rgba(30,42,68,0.25)]">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl font-semibold tracking-tight">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="email">Email Address</FieldLabel>
+      <CardContent>
+        <form onSubmit={handleSubmit}>
+          <FieldGroup className="space-y-5">
+            {error && (
+              <Alert variant="destructive" className="border-destructive/20">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="nombre">Nombre</FieldLabel>
+                <div className="relative">
+                  <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    id="nombre"
+                    value={form.nombre}
+                    onChange={(e) => handleChange('nombre', e.target.value)}
+                    placeholder="Nombre"
+                    className="pl-10"
                     required
                     disabled={isLoading}
                   />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    disabled={isLoading}
-                  />
-                </Field>
-              </div>
+                </div>
+              </Field>
 
               <Field>
-                <FieldLabel htmlFor="bio">Biography</FieldLabel>
-                <Textarea
-                  id="bio"
-                  value={formData.bio}
-                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                  rows={3}
-                  placeholder="Brief description of the teacher's background and expertise"
+                <FieldLabel htmlFor="apellido">Apellido</FieldLabel>
+                <div className="relative">
+                  <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="apellido"
+                    value={form.apellido}
+                    onChange={(e) => handleChange('apellido', e.target.value)}
+                    placeholder="Apellido"
+                    className="pl-10"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </Field>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="dni">DNI</FieldLabel>
+                <div className="relative">
+                  <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="dni"
+                    value={form.dni}
+                    onChange={(e) => handleChange('dni', e.target.value)}
+                    placeholder="12345678"
+                    className="pl-10"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="telefono">Teléfono</FieldLabel>
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="telefono"
+                    value={form.telefono}
+                    onChange={(e) => handleChange('telefono', e.target.value)}
+                    placeholder="341..."
+                    className="pl-10"
+                    disabled={isLoading}
+                  />
+                </div>
+              </Field>
+            </div>
+
+            <Field>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => handleChange('email', e.target.value)}
+                  placeholder="profesor@email.com"
+                  className="pl-10"
+                  required
                   disabled={isLoading}
                 />
-              </Field>
-            </FieldGroup>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Professional Details</CardTitle>
-            <CardDescription>Specialty and employment status</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="specialty">Specialty</FieldLabel>
-                  <Select
-                    value={formData.specialty}
-                    onValueChange={(value) => setFormData({ ...formData, specialty: value })}
-                    disabled={isLoading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a specialty" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {specialtyOptions.map((specialty) => (
-                        <SelectItem key={specialty} value={specialty}>
-                          {specialty}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="status">Status</FieldLabel>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value as Status })}
-                    disabled={isLoading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
               </div>
-            </FieldGroup>
-          </CardContent>
-        </Card>
+            </Field>
 
-        <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                {mode === 'create' ? 'Creating...' : 'Saving...'}
-              </>
-            ) : (
-              mode === 'create' ? 'Create Teacher' : 'Save Changes'
-            )}
-          </Button>
-        </div>
-      </div>
-    </form>
+            <Field>
+              <FieldLabel htmlFor="password">
+                {isEdit ? 'Nueva contraseña (opcional)' : 'Contraseña'}
+              </FieldLabel>
+
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={(e) => handleChange('password', e.target.value)}
+                  placeholder={isEdit ? 'Solo si querés cambiarla' : 'Ingresá una contraseña'}
+                  className="pr-11"
+                  required={!isEdit}
+                  disabled={isLoading}
+                />
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1 h-8 w-8 text-muted-foreground"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  disabled={isLoading}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </Button>
+              </div>
+            </Field>
+
+            <div className="flex justify-end pt-2">
+              <Button
+                type="submit"
+                className="min-w-40"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : isEdit ? (
+                  'Guardar cambios'
+                ) : (
+                  'Crear profesor'
+                )}
+              </Button>
+            </div>
+          </FieldGroup>
+        </form>
+      </CardContent>
+    </Card>
   )
 }

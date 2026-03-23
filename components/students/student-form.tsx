@@ -33,15 +33,15 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
   const [showPassword, setShowPassword] = useState(false)
 
   const title = useMemo(
-    () => (isEdit ? 'Editar alumno' : 'Nuevo alumno'),
+    () => (isEdit ? 'Actualizar alumno' : 'Crear alumno'),
     [isEdit]
   )
 
   const description = useMemo(
     () =>
       isEdit
-        ? 'Actualizá la información principal del alumno.'
-        : 'Completá los datos para registrar un nuevo alumno.',
+        ? ''
+        : '',
     [isEdit]
   )
 
