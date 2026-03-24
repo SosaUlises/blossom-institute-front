@@ -169,35 +169,46 @@ export function StudentsTable() {
                         </span>
                       </td>
 
-                      <td className="px-5 py-4">
-                        <div className="flex justify-end gap-2">
-                          <Link href={`/dashboard/students/${student.id}`}>
-                            <Button variant="outline" size="sm">
-                              <Pencil className="mr-2 size-4" />
-                              Editar
-                            </Button>
-                          </Link>
+                     <td className="px-5 py-4">
+                      <div className="flex justify-end gap-2">
 
+                        {/* EDITAR */}
+                        <Link href={`/dashboard/students/${student.id}`}>
                           <Button
                             size="sm"
-                            variant={student.activo ? 'destructive' : 'default'}
-                            onClick={() => handleToggleActive(student)}
-                            disabled={actionLoadingId === student.id}
+                            className="h-9 rounded-xl bg-primary/90 text-primary-foreground shadow-sm transition-all hover:bg-primary hover:shadow-md hover:-translate-y-[1px]"
                           >
-                            {student.activo ? (
-                              <>
-                                <Power className="mr-2 size-4" />
-                                Desactivar
-                              </>
-                            ) : (
-                              <>
-                                <UserCheck className="mr-2 size-4" />
-                                Activar
-                              </>
-                            )}
+                            <Pencil className="mr-2 size-4" />
+                            Editar
                           </Button>
-                        </div>
-                      </td>
+                        </Link>
+
+                        {/* ACTIVAR / DESACTIVAR */}
+                        <Button
+                          size="sm"
+                          onClick={() => handleToggleActive(student)}
+                          disabled={actionLoadingId === student.id}
+                          className={
+                            student.activo
+                              ? "h-9 rounded-xl bg-destructive/90 text-destructive-foreground shadow-sm transition-all hover:bg-destructive hover:shadow-md hover:-translate-y-[1px]"
+                              : "h-9 rounded-xl bg-success/90 text-success-foreground shadow-sm transition-all hover:bg-success hover:shadow-md hover:-translate-y-[1px]"
+                          }
+                        >
+                          {student.activo ? (
+                            <>
+                              <Power className="mr-2 size-4" />
+                              Desactivar
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck className="mr-2 size-4" />
+                              Activar
+                            </>
+                          )}
+                        </Button>
+
+                      </div>
+                    </td>
                     </tr>
                   ))
                 )}
