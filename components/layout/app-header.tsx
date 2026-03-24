@@ -1,73 +1,69 @@
 'use client'
 
-import { Bell, Search, Moon, Sun } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Breadcrumbs, BreadcrumbItem } from '@/components/layout/breadcrumbs'
+import { cn } from '@/lib/utils'
 
 interface AppHeaderProps {
   title: string
-  breadcrumbs?: BreadcrumbItem[]
 }
 
-export function AppHeader({ title, breadcrumbs }: AppHeaderProps) {
-  const { setTheme, theme } = useTheme()
+export function AppHeader({ title }: AppHeaderProps) {
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        {breadcrumbs && breadcrumbs.length > 0 ? (
-          <Breadcrumbs items={breadcrumbs} />
-        ) : (
-          <h1 className="text-lg font-semibold">{title}</h1>
-        )}
-      </div>
-      <div className="ml-auto flex items-center gap-2">
-        <div className="relative hidden md:block">
-          <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search..."
-            className="w-64 pl-9 bg-muted/50"
-          />
+    <header className="sticky top-0 z-20 flex h-16 items-center border-b border-slate-200/70 bg-white/80 px-6 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/80">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl border border-slate-200/80 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <SidebarTrigger className="text-slate-600 dark:text-slate-300" />
         </div>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="size-4" />
-          <span className="absolute right-1 top-1 size-2 rounded-full bg-primary" />
-          <span className="sr-only">Notifications</span>
+
+        <Separator orientation="vertical" className="h-5 bg-slate-200 dark:bg-slate-800" />
+
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            {title}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Blossom Institute · Panel administrativo
+          </p>
+        </div>
+      </div>
+
+      <div className="ml-auto flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme('light')}
+          className={cn(
+            'text-slate-500 dark:text-slate-400',
+            mounted && theme === 'light' && 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
+          )}
+        >
+          <Sun className="size-4" />
         </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTheme('light')}>
-              Light
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('dark')}>
-              Dark
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('system')}>
-              System
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme('dark')}
+          className={cn(
+            'text-slate-500 dark:text-slate-400',
+            mounted && theme === 'dark' && 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
+          )}
+        >
+          <Moon className="size-4" />
+        </Button>
       </div>
     </header>
   )

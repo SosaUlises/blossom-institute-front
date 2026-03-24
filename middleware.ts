@@ -33,6 +33,7 @@ async function getSessionFromRequest(request: NextRequest) {
     const { payload } = await jwtVerify(token, getJwtSecret(), {
       issuer: process.env.JWT_ISSUER,
       audience: process.env.JWT_AUDIENCE,
+      clockTolerance: 10,
     })
 
     return {
