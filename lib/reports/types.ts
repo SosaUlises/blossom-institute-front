@@ -117,3 +117,55 @@ export interface ReporteHomeworkResponse {
   resumen: ReporteHomeworkResumen
   items: ReporteHomeworkItem[]
 }
+
+export interface ReporteStudentSummaryAttendance {
+  clasesTotales: number
+  presentes: number
+  ausentes: number
+  porcentajeAsistencia: number
+}
+
+export interface ReporteStudentSummaryHomework {
+  homeworkTotal: number
+  homeworkEntregadas: number
+  homeworkSinEntregar: number
+  homeworkPendientesCorreccion: number
+  homeworkRehacer: number
+  homeworkAprobadas: number
+  homeworkPromedio?: number | null
+}
+
+export interface ReporteStudentSummaryMarks {
+  quizCount: number
+  quizPromedio?: number | null
+  testCount: number
+  testPromedio?: number | null
+  marksCount: number
+  promedioGeneral?: number | null
+}
+
+export interface ReporteStudentSummarySkillItem {
+  skill: number
+  evaluacionesCount: number
+  totalObtenido: number
+  totalMaximo: number
+  porcentaje?: number | null
+}
+
+export interface ReporteStudentSummaryResponse {
+  cursoId: number
+  cursoNombre: string
+  alumnoId: number
+  alumnoNombre: string
+  alumnoApellido: string
+  alumnoDni: number
+  alumnoEmail?: string | null
+  year: number
+  term: number
+  from: string
+  to: string
+  attendance: ReporteStudentSummaryAttendance
+  homework: ReporteStudentSummaryHomework
+  marks: ReporteStudentSummaryMarks
+  skills: ReporteStudentSummarySkillItem[]
+}

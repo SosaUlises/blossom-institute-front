@@ -1,6 +1,7 @@
 import type { ReporteMarksResponse } from './types'
 import type { ReporteAttendanceResponse } from './types'
 import type { ReporteHomeworkResponse } from './types'
+import type { ReporteStudentSummaryResponse } from './types'
 
 async function safeJson(response: Response) {
   const text = await response.text()
@@ -203,4 +204,33 @@ export function getHomeworkExportPdfUrl(params: {
   }
 
   return `/api/reports/homework/${params.cursoId}/${params.year}/${params.term}/export/pdf?${query.toString()}`
+}
+
+
+
+export async function getStudentSummaryReport(params: {
+  cursoId: number
+  alumnoId: number
+  year: number
+  term: number
+}): Promise<ReporteStudentSummaryResponse> {
+  const response = await fetch(
+    `/api/reports/student-summary/${params.cursoId}/${params.alumnoId}/${params.year}/${params.term}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    }
+  )
+
+  return parseResponse<ReporteStudentSummaryResponse>(response)
+}
+
+export function getStudentSummaryExportPdfUrl(params: {
+  cursoId: number
+  alumnoId: number
+  year: number
+  term: number
+}) {
+  return `/api/reports/student-summary/${params.cursoId}/${params.alumnoId}/${params.year}/${params.term}/export/pdf`
 }
