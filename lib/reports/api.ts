@@ -2,6 +2,7 @@ import type { ReporteMarksResponse } from './types'
 import type { ReporteAttendanceResponse } from './types'
 import type { ReporteHomeworkResponse } from './types'
 import type { ReporteStudentSummaryResponse } from './types'
+import type { AsistenciaRangeResponse } from './types'
 
 async function safeJson(response: Response) {
   const text = await response.text()
@@ -233,4 +234,37 @@ export function getStudentSummaryExportPdfUrl(params: {
   term: number
 }) {
   return `/api/reports/student-summary/${params.cursoId}/${params.alumnoId}/${params.year}/${params.term}/export/pdf`
+}
+
+
+
+export async function getAttendanceRangeReport(params: {
+  cursoId: number
+  from: string
+  to: string
+  pageNumber?: number
+  pageSize?: number
+  search?: string
+}): Promise<AsistenciaRangeResponse> {
+  const query = new URLSearchParams()
+
+  query.set('from', params.from)
+  query.set('to', params.to)
+  query.set('pageNumber', String(params.pageNumber ?? 1))
+  query.set('pageSize', String(params.pageSize ?? 10))
+
+  if (params.search?.trim()) {
+    query.set('search', params.search.trim())
+  }
+
+  const response = await fetch(
+    `/api/reports/attendance-range/${params.cursoId}?${query.toString()}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    }
+  )
+
+  return parseResponse<AsistenciaRangeResponse>(response)
 }

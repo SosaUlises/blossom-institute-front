@@ -169,3 +169,22 @@ export interface ReporteStudentSummaryResponse {
   marks: ReporteStudentSummaryMarks
   skills: ReporteStudentSummarySkillItem[]
 }
+
+export interface AsistenciaRangeItem {
+  alumnoId: number
+  nombre: string
+  apellido: string
+  presentes: number
+  ausentes: number
+  totalRegistradas: number
+  porcentajePresencia: number
+}
+
+export interface AsistenciaRangeResponse {
+  cursoId: number
+  from: string
+  to: string
+  totalAlumnos: number
+  totalClasesConAsistencia: number
+  items: AsistenciaRangeItem[]
+}
