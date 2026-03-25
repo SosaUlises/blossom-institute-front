@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Settings,
   LogOut,
+  BarChart3,
 } from 'lucide-react'
 
 import {
@@ -43,7 +44,7 @@ const mainNavItems = [
   { title: 'Students', url: '/dashboard/students', icon: Users },
   { title: 'Teachers', url: '/dashboard/teachers', icon: GraduationCap },
   { title: 'Courses', url: '/dashboard/courses', icon: BookOpen },
-  { title: 'Assignments', url: '/dashboard/assignments', icon: ClipboardList },
+  { title: 'Reports', url: '/dashboard/reports', icon: BarChart3 },
 ]
 
 const settingsNavItems = [
