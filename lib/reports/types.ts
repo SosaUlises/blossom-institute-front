@@ -188,3 +188,36 @@ export interface AsistenciaRangeResponse {
   totalClasesConAsistencia: number
   items: AsistenciaRangeItem[]
 }
+
+export enum EstadoEntregaReporte {
+  SinEntregar = 0,
+  EntregadoEnTermino = 1,
+  EntregadoFueraDeTermino = 2,
+}
+
+export interface FeedbackVigente {
+  id?: number
+  comentario?: string | null
+  nota?: number | null
+  requiereRehacer?: boolean
+  esVigente?: boolean
+}
+
+export interface DeliveriesByTaskItem {
+  alumnoId: number
+  alumnoNombre: string
+  alumnoApellido: string
+  alumnoDni: number
+  estado: EstadoEntregaReporte
+  entregaId?: number | null
+  fechaEntregaUtc?: string | null
+  tieneAdjuntos: boolean
+  feedbackVigente?: FeedbackVigente | null
+}
+
+export interface DeliveriesByTaskResponse {
+  pageNumber: number
+  pageSize: number
+  total: number
+  items: DeliveriesByTaskItem[]
+}

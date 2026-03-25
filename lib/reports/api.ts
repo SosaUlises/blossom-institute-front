@@ -3,6 +3,7 @@ import type { ReporteAttendanceResponse } from './types'
 import type { ReporteHomeworkResponse } from './types'
 import type { ReporteStudentSummaryResponse } from './types'
 import type { AsistenciaRangeResponse } from './types'
+import type { DeliveriesByTaskResponse } from './types'
 
 async function safeJson(response: Response) {
   const text = await response.text()
@@ -267,4 +268,44 @@ export async function getAttendanceRangeReport(params: {
   )
 
   return parseResponse<AsistenciaRangeResponse>(response)
+}
+
+
+
+export async function getDeliveriesByTaskReport(params: {
+  cursoId: number
+  tareaId: number
+  pageNumber?: number
+  pageSize?: number
+  search?: string
+  estado?: number
+  pendienteCorreccion?: boolean
+}): Promise<DeliveriesByTaskResponse> {
+  const query = new URLSearchParams()
+
+  query.set('pageNumber', String(params.pageNumber ?? 1))
+  query.set('pageSize', String(params.pageSize ?? 20))
+
+  if (params.search?.trim()) {
+    query.set('search', params.search.trim())
+  }
+
+  if (typeof params.estado === 'number') {
+    query.set('estado', String(params.estado))
+  }
+
+  if (typeof params.pendienteCorreccion === 'boolean') {
+    query.set('pendienteCorreccion', String(params.pendienteCorreccion))
+  }
+
+  const response = await fetch(
+    `/api/reports/deliveries/${params.cursoId}/${params.tareaId}?${query.toString()}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    }
+  )
+
+  return parseResponse<DeliveriesByTaskResponse>(response)
 }
