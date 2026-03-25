@@ -1,4 +1,5 @@
 import type { ReporteMarksResponse } from './types'
+import type { ReporteAttendanceResponse } from './types'
 
 async function safeJson(response: Response) {
   const text = await response.text()
@@ -81,4 +82,64 @@ export function getMarksExportPdfUrl(params: {
   }
 
   return `/api/reports/marks/${params.cursoId}/${params.year}/${params.term}/export/pdf?${query.toString()}`
+}
+
+
+export async function getAttendanceReport(params: {
+  cursoId: number
+  year: number
+  term: number
+  pageNumber?: number
+  pageSize?: number
+  search?: string
+}): Promise<ReporteAttendanceResponse> {
+  const query = new URLSearchParams()
+
+  query.set('pageNumber', String(params.pageNumber ?? 1))
+  query.set('pageSize', String(params.pageSize ?? 10))
+
+  if (params.search?.trim()) {
+    query.set('search', params.search.trim())
+  }
+
+  const response = await fetch(
+    `/api/reports/attendance/${params.cursoId}/${params.year}/${params.term}?${query.toString()}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    }
+  )
+
+  return parseResponse<ReporteAttendanceResponse>(response)
+}
+
+export function getAttendanceExportExcelUrl(params: {
+  cursoId: number
+  year: number
+  term: number
+  search?: string
+}) {
+  const query = new URLSearchParams()
+
+  if (params.search?.trim()) {
+    query.set('search', params.search.trim())
+  }
+
+  return `/api/reports/attendance/${params.cursoId}/${params.year}/${params.term}/export/excel?${query.toString()}`
+}
+
+export function getAttendanceExportPdfUrl(params: {
+  cursoId: number
+  year: number
+  term: number
+  search?: string
+}) {
+  const query = new URLSearchParams()
+
+  if (params.search?.trim()) {
+    query.set('search', params.search.trim())
+  }
+
+  return `/api/reports/attendance/${params.cursoId}/${params.year}/${params.term}/export/pdf?${query.toString()}`
 }

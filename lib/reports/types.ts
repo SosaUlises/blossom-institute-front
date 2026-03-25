@@ -43,3 +43,37 @@ export interface ApiEnvelope<T> {
   statusCode: number
   data: T
 }
+
+export interface ReporteAttendanceResumen {
+  cursoId: number
+  cursoNombre: string
+  year: number
+  term: number
+  from: string
+  to: string
+  totalAlumnos: number
+  totalClases: number
+  totalPresentes: number
+  totalAusentes: number
+  porcentajeAsistenciaCurso?: number | null
+}
+
+export interface ReporteAttendanceItem {
+  alumnoId: number
+  alumnoNombre: string
+  alumnoApellido: string
+  alumnoDni: number
+  alumnoEmail?: string | null
+  clasesTotales: number
+  presentes: number
+  ausentes: number
+  porcentajeAsistencia: number
+}
+
+export interface ReporteAttendanceResponse {
+  pageNumber: number
+  pageSize: number
+  total: number
+  resumen: ReporteAttendanceResumen
+  items: ReporteAttendanceItem[]
+}
