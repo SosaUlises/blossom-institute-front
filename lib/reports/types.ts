@@ -77,3 +77,43 @@ export interface ReporteAttendanceResponse {
   resumen: ReporteAttendanceResumen
   items: ReporteAttendanceItem[]
 }
+
+export interface ReporteHomeworkResumen {
+  cursoId: number
+  cursoNombre: string
+  year: number
+  term: number
+  from: string
+  to: string
+  totalAlumnos: number
+  totalHomework: number
+  totalEntregas: number
+  totalSinEntregar: number
+  totalPendientesCorreccion: number
+  totalRehacer: number
+  totalAprobadas: number
+  promedioHomeworkCurso?: number | null
+}
+
+export interface ReporteHomeworkItem {
+  alumnoId: number
+  alumnoNombre: string
+  alumnoApellido: string
+  alumnoDni: number
+  alumnoEmail?: string | null
+  homeworkTotal: number
+  homeworkEntregadas: number
+  homeworkSinEntregar: number
+  homeworkPendientesCorreccion: number
+  homeworkRehacer: number
+  homeworkAprobadas: number
+  homeworkPromedio?: number | null
+}
+
+export interface ReporteHomeworkResponse {
+  pageNumber: number
+  pageSize: number
+  total: number
+  resumen: ReporteHomeworkResumen
+  items: ReporteHomeworkItem[]
+}

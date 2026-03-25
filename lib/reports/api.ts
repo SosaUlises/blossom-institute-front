@@ -1,5 +1,6 @@
 import type { ReporteMarksResponse } from './types'
 import type { ReporteAttendanceResponse } from './types'
+import type { ReporteHomeworkResponse } from './types'
 
 async function safeJson(response: Response) {
   const text = await response.text()
@@ -142,4 +143,64 @@ export function getAttendanceExportPdfUrl(params: {
   }
 
   return `/api/reports/attendance/${params.cursoId}/${params.year}/${params.term}/export/pdf?${query.toString()}`
+}
+
+
+export async function getHomeworkReport(params: {
+  cursoId: number
+  year: number
+  term: number
+  pageNumber?: number
+  pageSize?: number
+  search?: string
+}): Promise<ReporteHomeworkResponse> {
+  const query = new URLSearchParams()
+
+  query.set('pageNumber', String(params.pageNumber ?? 1))
+  query.set('pageSize', String(params.pageSize ?? 10))
+
+  if (params.search?.trim()) {
+    query.set('search', params.search.trim())
+  }
+
+  const response = await fetch(
+    `/api/reports/homework/${params.cursoId}/${params.year}/${params.term}?${query.toString()}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    }
+  )
+
+  return parseResponse<ReporteHomeworkResponse>(response)
+}
+
+export function getHomeworkExportExcelUrl(params: {
+  cursoId: number
+  year: number
+  term: number
+  search?: string
+}) {
+  const query = new URLSearchParams()
+
+  if (params.search?.trim()) {
+    query.set('search', params.search.trim())
+  }
+
+  return `/api/reports/homework/${params.cursoId}/${params.year}/${params.term}/export/excel?${query.toString()}`
+}
+
+export function getHomeworkExportPdfUrl(params: {
+  cursoId: number
+  year: number
+  term: number
+  search?: string
+}) {
+  const query = new URLSearchParams()
+
+  if (params.search?.trim()) {
+    query.set('search', params.search.trim())
+  }
+
+  return `/api/reports/homework/${params.cursoId}/${params.year}/${params.term}/export/pdf?${query.toString()}`
 }
