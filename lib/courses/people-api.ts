@@ -37,7 +37,14 @@ export async function getCursoAlumnos(cursoId: number) {
     cache: 'no-store',
   })
 
-  return parseResponse<CursoPeopleResponse<CursoAlumno>>(res)
+  const text = await res.text()
+  const json = text ? JSON.parse(text) : null
+
+  if (!res.ok) {
+    throw new Error(json?.message || 'No se pudieron obtener los alumnos del curso.')
+  }
+
+  return json.data
 }
 
 export async function assignAlumnos(cursoId: number, payload: AssignAlumnosDTO) {
@@ -90,3 +97,4 @@ export async function removeProfesor(cursoId: number, profesorId: number) {
 
   await parseResponse<unknown>(res)
 }
+
