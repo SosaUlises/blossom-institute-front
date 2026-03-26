@@ -221,3 +221,39 @@ export interface DeliveriesByTaskResponse {
   total: number
   items: DeliveriesByTaskItem[]
 }
+
+export interface ReporteStudentAssessmentDetailSkill {
+  skill: number
+  puntajeObtenido: number
+  puntajeMaximo: number
+  porcentaje?: number | null
+}
+
+export interface ReporteStudentAssessmentDetailItem {
+  calificacionId: number
+  tipo: number
+  titulo: string
+  descripcion?: string | null
+  nota: number
+  fecha: string
+  tareaId?: number | null
+  entregaId?: number | null
+  tieneDetalleSkills: boolean
+  skills: ReporteStudentAssessmentDetailSkill[]
+}
+
+export interface ReporteStudentAssessmentDetailResponse {
+  cursoId: number
+  cursoNombre: string
+  alumnoId: number
+  alumnoNombre: string
+  alumnoApellido: string
+  alumnoDni: number
+  alumnoEmail?: string | null
+  year: number
+  term: number
+  from: string
+  to: string
+  total: number
+  items: ReporteStudentAssessmentDetailItem[]
+}

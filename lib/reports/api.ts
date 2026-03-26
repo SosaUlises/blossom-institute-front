@@ -4,6 +4,7 @@ import type { ReporteHomeworkResponse } from './types'
 import type { ReporteStudentSummaryResponse } from './types'
 import type { AsistenciaRangeResponse } from './types'
 import type { DeliveriesByTaskResponse } from './types'
+import type { ReporteStudentAssessmentDetailResponse } from './types'
 
 async function safeJson(response: Response) {
   const text = await response.text()
@@ -308,4 +309,46 @@ export async function getDeliveriesByTaskReport(params: {
   )
 
   return parseResponse<DeliveriesByTaskResponse>(response)
+}
+
+
+export async function getStudentAssessmentDetailReport(params: {
+  cursoId: number
+  alumnoId: number
+  year: number
+  term: number
+  tipo?: number
+}): Promise<ReporteStudentAssessmentDetailResponse> {
+  const query = new URLSearchParams()
+
+  if (typeof params.tipo === 'number') {
+    query.set('tipo', String(params.tipo))
+  }
+
+  const response = await fetch(
+    `/api/reports/student-assessments/${params.cursoId}/${params.alumnoId}/${params.year}/${params.term}?${query.toString()}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    }
+  )
+
+  return parseResponse<ReporteStudentAssessmentDetailResponse>(response)
+}
+
+export function getStudentAssessmentDetailExportPdfUrl(params: {
+  cursoId: number
+  alumnoId: number
+  year: number
+  term: number
+  tipo?: number
+}) {
+  const query = new URLSearchParams()
+
+  if (typeof params.tipo === 'number') {
+    query.set('tipo', String(params.tipo))
+  }
+
+  return `/api/reports/student-assessments/${params.cursoId}/${params.alumnoId}/${params.year}/${params.term}/export/pdf?${query.toString()}`
 }

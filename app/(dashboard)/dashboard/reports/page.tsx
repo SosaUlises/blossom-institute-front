@@ -37,6 +37,12 @@ const reportCards = [
     icon: UserRoundSearch,
   },
   {
+  title: 'Student assessments detail',
+  description: 'Detalle cronológico de evaluaciones por alumno, con skills por calificación.',
+  href: '/dashboard/reports/student-assessments',
+  icon: GraduationCap,
+  },
+  {
     title: 'Attendance by range',
     description: 'Reporte de asistencias en un rango de fechas.',
     href: '/dashboard/reports/attendance-range',
@@ -47,7 +53,7 @@ const reportCards = [
     description: 'Estado de entregas de una tarea puntual.',
     href: '/dashboard/reports/deliveries',
     icon: GraduationCap,
-  },
+  }
 ]
 
 export default function ReportsPage() {
