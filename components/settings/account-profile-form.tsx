@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, Save } from 'lucide-react'
+import { BadgeCheck, Loader2, Save, UserRound } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -70,18 +70,26 @@ export function AccountProfileForm({
   }
 
   return (
-    <Card className="border-border/70 bg-card/95 shadow-[0_18px_40px_-22px_rgba(30,42,68,0.20)]">
-      <CardHeader className="space-y-2">
-        <CardTitle className="text-lg font-semibold tracking-tight">
-          Perfil
-        </CardTitle>
-        <CardDescription>
-          Actualizá la información de tu cuenta.
-        </CardDescription>
+    <Card className="rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+      <CardHeader className="pb-4">
+        <div className="flex items-start gap-3">
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <UserRound className="size-5" />
+          </div>
+
+          <div className="space-y-1">
+            <CardTitle className="text-xl font-semibold tracking-tight">
+              Perfil
+            </CardTitle>
+            <CardDescription>
+              Actualizá la información principal de tu cuenta.
+            </CardDescription>
+          </div>
+        </div>
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Nombre</label>
@@ -89,6 +97,7 @@ export function AccountProfileForm({
                 value={formData.nombre}
                 onChange={(e) => handleChange('nombre', e.target.value)}
                 placeholder="Nombre"
+                className="h-11 rounded-2xl border-border/70 bg-card/80 shadow-sm"
               />
             </div>
 
@@ -98,6 +107,7 @@ export function AccountProfileForm({
                 value={formData.apellido}
                 onChange={(e) => handleChange('apellido', e.target.value)}
                 placeholder="Apellido"
+                className="h-11 rounded-2xl border-border/70 bg-card/80 shadow-sm"
               />
             </div>
           </div>
@@ -110,6 +120,7 @@ export function AccountProfileForm({
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="email@ejemplo.com"
+                className="h-11 rounded-2xl border-border/70 bg-card/80 shadow-sm"
               />
             </div>
 
@@ -119,6 +130,7 @@ export function AccountProfileForm({
                 value={formData.telefono ?? ''}
                 onChange={(e) => handleChange('telefono', e.target.value)}
                 placeholder="341..."
+                className="h-11 rounded-2xl border-border/70 bg-card/80 shadow-sm"
               />
             </div>
           </div>
@@ -131,17 +143,19 @@ export function AccountProfileForm({
                 value={formData.dni || ''}
                 onChange={(e) => handleChange('dni', e.target.value)}
                 placeholder="DNI"
+                className="h-11 rounded-2xl border-border/70 bg-card/80 shadow-sm"
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Roles</label>
-              <div className="flex min-h-10 flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/20 px-3 py-2">
+              <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-2xl border border-border/70 bg-muted/15 px-3 py-2">
                 {account.roles.map((role) => (
                   <span
                     key={role}
-                    className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
                   >
+                    <BadgeCheck className="size-3.5" />
                     {role}
                   </span>
                 ))}
@@ -150,13 +164,13 @@ export function AccountProfileForm({
           </div>
 
           {error && (
-            <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="rounded-xl border border-success/20 bg-success/5 p-3 text-sm text-success">
+            <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-3 text-sm text-green-700 dark:text-green-400">
               {success}
             </div>
           )}
@@ -165,7 +179,7 @@ export function AccountProfileForm({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-10 rounded-xl bg-primary/90 text-primary-foreground shadow-sm transition-all hover:bg-primary hover:shadow-md hover:-translate-y-[1px]"
+              className="h-11 rounded-2xl bg-primary/90 px-5 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]"
             >
               {isSubmitting ? (
                 <>
