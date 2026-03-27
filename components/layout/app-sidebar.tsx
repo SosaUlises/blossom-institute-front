@@ -17,7 +17,6 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -102,120 +101,99 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-4">
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-            Main
-          </SidebarGroupLabel>
+      <SidebarContent className="flex h-full flex-col px-3 py-4">
+        <div className="flex min-h-0 flex-1 flex-col justify-between">
+          <div className="space-y-5">
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                Main
+              </SidebarGroupLabel>
 
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1.5">
-              {mainNavItems.map((item) => {
-                const isActive =
-                  pathname === item.url ||
-                  (item.url !== '/dashboard' && pathname.startsWith(item.url))
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-1.5">
+                  {mainNavItems.map((item) => {
+                    const isActive =
+                      pathname === item.url ||
+                      (item.url !== '/dashboard' && pathname.startsWith(item.url))
 
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      className={cn(
-                        'h-11 rounded-2xl px-3 text-sm font-medium transition-all',
-                        isActive
-                          ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_16px_32px_-16px_rgba(36,59,123,0.55)] hover:bg-sidebar-primary'
-                          : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                      )}
-                    >
-                      <Link href={item.url} className="flex items-center gap-3">
-                        <item.icon
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip={item.title}
                           className={cn(
-                            'size-4 shrink-0',
+                            'h-11 rounded-2xl px-3 text-sm font-medium transition-all',
                             isActive
-                              ? 'text-sidebar-primary-foreground'
-                              : 'text-muted-foreground'
+                              ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_16px_32px_-16px_rgba(36,59,123,0.55)] hover:bg-sidebar-primary'
+                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                           )}
-                        />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                        >
+                          <Link href={item.url} className="flex items-center gap-3">
+                            <item.icon
+                              className={cn(
+                                'size-4 shrink-0',
+                                isActive
+                                  ? 'text-sidebar-primary-foreground'
+                                  : 'text-muted-foreground'
+                              )}
+                            />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-        <SidebarSeparator className="my-5 bg-sidebar-border/80" />
+            <SidebarSeparator className="bg-sidebar-border/80" />
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-            System
-          </SidebarGroupLabel>
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                System
+              </SidebarGroupLabel>
 
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1.5">
-              {settingsNavItems.map((item) => {
-                const isActive = pathname.startsWith(item.url)
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-1.5">
+                  {settingsNavItems.map((item) => {
+                    const isActive = pathname.startsWith(item.url)
 
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      className={cn(
-                        'h-11 rounded-2xl px-3 text-sm font-medium transition-all',
-                        isActive
-                          ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_16px_32px_-16px_rgba(36,59,123,0.55)] hover:bg-sidebar-primary'
-                          : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                      )}
-                    >
-                      <Link href={item.url} className="flex items-center gap-3">
-                        <item.icon
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip={item.title}
                           className={cn(
-                            'size-4 shrink-0',
+                            'h-11 rounded-2xl px-3 text-sm font-medium transition-all',
                             isActive
-                              ? 'text-sidebar-primary-foreground'
-                              : 'text-muted-foreground'
+                              ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_16px_32px_-16px_rgba(36,59,123,0.55)] hover:bg-sidebar-primary'
+                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                           )}
-                        />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="border-t border-sidebar-border/80 p-3">
-        {!mounted ? (
-          <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-card/80 px-3 py-3 shadow-sm">
-            <Avatar className="size-10 ring-1 ring-primary/10">
-              <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
-              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-foreground">
-                {fullName}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {user.email}
-              </p>
-            </div>
+                        >
+                          <Link href={item.url} className="flex items-center gap-3">
+                            <item.icon
+                              className={cn(
+                                'size-4 shrink-0',
+                                isActive
+                                  ? 'text-sidebar-primary-foreground'
+                                  : 'text-muted-foreground'
+                              )}
+                            />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </div>
-        ) : (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-card/85 px-3 py-3 text-left shadow-sm transition-all hover:bg-sidebar-accent/70"
-              >
+
+          <div className="pt-5">
+            {!mounted ? (
+              <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-card/80 px-3 py-3 shadow-sm">
                 <Avatar className="size-10 ring-1 ring-primary/10">
                   <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
                   <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
@@ -231,39 +209,64 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     {user.email}
                   </p>
                 </div>
-              </button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent
-              align="start"
-              side="top"
-              className="w-64 rounded-2xl border border-border/70 bg-popover/95 p-2 shadow-[0_22px_50px_-24px_rgba(15,23,42,0.30)] backdrop-blur-xl"
-            >
-              <div className="mb-2 rounded-xl bg-muted/40 px-3 py-2">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {fullName}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {user.email}
-                </p>
-                <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">
-                  {user.roles.join(', ')}
-                </p>
               </div>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-card/85 px-3 py-3 text-left shadow-sm transition-all hover:bg-sidebar-accent/70"
+                  >
+                    <Avatar className="size-10 ring-1 ring-primary/10">
+                      <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
+                      <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
 
-              <DropdownMenuSeparator className="my-2 bg-border" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {fullName}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
 
-              <DropdownMenuItem
-                onClick={handleLogout}
-                className="rounded-xl px-3 py-2 text-sm text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
-              >
-                <LogOut className="mr-2 size-4" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </SidebarFooter>
+                <DropdownMenuContent
+                  align="start"
+                  side="top"
+                  className="w-64 rounded-2xl border border-border/70 bg-popover/95 p-2 shadow-[0_22px_50px_-24px_rgba(15,23,42,0.30)] backdrop-blur-xl"
+                >
+                  <div className="mb-2 rounded-xl bg-muted/40 px-3 py-2">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {fullName}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
+                    <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">
+                      {user.roles.join(', ')}
+                    </p>
+                  </div>
+
+                  <DropdownMenuSeparator className="my-2 bg-border" />
+
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="rounded-xl px-3 py-2 text-sm text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                  >
+                    <LogOut className="mr-2 size-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </div>
+      </SidebarContent>
     </Sidebar>
   )
 }
