@@ -7,6 +7,10 @@ import {
   Trash2,
   Users,
   CheckCircle2,
+  UserRound,
+  Mail,
+  IdCard,
+  Plus,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -25,6 +29,7 @@ import { getStudents } from '@/lib/students/api'
 import { getTeachers } from '@/lib/teachers/api'
 import type { Alumno } from '@/lib/students/types'
 import type { Profesor } from '@/lib/teachers/types'
+import { cn } from '@/lib/utils'
 
 type TabKey = 'alumnos' | 'profesores'
 
@@ -212,8 +217,8 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.85fr)]">
-      <Card className="min-w-0 border-border/70 bg-card/95 shadow-[0_18px_40px_-22px_rgba(30,42,68,0.20)]">
-        <CardHeader className="space-y-4">
+      <Card className="min-w-0 rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_40px_-22px_rgba(30,42,68,0.20)]">
+        <CardHeader className="space-y-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-1">
               <CardTitle className="text-xl font-semibold tracking-tight">
@@ -226,16 +231,28 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
 
             <div className="flex flex-wrap gap-2">
               <Button
-                variant={tab === 'alumnos' ? 'default' : 'outline'}
+                variant="outline"
                 onClick={() => setTab('alumnos')}
+                className={cn(
+                  'h-10 rounded-2xl border-border/70 px-4',
+                  tab === 'alumnos'
+                    ? 'border-primary/20 bg-primary/10 text-primary'
+                    : 'bg-background/70 text-foreground'
+                )}
               >
                 <Users className="mr-2 size-4" />
                 Alumnos
               </Button>
 
               <Button
-                variant={tab === 'profesores' ? 'default' : 'outline'}
+                variant="outline"
                 onClick={() => setTab('profesores')}
+                className={cn(
+                  'h-10 rounded-2xl border-border/70 px-4',
+                  tab === 'profesores'
+                    ? 'border-primary/20 bg-primary/10 text-primary'
+                    : 'bg-background/70 text-foreground'
+                )}
               >
                 <GraduationCap className="mr-2 size-4" />
                 Profesores
@@ -273,60 +290,85 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
               }
               value={searchCurrent}
               onChange={(e) => setSearchCurrent(e.target.value)}
-              className="pl-10"
+              className="h-11 rounded-2xl border-border/70 bg-card/80 pl-10 shadow-sm"
             />
           </div>
         </CardHeader>
 
         <CardContent className="min-w-0 pt-0">
           <div className="overflow-x-auto rounded-2xl border border-border/70">
-            <table className="w-full min-w-[720px] text-sm">
-              <thead className="border-b border-border/70 bg-muted/30">
-                <tr className="text-left text-muted-foreground">
-                  <th className="px-5 py-4 font-medium">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead className="border-b border-border/70 bg-muted/25">
+                <tr className="text-left">
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     {tab === 'alumnos' ? 'Alumno' : 'Profesor'}
                   </th>
-                  <th className="px-5 py-4 font-medium">Email</th>
-                  <th className="px-5 py-4 font-medium">DNI</th>
-                  <th className="px-5 py-4 text-right font-medium">Acciones</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Email
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    DNI
+                  </th>
+                  <th className="px-6 py-4 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
                   Array.from({ length: 5 }).map((_, index) => (
-                    <tr key={index} className="border-b border-border/60">
-                      <td className="px-5 py-4" colSpan={4}>
-                        <div className="h-10 animate-pulse rounded-xl bg-muted/50" />
+                    <tr key={index} className="border-b border-border/60 last:border-0">
+                      <td className="px-6 py-4" colSpan={4}>
+                        <div className="h-12 animate-pulse rounded-2xl bg-muted/40" />
                       </td>
                     </tr>
                   ))
                 ) : tab === 'alumnos' ? (
                   filteredCurrentAlumnos.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-5 py-12 text-center text-muted-foreground">
+                      <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
                         No hay alumnos asignados para mostrar.
                       </td>
                     </tr>
                   ) : (
                     filteredCurrentAlumnos.map((alumno) => (
-                      <tr key={alumno.alumnoId} className="border-b border-border/60 transition hover:bg-muted/20">
-                        <td className="px-5 py-4">
-                          <div className="space-y-0.5">
-                            <p className="font-medium text-foreground">
-                              {alumno.nombre} {alumno.apellido}
-                            </p>
+                      <tr key={alumno.alumnoId} className="border-b border-border/60 transition hover:bg-muted/15 last:border-0">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                              <UserRound className="size-4" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">
+                                {alumno.nombre} {alumno.apellido}
+                              </p>
+                              <p className="text-xs text-muted-foreground">ID #{alumno.alumnoId}</p>
+                            </div>
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-muted-foreground">{alumno.email}</td>
-                        <td className="px-5 py-4 text-muted-foreground">{alumno.dni}</td>
-                        <td className="px-5 py-4">
+
+                        <td className="px-6 py-4 text-muted-foreground">
+                          <div className="inline-flex items-center gap-2">
+                            <Mail className="size-4" />
+                            {alumno.email}
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-4 text-muted-foreground">
+                          <div className="inline-flex items-center gap-2">
+                            <IdCard className="size-4" />
+                            {alumno.dni}
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-4">
                           <div className="flex justify-end">
                             <Button
                               size="sm"
-                              variant="destructive"
                               onClick={() => handleRemoveAlumno(alumno)}
                               disabled={actionLoadingId === alumno.alumnoId}
+                              className="h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-red-500/15 dark:text-red-400"
                             >
                               <Trash2 className="mr-2 size-4" />
                               Quitar
@@ -338,29 +380,48 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                   )
                 ) : filteredCurrentProfesores.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-5 py-12 text-center text-muted-foreground">
+                    <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
                       No hay profesores asignados para mostrar.
                     </td>
                   </tr>
                 ) : (
                   filteredCurrentProfesores.map((profesor) => (
-                    <tr key={profesor.profesorId} className="border-b border-border/60 transition hover:bg-muted/20">
-                      <td className="px-5 py-4">
-                        <div className="space-y-0.5">
-                          <p className="font-medium text-foreground">
-                            {profesor.nombre} {profesor.apellido}
-                          </p>
+                    <tr key={profesor.profesorId} className="border-b border-border/60 transition hover:bg-muted/15 last:border-0">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                            <GraduationCap className="size-4" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground">
+                              {profesor.nombre} {profesor.apellido}
+                            </p>
+                            <p className="text-xs text-muted-foreground">ID #{profesor.profesorId}</p>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-muted-foreground">{profesor.email}</td>
-                      <td className="px-5 py-4 text-muted-foreground">{profesor.dni}</td>
-                      <td className="px-5 py-4">
+
+                      <td className="px-6 py-4 text-muted-foreground">
+                        <div className="inline-flex items-center gap-2">
+                          <Mail className="size-4" />
+                          {profesor.email}
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 text-muted-foreground">
+                        <div className="inline-flex items-center gap-2">
+                          <IdCard className="size-4" />
+                          {profesor.dni}
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
                         <div className="flex justify-end">
                           <Button
                             size="sm"
-                            variant="destructive"
                             onClick={() => handleRemoveProfesor(profesor)}
                             disabled={actionLoadingId === profesor.profesorId}
+                            className="h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-red-500/15 dark:text-red-400"
                           >
                             <Trash2 className="mr-2 size-4" />
                             Quitar
@@ -376,7 +437,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
         </CardContent>
       </Card>
 
-      <Card className="min-w-0 border-border/70 bg-card/95 shadow-[0_18px_40px_-22px_rgba(30,42,68,0.20)]">
+      <Card className="min-w-0 rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_40px_-22px_rgba(30,42,68,0.20)]">
         <CardHeader className="space-y-4">
           <div className="space-y-1">
             <CardTitle className="text-xl font-semibold tracking-tight">
@@ -397,7 +458,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
               }
               value={searchAssignable}
               onChange={(e) => setSearchAssignable(e.target.value)}
-              className="pl-10"
+              className="h-11 rounded-2xl border-border/70 bg-card/80 pl-10 shadow-sm"
             />
           </div>
 
@@ -407,8 +468,9 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
               assigning ||
               (tab === 'alumnos' ? selectedAlumnoIds.length === 0 : selectedProfesorIds.length === 0)
             }
+            className="h-11 rounded-2xl bg-primary/90 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]"
           >
-            <CheckCircle2 className="mr-2 size-4" />
+            <Plus className="mr-2 size-4" />
             {assigning
               ? 'Guardando...'
               : tab === 'alumnos'
@@ -418,7 +480,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
         </CardHeader>
 
         <CardContent className="min-w-0 pt-0">
-          <div className="max-h-[540px] space-y-3 overflow-y-auto overflow-x-hidden pr-1">
+          <div className="max-h-[560px] space-y-3 overflow-y-auto overflow-x-hidden pr-1">
             {tab === 'alumnos' ? (
               assignableStudents.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
@@ -431,7 +493,12 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                   return (
                     <label
                       key={student.id}
-                      className="flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border border-border/70 bg-background/60 p-4 transition hover:bg-muted/20"
+                      className={cn(
+                        'flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all',
+                        checked
+                          ? 'border-primary/25 bg-primary/8 shadow-sm'
+                          : 'border-border/70 bg-background/60 hover:bg-muted/20'
+                      )}
                     >
                       <input
                         type="checkbox"
@@ -462,7 +529,12 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                 return (
                   <label
                     key={teacher.id}
-                    className="flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border border-border/70 bg-background/60 p-4 transition hover:bg-muted/20"
+                    className={cn(
+                      'flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all',
+                      checked
+                        ? 'border-primary/25 bg-primary/8 shadow-sm'
+                        : 'border-border/70 bg-background/60 hover:bg-muted/20'
+                    )}
                   >
                     <input
                       type="checkbox"
