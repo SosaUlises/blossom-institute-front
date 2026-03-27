@@ -97,7 +97,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
               Blossom Institute
             </p>
             <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-              Academic admin
+              Academic Management
             </p>
           </div>
         </Link>
@@ -248,12 +248,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 </p>
               </div>
 
-              <DropdownMenuItem asChild className="rounded-xl px-3 py-2 text-sm">
-                <Link href="/dashboard/settings">
-                  <Settings className="mr-2 size-4" />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
 
               <DropdownMenuSeparator className="my-2 bg-slate-200 dark:bg-slate-800" />
 
