@@ -9,7 +9,6 @@ import {
   Users,
   GraduationCap,
   BookOpen,
-  ClipboardList,
   Settings,
   LogOut,
   BarChart3,
@@ -18,7 +17,6 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -78,141 +76,124 @@ export function AppSidebar({ user }: AppSidebarProps) {
   }
 
   return (
-    <Sidebar className="border-r border-slate-200/70 bg-[linear-gradient(180deg,#ffffff,rgba(248,250,252,0.92))] backdrop-blur-xl dark:border-slate-800/80 dark:bg-[linear-gradient(180deg,#0f172a,rgba(2,6,23,0.96))]">
-      <SidebarHeader className="border-b border-slate-200/70 px-4 py-4 dark:border-slate-800/80">
+    <Sidebar className="border-r border-sidebar-border/80 bg-sidebar/95 text-sidebar-foreground backdrop-blur-2xl">
+      <SidebarHeader className="border-b border-sidebar-border/80 px-4 py-4">
         <Link href="/dashboard" className="flex items-center gap-3 rounded-2xl">
-          <div className="overflow-hidden rounded-2xl border border-primary/10 bg-white shadow-[0_8px_24px_-12px_rgba(36,59,123,0.25)] dark:border-slate-700 dark:bg-slate-900">
+          <div className="overflow-hidden rounded-2xl border border-primary/10 bg-card shadow-[0_10px_28px_-16px_rgba(36,59,123,0.35)]">
             <Image
               src="/logo-blossom.png"
               alt="Blossom Institute"
-              width={46}
-              height={46}
-              className="h-[46px] w-[46px] object-cover"
+              width={48}
+              height={48}
+              className="h-12 w-12 object-cover"
               priority
             />
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            <p className="truncate text-sm font-semibold tracking-tight text-foreground">
               Blossom Institute
             </p>
-            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+            <p className="truncate text-xs text-muted-foreground">
               Academic Management
             </p>
           </div>
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-4">
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-            Main
-          </SidebarGroupLabel>
+      <SidebarContent className="flex h-full flex-col px-3 py-4">
+        <div className="flex min-h-0 flex-1 flex-col justify-between">
+          <div className="space-y-5">
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                Main
+              </SidebarGroupLabel>
 
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1.5">
-              {mainNavItems.map((item) => {
-                const isActive =
-                  pathname === item.url ||
-                  (item.url !== '/dashboard' && pathname.startsWith(item.url))
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-1.5">
+                  {mainNavItems.map((item) => {
+                    const isActive =
+                      pathname === item.url ||
+                      (item.url !== '/dashboard' && pathname.startsWith(item.url))
 
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      className={cn(
-                        'h-11 rounded-2xl px-3 text-sm font-medium transition',
-                        isActive
-                          ? 'bg-[#243B7B] text-white shadow-[0_14px_30px_-14px_rgba(36,59,123,0.55)] hover:bg-[#243B7B]'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100'
-                      )}
-                    >
-                      <Link href={item.url} className="flex items-center gap-3">
-                        <item.icon
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip={item.title}
                           className={cn(
-                            'size-4 shrink-0',
-                            isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400'
+                            'h-11 rounded-2xl px-3 text-sm font-medium transition-all',
+                            isActive
+                              ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_16px_32px_-16px_rgba(36,59,123,0.55)] hover:bg-sidebar-primary'
+                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                           )}
-                        />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                        >
+                          <Link href={item.url} className="flex items-center gap-3">
+                            <item.icon
+                              className={cn(
+                                'size-4 shrink-0',
+                                isActive
+                                  ? 'text-sidebar-primary-foreground'
+                                  : 'text-muted-foreground'
+                              )}
+                            />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-        <SidebarSeparator className="my-4 bg-slate-200/80 dark:bg-slate-800" />
+            <SidebarSeparator className="bg-sidebar-border/80" />
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-            System
-          </SidebarGroupLabel>
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                System
+              </SidebarGroupLabel>
 
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1.5">
-              {settingsNavItems.map((item) => {
-                const isActive = pathname.startsWith(item.url)
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-1.5">
+                  {settingsNavItems.map((item) => {
+                    const isActive = pathname.startsWith(item.url)
 
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      className={cn(
-                        'h-11 rounded-2xl px-3 text-sm font-medium transition',
-                        isActive
-                          ? 'bg-[#243B7B] text-white shadow-[0_14px_30px_-14px_rgba(36,59,123,0.55)] hover:bg-[#243B7B]'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100'
-                      )}
-                    >
-                      <Link href={item.url} className="flex items-center gap-3">
-                        <item.icon
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip={item.title}
                           className={cn(
-                            'size-4 shrink-0',
-                            isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400'
+                            'h-11 rounded-2xl px-3 text-sm font-medium transition-all',
+                            isActive
+                              ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_16px_32px_-16px_rgba(36,59,123,0.55)] hover:bg-sidebar-primary'
+                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                           )}
-                        />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="border-t border-slate-200/70 p-3 dark:border-slate-800/80">
-        {!mounted ? (
-          <div className="flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <Avatar className="size-10 ring-1 ring-primary/10">
-              <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
-              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {fullName}
-              </p>
-              <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                {user.email}
-              </p>
-            </div>
+                        >
+                          <Link href={item.url} className="flex items-center gap-3">
+                            <item.icon
+                              className={cn(
+                                'size-4 shrink-0',
+                                isActive
+                                  ? 'text-sidebar-primary-foreground'
+                                  : 'text-muted-foreground'
+                              )}
+                            />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </div>
-        ) : (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-3 text-left shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
-              >
+
+          <div className="pt-5">
+            {!mounted ? (
+              <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-card/80 px-3 py-3 shadow-sm">
                 <Avatar className="size-10 ring-1 ring-primary/10">
                   <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
                   <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
@@ -221,47 +202,71 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 </Avatar>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <p className="truncate text-sm font-semibold text-foreground">
                     {fullName}
                   </p>
-                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                  <p className="truncate text-xs text-muted-foreground">
                     {user.email}
                   </p>
                 </div>
-              </button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent
-              align="start"
-              side="top"
-              className="w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.25)] dark:border-slate-800 dark:bg-slate-900"
-            >
-              <div className="mb-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {fullName}
-                </p>
-                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                  {user.email}
-                </p>
-                <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">
-                  {user.roles.join(', ')}
-                </p>
               </div>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-card/85 px-3 py-3 text-left shadow-sm transition-all hover:bg-sidebar-accent/70"
+                  >
+                    <Avatar className="size-10 ring-1 ring-primary/10">
+                      <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
+                      <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
 
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {fullName}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
 
-              <DropdownMenuSeparator className="my-2 bg-slate-200 dark:bg-slate-800" />
+                <DropdownMenuContent
+                  align="start"
+                  side="top"
+                  className="w-64 rounded-2xl border border-border/70 bg-popover/95 p-2 shadow-[0_22px_50px_-24px_rgba(15,23,42,0.30)] backdrop-blur-xl"
+                >
+                  <div className="mb-2 rounded-xl bg-muted/40 px-3 py-2">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {fullName}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
+                    <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">
+                      {user.roles.join(', ')}
+                    </p>
+                  </div>
 
-              <DropdownMenuItem
-                onClick={handleLogout}
-                className="rounded-xl px-3 py-2 text-sm text-red-600 focus:text-red-600"
-              >
-                <LogOut className="mr-2 size-4" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </SidebarFooter>
+                  <DropdownMenuSeparator className="my-2 bg-border" />
+
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="rounded-xl px-3 py-2 text-sm text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                  >
+                    <LogOut className="mr-2 size-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </div>
+      </SidebarContent>
     </Sidebar>
   )
 }

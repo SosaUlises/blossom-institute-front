@@ -2,7 +2,19 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { Archive, Pencil, Plus, Power, Search, UserCheck } from 'lucide-react'
+import {
+  Archive,
+  BookOpen,
+  Pencil,
+  Plus,
+  Power,
+  Search,
+  UserCheck,
+  Users,
+  GraduationCap,
+  CalendarRange,
+  Settings2,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -105,72 +117,88 @@ export function CoursesTable() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="grid w-full gap-3 md:grid-cols-3">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="relative min-w-[260px]">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar curso..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-11 rounded-2xl border-border/70 bg-card/80 pl-10 shadow-sm"
+              />
+            </div>
+
             <Input
-              placeholder="Buscar curso..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              placeholder="Filtrar por año"
+              value={anio}
+              onChange={(e) => setAnio(e.target.value)}
+              className="h-11 rounded-2xl border-border/70 bg-card/80 shadow-sm"
             />
+
+            <select
+              value={estado}
+              onChange={(e) => setEstado(e.target.value)}
+              className="flex h-11 rounded-2xl border border-border/70 bg-card/80 px-3 py-2 text-sm shadow-sm"
+            >
+              <option value="">Todos los estados</option>
+              <option value={EstadoCurso.Activo}>Activo</option>
+              <option value={EstadoCurso.Inactivo}>Inactivo</option>
+              <option value={EstadoCurso.Archivado}>Archivado</option>
+            </select>
           </div>
 
-          <Input
-            placeholder="Filtrar por año"
-            value={anio}
-            onChange={(e) => setAnio(e.target.value)}
-          />
-
-          <select
-            value={estado}
-            onChange={(e) => setEstado(e.target.value)}
-            className="flex h-10 rounded-xl border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">Todos los estados</option>
-            <option value={EstadoCurso.Activo}>Activo</option>
-            <option value={EstadoCurso.Inactivo}>Inactivo</option>
-            <option value={EstadoCurso.Archivado}>Archivado</option>
-          </select>
+          <Link href="/dashboard/courses/new">
+            <Button className="h-11 rounded-2xl bg-primary/90 px-5 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]">
+              <Plus className="mr-2 size-4" />
+              Nuevo curso
+            </Button>
+          </Link>
         </div>
-
-        <Link href="/dashboard/courses/new">
-          <Button>
-            <Plus className="mr-2 size-4" />
-            Nuevo curso
-          </Button>
-        </Link>
       </div>
 
-      <Card className="border-border/70 bg-card/95 shadow-[0_12px_30px_-18px_rgba(30,42,68,0.18)]">
+      <Card className="overflow-hidden rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-sm">
-              <thead className="border-b border-border/70 bg-muted/30">
-                <tr className="text-left text-muted-foreground">
-                  <th className="px-5 py-4 text-center font-medium">Curso</th>
-                  <th className="px-5 py-4 text-center font-medium">Año</th>
-                  <th className="px-5 py-4 text-center font-medium">Estado</th>
-                  <th className="px-5 py-4 text-center font-medium">Profesores</th>
-                  <th className="px-5 py-4 text-center font-medium">Alumnos</th>
-                  <th className="px-5 py-4 text-center font-medium">Acciones</th>
+            <table className="w-full min-w-[1180px] text-sm">
+              <thead className="border-b border-border/70 bg-muted/25">
+                <tr className="text-left">
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Curso
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Año
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Estado
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Profesores
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Alumnos
+                  </th>
+                  <th className="px-6 py-4 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
                   Array.from({ length: 6 }).map((_, index) => (
-                    <tr key={index} className="border-b border-border/60">
-                      <td className="px-5 py-4" colSpan={7}>
-                        <div className="h-10 animate-pulse rounded-xl bg-muted/50" />
+                    <tr key={index} className="border-b border-border/60 last:border-0">
+                      <td className="px-6 py-4" colSpan={6}>
+                        <div className="h-12 animate-pulse rounded-2xl bg-muted/40" />
                       </td>
                     </tr>
                   ))
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-12 text-center text-muted-foreground">
+                    <td colSpan={6} className="px-6 py-14 text-center text-sm text-muted-foreground">
                       {emptyStateText}
                     </td>
                   </tr>
@@ -178,100 +206,117 @@ export function CoursesTable() {
                   items.map((course) => (
                     <tr
                       key={course.id}
-                      className="border-b border-border/60 transition hover:bg-muted/20"
+                      className="border-b border-border/60 transition-colors hover:bg-muted/15 last:border-0"
                     >
-                      <td className="px-5 py-4">
-                        <div className="space-y-0.5">
-                          <p className="font-medium text-center text-foreground">{course.nombre}</p>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                            <BookOpen className="size-4.5" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="font-semibold text-foreground">{course.nombre}</p>
+                          </div>
                         </div>
                       </td>
 
-                      <td className="px-5 py-4 text-center text-muted-foreground">{course.anio}</td>
+                      <td className="px-6 py-4">
+                        <div className="inline-flex items-center gap-2 text-muted-foreground">
+                          <CalendarRange className="size-4" />
+                          <span>{course.anio}</span>
+                        </div>
+                      </td>
 
-                      <td className="px-5 py-4">
+                      <td className="px-6 py-4">
                         <span
                           className={
                             course.estado === EstadoCurso.Activo
-                              ? 'inline-flex rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-600 dark:text-green-400 text-center'
+                              ? 'inline-flex rounded-full border border-green-500/15 bg-green-500/10 px-3 py-1 text-xs font-medium text-green-600 dark:text-green-400'
                               : course.estado === EstadoCurso.Inactivo
-                              ? 'inline-flex rounded-full bg-yellow-500/10 px-2.5 py-1 text-xs font-medium text-yellow-600 dark:text-yellow-400 text-center'
-                              : 'inline-flex rounded-full bg-slate-500/10 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 text-center'
+                              ? 'inline-flex rounded-full border border-amber-500/15 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-400'
+                              : 'inline-flex rounded-full border border-slate-500/15 bg-slate-500/10 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400'
                           }
                         >
                           {estadoLabels[course.estado]}
                         </span>
                       </td>
 
+                      <td className="px-6 py-4">
+                        <div className="inline-flex items-center gap-2 text-muted-foreground">
+                          <GraduationCap className="size-4" />
+                          <span>{course.cantidadProfesores}</span>
+                        </div>
+                      </td>
 
-                      <td className="px-5 py-4 text-center text-muted-foreground">{course.cantidadProfesores}</td>
-                      <td className="px-5 py-4 text-center text-muted-foreground">{course.cantidadAlumnos}</td>
+                      <td className="px-6 py-4">
+                        <div className="inline-flex items-center gap-2 text-muted-foreground">
+                          <Users className="size-4" />
+                          <span>{course.cantidadAlumnos}</span>
+                        </div>
+                      </td>
 
-                  <td className="px-5 py-4">
-                  <div className="flex justify-end gap-2">
-                    
-                    {/* EDITAR (primario suave) */}
-                    <Link href={`/dashboard/courses/${course.id}`}>
-                      <Button
-                        size="sm"
-                        className="h-9 rounded-xl bg-primary/90 text-primary-foreground shadow-sm transition-all hover:bg-primary hover:shadow-md hover:-translate-y-[1px]"
-                      >
-                        <Pencil className="mr-2 size-4" />
-                        Editar
-                      </Button>
-                    </Link>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/dashboard/courses/${course.id}`}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-9 rounded-xl border-border/70 bg-background/70 px-3 text-foreground shadow-sm transition-all hover:-translate-y-[1px] hover:bg-card hover:shadow-md hover:text-primary-700"
+                            >
+                              <Pencil className="mr-2 size-4" />
+                              Editar
+                            </Button>
+                          </Link>
 
-                    {/* GESTIONAR (outline premium) */}
-                    <Link href={`/dashboard/courses/${course.id}/manage`}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-9 rounded-xl border-border/70 bg-background/60 backdrop-blur transition-all hover:bg-primary/5 hover:border-primary/40 hover:text-primary hover:shadow-sm hover:-translate-y-[1px]"
-                      >
-                        Gestionar
-                      </Button>
-                    </Link>
+                          <Link href={`/dashboard/courses/${course.id}/manage`}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-9 rounded-xl border-primary/15 bg-primary/5 px-3 text-primary shadow-sm transition-all hover:-translate-y-[1px] hover:bg-primary/10 hover:shadow-md hover:text-primary-700"
+                            >
+                              <Settings2 className="mr-2 size-4" />
+                              Gestionar
+                            </Button>
+                          </Link>
 
-                    {/* ACTIVAR / DESACTIVAR */}
-                    {course.estado !== EstadoCurso.Archivado && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleToggleActive(course)}
-                        disabled={actionLoadingId === course.id}
-                        className={
-                          course.estado === EstadoCurso.Activo
-                            ? "h-9 rounded-xl bg-destructive/90 text-destructive-foreground shadow-sm transition-all hover:bg-destructive hover:shadow-md hover:-translate-y-[1px]"
-                            : "h-9 rounded-xl bg-success/90 text-success-foreground shadow-sm transition-all hover:bg-success hover:shadow-md hover:-translate-y-[1px]"
-                        }
-                      >
-                        {course.estado === EstadoCurso.Activo ? (
-                          <>
-                            <Power className="mr-2 size-4" />
-                            Desactivar
-                          </>
-                        ) : (
-                          <>
-                            <UserCheck className="mr-2 size-4" />
-                            Activar
-                          </>
-                        )}
-                      </Button>
-                    )}
+                          {course.estado !== EstadoCurso.Archivado && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleToggleActive(course)}
+                              disabled={actionLoadingId === course.id}
+                              className={
+                                course.estado === EstadoCurso.Activo
+                                  ? 'h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-red-500/15 dark:text-red-400'
+                                  : 'h-9 rounded-xl border border-green-500/15 bg-green-500/10 px-3 text-green-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-green-500/15 dark:text-green-400'
+                              }
+                            >
+                              {course.estado === EstadoCurso.Activo ? (
+                                <>
+                                  <Power className="mr-2 size-4" />
+                                  Desactivar
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="mr-2 size-4" />
+                                  Activar
+                                </>
+                              )}
+                            </Button>
+                          )}
 
-                    {/* ARCHIVAR (acción destructiva secundaria) */}
-                    {course.estado !== EstadoCurso.Archivado && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleArchive(course)}
-                        disabled={actionLoadingId === course.id}
-                        className="h-9 rounded-xl border border-border/70 bg-muted/40 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40 hover:shadow-sm hover:-translate-y-[1px]"
-                      >
-                        <Archive className="mr-2 size-4" />
-                        Archivar
-                      </Button>
-                    )}
-                    
-                  </div>
-                </td>
+                          {course.estado !== EstadoCurso.Archivado && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleArchive(course)}
+                              disabled={actionLoadingId === course.id}
+                              className="h-9 rounded-xl border border-border/70 bg-muted/40 px-3 text-muted-foreground transition-all hover:-translate-y-[1px] hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive hover:shadow-sm"
+                            >
+                              <Archive className="mr-2 size-4" />
+                              Archivar
+                            </Button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}

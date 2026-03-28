@@ -230,7 +230,7 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
             <div className="flex justify-end pt-2">
               <Button
                 type="submit"
-                className="min-w-40"
+                className="min-w-40 rounded-2xl bg-primary/90 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]"
                 disabled={isLoading}
               >
                 {isLoading ? (

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Sparkles, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -22,21 +22,22 @@ export function AppHeader({ title }: AppHeaderProps) {
   }, [])
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center border-b border-slate-200/70 bg-white/80 px-6 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/80">
+    <header className="sticky top-0 z-30 flex h-[74px] items-center border-b border-border/70 bg-background/75 px-6 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/65">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl border border-slate-200/80 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <SidebarTrigger className="text-slate-600 dark:text-slate-300" />
+        <div className="flex size-12 items-center justify-center rounded-2xl border border-border/70 bg-card/80 shadow-[0_10px_30px_-18px_rgba(30,42,68,0.28)]">
+          <SidebarTrigger className="text-muted-foreground transition hover:text-foreground" />
         </div>
 
-        <Separator orientation="vertical" className="h-5 bg-slate-200 dark:bg-slate-800" />
+        <Separator orientation="vertical" className="h-6 bg-border/80" />
 
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+        <div className="space-y-0.5">
+          <h1 className="text-[1.35rem] font-semibold tracking-tight text-foreground">
             {title}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Blossom Institute · Panel administrativo
-          </p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Sparkles className="size-3.5 text-primary/80" />
+            <span>Blossom Institute · Panel administrativo</span>
+          </div>
         </div>
       </div>
 
@@ -46,8 +47,8 @@ export function AppHeader({ title }: AppHeaderProps) {
           size="icon"
           onClick={() => setTheme('light')}
           className={cn(
-            'text-slate-500 dark:text-slate-400',
-            mounted && theme === 'light' && 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
+            'rounded-2xl border border-transparent text-muted-foreground transition-all hover:border-border/70 hover:bg-card/80 hover:text-foreground',
+            mounted && theme === 'light' && 'border-border/70 bg-card/90 text-foreground shadow-sm'
           )}
         >
           <Sun className="size-4" />
@@ -58,8 +59,8 @@ export function AppHeader({ title }: AppHeaderProps) {
           size="icon"
           onClick={() => setTheme('dark')}
           className={cn(
-            'text-slate-500 dark:text-slate-400',
-            mounted && theme === 'dark' && 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
+            'rounded-2xl border border-transparent text-muted-foreground transition-all hover:border-border/70 hover:bg-card/80 hover:text-foreground',
+            mounted && theme === 'dark' && 'border-border/70 bg-card/90 text-foreground shadow-sm'
           )}
         >
           <Moon className="size-4" />

@@ -8,14 +8,18 @@ import {
   CheckCircle2,
   Clock3,
   AlertCircle,
+  ClipboardCheck,
+  BookOpen,
+  ListChecks,
+  PlusCircle,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { getCourses } from '@/lib/courses/api'
 import { getDeliveriesByTaskReport } from '@/lib/reports/api'
-import { EstadoEntregaReporte, type DeliveriesByTaskResponse } from '@/lib/reports/types'
+import { EstadoEntregaReporte, type DeliveriesByTaskItem, type DeliveriesByTaskResponse } from '@/lib/reports/types'
 import type { CursoListItem } from '@/lib/courses/types'
 import { getTasksByCourse } from '@/lib/tasks/api'
 import { EstadoTarea, type CursoTareaListItem } from '@/lib/tasks/types'
@@ -36,13 +40,13 @@ function getEstadoLabel(estado: EstadoEntregaReporte) {
 function getEstadoBadgeClass(estado: EstadoEntregaReporte) {
   switch (estado) {
     case EstadoEntregaReporte.SinEntregar:
-      return 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
+      return 'border-slate-500/15 bg-slate-500/10 text-slate-600 dark:text-slate-400'
     case EstadoEntregaReporte.EntregadoEnTermino:
-      return 'bg-green-500/10 text-green-600 dark:text-green-400'
+      return 'border-green-500/15 bg-green-500/10 text-green-600 dark:text-green-400'
     case EstadoEntregaReporte.EntregadoFueraDeTermino:
-      return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400'
+      return 'border-amber-500/15 bg-amber-500/10 text-amber-700 dark:text-amber-400'
     default:
-      return 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
+      return 'border-slate-500/15 bg-slate-500/10 text-slate-600 dark:text-slate-400'
   }
 }
 
@@ -66,6 +70,48 @@ function formatTaskStatus(status: EstadoTarea) {
     default:
       return 'Desconocido'
   }
+}
+
+function SummaryCard({
+  title,
+  value,
+  icon: Icon,
+  accent = 'blue',
+}: {
+  title: string
+  value: string | number
+  icon: React.ComponentType<{ className?: string }>
+  accent?: 'blue' | 'emerald' | 'violet' | 'amber'
+}) {
+  const accentStyles =
+    accent === 'emerald'
+      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+      : accent === 'violet'
+      ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+      : accent === 'amber'
+      ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+      : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+
+  return (
+    <Card className="rounded-[24px] border border-border/70 bg-card/95 shadow-[0_14px_34px_-22px_rgba(30,42,68,0.16)]">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              {title}
+            </p>
+            <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+              {value}
+            </p>
+          </div>
+
+          <div className={`flex size-11 items-center justify-center rounded-2xl ${accentStyles}`}>
+            <Icon className="size-5" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 export function DeliveriesByTaskReportView() {
@@ -175,22 +221,25 @@ export function DeliveriesByTaskReportView() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-border/70 bg-card/95">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold tracking-tight">
+      <Card className="rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_40px_-22px_rgba(30,42,68,0.18)]">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-semibold tracking-tight">
             Filtros del reporte
           </CardTitle>
+          <CardDescription>
+              Realizá el filtrado necesario para generar el reporte.
+          </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 lg:grid-cols-5">
+        <CardContent className="space-y-5">
+          <div className="grid gap-4 xl:grid-cols-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Curso</label>
               <select
                 value={cursoId}
                 onChange={(e) => setCursoId(e.target.value)}
                 disabled={loadingCourses}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/80 px-3 py-2 text-sm shadow-sm"
               >
                 <option value="">Seleccionar curso</option>
                 {courses.map((course) => (
@@ -201,13 +250,13 @@ export function DeliveriesByTaskReportView() {
               </select>
             </div>
 
-            <div className="space-y-2 lg:col-span-2">
+            <div className="space-y-2 xl:col-span-2">
               <label className="text-sm font-medium text-foreground">Tarea</label>
               <select
                 value={tareaId}
                 onChange={(e) => setTareaId(e.target.value)}
                 disabled={!cursoId || loadingTasks}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/80 px-3 py-2 text-sm shadow-sm"
               >
                 <option value="">
                   {!cursoId
@@ -230,7 +279,7 @@ export function DeliveriesByTaskReportView() {
               <select
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/80 px-3 py-2 text-sm shadow-sm"
               >
                 <option value="">Todos</option>
                 <option value={EstadoEntregaReporte.SinEntregar}>Sin entregar</option>
@@ -246,7 +295,7 @@ export function DeliveriesByTaskReportView() {
               <select
                 value={pendienteCorreccion}
                 onChange={(e) => setPendienteCorreccion(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/80 px-3 py-2 text-sm shadow-sm"
               >
                 <option value="">Todos</option>
                 <option value="true">Sí</option>
@@ -255,30 +304,34 @@ export function DeliveriesByTaskReportView() {
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,420px)_auto] lg:items-end">
-           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Búsqueda</label>
-            <div className="relative max-w-sm">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,360px)_auto] xl:items-end">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Búsqueda</label>
+              <div className="relative max-w-sm">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Alumno o DNI"
-                className="pl-10"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Alumno o DNI"
+                  className="h-11 rounded-2xl border-border/70 bg-card/80 pl-10 shadow-sm"
                 />
-            </div>
+              </div>
             </div>
 
             <div className="flex items-end">
-              <Button onClick={handleLoad} disabled={loadingReport}>
+              <Button
+                onClick={handleLoad}
+                disabled={loadingReport}
+                className="h-11 rounded-2xl bg-primary/90 px-5 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]"
+              >
                 {loadingReport ? 'Cargando...' : 'Generar reporte'}
               </Button>
             </div>
           </div>
 
           {selectedTask && (
-            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="rounded-[24px] border border-border/70 bg-muted/20 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Tarea seleccionada
               </p>
               <p className="mt-2 text-base font-semibold text-foreground">
@@ -294,7 +347,7 @@ export function DeliveriesByTaskReportView() {
           )}
 
           {error && (
-            <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -304,133 +357,138 @@ export function DeliveriesByTaskReportView() {
       {report && (
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <Card className="border-border/70 bg-card/95">
-              <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Total registros
-                </p>
-                <p className="mt-2 text-2xl font-bold text-foreground">{report.total}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/70 bg-card/95">
-              <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Entregadas</p>
-                <p className="mt-2 text-2xl font-bold text-foreground">{totalEntregadas}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/70 bg-card/95">
-              <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Pend. corrección
-                </p>
-                <p className="mt-2 text-2xl font-bold text-foreground">{totalPendientes}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/70 bg-card/95">
-              <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Con adjuntos
-                </p>
-                <p className="mt-2 text-2xl font-bold text-foreground">{totalConAdjuntos}</p>
-              </CardContent>
-            </Card>
+            <SummaryCard
+              title="Total registros"
+              value={report.total}
+              icon={ListChecks}
+              accent="blue"
+            />
+            <SummaryCard
+              title="Entregadas"
+              value={totalEntregadas}
+              icon={ClipboardCheck}
+              accent="emerald"
+            />
+            <SummaryCard
+              title="Pend. corrección"
+              value={totalPendientes}
+              icon={AlertCircle}
+              accent="amber"
+            />
+            <SummaryCard
+              title="Con adjuntos"
+              value={totalConAdjuntos}
+              icon={PlusCircle}
+              accent="violet"
+            />
           </div>
 
-          <Card className="border-border/70 bg-card/95">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold tracking-tight">
+          <Card className="overflow-hidden rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold tracking-tight">
                 Resultado del reporte
               </CardTitle>
+              <CardDescription>
+                Estado de entrega por alumno para la tarea seleccionada.
+              </CardDescription>
             </CardHeader>
 
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1180px] text-sm">
-                  <thead className="border-b border-border/70 bg-muted/30">
-                    <tr className="text-left text-muted-foreground">
-                      <th className="px-5 py-4 font-medium">Alumno</th>
-                      <th className="px-5 py-4 font-medium">DNI</th>
-                      <th className="px-5 py-4 font-medium">Estado</th>
-                      <th className="px-5 py-4 font-medium">Entrega</th>
-                      <th className="px-5 py-4 font-medium">Adjuntos</th>
-                      <th className="px-5 py-4 font-medium">Feedback</th>
-                      <th className="px-5 py-4 font-medium">Nota</th>
-                      <th className="px-5 py-4 font-medium">Rehacer</th>
+                <table className="w-full min-w-[1220px] text-sm">
+                  <thead className="border-b border-border/70 bg-muted/25">
+                    <tr className="text-left">
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Alumno
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        DNI
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Estado
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Entrega
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Adjuntos
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Feedback
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Nota
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Rehacer
+                      </th>
                     </tr>
                   </thead>
 
                   <tbody>
                     {report.items.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="px-5 py-12 text-center text-muted-foreground">
+                        <td colSpan={8} className="px-6 py-14 text-center text-sm text-muted-foreground">
                           No hay resultados para mostrar.
                         </td>
                       </tr>
                     ) : (
-                      report.items.map((item) => (
+                      report.items.map((item: DeliveriesByTaskItem) => (
                         <tr
                           key={item.alumnoId}
-                          className="border-b border-border/60 transition hover:bg-muted/20"
+                          className="border-b border-border/60 transition-colors hover:bg-muted/15 last:border-0"
                         >
-                          <td className="px-5 py-4">
-                            <div className="space-y-0.5">
-                              <p className="font-medium text-foreground">
-                                {item.alumnoNombre} {item.alumnoApellido}
-                              </p>
-                        
-                            </div>
+                          <td className="px-6 py-4 font-medium text-foreground">
+                            {item.alumnoNombre} {item.alumnoApellido}
                           </td>
 
-                          <td className="px-5 py-4 text-muted-foreground">{item.alumnoDni}</td>
+                          <td className="px-6 py-4 text-muted-foreground">{item.alumnoDni}</td>
 
-                          <td className="px-5 py-4">
+                          <td className="px-6 py-4">
                             <span
-                              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${getEstadoBadgeClass(item.estado)}`}
+                              className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${getEstadoBadgeClass(item.estado)}`}
                             >
                               {getEstadoLabel(item.estado)}
                             </span>
                           </td>
 
-                          <td className="px-5 py-4 text-muted-foreground">
+                          <td className="px-6 py-4 text-muted-foreground">
                             {item.fechaEntregaUtc
                               ? new Date(item.fechaEntregaUtc).toLocaleString()
                               : '-'}
                           </td>
 
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-2 text-muted-foreground">
+                          <td className="px-6 py-4 text-muted-foreground">
+                            <div className="inline-flex items-center gap-2">
                               <Paperclip className="size-4" />
                               <span>{item.tieneAdjuntos ? 'Sí' : 'No'}</span>
                             </div>
                           </td>
 
-                          <td className="px-5 py-4 text-muted-foreground">
-                            <div className="flex items-center gap-2">
+                          <td className="px-6 py-4 text-muted-foreground">
+                            <div className="inline-flex items-center gap-2">
                               <MessageSquare className="size-4" />
                               <span>{item.feedbackVigente?.comentario ? 'Sí' : 'No'}</span>
                             </div>
                           </td>
 
-                          <td className="px-5 py-4">
+                          <td className="px-6 py-4">
                             {item.feedbackVigente?.nota != null ? (
-                              <div className="flex items-center gap-2 font-medium text-foreground">
+                              <div className="inline-flex items-center gap-2 font-semibold text-foreground">
                                 <CheckCircle2 className="size-4 text-green-500" />
                                 {item.feedbackVigente.nota}
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2 text-muted-foreground">
+                              <div className="inline-flex items-center gap-2 text-muted-foreground">
                                 <Clock3 className="size-4" />
                                 Pendiente
                               </div>
                             )}
                           </td>
 
-                          <td className="px-5 py-4">
+                          <td className="px-6 py-4">
                             {item.feedbackVigente?.requiereRehacer ? (
-                              <div className="flex items-center gap-2 font-medium text-yellow-700 dark:text-yellow-400">
+                              <div className="inline-flex items-center gap-2 font-medium text-amber-700 dark:text-amber-400">
                                 <AlertCircle className="size-4" />
                                 Sí
                               </div>

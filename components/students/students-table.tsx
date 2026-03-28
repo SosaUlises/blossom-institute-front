@@ -2,7 +2,17 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { Pencil, Plus, Power, Search, UserCheck } from 'lucide-react'
+import {
+  Pencil,
+  Plus,
+  Power,
+  Search,
+  UserCheck,
+  UserRound,
+  Mail,
+  IdCard,
+  Phone,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -81,53 +91,69 @@ export function StudentsTable() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative w-full max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nombre, apellido, email o DNI..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+  
 
-        <Link href="/dashboard/students/new">
-          <Button>
-            <Plus className="mr-2 size-4" />
-            Nuevo alumno
-          </Button>
-        </Link>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative w-full min-w-[280px] max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nombre, apellido, email o DNI..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-11 rounded-2xl border-border/70 bg-card/80 pl-10 shadow-sm"
+            />
+          </div>
+
+          <Link href="/dashboard/students/new">
+            <Button className="h-11 rounded-2xl bg-primary/90 px-5 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]">
+              <Plus className="mr-2 size-4" />
+              Nuevo alumno
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      <Card className="border-border/70 bg-card/95 shadow-[0_12px_30px_-18px_rgba(30,42,68,0.18)]">
+      <Card className="overflow-hidden rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[780px] text-sm">
-              <thead className="border-b border-border/70 bg-muted/30">
-                <tr className="text-left text-muted-foreground">
-                  <th className="px-5 py-4 font-medium">Alumno</th>
-                  <th className="px-5 py-4 font-medium">Email</th>
-                  <th className="px-5 py-4 font-medium">DNI</th>
-                  <th className="px-5 py-4 font-medium">Teléfono</th>
-                  <th className="px-5 py-4 font-medium">Estado</th>
-                  <th className="px-5 py-4 text-right font-medium">Acciones</th>
+            <table className="w-full min-w-[980px] text-sm">
+              <thead className="border-b border-border/70 bg-muted/25">
+                <tr className="text-left">
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Alumno
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Contacto
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    DNI
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Teléfono
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Estado
+                  </th>
+                  <th className="px-6 py-4 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
                   Array.from({ length: 6 }).map((_, index) => (
-                    <tr key={index} className="border-b border-border/60">
-                      <td className="px-5 py-4" colSpan={6}>
-                        <div className="h-10 animate-pulse rounded-xl bg-muted/50" />
+                    <tr key={index} className="border-b border-border/60 last:border-0">
+                      <td className="px-6 py-4" colSpan={6}>
+                        <div className="h-12 animate-pulse rounded-2xl bg-muted/40" />
                       </td>
                     </tr>
                   ))
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-12 text-center text-muted-foreground">
+                    <td colSpan={6} className="px-6 py-14 text-center text-sm text-muted-foreground">
                       {emptyStateText}
                     </td>
                   </tr>
@@ -135,80 +161,92 @@ export function StudentsTable() {
                   items.map((student) => (
                     <tr
                       key={student.id}
-                      className="border-b border-border/60 transition hover:bg-muted/20"
+                      className="border-b border-border/60 transition-colors hover:bg-muted/15 last:border-0"
                     >
-                      <td className="px-5 py-4">
-                        <div className="space-y-0.5">
-                          <p className="font-medium text-foreground">
-                            {student.nombre} {student.apellido}
-                          </p>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                            <UserRound className="size-4.5" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="font-semibold text-foreground">
+                              {student.nombre} {student.apellido}
+                            </p>
+                          </div>
                         </div>
                       </td>
 
-                      <td className="px-5 py-4 text-muted-foreground">
-                        {student.email}
+                      <td className="px-6 py-4">
+                        <div className="inline-flex items-center gap-2 text-muted-foreground">
+                          <Mail className="size-4" />
+                          <span>{student.email}</span>
+                        </div>
                       </td>
 
-                      <td className="px-5 py-4 text-muted-foreground">
-                        {student.dni}
+                      <td className="px-6 py-4">
+                        <div className="inline-flex items-center gap-2 text-muted-foreground">
+                          <IdCard className="size-4" />
+                          <span>{student.dni}</span>
+                        </div>
                       </td>
 
-                      <td className="px-5 py-4 text-muted-foreground">
-                        {student.telefono || '-'}
+                      <td className="px-6 py-4">
+                        <div className="inline-flex items-center gap-2 text-muted-foreground">
+                          <Phone className="size-4" />
+                          <span>{student.telefono || '-'}</span>
+                        </div>
                       </td>
 
-                      <td className="px-5 py-4">
+                      <td className="px-6 py-4">
                         <span
                           className={
                             student.activo
-                              ? 'inline-flex rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-600 dark:text-green-400'
-                              : 'inline-flex rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-600 dark:text-red-400'
+                              ? 'inline-flex rounded-full border border-green-500/15 bg-green-500/10 px-3 py-1 text-xs font-medium text-green-600 dark:text-green-400'
+                              : 'inline-flex rounded-full border border-red-500/15 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400'
                           }
                         >
                           {student.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
 
-                     <td className="px-5 py-4">
-                      <div className="flex justify-end gap-2">
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/dashboard/students/${student.id}`}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-9 rounded-xl border-border/70 bg-background/70 px-3 text-foreground shadow-sm transition-all hover:-translate-y-[1px] hover:bg-primary/10 hover:shadow-md hover:text-primary-700"
+                            >
+                              <Pencil className="mr-2 size-4" />
+                              Editar
+                            </Button>
+                          </Link>
 
-                        {/* EDITAR */}
-                        <Link href={`/dashboard/students/${student.id}`}>
                           <Button
                             size="sm"
-                            className="h-9 rounded-xl bg-primary/90 text-primary-foreground shadow-sm transition-all hover:bg-primary hover:shadow-md hover:-translate-y-[1px]"
+                            onClick={() => handleToggleActive(student)}
+                            disabled={actionLoadingId === student.id}
+                            className={
+                              student.activo
+                                ? 'h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-red-500/15 dark:text-red-400'
+                                : 'h-9 rounded-xl border border-green-500/15 bg-green-500/10 px-3 text-green-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-green-500/15 dark:text-green-400'
+                            }
                           >
-                            <Pencil className="mr-2 size-4" />
-                            Editar
+                            {student.activo ? (
+                              <>
+                                <Power className="mr-2 size-4" />
+                                Desactivar
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="mr-2 size-4" />
+                                Activar
+                              </>
+                            )}
                           </Button>
-                        </Link>
-
-                        {/* ACTIVAR / DESACTIVAR */}
-                        <Button
-                          size="sm"
-                          onClick={() => handleToggleActive(student)}
-                          disabled={actionLoadingId === student.id}
-                          className={
-                            student.activo
-                              ? "h-9 rounded-xl bg-destructive/90 text-destructive-foreground shadow-sm transition-all hover:bg-destructive hover:shadow-md hover:-translate-y-[1px]"
-                              : "h-9 rounded-xl bg-success/90 text-success-foreground shadow-sm transition-all hover:bg-success hover:shadow-md hover:-translate-y-[1px]"
-                          }
-                        >
-                          {student.activo ? (
-                            <>
-                              <Power className="mr-2 size-4" />
-                              Desactivar
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className="mr-2 size-4" />
-                              Activar
-                            </>
-                          )}
-                        </Button>
-
-                      </div>
-                    </td>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
