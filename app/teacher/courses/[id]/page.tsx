@@ -13,6 +13,7 @@ import { TeacherCourseHero } from '@/components/teacher/course-detail/teacher-co
 import { getTeacherCourseDetailServer } from '@/lib/teacher/course-detail/server-api'
 import { getEstadoCursoBadgeClass, getEstadoCursoLabel } from '@/lib/teacher/course-detail/utils'
 import type { TeacherCourseDetail } from '@/lib/teacher/course-detail/types'
+import { TeacherCourseTabs } from '@/components/teacher/course-detail/teacher-course-tabs'
 
 type PageProps = {
   params: Promise<{
@@ -42,7 +43,13 @@ export default async function TeacherCourseDetailPage({ params }: PageProps) {
 
       <main className="px-6 py-8">
         <div className="mx-auto max-w-7xl space-y-8">
-          <TeacherCourseHero course={course} />
+     <div className="space-y-8">
+      <TeacherCourseHero course={course} />
+
+      <div className="pt-2">
+        <TeacherCourseTabs course={course} />
+      </div>
+    </div>
 
           <section className="grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
             <div className="relative overflow-hidden rounded-[30px] border border-border/70 bg-card/95 p-6 shadow-[0_20px_48px_-26px_rgba(30,42,68,0.18)] md:p-7">
