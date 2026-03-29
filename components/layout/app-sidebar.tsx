@@ -38,15 +38,15 @@ import type { SessionUser } from '@/lib/auth/session'
 import { cn } from '@/lib/utils'
 
 const mainNavItems = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Students', url: '/dashboard/students', icon: Users },
-  { title: 'Teachers', url: '/dashboard/teachers', icon: GraduationCap },
-  { title: 'Courses', url: '/dashboard/courses', icon: BookOpen },
-  { title: 'Reports', url: '/dashboard/reports', icon: BarChart3 },
+  { title: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard },
+  { title: 'Students', url: '/admin/dashboard/students', icon: Users },
+  { title: 'Teachers', url: '/admin/dashboard/teachers', icon: GraduationCap },
+  { title: 'Courses', url: '/admin/dashboard/courses', icon: BookOpen },
+  { title: 'Reports', url: '/admin/dashboard/reports', icon: BarChart3 },
 ]
 
 const settingsNavItems = [
-  { title: 'Settings', url: '/dashboard/settings', icon: Settings },
+  { title: 'Settings', url: '/admin/dashboard/settings', icon: Settings },
 ]
 
 interface AppSidebarProps {
@@ -78,7 +78,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   return (
     <Sidebar className="border-r border-sidebar-border/80 bg-sidebar/95 text-sidebar-foreground backdrop-blur-2xl">
       <SidebarHeader className="border-b border-sidebar-border/80 px-4 py-4">
-        <Link href="/dashboard" className="flex items-center gap-3 rounded-2xl">
+        <Link href="/admin/dashboard" className="flex items-center gap-3 rounded-2xl">
           <div className="overflow-hidden rounded-2xl border border-primary/10 bg-card shadow-[0_10px_28px_-16px_rgba(36,59,123,0.35)]">
             <Image
               src="/logo-blossom.png"
