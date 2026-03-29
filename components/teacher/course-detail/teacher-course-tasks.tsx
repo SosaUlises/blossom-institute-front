@@ -19,6 +19,7 @@ import { formatDateTime } from '@/lib/teacher/course-detail/formatters'
 import type { TeacherTaskListResponse, TeacherTaskListItem } from '@/lib/teacher/tasks/types'
 import { EstadoTarea } from '@/lib/teacher/tasks/types'
 import { getEstadoTareaConfig } from '@/lib/teacher/tasks/utils'
+import { archiveTeacherTask } from '@/lib/teacher/tasks/task-api'
 
 type Envelope<T> = {
   message?: string
@@ -105,33 +106,25 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
     load()
   }, [courseId, debouncedSearch, estado, pageNumber])
 
-  const handleArchive = async (taskId: number) => {
-    const confirmed = window.confirm('¿Querés archivar esta tarea?')
-    if (!confirmed) return
+ const handleArchive = async (taskId: number) => {
+  const confirmed = window.confirm('¿Querés archivar esta tarea?')
+  if (!confirmed) return
 
-    try {
-      const response = await fetch(
-        `/api/teacher/courses/${courseId}/tasks/${taskId}/archive`,
-        { method: 'PATCH' }
+  try {
+    setError(null)
+    await archiveTeacherTask(courseId, taskId)
+
+    setData((prev) =>
+      prev.map((item) =>
+        item.id === taskId
+          ? { ...item, estado: EstadoTarea.Archivada }
+          : item
       )
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.message || 'No se pudo archivar la tarea.')
-      }
-
-      setData((prev) =>
-        prev.map((item) =>
-          item.id === taskId
-            ? { ...item, estado: EstadoTarea.Archivada }
-            : item
-        )
-      )
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ocurrió un error.')
-    }
+    )
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Ocurrió un error.')
   }
+}
 
   if (loading) {
     return <p className="text-sm text-muted-foreground">Cargando tareas...</p>

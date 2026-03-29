@@ -144,3 +144,17 @@ export interface TeacherSubmissionFeedbacksResponse {
   } | null
   items: TeacherFeedbackHistoryItem[]
 }
+
+export interface TeacherTaskUpdateResourceInput {
+  tipo: number
+  url?: string | null
+  nombre?: string | null
+}
+
+export interface TeacherTaskUpdatePayload {
+  titulo: string
+  consigna?: string | null
+  fechaEntregaUtc?: string | null
+  estado: number
+  recursos: TeacherTaskUpdateResourceInput[]
+}
