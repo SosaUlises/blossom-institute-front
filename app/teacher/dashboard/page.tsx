@@ -9,11 +9,11 @@ export default async function TeacherDashboardPage() {
     <>
       <AppHeader title="Teacher Dashboard" />
 
-      <div className="flex-1 overflow-auto px-6 py-8">
-        <div className="mx-auto max-w-7xl">
+      <main className="px-6 py-8">
+        <div className="mx-auto max-w-7xl space-y-6">
           <TeacherDashboardView dashboard={dashboard} />
         </div>
-      </div>
+      </main>
     </>
   )
 }

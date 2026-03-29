@@ -1,6 +1,6 @@
+import { AppHeader } from '@/components/layout/app-header'
 import { BookOpen, Sparkles } from 'lucide-react'
 
-import { AppHeader } from '@/components/layout/app-header'
 import { TeacherCoursesTable } from '@/components/teacher/courses/teacher-courses-table'
 
 export default function TeacherCoursesPage() {
@@ -8,7 +8,7 @@ export default function TeacherCoursesPage() {
     <>
       <AppHeader title="My Courses" />
 
-      <div className="flex-1 overflow-auto px-6 py-8">
+      <main className="px-6 py-8">
         <div className="mx-auto max-w-7xl space-y-8">
           <section className="relative overflow-hidden rounded-[30px] border border-border/70 bg-card/92 p-7 shadow-[0_24px_70px_-34px_rgba(30,42,68,0.24)]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.12),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.08),transparent_26%)]" />
@@ -50,7 +50,7 @@ export default function TeacherCoursesPage() {
 
           <TeacherCoursesTable />
         </div>
-      </div>
+      </main>
     </>
   )
 }
