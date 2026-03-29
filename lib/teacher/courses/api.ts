@@ -1,4 +1,3 @@
-import { getSession } from '@/lib/auth/session'
 import type { TeacherCoursesResponse } from '@/lib/teacher/courses/types'
 
 export interface GetTeacherCoursesParams {
@@ -22,31 +21,28 @@ async function parseResponse<T>(response: Response): Promise<T> {
 export async function getTeacherCourses(
   params?: GetTeacherCoursesParams
 ): Promise<TeacherCoursesResponse> {
-  const session = await getSession()
-
-  if (!session?.token) {
-    throw new Error('No hay sesión activa.')
-  }
-
   const query = new URLSearchParams()
 
   query.set('pageNumber', String(params?.pageNumber ?? 1))
   query.set('pageSize', String(params?.pageSize ?? 10))
 
-  if (params?.search?.trim()) query.set('search', params.search.trim())
-  if (params?.anio) query.set('anio', String(params.anio))
-  if (params?.estado) query.set('estado', String(params.estado))
+  if (params?.search?.trim()) {
+    query.set('search', params.search.trim())
+  }
 
-  const response = await fetch(
-    `${process.env.BACKEND_API_URL}/api/v1/me/profesor/cursos?${query.toString()}`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
-      cache: 'no-store',
-    }
-  )
+  if (params?.anio != null) {
+    query.set('anio', String(params.anio))
+  }
+
+  if (params?.estado != null) {
+    query.set('estado', String(params.estado))
+  }
+
+  const response = await fetch(`/api/teacher/courses?${query.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  })
 
   return parseResponse<TeacherCoursesResponse>(response)
 }

@@ -1,24 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth/session'
 
-const BASE = process.env.NEXT_PUBLIC_API_URL
+const BASE = process.env.BACKEND_API_URL
 
-export async function GET(request: NextRequest) {
-  const session = await getSession()
-  const { searchParams } = new URL(request.url)
+export async function GET(req: Request) {
+  try {
+    const session = await getSession()
 
-  const query = new URLSearchParams(searchParams)
+    if (!session?.token) {
+      return NextResponse.json(
+        { message: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
 
-  const response = await fetch(`${BASE}/api/v1/me/profesor/cursos?${query.toString()}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${session?.token}`,
-    },
-    cache: 'no-store',
-  })
+    const { searchParams } = new URL(req.url)
 
-  const text = await response.text()
-  const json = text ? JSON.parse(text) : null
+    const query = new URLSearchParams(searchParams)
 
-  return NextResponse.json(json, { status: response.status })
+    const res = await fetch(
+      `${BASE}/api/v1/me/profesor/cursos?${query.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+        cache: 'no-store',
+      }
+    )
+
+    const data = await res.json()
+
+    return NextResponse.json(data, { status: res.status })
+  } catch (error) {
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    )
+  }
 }

@@ -40,7 +40,7 @@ export default function TeacherCoursesPage() {
                       Módulo
                     </p>
                     <p className="text-sm font-semibold text-foreground">
-                      My courses
+                      Cursos
                     </p>
                   </div>
                 </div>
