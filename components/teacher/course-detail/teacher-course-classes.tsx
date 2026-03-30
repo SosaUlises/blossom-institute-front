@@ -12,6 +12,7 @@ import { RowActions } from '@/components/ui/row-actions'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/teacher/course-detail/formatters'
 import { getEstadoClaseConfig } from '@/lib/teacher/course-detail/status'
+import { CheckCircle2, Users, XCircle } from 'lucide-react'
 
 type CourseClass = {
   id: number
@@ -33,6 +34,8 @@ type PaginatedClassesEnvelope = {
   }
 }
 
+
+
 function ClassStat({
   label,
   value,
@@ -40,12 +43,49 @@ function ClassStat({
   label: string
   value: number
 }) {
+  const config =
+    label === 'Presentes'
+      ? {
+          icon: CheckCircle2,
+          container: 'border-emerald-500/20 bg-emerald-500/10',
+          iconWrap: 'bg-emerald-500/15 text-emerald-600',
+          value: 'text-emerald-700 dark:text-emerald-400',
+        }
+      : label === 'Ausentes'
+      ? {
+          icon: XCircle,
+          container: 'border-rose-500/20 bg-rose-500/10',
+          iconWrap: 'bg-rose-500/15 text-rose-600',
+          value: 'text-rose-700 dark:text-rose-400',
+        }
+      : {
+          icon: Users,
+          container: 'border-border/70 bg-background/80',
+          iconWrap: 'bg-background text-muted-foreground',
+          value: 'text-foreground',
+        }
+
+  const Icon = config.icon
+
   return (
-    <div className="rounded-2xl border border-border/60 bg-background/80 px-4 py-3 shadow-sm">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-        {label}
+    <div
+      className={`rounded-[22px] border px-4 py-3 shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md ${config.container}`}
+    >
+      <div className="flex items-center gap-2">
+        <div
+          className={`flex size-8 items-center justify-center rounded-xl ${config.iconWrap}`}
+        >
+          <Icon className="size-4" />
+        </div>
+
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          {label}
+        </span>
+      </div>
+
+      <p className={`mt-2 text-xl font-bold ${config.value}`}>
+        {value}
       </p>
-      <p className="mt-1.5 text-lg font-semibold text-foreground">{value}</p>
     </div>
   )
 }
@@ -117,18 +157,15 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Classes
           </p>
-          <h3 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-            Clases y asistencia
-          </h3>
         </div>
 
-        <Button
-          onClick={() => router.push(`/teacher/courses/${courseId}/classes/take`)}
-          className="h-10 rounded-2xl"
-        >
-          <CheckSquare className="mr-2 size-4" />
-          Tomar asistencia
-        </Button>
+       <Button
+        onClick={() => router.push(`/teacher/courses/${courseId}/classes/take`)}
+        className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_26px_-12px_rgba(36,59,123,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_16px_34px_-14px_rgba(36,59,123,0.55)] active:translate-y-0"
+      >
+        <CheckSquare className="mr-2 size-4 transition-transform duration-200 group-hover:scale-110" />
+        Tomar asistencia
+      </Button>
       </div>
 
       <div className="flex flex-col gap-4 rounded-[24px] border border-border/70 bg-card/90 p-4 md:flex-row md:items-end md:justify-between">
@@ -162,16 +199,16 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
 
         <div className="flex gap-2">
           <Button
-            variant="outline"
-            className="rounded-2xl"
-            onClick={() => {
-              setFrom('')
-              setTo('')
-              setPageNumber(1)
-            }}
-          >
-            Limpiar filtros
-          </Button>
+          variant="outline"
+          className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary hover:shadow-sm"
+          onClick={() => {
+            setFrom('')
+            setTo('')
+            setPageNumber(1)
+          }}
+        >
+          Limpiar filtros
+        </Button>
         </div>
       </div>
 
@@ -253,7 +290,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="rounded-2xl"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
             disabled={pageNumber === 1}
             onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
           >
@@ -262,7 +299,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
 
           <Button
             variant="outline"
-            className="rounded-2xl"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
             disabled={pageNumber * pageSize >= total}
             onClick={() => setPageNumber((prev) => prev + 1)}
           >

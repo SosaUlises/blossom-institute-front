@@ -6,8 +6,8 @@ import {
   ArrowRight,
   BookOpen,
   CalendarRange,
-  Clock3,
   Search,
+  Sparkles,
 } from 'lucide-react'
 
 import { Card, CardContent } from '@/components/ui/card'
@@ -36,6 +36,77 @@ function getEstadoCursoBadgeClass(estado: number) {
   }
 }
 
+function TeacherCourseCard({ course }: { course: TeacherCourseListItem }) {
+  return (
+    <Card className="group relative overflow-hidden rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)] transition-all hover:-translate-y-[2px] hover:shadow-[0_26px_56px_-26px_rgba(30,42,68,0.24)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.10),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_24%)]" />
+
+      <CardContent className="relative p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-[22px] bg-primary/10 text-primary shadow-sm">
+            <BookOpen className="size-6" />
+          </div>
+
+          <span className={getEstadoCursoBadgeClass(course.estado)}>
+            {estadoLabels[course.estado]}
+          </span>
+        </div>
+
+        <div className="mt-6 space-y-4">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            <Sparkles className="size-3.5" />
+            Curso asignado
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="line-clamp-2 text-[1.9rem] font-bold leading-[1.05] tracking-tight text-foreground">
+              {course.nombre}
+            </h3>
+
+            <div className="inline-flex items-center gap-2 text-[15px] text-muted-foreground">
+              <CalendarRange className="size-4.5" />
+              <span>Año {course.anio}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-7">
+          <Link href={`/teacher/courses/${course.id}`}>
+            <Button
+              className="h-11 rounded-2xl px-5 text-sm font-semibold shadow-[0_14px_28px_-16px_rgba(36,59,123,0.40)] transition-all hover:-translate-y-[1px] hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.46)]"
+            >
+              Abrir curso
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function TeacherCourseCardSkeleton() {
+  return (
+    <div className="rounded-[28px] border border-border/70 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+      <div className="space-y-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="h-14 w-14 animate-pulse rounded-[22px] bg-muted/40" />
+          <div className="h-6 w-20 animate-pulse rounded-full bg-muted/40" />
+        </div>
+
+        <div className="space-y-4">
+          <div className="h-6 w-32 animate-pulse rounded-full bg-muted/40" />
+          <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-muted/40" />
+          <div className="h-5 w-24 animate-pulse rounded-xl bg-muted/40" />
+        </div>
+
+        <div className="pt-2">
+          <div className="h-11 w-36 animate-pulse rounded-2xl bg-muted/40" />
+        </div>
+      </div>
+    </div>
+  )
+}
 export function TeacherCoursesTable() {
   const [items, setItems] = useState<TeacherCourseListItem[]>([])
   const [search, setSearch] = useState('')
@@ -113,113 +184,25 @@ export function TeacherCoursesTable() {
         </div>
       </div>
 
-      <Card className="overflow-hidden rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1080px] text-sm">
-              <thead className="border-b border-border/70 bg-muted/25">
-                <tr className="text-left">
-                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Curso
-                  </th>
-                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Año
-                  </th>
-                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Estado
-                  </th>
-                  <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Horarios por semana
-                  </th>
-                  <th className="px-6 py-4  text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Acción
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {loading ? (
-                  Array.from({ length: 6 }).map((_, index) => (
-                    <tr key={index} className="border-b border-border/60 last:border-0">
-                      <td className="px-6 py-4" colSpan={5}>
-                        <div className="h-12 animate-pulse rounded-2xl bg-muted/40" />
-                      </td>
-                    </tr>
-                  ))
-                ) : items.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-6 py-14 text-center text-sm text-muted-foreground"
-                    >
-                      {emptyStateText}
-                    </td>
-                  </tr>
-                ) : (
-                  items.map((course) => (
-                    <tr
-                      key={course.id}
-                      className="border-b border-border/60 transition-colors hover:bg-muted/15 last:border-0"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                            <BookOpen className="size-4.5" />
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold text-foreground">
-                              {course.nombre}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="inline-flex items-center gap-2 text-muted-foreground">
-                          <CalendarRange className="size-4" />
-                          <span>{course.anio}</span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <span className={getEstadoCursoBadgeClass(course.estado)}>
-                          {estadoLabels[course.estado]}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="inline-flex items-center gap-2 rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-muted-foreground shadow-sm">
-                          <Clock3 className="size-4" />
-                          <span className="text-sm font-medium">
-                            {course.cantidadHorarios}{' '}
-                            {course.cantidadHorarios === 1 ? 'horario' : 'horarios'}
-                          </span>
-                        </div>
-                      </td>
-
-                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Link href={`/teacher/courses/${course.id}`}>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-9 rounded-xl border-primary/15 bg-primary/5 px-3 text-primary shadow-sm transition-all hover:-translate-y-[1px] hover:bg-primary/10 hover:shadow-md hover:text-primary-700"
-                            >
-                              Ver curso
-                              <ArrowRight className="ml-2 size-4" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      {loading ? (
+        <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <TeacherCourseCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <Card className="rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+          <CardContent className="px-6 py-14 text-center text-sm text-muted-foreground">
+            {emptyStateText}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+          {items.map((course) => (
+            <TeacherCourseCard key={course.id} course={course} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

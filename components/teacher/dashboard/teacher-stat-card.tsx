@@ -27,7 +27,10 @@ export function TeacherStatCard({
       : 'bg-primary/10 text-primary'
 
   return (
-    <Card className="rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_40px_-22px_rgba(30,42,68,0.16)]">
+    <Card className="group relative rounded-[26px] border border-border/70 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(30,42,68,0.16)]
+  transition-all duration-200
+  hover:-translate-y-[2px]
+  hover:shadow-[0_24px_54px_-26px_rgba(30,42,68,0.24)]">
       <CardContent className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">

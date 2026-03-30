@@ -10,6 +10,7 @@ import {
   Pencil,
   Archive,
   Search,
+  Plus,
 } from 'lucide-react'
 
 import { RowActions } from '@/components/ui/row-actions'
@@ -30,20 +31,46 @@ function TaskMetaItem({
   icon: Icon,
   label,
   value,
+  tone = 'default',
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: string
+  tone?: 'default' | 'highlight'
 }) {
+  const containerClass =
+    tone === 'highlight'
+      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 shadow-sm'
+      : 'rounded-2xl border border-border/60 bg-background/80 px-4 py-3 shadow-sm'
+
+  const iconWrapClass =
+    tone === 'highlight'
+      ? 'bg-primary/10 text-primary'
+      : 'bg-background text-muted-foreground'
+
+  const labelClass =
+    tone === 'highlight'
+      ? 'text-primary/80'
+      : 'text-muted-foreground'
+
+  const valueClass =
+    tone === 'highlight'
+      ? 'text-primary'
+      : 'text-foreground'
+
   return (
-    <div className="rounded-2xl border border-border/60 bg-background/80 px-4 py-3 shadow-sm">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon className="size-4" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
+    <div className={containerClass}>
+      <div className="flex items-center gap-2">
+        <div className={`flex size-8 items-center justify-center rounded-xl ${iconWrapClass}`}>
+          <Icon className="size-4" />
+        </div>
+
+        <span className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${labelClass}`}>
           {label}
         </span>
       </div>
-      <p className="mt-1.5 text-sm font-semibold text-foreground">{value}</p>
+
+      <p className={`mt-2 text-sm font-semibold ${valueClass}`}>{value}</p>
     </div>
   )
 }
@@ -134,8 +161,25 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
     return <p className="text-sm text-destructive">{error}</p>
   }
 
+
   return (
+    
     <div className="space-y-5">
+        <div className="flex items-center justify-between gap-4">
+  <div>
+    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      Tasks
+    </p>
+  </div>
+
+  <Button
+    onClick={() => router.push(`/teacher/courses/${courseId}/tasks/create`)}
+    className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_26px_-12px_rgba(36,59,123,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_16px_34px_-14px_rgba(36,59,123,0.55)] active:translate-y-0"
+  >
+    <Plus className="mr-2 size-4" />
+    Crear tarea
+  </Button>
+</div>
       <div className="flex flex-col gap-4 rounded-[24px] border border-border/70 bg-card/90 p-4 md:flex-row md:items-end md:justify-between">
         <div className="grid gap-3 md:grid-cols-2">
           <div className="relative min-w-[260px]">
@@ -169,7 +213,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="rounded-2xl"
+             className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary hover:shadow-sm"
             onClick={() => {
               setSearch('')
               setDebouncedSearch('')
@@ -243,24 +287,25 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
                         {task.titulo}
                       </h3>
 
-                      <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                        Seguimiento de publicación y entrega de la actividad asignada al curso.
-                      </p>
+                     <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                      Gestioná entregas, edición y estado de la actividad.
+                    </p>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <TaskMetaItem
-                        icon={CalendarClock}
-                        label="Fecha de entrega"
-                        value={formatDateTime(task.fechaEntregaUtc)}
-                      />
+                    <TaskMetaItem
+                      icon={CalendarClock}
+                      label="Entrega"
+                      value={formatDateTime(task.fechaEntregaUtc)}
+                      tone="highlight"
+                    />
 
-                      <TaskMetaItem
-                        icon={Clock3}
-                        label="Fecha de publicación"
-                        value={formatDateTime(task.createdAtUtc)}
-                      />
-                    </div>
+                    <TaskMetaItem
+                      icon={Clock3}
+                      label="Publicación"
+                      value={formatDateTime(task.createdAtUtc)}
+                    />
+                  </div>
                   </div>
                 </div>
               </article>
@@ -277,7 +322,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="rounded-2xl"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
             disabled={pageNumber === 1}
             onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
           >
@@ -286,7 +331,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
           <Button
             variant="outline"
-            className="rounded-2xl"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
             disabled={pageNumber * pageSize >= total}
             onClick={() => setPageNumber((prev) => prev + 1)}
           >
