@@ -3,10 +3,19 @@ export enum EstadoCorreccion {
   Rehacer = 2,
 }
 
-export interface CreateFeedbackPayload {
+export type CreateFeedbackAttachmentPayload = {
+  tipo: number
+  url: string
+  nombre?: string | null
+  storageProvider?: number | null
+  storageKey?: string | null
+  contentType?: string | null
+  sizeBytes?: number | null
+}
+
+export type CreateFeedbackPayload = {
   estado: number
   nota?: number | null
   comentario?: string | null
-  archivoCorregidoUrl?: string | null
-  archivoCorregidoNombre?: string | null
+  adjuntos: CreateFeedbackAttachmentPayload[]
 }

@@ -4,8 +4,13 @@ import { useState } from 'react'
 import { Save } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { FileUploadField } from '@/components/shared/file-upload-field'
 import { createTeacherSubmissionFeedback } from '@/lib/teacher/tasks/feedback-api'
-import { EstadoCorreccion, type CreateFeedbackPayload } from '@/lib/teacher/tasks/feedback-types'
+import {
+  EstadoCorreccion,
+  type CreateFeedbackPayload,
+} from '@/lib/teacher/tasks/feedback-types'
+import type { UploadedFileResult } from '@/lib/uploads/api'
 
 type Props = {
   courseId: number
@@ -23,12 +28,15 @@ export function TeacherFeedbackForm({
   const [estado, setEstado] = useState(String(EstadoCorreccion.Aprobado))
   const [nota, setNota] = useState('')
   const [comentario, setComentario] = useState('')
-  const [archivoCorregidoUrl, setArchivoCorregidoUrl] = useState('')
-  const [archivoCorregidoNombre, setArchivoCorregidoNombre] = useState('')
+  const [adjuntos, setAdjuntos] = useState<UploadedFileResult[]>([])
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  const handleRemoveAttachment = (index: number) => {
+    setAdjuntos((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const handleSubmit = async () => {
     try {
@@ -40,8 +48,15 @@ export function TeacherFeedbackForm({
         estado: Number(estado),
         nota: nota.trim() ? Number(nota) : null,
         comentario: comentario.trim() || null,
-        archivoCorregidoUrl: archivoCorregidoUrl.trim() || null,
-        archivoCorregidoNombre: archivoCorregidoNombre.trim() || null,
+        adjuntos: adjuntos.map((file) => ({
+          tipo: 2,
+          url: file.url,
+          nombre: file.nombre,
+          storageProvider: file.storageProvider ?? null,
+          storageKey: file.storageKey ?? null,
+          contentType: file.contentType ?? null,
+          sizeBytes: file.sizeBytes ?? null,
+        })),
       }
 
       await createTeacherSubmissionFeedback(courseId, taskId, alumnoId, payload)
@@ -49,8 +64,7 @@ export function TeacherFeedbackForm({
       setSuccess('Feedback creado correctamente.')
       setComentario('')
       setNota('')
-      setArchivoCorregidoUrl('')
-      setArchivoCorregidoNombre('')
+      setAdjuntos([])
 
       if (onCreated) {
         await onCreated()
@@ -110,30 +124,19 @@ export function TeacherFeedbackForm({
         />
       </div>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            URL archivo corregido
-          </label>
-          <input
-            value={archivoCorregidoUrl}
-            onChange={(e) => setArchivoCorregidoUrl(e.target.value)}
-            className="h-11 w-full rounded-2xl border border-border/70 bg-background/80 px-4 text-sm outline-none"
-            placeholder="https://..."
-          />
-        </div>
+      <div className="mt-4 space-y-2">
+        <label className="text-sm font-medium text-foreground">
+          Archivos corregidos
+        </label>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Nombre archivo corregido
-          </label>
-          <input
-            value={archivoCorregidoNombre}
-            onChange={(e) => setArchivoCorregidoNombre(e.target.value)}
-            className="h-11 w-full rounded-2xl border border-border/70 bg-background/80 px-4 text-sm outline-none"
-            placeholder="correccion-final.pdf"
-          />
-        </div>
+        <FileUploadField
+          folder="feedbacks"
+          multiple
+          values={adjuntos}
+          onUploadedMany={setAdjuntos}
+          onRemoveAt={handleRemoveAttachment}
+          label="Subir archivos"
+        />
       </div>
 
       {error && (

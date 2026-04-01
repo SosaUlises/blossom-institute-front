@@ -149,6 +149,10 @@ export interface TeacherTaskUpdateResourceInput {
   tipo: number
   url?: string | null
   nombre?: string | null
+  storageProvider?: number | null
+  storageKey?: string | null
+  contentType?: string | null
+  sizeBytes?: number | null
 }
 
 export interface TeacherTaskUpdatePayload {

@@ -6,20 +6,20 @@ import {
   ArrowLeft,
   CalendarClock,
   Link as LinkIcon,
-  Paperclip,
   Plus,
   Save,
   Trash2,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { FileUploadField } from '@/components/shared/file-upload-field'
 import { getTeacherTaskDetail, updateTeacherTask } from '@/lib/teacher/tasks/task-api'
 import type {
-  TeacherTaskDetail,
   TeacherTaskUpdatePayload,
   TeacherTaskUpdateResourceInput,
 } from '@/lib/teacher/tasks/types'
 import { EstadoTarea } from '@/lib/teacher/tasks/types'
+import type { UploadedFileResult } from '@/lib/uploads/api'
 
 type Props = {
   courseId: number
@@ -31,6 +31,10 @@ type ResourceDraft = {
   tipo: string
   url: string
   nombre: string
+  storageProvider?: number | null
+  storageKey?: string | null
+  contentType?: string | null
+  sizeBytes?: number | null
 }
 
 function createEmptyResource(): ResourceDraft {
@@ -39,6 +43,10 @@ function createEmptyResource(): ResourceDraft {
     tipo: '1',
     url: '',
     nombre: '',
+    storageProvider: null,
+    storageKey: null,
+    contentType: null,
+    sizeBytes: null,
   }
 }
 
@@ -75,11 +83,15 @@ export function TeacherTaskEditView({ courseId, taskId }: Props) {
 
         setRecursos(
           task.recursos.length > 0
-            ? task.recursos.map((resource) => ({
+            ? task.recursos.map((resource: any) => ({
                 id: crypto.randomUUID(),
                 tipo: String(resource.tipo),
                 url: resource.url ?? '',
                 nombre: resource.nombre ?? '',
+                storageProvider: resource.storageProvider ?? null,
+                storageKey: resource.storageKey ?? null,
+                contentType: resource.contentType ?? null,
+                sizeBytes: resource.sizeBytes ?? null,
               }))
             : [createEmptyResource()]
         )
@@ -104,11 +116,48 @@ export function TeacherTaskEditView({ courseId, taskId }: Props) {
   const handleChangeResource = (
     id: string,
     field: keyof Omit<ResourceDraft, 'id'>,
-    value: string
+    value: string | number | null
   ) => {
     setRecursos((prev) =>
       prev.map((resource) =>
         resource.id === id ? { ...resource, [field]: value } : resource
+      )
+    )
+  }
+
+  const handleUploadedFile = (id: string, file: UploadedFileResult) => {
+    setRecursos((prev) =>
+      prev.map((resource) =>
+        resource.id === id
+          ? {
+              ...resource,
+              tipo: '2',
+              url: file.url,
+              nombre: file.nombre,
+              storageProvider: file.storageProvider ?? null,
+              storageKey: file.storageKey ?? null,
+              contentType: file.contentType ?? null,
+              sizeBytes: file.sizeBytes ?? null,
+            }
+          : resource
+      )
+    )
+  }
+
+  const handleRemoveUploadedFile = (id: string) => {
+    setRecursos((prev) =>
+      prev.map((resource) =>
+        resource.id === id
+          ? {
+              ...resource,
+              url: '',
+              nombre: '',
+              storageProvider: null,
+              storageKey: null,
+              contentType: null,
+              sizeBytes: null,
+            }
+          : resource
       )
     )
   }
@@ -130,6 +179,10 @@ export function TeacherTaskEditView({ courseId, taskId }: Props) {
           tipo: Number(resource.tipo),
           url: resource.url.trim() || null,
           nombre: resource.nombre.trim() || null,
+          storageProvider: resource.storageProvider ?? null,
+          storageKey: resource.storageKey?.trim() || null,
+          contentType: resource.contentType?.trim() || null,
+          sizeBytes: resource.sizeBytes ?? null,
         })),
       }
 
@@ -272,22 +325,42 @@ export function TeacherTaskEditView({ courseId, taskId }: Props) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">URL</label>
-                  <div className="relative">
-                    {resource.tipo === '1' ? (
+                  <label className="text-sm font-medium text-foreground">
+                    {resource.tipo === '1' ? 'URL' : 'Archivo'}
+                  </label>
+
+                  {resource.tipo === '1' ? (
+                    <div className="relative">
                       <LinkIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    ) : (
-                      <Paperclip className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    )}
-                    <input
-                      value={resource.url}
-                      onChange={(e) =>
-                        handleChangeResource(resource.id, 'url', e.target.value)
+                      <input
+                        value={resource.url}
+                        onChange={(e) =>
+                          handleChangeResource(resource.id, 'url', e.target.value)
+                        }
+                        className="h-11 w-full rounded-2xl border border-border/70 bg-background/80 pl-10 pr-4 text-sm outline-none"
+                        placeholder="https://..."
+                      />
+                    </div>
+                  ) : (
+                    <FileUploadField
+                      folder="tasks"
+                      value={
+                        resource.url
+                          ? {
+                              url: resource.url,
+                              nombre: resource.nombre || 'Archivo',
+                              storageProvider: resource.storageProvider ?? null,
+                              storageKey: resource.storageKey ?? null,
+                              contentType: resource.contentType ?? null,
+                              sizeBytes: resource.sizeBytes ?? null,
+                            }
+                          : null
                       }
-                      className="h-11 w-full rounded-2xl border border-border/70 bg-background/80 pl-10 pr-4 text-sm outline-none"
-                      placeholder="https://..."
+                      onUploaded={(file) => handleUploadedFile(resource.id, file)}
+                      onRemove={() => handleRemoveUploadedFile(resource.id)}
+                      label="Subir archivo"
                     />
-                  </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
