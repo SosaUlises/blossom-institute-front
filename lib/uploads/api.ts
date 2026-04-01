@@ -14,8 +14,8 @@ type ApiEnvelope<T> = {
 
 export async function uploadFile(file: File, folder: string) {
   const formData = new FormData()
-  formData.append('file', file)
-  formData.append('folder', folder)
+  formData.append('File', file)
+  formData.append('Folder', folder)
 
   const response = await fetch('/api/uploads', {
     method: 'POST',
@@ -29,4 +29,22 @@ export async function uploadFile(file: File, folder: string) {
   }
 
   return result.data as UploadedFileResult
+}
+
+export async function deleteUploadedFile(storageKey: string) {
+  const response = await fetch('/api/uploads', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ storageKey }),
+  })
+
+  const result = (await response.json()) as ApiEnvelope<boolean>
+
+  if (!response.ok) {
+    throw new Error(result.message || 'No se pudo eliminar el archivo.')
+  }
+
+  return true
 }

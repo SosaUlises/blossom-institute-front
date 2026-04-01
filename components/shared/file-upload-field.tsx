@@ -14,7 +14,11 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { uploadFile, type UploadedFileResult } from '@/lib/uploads/api'
+import {
+  deleteUploadedFile,
+  uploadFile,
+  type UploadedFileResult,
+} from '@/lib/uploads/api'
 
 type Props = {
   folder: string
@@ -27,6 +31,7 @@ type Props = {
   label?: string
   maxSizeMb?: number
   multiple?: boolean
+  deleteOnRemove?: boolean
 }
 
 const ACCEPTED_EXTENSIONS = [
@@ -118,9 +123,11 @@ export function FileUploadField({
   label = 'Adjuntar archivo',
   maxSizeMb = 20,
   multiple = false,
+  deleteOnRemove = true,
 }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [removingIndex, setRemovingIndex] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const maxBytes = useMemo(() => maxSizeMb * 1024 * 1024, [maxSizeMb])
@@ -191,12 +198,49 @@ export function FileUploadField({
     }
   }
 
+  const removeSingle = async () => {
+    try {
+      setError(null)
+      setRemovingIndex(0)
+
+      if (deleteOnRemove && value?.storageKey) {
+        await deleteUploadedFile(value.storageKey)
+      }
+
+      onRemove?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error eliminando archivo.')
+    } finally {
+      setRemovingIndex(null)
+    }
+  }
+
+  const removeManyAt = async (index: number) => {
+    try {
+      setError(null)
+      setRemovingIndex(index)
+
+      const file = values[index]
+
+      if (deleteOnRemove && file?.storageKey) {
+        await deleteUploadedFile(file.storageKey)
+      }
+
+      onRemoveAt?.(index)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error eliminando archivo.')
+    } finally {
+      setRemovingIndex(null)
+    }
+  }
+
   const renderFileRow = (
     file: UploadedFileResult,
     index: number,
     removable: boolean
   ) => {
     const FileIcon = getFileIcon(file.nombre, file.contentType)
+    const isRemoving = removingIndex === index
 
     return (
       <div
@@ -231,16 +275,21 @@ export function FileUploadField({
               type="button"
               variant="ghost"
               size="icon"
+              disabled={isRemoving}
               className="rounded-xl text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive"
               onClick={() => {
                 if (multiple) {
-                  onRemoveAt?.(index)
+                  void removeManyAt(index)
                 } else {
-                  onRemove?.()
+                  void removeSingle()
                 }
               }}
             >
-              <X className="size-4" />
+              {isRemoving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <X className="size-4" />
+              )}
             </Button>
           ) : null}
         </div>
@@ -259,7 +308,7 @@ export function FileUploadField({
         accept={ACCEPT_ATTRIBUTE}
         multiple={multiple}
         className="hidden"
-        onChange={(e) => handleChange(e.target.files)}
+        onChange={(e) => void handleChange(e.target.files)}
       />
 
       <div className="rounded-[24px] border border-dashed border-border/70 bg-background/60 p-4 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5">
