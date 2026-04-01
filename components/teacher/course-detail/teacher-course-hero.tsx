@@ -71,7 +71,7 @@ export function TeacherCourseHero({ course }: Props) {
               <Link href={`/teacher/courses/${course.id}/classes/take`}>
                 <Button
                   variant="outline"
-                  className="h-11 rounded-2xl border-primary/15 bg-primary/5 px-5 text-sm font-semibold text-primary shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/10 hover:shadow-md"
+                  className="h-11 rounded-2xl border-primary/15 bg-primary/5 px-5 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/20 hover:shadow-md hover:text-primary"
                 >
                   <CheckSquare className="mr-2 size-4" />
                   Tomar asistencia

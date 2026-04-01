@@ -96,10 +96,7 @@ export function TeacherGradeEditView({
           </Button>
 
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-              <Pencil className="size-3.5" />
-              Edit grade
-            </div>
+     
 
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
               Editar calificación

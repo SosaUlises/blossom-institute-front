@@ -71,20 +71,19 @@ function StudentCard({
           </p>
         </div>
 
-        <div className="pt-1">
-          <Button
-            variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
-            onClick={() =>
-              router.push(
-                `/teacher/courses/${courseId}/students/${student.alumnoId}/grades`
-              )
-            }
-          >
-            <Trophy className="mr-2 size-4" />
-            Calificaciones
-          </Button>
-        </div>
+       <div className="pt-1">
+        <Button
+          className="rounded-2xl bg-amber-500 text-white shadow-[0_10px_24px_-12px_rgba(245,158,11,0.7)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-amber-600 hover:shadow-[0_14px_30px_-12px_rgba(245,158,11,0.85)] active:translate-y-0"
+          onClick={() =>
+            router.push(
+              `/teacher/courses/${courseId}/students/${student.alumnoId}/grades`
+            )
+          }
+        >
+          <Trophy className="mr-2 size-4" />
+          Calificaciones
+        </Button>
+      </div>
       </div>
     </article>
   )

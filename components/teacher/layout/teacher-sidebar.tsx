@@ -36,7 +36,7 @@ import { cn } from '@/lib/utils'
 
 const teacherNavItems = [
   { title: 'Dashboard', url: '/teacher/dashboard', icon: LayoutDashboard },
-  { title: 'My courses', url: '/teacher/courses', icon: BookOpen },
+  { title: 'Courses', url: '/teacher/courses', icon: BookOpen },
 ]
 
 const systemNavItems = [
