@@ -19,6 +19,12 @@ interface BackendLoginResponse {
   }
 }
 
+const ALLOWED_ROLES = ['Administrador', 'Profesor', 'Alumno']
+
+function hasAllowedRole(roles: string[] = []) {
+  return roles.some((role) => ALLOWED_ROLES.includes(role))
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -58,10 +64,12 @@ export async function POST(request: Request) {
       )
     }
 
-    if (!session.user.roles.includes('Administrador')) {
+    const userRoles = session.user.roles ?? []
+
+    if (!hasAllowedRole(userRoles)) {
       return NextResponse.json(
         {
-          message: 'No tenés permisos para acceder al panel administrativo.',
+          message: 'No tenés permisos para acceder a la plataforma.',
           success: false,
           statusCode: 403,
         },

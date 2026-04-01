@@ -41,6 +41,16 @@ function normalizeRoles(roleClaim: unknown): string[] {
   return []
 }
 
+export function hasRole(session: SessionData | null, role: string) {
+  if (!session) return false
+  return session.user.roles.includes(role)
+}
+
+export function hasAnyRole(session: SessionData | null, roles: string[]) {
+  if (!session) return false
+  return roles.some((role) => session.user.roles.includes(role))
+}
+
 export async function verifyToken(token: string): Promise<SessionData | null> {
   try {
     const secret = getJwtSecret()
@@ -81,7 +91,27 @@ export async function getSession(): Promise<SessionData | null> {
 
 export async function isAdminSession() {
   const session = await getSession()
-  if (!session) return false
+  return hasRole(session, 'Administrador')
+}
 
-  return session.user.roles.includes('Administrador')
+export async function isTeacherSession() {
+  const session = await getSession()
+  return hasRole(session, 'Profesor')
+}
+
+export async function isStudentSession() {
+  const session = await getSession()
+  return hasRole(session, 'Alumno')
+}
+
+export async function getDefaultRouteBySession() {
+  const session = await getSession()
+
+  if (!session) return '/login'
+
+  if (session.user.roles.includes('Administrador')) return '/admin/dashboard'
+  if (session.user.roles.includes('Profesor')) return '/teacher/dashboard'
+  if (session.user.roles.includes('Alumno')) return '/student/dashboard'
+
+  return '/login'
 }

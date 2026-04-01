@@ -13,6 +13,13 @@ import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
 
+function getDefaultRouteByRoles(roles: string[]) {
+  if (roles.includes('Administrador')) return '/admin/dashboard'
+  if (roles.includes('Profesor')) return '/teacher/dashboard'
+  if (roles.includes('Alumno')) return '/student/dashboard'
+  return '/login'
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -31,8 +38,8 @@ export default function LoginPage() {
         return res.json()
       })
       .then((data) => {
-        if (data?.success) {
-          router.replace('/dashboard')
+        if (data?.success && data?.data?.roles) {
+          router.replace(getDefaultRouteByRoles(data.data.roles))
         }
       })
       .catch(() => {})
@@ -53,6 +60,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           email: formData.email.trim(),
           password: formData.password,
+          rememberMe: formData.rememberMe,
         }),
       })
 
@@ -64,7 +72,7 @@ export default function LoginPage() {
         } else if (response.status === 401) {
           setError('Usuario o contraseña incorrectos.')
         } else if (response.status === 403) {
-          setError(result.message || 'No tenés permisos para acceder al panel administrativo.')
+          setError(result.message || 'No tenés permisos para acceder.')
         } else if (response.status === 423) {
           setError('Tu cuenta está bloqueada temporalmente. Intentá más tarde.')
         } else {
@@ -74,10 +82,21 @@ export default function LoginPage() {
         return
       }
 
-      router.replace('/dashboard')
+      const meResponse = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      const meResult = await meResponse.json()
+
+      if (!meResponse.ok || !meResult?.success || !meResult?.data?.roles) {
+        throw new Error('No se pudo resolver la redirección del usuario.')
+      }
+
+      router.replace(getDefaultRouteByRoles(meResult.data.roles))
       router.refresh()
-    } catch {
-      setError('Ocurrió un error al iniciar sesión.')
+    } catch (err: any) {
+      setError(err?.message || 'Ocurrió un error al iniciar sesión.')
     } finally {
       setIsLoading(false)
     }
@@ -95,18 +114,18 @@ export default function LoginPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(198,61,79,0.08),transparent_30%)]" />
 
           <div className="relative z-10 flex h-full w-full items-end px-16 py-16">
-              <div className="max-w-lg space-y-4">
-                <p className="text-sm font-medium uppercase tracking-[0.18em] text-white/65">
-                     Blossom Institute
-                </p>
-                <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-white">
-                  Tu espacio dentro de Blossom
-                </h1>
-                <p className="max-w-md text-base leading-7 text-white/78">
+            <div className="max-w-lg space-y-4">
+              <p className="text-sm font-medium uppercase tracking-[0.18em] text-white/65">
+                Blossom Institute
+              </p>
+              <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-white">
+                Tu espacio dentro de Blossom
+              </h1>
+              <p className="max-w-md text-base leading-7 text-white/78">
                 Accedé a una experiencia académica más clara y cercana, diseñada para acompañar el aprendizaje y la organización de toda la comunidad educativa.
-                </p>
-              </div>
+              </p>
             </div>
+          </div>
         </div>
 
         <div className="flex min-h-screen items-center justify-center px-6 py-10">
@@ -124,16 +143,16 @@ export default function LoginPage() {
               </div>
 
               <p className="mt-5 text-sm text-slate-500">
-                Iniciá sesión para acceder al panel administrativo
+                Iniciá sesión para acceder a tu panel
               </p>
             </div>
 
-            <Card className="border border-slate-200/80 bg-white/95 shadow-[0_20px_60px_-20px_rgba(30,42,68,0.18)] backdrop-blur-sm">
+            <Card className="border border-slate-200/80 bg-white/95 shadow-[0_20px_60px_-20px_rgba(30,42,68,0.18)] backdrop-blur-sm dark:border-border/70 dark:bg-card/95">
               <CardHeader className="space-y-2 pb-4 text-center">
                 <CardTitle className="text-2xl font-bold text-foreground">
                   Bienvenido
                 </CardTitle>
-                <CardDescription className="text-sm text-slate-500">
+                <CardDescription className="text-sm text-slate-500 dark:text-muted-foreground">
                   Ingresá tus credenciales para continuar
                 </CardDescription>
               </CardHeader>
@@ -207,7 +226,7 @@ export default function LoginPage() {
                           }
                           disabled={isLoading}
                         />
-                        <label htmlFor="remember" className="cursor-pointer text-sm text-slate-500">
+                        <label htmlFor="remember" className="cursor-pointer text-sm text-slate-500 dark:text-muted-foreground">
                           Recordarme
                         </label>
                       </div>
