@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { BadgeCheck, Mail, Users } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { BadgeCheck, Mail, Trophy, Users } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
 
 type Student = {
   alumnoId: number
@@ -18,7 +21,15 @@ type Envelope<T> = {
   }
 }
 
-function StudentCard({ student }: { student: Student }) {
+function StudentCard({
+  student,
+  courseId,
+}: {
+  student: Student
+  courseId: number
+}) {
+  const router = useRouter()
+
   return (
     <article className="group relative rounded-[26px] border border-border/70 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(30,42,68,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_22px_48px_-24px_rgba(30,42,68,0.22)]">
       <div className="pointer-events-none absolute inset-0 rounded-[26px] bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
@@ -55,9 +66,24 @@ function StudentCard({ student }: { student: Student }) {
             </span>
           </div>
 
-          <p className="mt-2 text-sm font-medium text-foreground break-all">
+          <p className="mt-2 break-all text-sm font-medium text-foreground">
             {student.email ?? 'Sin email registrado'}
           </p>
+        </div>
+
+        <div className="pt-1">
+          <Button
+            variant="outline"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            onClick={() =>
+              router.push(
+                `/teacher/courses/${courseId}/students/${student.alumnoId}/grades`
+              )
+            }
+          >
+            <Trophy className="mr-2 size-4" />
+            Calificaciones
+          </Button>
         </div>
       </div>
     </article>
@@ -79,6 +105,7 @@ function StudentCardSkeleton() {
         </div>
 
         <div className="h-16 animate-pulse rounded-[20px] bg-muted/40" />
+        <div className="h-10 w-36 animate-pulse rounded-2xl bg-muted/40" />
       </div>
     </div>
   )
@@ -142,7 +169,11 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {data.map((student) => (
-        <StudentCard key={student.alumnoId} student={student} />
+        <StudentCard
+          key={student.alumnoId}
+          student={student}
+          courseId={courseId}
+        />
       ))}
     </div>
   )
