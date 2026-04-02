@@ -170,7 +170,7 @@ export default function ForgotPasswordPage() {
           </section>
 
           <AuthRecoverySidePanel
-            imageUrl="/blossom-2.jpg"
+            imageUrl="/blossom-4.jpg"
             imageAlt="Recuperación de acceso en Blossom Institute"
             imagePosition="center center"
           />

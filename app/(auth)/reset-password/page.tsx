@@ -242,7 +242,7 @@ export default function ResetPasswordPage() {
           </section>
 
           <AuthRecoverySidePanel
-            imageUrl="/blossom-1.jpg"
+            imageUrl="/blossom-6.jpg"
             imageAlt="Restablecimiento de contraseña en Blossom Institute"
             imagePosition="center center"
           />
