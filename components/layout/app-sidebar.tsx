@@ -76,30 +76,20 @@ export function AppSidebar({ user }: AppSidebarProps) {
   }
 
   return (
-    <Sidebar className="border-r border-sidebar-border/80 bg-sidebar/95 text-sidebar-foreground backdrop-blur-2xl">
-      <SidebarHeader className="border-b border-sidebar-border/80 px-4 py-4">
-        <Link href="/admin/dashboard" className="flex items-center gap-3 rounded-2xl">
-          <div className="overflow-hidden rounded-2xl border border-primary/10 bg-card shadow-[0_10px_28px_-16px_rgba(36,59,123,0.35)]">
-            <Image
-              src="/logo-blossom.png"
-              alt="Blossom Institute"
-              width={48}
-              height={48}
-              className="h-12 w-12 object-cover"
-              priority
-            />
-          </div>
-
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold tracking-tight text-foreground">
-              Blossom Institute
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              Academic Management
-            </p>
-          </div>
-        </Link>
-      </SidebarHeader>
+    <Sidebar className="border-r border-sidebar-border/70 bg-sidebar/92 text-sidebar-foreground backdrop-blur-2xl">
+   <SidebarHeader className="border-b border-sidebar-border/70 px-4 py-5">
+  <Link
+    href="/admin/dashboard"
+    className="flex flex-col items-center justify-center text-center"
+  >
+    <p className="text-[1rem] font-semibold tracking-tight text-foreground">
+      Blossom Institute
+    </p>
+    <p className="text-xs text-muted-foreground">
+      Academic Management
+    </p>
+  </Link>
+</SidebarHeader>
 
       <SidebarContent className="flex h-full flex-col px-3 py-4">
         <div className="flex min-h-0 flex-1 flex-col justify-between">
@@ -114,7 +104,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   {mainNavItems.map((item) => {
                     const isActive =
                       pathname === item.url ||
-                      (item.url !== '/dashboard' && pathname.startsWith(item.url))
+                      (item.url !== '/admin/dashboard' && pathname.startsWith(item.url))
 
                     return (
                       <SidebarMenuItem key={item.title}>
@@ -122,18 +112,18 @@ export function AppSidebar({ user }: AppSidebarProps) {
                           asChild
                           tooltip={item.title}
                           className={cn(
-                            'h-11 rounded-2xl px-3 text-sm font-medium transition-all',
+                            'h-11 rounded-2xl px-3 text-sm font-medium transition-all duration-200',
                             isActive
-                              ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_16px_32px_-16px_rgba(36,59,123,0.55)] hover:bg-sidebar-primary'
-                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                              ? 'border border-primary/20 bg-primary/14 text-foreground shadow-[0_14px_28px_-18px_rgba(36,59,123,0.24)] hover:bg-primary/16 dark:bg-primary/16 dark:text-foreground'
+                              : 'border border-transparent text-sidebar-foreground/85 hover:border-sidebar-border/60 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground'
                           )}
                         >
                           <Link href={item.url} className="flex items-center gap-3">
                             <item.icon
                               className={cn(
-                                'size-4 shrink-0',
+                                'size-4 shrink-0 transition-colors duration-200',
                                 isActive
-                                  ? 'text-sidebar-primary-foreground'
+                                  ? 'text-primary'
                                   : 'text-muted-foreground'
                               )}
                             />
@@ -147,7 +137,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            <SidebarSeparator className="bg-sidebar-border/80" />
+            <SidebarSeparator className="bg-sidebar-border/70" />
 
             <SidebarGroup>
               <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
@@ -165,18 +155,18 @@ export function AppSidebar({ user }: AppSidebarProps) {
                           asChild
                           tooltip={item.title}
                           className={cn(
-                            'h-11 rounded-2xl px-3 text-sm font-medium transition-all',
+                            'h-11 rounded-2xl px-3 text-sm font-medium transition-all duration-200',
                             isActive
-                              ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_16px_32px_-16px_rgba(36,59,123,0.55)] hover:bg-sidebar-primary'
-                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                              ? 'border border-primary/20 bg-primary/14 text-foreground shadow-[0_14px_28px_-18px_rgba(36,59,123,0.24)] hover:bg-primary/16 dark:bg-primary/16 dark:text-foreground'
+                              : 'border border-transparent text-sidebar-foreground/85 hover:border-sidebar-border/60 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground'
                           )}
                         >
                           <Link href={item.url} className="flex items-center gap-3">
                             <item.icon
                               className={cn(
-                                'size-4 shrink-0',
+                                'size-4 shrink-0 transition-colors duration-200',
                                 isActive
-                                  ? 'text-sidebar-primary-foreground'
+                                  ? 'text-primary'
                                   : 'text-muted-foreground'
                               )}
                             />
@@ -193,7 +183,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
           <div className="pt-5">
             {!mounted ? (
-              <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-card/80 px-3 py-3 shadow-sm">
+              <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/80 px-3 py-3 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.18)]">
                 <Avatar className="size-10 ring-1 ring-primary/10">
                   <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
                   <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
@@ -215,7 +205,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-card/85 px-3 py-3 text-left shadow-sm transition-all hover:bg-sidebar-accent/70"
+                    className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/82 px-3 py-3 text-left shadow-[0_10px_22px_-18px_rgba(15,23,42,0.18)] transition-all duration-200 hover:border-primary/15 hover:bg-sidebar-accent/70"
                   >
                     <Avatar className="size-10 ring-1 ring-primary/10">
                       <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
@@ -240,7 +230,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   side="top"
                   className="w-64 rounded-2xl border border-border/70 bg-popover/95 p-2 shadow-[0_22px_50px_-24px_rgba(15,23,42,0.30)] backdrop-blur-xl"
                 >
-                  <div className="mb-2 rounded-xl bg-muted/40 px-3 py-2">
+                  <div className="mb-2 rounded-xl bg-muted/35 px-3 py-2.5">
                     <p className="truncate text-sm font-semibold text-foreground">
                       {fullName}
                     </p>
@@ -256,7 +246,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="rounded-xl px-3 py-2 text-sm text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                    className="rounded-xl px-3 py-2 text-sm text-red-600 transition-colors focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
                   >
                     <LogOut className="mr-2 size-4" />
                     Sign out
