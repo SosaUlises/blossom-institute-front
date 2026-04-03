@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Eye, EyeOff, Loader2, Mail, Phone, User, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Mail, Phone, User, ShieldCheck, LockKeyhole } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,8 +40,8 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
   const description = useMemo(
     () =>
       isEdit
-        ? ''
-        : '',
+        ? 'Modificá la información del alumno y actualizá sus datos principales.'
+        : 'Ingresá los datos principales del alumno para crear su cuenta en la plataforma.',
     [isEdit]
   )
 
@@ -98,32 +98,41 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
   }
 
   return (
-    <Card className="border-border/70 bg-card/95 text-card-foreground shadow-[0_18px_50px_-24px_rgba(30,42,68,0.25)]">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-semibold tracking-tight">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+    <Card className="overflow-hidden rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+      <CardHeader className="border-b border-border/50 pb-5">
+        <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
+          {title}
+        </CardTitle>
+        <CardDescription className="text-sm leading-6 text-muted-foreground">
+          {description}
+        </CardDescription>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="p-6 sm:p-7">
         <form onSubmit={handleSubmit}>
-          <FieldGroup className="space-y-5">
+          <FieldGroup className="space-y-6">
             {error && (
-              <Alert variant="destructive" className="border-destructive/20">
+              <Alert className="rounded-2xl border-destructive/25 bg-destructive/5 text-destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-5 md:grid-cols-2">
               <Field>
-                <FieldLabel htmlFor="nombre">Nombre</FieldLabel>
+                <FieldLabel
+                  htmlFor="nombre"
+                  className="mb-2.5 text-sm font-semibold text-foreground"
+                >
+                  Nombre
+                </FieldLabel>
                 <div className="relative">
-                  <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <User className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="nombre"
                     value={form.nombre}
                     onChange={(e) => handleChange('nombre', e.target.value)}
                     placeholder="Nombre"
-                    className="pl-10"
+                    className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
                     required
                     disabled={isLoading}
                   />
@@ -131,15 +140,20 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="apellido">Apellido</FieldLabel>
+                <FieldLabel
+                  htmlFor="apellido"
+                  className="mb-2.5 text-sm font-semibold text-foreground"
+                >
+                  Apellido
+                </FieldLabel>
                 <div className="relative">
-                  <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <User className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="apellido"
                     value={form.apellido}
                     onChange={(e) => handleChange('apellido', e.target.value)}
                     placeholder="Apellido"
-                    className="pl-10"
+                    className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
                     required
                     disabled={isLoading}
                   />
@@ -147,17 +161,22 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
               </Field>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-5 md:grid-cols-2">
               <Field>
-                <FieldLabel htmlFor="dni">DNI</FieldLabel>
+                <FieldLabel
+                  htmlFor="dni"
+                  className="mb-2.5 text-sm font-semibold text-foreground"
+                >
+                  DNI
+                </FieldLabel>
                 <div className="relative">
-                  <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <ShieldCheck className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="dni"
                     value={form.dni}
                     onChange={(e) => handleChange('dni', e.target.value)}
                     placeholder="12345678"
-                    className="pl-10"
+                    className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
                     required
                     disabled={isLoading}
                   />
@@ -165,15 +184,20 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="telefono">Teléfono</FieldLabel>
+                <FieldLabel
+                  htmlFor="telefono"
+                  className="mb-2.5 text-sm font-semibold text-foreground"
+                >
+                  Teléfono
+                </FieldLabel>
                 <div className="relative">
-                  <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Phone className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="telefono"
                     value={form.telefono}
                     onChange={(e) => handleChange('telefono', e.target.value)}
                     placeholder="341..."
-                    className="pl-10"
+                    className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
                     disabled={isLoading}
                   />
                 </div>
@@ -181,16 +205,21 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
             </div>
 
             <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <FieldLabel
+                htmlFor="email"
+                className="mb-2.5 text-sm font-semibold text-foreground"
+              >
+                Email
+              </FieldLabel>
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
                   value={form.email}
                   onChange={(e) => handleChange('email', e.target.value)}
                   placeholder="alumno@email.com"
-                  className="pl-10"
+                  className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
                   required
                   disabled={isLoading}
                 />
@@ -198,18 +227,23 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="password">
+              <FieldLabel
+                htmlFor="password"
+                className="mb-2.5 text-sm font-semibold text-foreground"
+              >
                 {isEdit ? 'Nueva contraseña (opcional)' : 'Contraseña'}
               </FieldLabel>
 
               <div className="relative">
+                <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={form.password}
                   onChange={(e) => handleChange('password', e.target.value)}
                   placeholder={isEdit ? 'Solo si querés cambiarla' : 'Ingresá una contraseña'}
-                  className="pr-11"
+                  className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-12 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
                   required={!isEdit}
                   disabled={isLoading}
                 />
@@ -218,7 +252,7 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1 h-8 w-8 text-muted-foreground"
+                  className="absolute right-1.5 top-1.5 h-9 w-9 rounded-xl text-muted-foreground transition-all duration-200 hover:bg-primary/8 hover:text-primary"
                   onClick={() => setShowPassword((prev) => !prev)}
                   disabled={isLoading}
                 >
@@ -230,7 +264,7 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
             <div className="flex justify-end pt-2">
               <Button
                 type="submit"
-                className="min-w-40 rounded-2xl bg-primary/90 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]"
+                className="min-w-44 rounded-2xl bg-primary px-5 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
                 disabled={isLoading}
               >
                 {isLoading ? (
