@@ -25,7 +25,7 @@ export function AppHeader({ title }: AppHeaderProps) {
     <header className="sticky top-0 z-30 flex h-[74px] items-center border-b border-border/60 bg-background/75 px-6 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/65">
       <div className="flex items-center gap-3">
         <div className="flex size-11 items-center justify-center rounded-2xl border border-border/60 bg-card/80 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.22)]">
-          <SidebarTrigger className="text-muted-foreground transition-all duration-200 hover:text-foreground" />
+          <SidebarTrigger className="text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-card/90" />
         </div>
 
         <Separator orientation="vertical" className="h-6 bg-border/70" />
