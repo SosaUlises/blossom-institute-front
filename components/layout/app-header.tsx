@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Moon, Sparkles, Sun } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -22,22 +22,21 @@ export function AppHeader({ title }: AppHeaderProps) {
   }, [])
 
   return (
-    <header className="sticky top-0 z-30 flex h-[74px] items-center border-b border-border/70 bg-background/75 px-6 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/65">
+    <header className="sticky top-0 z-30 flex h-[74px] items-center border-b border-border/60 bg-background/75 px-6 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/65">
       <div className="flex items-center gap-3">
-        <div className="flex size-12 items-center justify-center rounded-2xl border border-border/70 bg-card/80 shadow-[0_10px_30px_-18px_rgba(30,42,68,0.28)]">
-          <SidebarTrigger className="text-muted-foreground transition hover:text-foreground" />
+        <div className="flex size-11 items-center justify-center rounded-2xl border border-border/60 bg-card/80 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.22)]">
+          <SidebarTrigger className="text-muted-foreground transition-all duration-200 hover:text-foreground" />
         </div>
 
-        <Separator orientation="vertical" className="h-6 bg-border/80" />
+        <Separator orientation="vertical" className="h-6 bg-border/70" />
 
         <div className="space-y-0.5">
           <h1 className="text-[1.35rem] font-semibold tracking-tight text-foreground">
             {title}
           </h1>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Sparkles className="size-3.5 text-primary/80" />
-            <span>Blossom Institute · Panel administrativo</span>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Blossom Institute · Panel administrativo
+          </p>
         </div>
       </div>
 
@@ -47,8 +46,8 @@ export function AppHeader({ title }: AppHeaderProps) {
           size="icon"
           onClick={() => setTheme('light')}
           className={cn(
-            'rounded-2xl border border-transparent text-muted-foreground transition-all hover:border-border/70 hover:bg-card/80 hover:text-foreground',
-            mounted && theme === 'light' && 'border-border/70 bg-card/90 text-foreground shadow-sm'
+            'rounded-2xl border border-transparent text-muted-foreground transition-all duration-200 hover:border-border/60 hover:bg-card/80 hover:text-foreground',
+            mounted && theme === 'light' && 'border-border/60 bg-card/90 text-foreground shadow-sm'
           )}
         >
           <Sun className="size-4" />
@@ -59,8 +58,8 @@ export function AppHeader({ title }: AppHeaderProps) {
           size="icon"
           onClick={() => setTheme('dark')}
           className={cn(
-            'rounded-2xl border border-transparent text-muted-foreground transition-all hover:border-border/70 hover:bg-card/80 hover:text-foreground',
-            mounted && theme === 'dark' && 'border-border/70 bg-card/90 text-foreground shadow-sm'
+            'rounded-2xl border border-transparent text-muted-foreground transition-all duration-200 hover:border-border/60 hover:bg-card/80 hover:text-foreground',
+            mounted && theme === 'dark' && 'border-border/60 bg-card/90 text-foreground shadow-sm'
           )}
         >
           <Moon className="size-4" />

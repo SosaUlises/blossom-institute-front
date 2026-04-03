@@ -41,7 +41,6 @@ export function StudentsTable() {
 
   const loadStudents = async () => {
     setLoading(true)
-
     try {
       const data = await getStudents({
         pageNumber: 1,
@@ -93,8 +92,6 @@ export function StudentsTable() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-  
-
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <div className="relative w-full min-w-[280px] max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -102,12 +99,12 @@ export function StudentsTable() {
               placeholder="Buscar por nombre, apellido, email o DNI..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-11 rounded-2xl border-border/70 bg-card/80 pl-10 shadow-sm"
+              className="h-11 rounded-2xl border-border/70 bg-card/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
             />
           </div>
 
           <Link href="/admin/dashboard/students/new">
-            <Button className="h-11 rounded-2xl bg-primary/90 px-5 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]">
+            <Button className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md">
               <Plus className="mr-2 size-4" />
               Nuevo alumno
             </Button>
@@ -115,11 +112,11 @@ export function StudentsTable() {
         </div>
       </div>
 
-      <Card className="overflow-hidden rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+      <Card className="overflow-hidden rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[980px] text-sm">
-              <thead className="border-b border-border/70 bg-muted/25">
+              <thead className="border-b border-border/60 bg-muted/20">
                 <tr className="text-left">
                   <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Alumno
@@ -145,15 +142,18 @@ export function StudentsTable() {
               <tbody>
                 {loading ? (
                   Array.from({ length: 6 }).map((_, index) => (
-                    <tr key={index} className="border-b border-border/60 last:border-0">
+                    <tr key={index} className="border-b border-border/40 last:border-0">
                       <td className="px-6 py-4" colSpan={6}>
-                        <div className="h-12 animate-pulse rounded-2xl bg-muted/40" />
+                        <div className="h-14 animate-pulse rounded-2xl bg-muted/35" />
                       </td>
                     </tr>
                   ))
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-14 text-center text-sm text-muted-foreground">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-16 text-center text-sm text-muted-foreground"
+                    >
                       {emptyStateText}
                     </td>
                   </tr>
@@ -161,44 +161,44 @@ export function StudentsTable() {
                   items.map((student) => (
                     <tr
                       key={student.id}
-                      className="border-b border-border/60 transition-colors hover:bg-muted/15 last:border-0"
+                      className="border-b border-border/40 transition-colors duration-200 hover:bg-muted/10 last:border-0"
                     >
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                             <UserRound className="size-4.5" />
                           </div>
 
                           <div className="min-w-0">
-                            <p className="font-semibold text-foreground">
+                            <p className="font-semibold tracking-tight text-foreground">
                               {student.nombre} {student.apellido}
                             </p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="inline-flex items-center gap-2 text-muted-foreground">
-                          <Mail className="size-4" />
-                          <span>{student.email}</span>
+                          <Mail className="size-4 shrink-0" />
+                          <span className="truncate">{student.email}</span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="inline-flex items-center gap-2 text-muted-foreground">
-                          <IdCard className="size-4" />
+                          <IdCard className="size-4 shrink-0" />
                           <span>{student.dni}</span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="inline-flex items-center gap-2 text-muted-foreground">
-                          <Phone className="size-4" />
+                          <Phone className="size-4 shrink-0" />
                           <span>{student.telefono || '-'}</span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <span
                           className={
                             student.activo
@@ -210,13 +210,13 @@ export function StudentsTable() {
                         </span>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="flex justify-end gap-2">
                           <Link href={`/admin/dashboard/students/${student.id}`}>
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-9 rounded-xl border-border/70 bg-background/70 px-3 text-foreground shadow-sm transition-all hover:-translate-y-[1px] hover:bg-primary/10 hover:shadow-md hover:text-primary-700"
+                              className="h-9 rounded-xl border-border/70 bg-background/75 px-3 text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/8 hover:text-primary"
                             >
                               <Pencil className="mr-2 size-4" />
                               Editar
@@ -229,8 +229,8 @@ export function StudentsTable() {
                             disabled={actionLoadingId === student.id}
                             className={
                               student.activo
-                                ? 'h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-red-500/15 dark:text-red-400'
-                                : 'h-9 rounded-xl border border-green-500/15 bg-green-500/10 px-3 text-green-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-green-500/15 dark:text-green-400'
+                                ? 'h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-500/15 dark:text-red-400'
+                                : 'h-9 rounded-xl border border-green-500/15 bg-green-500/10 px-3 text-green-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-green-500/15 dark:text-green-400'
                             }
                           >
                             {student.activo ? (

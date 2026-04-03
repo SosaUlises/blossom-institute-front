@@ -7,6 +7,18 @@ interface RouteContext {
   params: Promise<{ id: string }>
 }
 
+async function safeJson(response: Response) {
+  const text = await response.text()
+
+  if (!text) return null
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { raw: text }
+  }
+}
+
 export async function GET(_: NextRequest, context: RouteContext) {
   try {
     const session = await getSession()
@@ -28,18 +40,27 @@ export async function GET(_: NextRequest, context: RouteContext) {
       cache: 'no-store',
     })
 
-    const result = await response.json()
+    const result = await safeJson(response)
 
-    return NextResponse.json(result, { status: response.status })
-  } catch {
     return NextResponse.json(
-      { success: false, message: 'No se pudo obtener el alumno.' },
+      result ?? {
+        success: response.ok,
+        message: response.ok ? null : `Error del backend. Status: ${response.status}`,
+      },
+      { status: response.status }
+    )
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: error?.message || 'No se pudo obtener el alumno.',
+      },
       { status: 500 }
     )
   }
 }
 
-export async function PUT(request: Request, context: RouteContext) {
+export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const session = await getSession()
 
@@ -62,12 +83,21 @@ export async function PUT(request: Request, context: RouteContext) {
       body: JSON.stringify(body),
     })
 
-    const result = await response.json()
+    const result = await safeJson(response)
 
-    return NextResponse.json(result, { status: response.status })
-  } catch {
     return NextResponse.json(
-      { success: false, message: 'No se pudo actualizar el alumno.' },
+      result ?? {
+        success: response.ok,
+        message: response.ok ? null : `Error del backend. Status: ${response.status}`,
+      },
+      { status: response.status }
+    )
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: error?.message || 'No se pudo actualizar el alumno.',
+      },
       { status: 500 }
     )
   }

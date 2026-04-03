@@ -4,8 +4,6 @@ import {
   BookOpen,
   ClipboardList,
   ChartColumn,
-  Sparkles,
-  CalendarRange,
 } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
@@ -22,65 +20,58 @@ export default async function DashboardPage() {
     <>
       <AppHeader title="Dashboard" />
 
-      <div className="flex-1 overflow-auto px-6 py-8">
+      <div className="flex-1 overflow-auto px-6 py-8 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-10">
-          <section className="relative overflow-hidden rounded-[30px] border border-border/70 bg-card/90 p-7 shadow-[0_24px_70px_-34px_rgba(30,42,68,0.28)] backdrop-blur-sm">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.14),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.10),transparent_28%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(72,99,180,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.12),transparent_30%)]" />
+          <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.05),transparent_24%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(72,99,180,0.12),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.08),transparent_26%)]" />
 
-            <div className="relative space-y-6">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                      <Sparkles className="size-3.5" />
-                      Blossom Institute
-                    </span>
+            <div className="relative flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+              <div className="max-w-3xl">
+                <div className="mb-5 h-[3px] w-12 rounded-full bg-primary" />
 
-                    <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                      <CalendarRange className="size-3.5" />
-                      Panel administrativo
-                    </span>
-                  </div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+                  Panel administrativo
+                </p>
 
-                  <div className="space-y-3">
-                    <h2 className="max-w-3xl text-[2rem] font-bold tracking-tight text-foreground">
-                      Resumen general del instituto
-                    </h2>
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-[2.45rem]">
+                  Resumen general del instituto
+                </h2>
 
-                    <p className="max-w-2xl text-sm leading-7 text-muted-foreground">
-                      Visualizá el estado actual del instituto, el rendimiento académico por curso y la actividad operativa más relevante desde una vista centralizada.
-                    </p>
+                <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+                  Visualizá el estado académico y operativo desde una vista centralizada.
+                </p>
+              </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:w-[380px] xl:grid-cols-1">
+                {/* Promedio general */}
+                <div className="group rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-200 group-hover:scale-[1.05] group-hover:bg-primary/15">
+                      <ChartColumn className="size-5" />
+                    </div>
+
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Promedio general
+                      </p>
+                      <p className="text-2xl font-semibold tracking-tight text-foreground">
+                        {dashboard.generalAverage !== null
+                          ? `${dashboard.generalAverage.toFixed(2)}%`
+                          : '-'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 xl:w-[420px] xl:grid-cols-1">
-                  <div className="rounded-2xl border border-primary/15 bg-background/80 px-4 py-4 shadow-[0_12px_30px_-18px_rgba(36,59,123,0.28)] backdrop-blur-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                        <ChartColumn className="size-5" />
-                      </div>
-
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                          Promedio general
-                        </p>
-                        <p className="text-2xl font-bold tracking-tight text-foreground">
-                          {dashboard.generalAverage !== null
-                            ? dashboard.generalAverage.toFixed(2) +"%"
-                            : '-'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                <div className="rounded-2xl border border-border/70 bg-background/70 px-4 py-4">
+                {/* Próxima actividad */}
+                <div className="group rounded-2xl border border-border/60 bg-background/75 px-4 py-4 shadow-[0_12px_26px_-22px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/15 hover:bg-background/90 hover:shadow-[0_20px_36px_-22px_rgba(15,23,42,0.20)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Próxima actividad
                   </p>
-                  <p className="mt-2 text-sm font-medium text-foreground">
-                    {dashboard.upcomingClasses.length} clases agendadas · {dashboard.upcomingAssignments.length} entregas cercanas
+                  <p className="mt-2 text-sm leading-6 text-foreground">
+                    {dashboard.upcomingClasses.length} clases agendadas ·{' '}
+                    {dashboard.upcomingAssignments.length} entregas cercanas
                   </p>
-                </div>
                 </div>
               </div>
             </div>
@@ -91,7 +82,7 @@ export default async function DashboardPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Overview
               </p>
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">
+              <h3 className="text-xl font-semibold tracking-tight text-foreground">
                 Métricas principales
               </h3>
             </div>
@@ -133,7 +124,7 @@ export default async function DashboardPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Academic insight
               </p>
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">
+              <h3 className="text-xl font-semibold tracking-tight text-foreground">
                 Rendimiento académico
               </h3>
             </div>
@@ -146,7 +137,7 @@ export default async function DashboardPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Operational snapshot
               </p>
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">
+              <h3 className="text-xl font-semibold tracking-tight text-foreground">
                 Próxima actividad
               </h3>
             </div>

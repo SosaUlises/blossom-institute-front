@@ -26,12 +26,12 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
   const domainMax = maxValue <= 10 ? 10 : 100
 
   return (
-    <Card className="rounded-[28px] border border-border/70 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(30,42,68,0.18)]">
+    <Card className="rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold tracking-tight text-foreground">
+        <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
           Promedio de calificaciones por curso
         </CardTitle>
-        <CardDescription className="text-sm leading-6">
+        <CardDescription className="text-sm leading-6 text-muted-foreground">
           Rendimiento académico consolidado según evaluaciones registradas por curso.
         </CardDescription>
       </CardHeader>
@@ -42,18 +42,19 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
             No hay datos de calificaciones para mostrar.
           </div>
         ) : (
-          <div className="h-[340px]">
+          <div className="h-[360px] rounded-[24px] border border-border/50 bg-background/40 px-4 py-4 sm:px-5 sm:py-5">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
                 layout="vertical"
-                barSize={16}
-                margin={{ top: 8, right: 44, left: 16, bottom: 8 }}
+                barSize={22}
+                barCategoryGap={18}
+                margin={{ top: 6, right: 42, left: 22, bottom: 6 }}
               >
                 <CartesianGrid
-                  strokeDasharray="4 4"
+                  strokeDasharray="3 5"
                   horizontal={false}
-                  className="stroke-border/60"
+                  stroke="rgba(148, 163, 184, 0.18)"
                 />
 
                 <XAxis
@@ -61,6 +62,7 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
                   domain={[0, domainMax]}
                   tickLine={false}
                   axisLine={false}
+                  tickMargin={10}
                   className="text-xs fill-muted-foreground"
                 />
 
@@ -69,23 +71,33 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
                   type="category"
                   tickLine={false}
                   axisLine={false}
-                  width={120}
+                  tickMargin={12}
+                  width={132}
                   className="text-xs fill-foreground"
                 />
 
                 <Tooltip
-                  cursor={{ fill: 'rgba(53,82,161,0.05)' }}
+                  cursor={{ fill: 'rgba(53,82,161,0.06)' }}
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '1rem',
-                    boxShadow: '0 16px 38px -18px rgba(30,42,68,0.22)',
+                    borderRadius: '18px',
+                    boxShadow: '0 18px 42px -24px rgba(15,23,42,0.24)',
                     fontSize: '0.875rem',
+                    padding: '10px 12px',
                   }}
-                  formatter={(value: number) => [value.toFixed(2), 'Promedio']}
+                  formatter={(value: number) => [`${value.toFixed(2)}`, 'Promedio']}
+                  labelStyle={{
+                    color: 'hsl(var(--foreground))',
+                    fontWeight: 600,
+                    marginBottom: 4,
+                  }}
                 />
 
-                <Bar dataKey="averageGrade" radius={[0, 999, 999, 0]}>
+                <Bar
+                  dataKey="averageGrade"
+                  radius={[0, 999, 999, 0]}
+                >
                   {data.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
                   ))}
@@ -93,6 +105,7 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
                   <LabelList
                     dataKey="averageGrade"
                     position="right"
+                    offset={8}
                     formatter={(value: number) => value.toFixed(2)}
                     className="fill-foreground text-xs font-semibold"
                   />
