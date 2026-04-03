@@ -1,4 +1,4 @@
-import { Users } from 'lucide-react'
+import { GraduationCap, Users } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { StudentsTable } from '@/components/admin/students/students-table'
@@ -28,6 +28,20 @@ export default function StudentsPage() {
                 <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
                   Gestioná altas, edición y estado de los alumnos del instituto desde una vista clara y centralizada.
                 </p>
+              </div>
+              <div className="group inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-200 group-hover:scale-[1.05] group-hover:bg-primary/15">
+                  <GraduationCap className="size-5" />
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Módulo
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Students
+                  </p>
+                </div>
               </div>
             </div>
           </section>

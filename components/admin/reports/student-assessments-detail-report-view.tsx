@@ -41,34 +41,34 @@ interface CursoAlumnoOption {
 function getTipoCardClass(tipo: number) {
   switch (tipo) {
     case 1:
-      return 'border-blue-200/70 bg-linear-to-br from-blue-50/80 to-background dark:from-blue-950/20 dark:to-background'
+      return 'border-blue-200/60 bg-[linear-gradient(180deg,rgba(59,88,170,0.05)_0%,rgba(255,255,255,0)_100%)] dark:border-blue-900/40 dark:bg-[linear-gradient(180deg,rgba(59,88,170,0.10)_0%,rgba(255,255,255,0)_100%)]'
     case 2:
-      return 'border-violet-200/70 bg-linear-to-br from-violet-50/80 to-background dark:from-violet-950/20 dark:to-background'
+      return 'border-violet-200/60 bg-[linear-gradient(180deg,rgba(139,92,246,0.05)_0%,rgba(255,255,255,0)_100%)] dark:border-violet-900/40 dark:bg-[linear-gradient(180deg,rgba(139,92,246,0.10)_0%,rgba(255,255,255,0)_100%)]'
     case 3:
-      return 'border-emerald-200/70 bg-linear-to-br from-emerald-50/80 to-background dark:from-emerald-950/20 dark:to-background'
+      return 'border-emerald-200/60 bg-[linear-gradient(180deg,rgba(16,185,129,0.05)_0%,rgba(255,255,255,0)_100%)] dark:border-emerald-900/40 dark:bg-[linear-gradient(180deg,rgba(16,185,129,0.10)_0%,rgba(255,255,255,0)_100%)]'
     case 4:
-      return 'border-amber-200/70 bg-linear-to-br from-amber-50/80 to-background dark:from-amber-950/20 dark:to-background'
+      return 'border-amber-200/60 bg-[linear-gradient(180deg,rgba(245,158,11,0.05)_0%,rgba(255,255,255,0)_100%)] dark:border-amber-900/40 dark:bg-[linear-gradient(180deg,rgba(245,158,11,0.10)_0%,rgba(255,255,255,0)_100%)]'
     case 5:
-      return 'border-rose-200/70 bg-linear-to-br from-rose-50/80 to-background dark:from-rose-950/20 dark:to-background'
+      return 'border-rose-200/60 bg-[linear-gradient(180deg,rgba(244,63,94,0.05)_0%,rgba(255,255,255,0)_100%)] dark:border-rose-900/40 dark:bg-[linear-gradient(180deg,rgba(244,63,94,0.10)_0%,rgba(255,255,255,0)_100%)]'
     default:
-      return 'border-border/70 bg-card/80'
+      return 'border-border/60 bg-card/95'
   }
 }
 
 function getTipoAccentClass(tipo: number) {
   switch (tipo) {
     case 1:
-      return 'text-blue-600 dark:text-blue-400 bg-blue-500/10'
+      return 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
     case 2:
-      return 'text-violet-600 dark:text-violet-400 bg-violet-500/10'
+      return 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
     case 3:
-      return 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
+      return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
     case 4:
-      return 'text-amber-700 dark:text-amber-400 bg-amber-500/10'
+      return 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
     case 5:
-      return 'text-rose-600 dark:text-rose-400 bg-rose-500/10'
+      return 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
     default:
-      return 'text-slate-600 dark:text-slate-400 bg-slate-500/10'
+      return 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
   }
 }
 
@@ -157,20 +157,20 @@ function SummaryCard({
     accent === 'emerald'
       ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
       : accent === 'violet'
-      ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
-      : accent === 'amber'
-      ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-      : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+        ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+        : accent === 'amber'
+          ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+          : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
 
   return (
-    <Card className="rounded-[24px] border border-border/70 bg-card/95 shadow-[0_14px_34px_-22px_rgba(30,42,68,0.16)]">
+    <Card className="rounded-[24px] border border-border/60 bg-card/95 shadow-[0_14px_34px_-22px_rgba(15,23,42,0.14)]">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               {title}
             </p>
-            <p className="mt-2 text-xl font-bold tracking-tight text-foreground">
+            <p className="mt-2 text-xl font-semibold tracking-tight text-foreground">
               {value}
             </p>
             {subvalue && (
@@ -200,7 +200,7 @@ function ItemCard({
 
   return (
     <div
-      className={`overflow-hidden rounded-2xl border transition-all hover:shadow-[0_16px_34px_-22px_rgba(30,42,68,0.28)] ${getTipoCardClass(item.tipo)}`}
+      className={`overflow-hidden rounded-[24px] border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-22px_rgba(15,23,42,0.18)] ${getTipoCardClass(item.tipo)}`}
     >
       <button
         type="button"
@@ -222,9 +222,7 @@ function ItemCard({
             {item.tipo === 1 && (
               <>
                 <span className="text-xs text-muted-foreground">•</span>
-                <span className="text-xs text-muted-foreground">
-                  Desde homework
-                </span>
+                <span className="text-xs text-muted-foreground">Desde homework</span>
               </>
             )}
           </div>
@@ -255,7 +253,7 @@ function ItemCard({
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Nota
             </p>
-            <p className="text-xl font-bold text-foreground">
+            <p className="text-xl font-semibold text-foreground">
               {item.nota}
             </p>
           </div>
@@ -267,15 +265,15 @@ function ItemCard({
       </button>
 
       {expanded && (
-        <div className="border-t border-border/60 bg-background/50 px-5 pb-5 pt-4">
+        <div className="border-t border-border/50 bg-background/55 px-5 pb-5 pt-4">
           {item.skills.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
               Esta calificación no tiene detalle de skills.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-border/70 bg-background/70">
+            <div className="overflow-x-auto rounded-xl border border-border/60 bg-background/75">
               <table className="w-full min-w-[560px] text-sm">
-                <thead className="border-b border-border/70 bg-muted/30">
+                <thead className="border-b border-border/60 bg-muted/20">
                   <tr className="text-left text-muted-foreground">
                     <th className="px-4 py-3 font-medium">Skill</th>
                     <th className="px-4 py-3 font-medium">Obtenido</th>
@@ -285,7 +283,7 @@ function ItemCard({
                 </thead>
                 <tbody>
                   {item.skills.map((skill, index) => (
-                    <tr key={`${skill.skill}-${index}`} className="border-b border-border/60 last:border-0">
+                    <tr key={`${skill.skill}-${index}`} className="border-b border-border/40 last:border-0">
                       <td className="px-4 py-3 font-medium text-foreground">
                         {getSkillLabel(skill.skill)}
                       </td>
@@ -416,13 +414,13 @@ export function StudentAssessmentsDetailReportView() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_40px_-22px_rgba(30,42,68,0.18)]">
+      <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold tracking-tight">
+          <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
             Filtros del reporte
           </CardTitle>
-          <CardDescription>
-             Realizá el filtrado necesario para generar el reporte.
+          <CardDescription className="text-sm leading-6 text-muted-foreground">
+            Seleccioná curso, alumno, año, trimestre y tipo para generar el reporte.
           </CardDescription>
         </CardHeader>
 
@@ -434,7 +432,7 @@ export function StudentAssessmentsDetailReportView() {
                 value={cursoId}
                 onChange={(e) => setCursoId(e.target.value)}
                 disabled={loadingSources}
-                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/80 px-3 py-2 text-sm shadow-sm"
+                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
               >
                 <option value="">Seleccionar curso</option>
                 {courses.map((course) => (
@@ -451,14 +449,14 @@ export function StudentAssessmentsDetailReportView() {
                 value={alumnoId}
                 onChange={(e) => setAlumnoId(e.target.value)}
                 disabled={!cursoId || loadingStudents}
-                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/80 px-3 py-2 text-sm shadow-sm"
+                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
               >
                 <option value="">
                   {!cursoId
                     ? 'Primero seleccioná un curso'
                     : loadingStudents
-                    ? 'Cargando alumnos...'
-                    : 'Seleccionar alumno'}
+                      ? 'Cargando alumnos...'
+                      : 'Seleccionar alumno'}
                 </option>
 
                 {students.map((student) => (
@@ -475,7 +473,7 @@ export function StudentAssessmentsDetailReportView() {
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
                 placeholder="2026"
-                className="h-11 rounded-2xl border-border/70 bg-card/80 shadow-sm"
+                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
               />
             </div>
 
@@ -484,7 +482,7 @@ export function StudentAssessmentsDetailReportView() {
               <select
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
-                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/80 px-3 py-2 text-sm shadow-sm"
+                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
               >
                 <option value="1">Term 1</option>
                 <option value="2">Term 2</option>
@@ -497,7 +495,7 @@ export function StudentAssessmentsDetailReportView() {
               <select
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value)}
-                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/80 px-3 py-2 text-sm shadow-sm"
+                className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
               >
                 <option value="">Todos</option>
                 <option value="1">Homework</option>
@@ -513,7 +511,7 @@ export function StudentAssessmentsDetailReportView() {
             <Button
               onClick={handleLoad}
               disabled={loadingReport}
-              className="h-11 rounded-2xl bg-primary/90 px-5 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]"
+              className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
             >
               {loadingReport ? 'Cargando...' : 'Generar reporte'}
             </Button>
@@ -530,7 +528,7 @@ export function StudentAssessmentsDetailReportView() {
               >
                 <Button
                   variant="outline"
-                  className="h-11 rounded-2xl border-border/70 bg-background/70 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-card hover:shadow-md"
+                  className="h-11 rounded-2xl border-border/70 bg-background/75 text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-card hover:text-foreground hover:shadow-md"
                 >
                   <FileText className="mr-2 size-4" />
                   Exportar PDF
@@ -578,12 +576,12 @@ export function StudentAssessmentsDetailReportView() {
             />
           </div>
 
-          <Card className="rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+          <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold tracking-tight">
+              <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
                 Historial de evaluaciones
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm leading-6 text-muted-foreground">
                 Expandí cada evaluación para ver el detalle de skills.
               </CardDescription>
             </CardHeader>
