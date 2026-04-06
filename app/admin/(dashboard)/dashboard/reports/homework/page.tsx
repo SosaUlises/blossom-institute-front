@@ -1,3 +1,5 @@
+import { ClipboardCheck } from 'lucide-react'
+
 import { AppHeader } from '@/components/layout/app-header'
 import { HomeworkReportView } from '@/components/admin/reports/homework-report-view'
 
@@ -6,15 +8,43 @@ export default function ReportsHomeworkPage() {
     <>
       <AppHeader title="Homework report" />
 
-      <div className="flex-1 overflow-auto px-6 py-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <section className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">
-              Homework by term
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Consultá entregas, pendientes, rehacer, aprobadas y promedio por curso y trimestre.
-            </p>
+      <div className="flex-1 overflow-auto px-6 py-8 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-8">
+          <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.05),transparent_24%)]" />
+
+            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <div className="mb-5 h-[3px] w-12 rounded-full bg-primary" />
+
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+                  Reports center
+                </p>
+
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-[2.45rem]">
+                  Homework by term
+                </h2>
+
+                <p className="mt-4 max-w-3xl text-[15px] leading-7 text-muted-foreground">
+                  Consultá entregas, pendientes, rehacer, aprobadas y promedio por curso y trimestre desde una vista consolidada.
+                </p>
+              </div>
+
+              <div className="group inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <ClipboardCheck className="size-5" />
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Reporte
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Homework
+                  </p>
+                </div>
+              </div>
+            </div>
           </section>
 
           <HomeworkReportView />

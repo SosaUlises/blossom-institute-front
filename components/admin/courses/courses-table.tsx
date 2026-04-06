@@ -119,7 +119,6 @@ export function CoursesTable() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="grid gap-3 md:grid-cols-3">
             <div className="relative min-w-[260px]">
@@ -128,7 +127,7 @@ export function CoursesTable() {
                 placeholder="Buscar curso..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-11 rounded-2xl border-border/70 bg-card/80 pl-10 shadow-sm"
+                className="h-11 rounded-2xl border-border/70 bg-card/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
               />
             </div>
 
@@ -136,13 +135,13 @@ export function CoursesTable() {
               placeholder="Filtrar por año"
               value={anio}
               onChange={(e) => setAnio(e.target.value)}
-              className="h-11 rounded-2xl border-border/70 bg-card/80 shadow-sm"
+              className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
             />
 
             <select
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
-              className="flex h-11 rounded-2xl border border-border/70 bg-card/80 px-3 py-2 text-sm shadow-sm"
+              className="flex h-11 rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
             >
               <option value="">Todos los estados</option>
               <option value={EstadoCurso.Activo}>Activo</option>
@@ -152,7 +151,7 @@ export function CoursesTable() {
           </div>
 
           <Link href="/admin/dashboard/courses/new">
-            <Button className="h-11 rounded-2xl bg-primary/90 px-5 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]">
+            <Button className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md">
               <Plus className="mr-2 size-4" />
               Nuevo curso
             </Button>
@@ -160,11 +159,11 @@ export function CoursesTable() {
         </div>
       </div>
 
-      <Card className="overflow-hidden rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+      <Card className="overflow-hidden rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1180px] text-sm">
-              <thead className="border-b border-border/70 bg-muted/25">
+              <thead className="border-b border-border/60 bg-muted/20">
                 <tr className="text-left">
                   <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Curso
@@ -190,15 +189,15 @@ export function CoursesTable() {
               <tbody>
                 {loading ? (
                   Array.from({ length: 6 }).map((_, index) => (
-                    <tr key={index} className="border-b border-border/60 last:border-0">
+                    <tr key={index} className="border-b border-border/40 last:border-0">
                       <td className="px-6 py-4" colSpan={6}>
-                        <div className="h-12 animate-pulse rounded-2xl bg-muted/40" />
+                        <div className="h-14 animate-pulse rounded-2xl bg-muted/35" />
                       </td>
                     </tr>
                   ))
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-14 text-center text-sm text-muted-foreground">
+                    <td colSpan={6} className="px-6 py-16 text-center text-sm text-muted-foreground">
                       {emptyStateText}
                     </td>
                   </tr>
@@ -206,62 +205,64 @@ export function CoursesTable() {
                   items.map((course) => (
                     <tr
                       key={course.id}
-                      className="border-b border-border/60 transition-colors hover:bg-muted/15 last:border-0"
+                      className="border-b border-border/40 transition-colors duration-200 hover:bg-muted/10 last:border-0"
                     >
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                             <BookOpen className="size-4.5" />
                           </div>
 
                           <div className="min-w-0">
-                            <p className="font-semibold text-foreground">{course.nombre}</p>
+                            <p className="font-semibold tracking-tight text-foreground">
+                              {course.nombre}
+                            </p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="inline-flex items-center gap-2 text-muted-foreground">
-                          <CalendarRange className="size-4" />
+                          <CalendarRange className="size-4 shrink-0" />
                           <span>{course.anio}</span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <span
                           className={
                             course.estado === EstadoCurso.Activo
                               ? 'inline-flex rounded-full border border-green-500/15 bg-green-500/10 px-3 py-1 text-xs font-medium text-green-600 dark:text-green-400'
                               : course.estado === EstadoCurso.Inactivo
-                              ? 'inline-flex rounded-full border border-amber-500/15 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-400'
-                              : 'inline-flex rounded-full border border-slate-500/15 bg-slate-500/10 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400'
+                                ? 'inline-flex rounded-full border border-amber-500/15 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-400'
+                                : 'inline-flex rounded-full border border-slate-500/15 bg-slate-500/10 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400'
                           }
                         >
                           {estadoLabels[course.estado]}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="inline-flex items-center gap-2 text-muted-foreground">
-                          <GraduationCap className="size-4" />
+                          <GraduationCap className="size-4 shrink-0" />
                           <span>{course.cantidadProfesores}</span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="inline-flex items-center gap-2 text-muted-foreground">
-                          <Users className="size-4" />
+                          <Users className="size-4 shrink-0" />
                           <span>{course.cantidadAlumnos}</span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="flex justify-end gap-2">
                           <Link href={`/admin/dashboard/courses/${course.id}`}>
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-9 rounded-xl border-border/70 bg-background/70 px-3 text-foreground shadow-sm transition-all hover:-translate-y-[1px] hover:bg-card hover:shadow-md hover:text-primary-700"
+                              className="h-9 rounded-xl border-border/70 bg-background/75 px-3 text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/8 hover:text-primary"
                             >
                               <Pencil className="mr-2 size-4" />
                               Editar
@@ -272,7 +273,7 @@ export function CoursesTable() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-9 rounded-xl border-primary/15 bg-primary/5 px-3 text-primary shadow-sm transition-all hover:-translate-y-[1px] hover:bg-primary/10 hover:shadow-md hover:text-primary-700"
+                              className="h-9 rounded-xl border-primary/15 bg-primary/5 px-3 text-primary shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/20 hover:shadow-md"
                             >
                               <Settings2 className="mr-2 size-4" />
                               Gestionar
@@ -286,8 +287,8 @@ export function CoursesTable() {
                               disabled={actionLoadingId === course.id}
                               className={
                                 course.estado === EstadoCurso.Activo
-                                  ? 'h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-red-500/15 dark:text-red-400'
-                                  : 'h-9 rounded-xl border border-green-500/15 bg-green-500/10 px-3 text-green-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-green-500/15 dark:text-green-400'
+                                  ? 'h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-500/15 dark:text-red-400'
+                                  : 'h-9 rounded-xl border border-green-500/15 bg-green-500/10 px-3 text-green-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-green-500/15 dark:text-green-400'
                               }
                             >
                               {course.estado === EstadoCurso.Activo ? (
@@ -309,7 +310,7 @@ export function CoursesTable() {
                               size="sm"
                               onClick={() => handleArchive(course)}
                               disabled={actionLoadingId === course.id}
-                              className="h-9 rounded-xl border border-border/70 bg-muted/40 px-3 text-muted-foreground transition-all hover:-translate-y-[1px] hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive hover:shadow-sm"
+                              className="h-9 rounded-xl border border-border/70 bg-muted/35 px-3 text-muted-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                             >
                               <Archive className="mr-2 size-4" />
                               Archivar

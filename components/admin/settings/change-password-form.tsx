@@ -35,7 +35,7 @@ function PasswordField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="h-11 rounded-2xl border-border/70 bg-card/80 pr-12 shadow-sm"
+          className="h-11 rounded-2xl border-border/70 bg-card/85 pr-12 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
           autoComplete="off"
         />
 
@@ -91,7 +91,7 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <Card className="rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+    <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
       <CardHeader className="pb-4">
         <div className="flex items-start gap-3">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -99,10 +99,10 @@ export function ChangePasswordForm() {
           </div>
 
           <div className="space-y-1">
-            <CardTitle className="text-xl font-semibold tracking-tight">
+            <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
               Seguridad
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm leading-6 text-muted-foreground">
               Cambiá tu contraseña de acceso y mantené tu cuenta protegida.
             </CardDescription>
           </div>
@@ -160,7 +160,7 @@ export function ChangePasswordForm() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-2xl bg-primary/90 px-5 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]"
+              className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
             >
               {isSubmitting ? (
                 <>

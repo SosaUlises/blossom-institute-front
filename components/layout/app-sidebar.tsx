@@ -14,6 +14,8 @@ import {
   BarChart3,
 } from 'lucide-react'
 
+import { UserRound } from 'lucide-react'
+
 import {
   Sidebar,
   SidebarContent,
@@ -206,13 +208,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <button
                     type="button"
                     className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/82 px-3 py-3 text-left shadow-[0_10px_22px_-18px_rgba(15,23,42,0.18)] transition-all duration-200 hover:border-primary/15 hover:bg-sidebar-accent/70"
-                  >
-                    <Avatar className="size-10 ring-1 ring-primary/10">
-                      <AvatarImage src="/avatars/admin.jpg" alt={fullName} />
-                      <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
+                                    >
+                  <Avatar className="size-10 border border-border/60 bg-background ring-1 ring-primary/10">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      <UserRound className="size-4.5" />
+                    </AvatarFallback>
+                  </Avatar>
 
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-foreground">

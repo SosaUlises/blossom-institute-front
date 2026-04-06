@@ -6,7 +6,6 @@ import {
   Search,
   Trash2,
   Users,
-  CheckCircle2,
   UserRound,
   Mail,
   IdCard,
@@ -217,14 +216,14 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.85fr)]">
-      <Card className="min-w-0 rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_40px_-22px_rgba(30,42,68,0.20)]">
+      <Card className="min-w-0 rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
         <CardHeader className="space-y-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-1">
-              <CardTitle className="text-xl font-semibold tracking-tight">
+              <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
                 Gestión de personas
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm leading-6 text-muted-foreground">
                 Administrá profesores asignados y alumnos matriculados del curso.
               </p>
             </div>
@@ -234,10 +233,10 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                 variant="outline"
                 onClick={() => setTab('alumnos')}
                 className={cn(
-                  'h-10 rounded-2xl border-border/70 px-4',
+                  'h-10 rounded-2xl border-border/70 px-4 transition-all duration-200',
                   tab === 'alumnos'
                     ? 'border-primary/20 bg-primary/10 text-primary'
-                    : 'bg-background/70 text-foreground'
+                    : 'bg-background/75 text-foreground hover:bg-primary/8'
                 )}
               >
                 <Users className="mr-2 size-4" />
@@ -248,10 +247,10 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                 variant="outline"
                 onClick={() => setTab('profesores')}
                 className={cn(
-                  'h-10 rounded-2xl border-border/70 px-4',
+                  'h-10 rounded-2xl border-border/70 px-4 transition-all duration-200',
                   tab === 'profesores'
                     ? 'border-primary/20 bg-primary/10 text-primary'
-                    : 'bg-background/70 text-foreground'
+                    : 'bg-background/75 text-foreground hover:bg-primary/8'
                 )}
               >
                 <GraduationCap className="mr-2 size-4" />
@@ -261,20 +260,20 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="rounded-2xl border border-border/60 bg-background/70 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Asignados actualmente
               </p>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
                 {currentCount}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="rounded-2xl border border-border/60 bg-background/70 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Disponibles para asignar
               </p>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
                 {assignableCount}
               </p>
             </div>
@@ -290,15 +289,15 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
               }
               value={searchCurrent}
               onChange={(e) => setSearchCurrent(e.target.value)}
-              className="h-11 rounded-2xl border-border/70 bg-card/80 pl-10 shadow-sm"
+              className="h-11 rounded-2xl border-border/70 bg-card/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
             />
           </div>
         </CardHeader>
 
         <CardContent className="min-w-0 pt-0">
-          <div className="overflow-x-auto rounded-2xl border border-border/70">
+          <div className="overflow-x-auto rounded-2xl border border-border/60">
             <table className="w-full min-w-[760px] text-sm">
-              <thead className="border-b border-border/70 bg-muted/25">
+              <thead className="border-b border-border/60 bg-muted/20">
                 <tr className="text-left">
                   <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     {tab === 'alumnos' ? 'Alumno' : 'Profesor'}
@@ -318,9 +317,9 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
               <tbody>
                 {loading ? (
                   Array.from({ length: 5 }).map((_, index) => (
-                    <tr key={index} className="border-b border-border/60 last:border-0">
+                    <tr key={index} className="border-b border-border/40 last:border-0">
                       <td className="px-6 py-4" colSpan={4}>
-                        <div className="h-12 animate-pulse rounded-2xl bg-muted/40" />
+                        <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
                       </td>
                     </tr>
                   ))
@@ -333,42 +332,41 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                     </tr>
                   ) : (
                     filteredCurrentAlumnos.map((alumno) => (
-                      <tr key={alumno.alumnoId} className="border-b border-border/60 transition hover:bg-muted/15 last:border-0">
-                        <td className="px-6 py-4">
+                      <tr key={alumno.alumnoId} className="border-b border-border/40 transition-colors duration-200 hover:bg-muted/10 last:border-0">
+                        <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
                             <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                               <UserRound className="size-4" />
                             </div>
                             <div>
-                              <p className="font-semibold text-foreground">
+                              <p className="font-semibold tracking-tight text-foreground">
                                 {alumno.nombre} {alumno.apellido}
                               </p>
-                             
                             </div>
                           </div>
                         </td>
 
-                        <td className="px-6 py-4 text-muted-foreground">
+                        <td className="px-6 py-5 text-muted-foreground">
                           <div className="inline-flex items-center gap-2">
                             <Mail className="size-4" />
                             {alumno.email}
                           </div>
                         </td>
 
-                        <td className="px-6 py-4 text-muted-foreground">
+                        <td className="px-6 py-5 text-muted-foreground">
                           <div className="inline-flex items-center gap-2">
                             <IdCard className="size-4" />
                             {alumno.dni}
                           </div>
                         </td>
 
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-5">
                           <div className="flex justify-end">
                             <Button
                               size="sm"
                               onClick={() => handleRemoveAlumno(alumno)}
                               disabled={actionLoadingId === alumno.alumnoId}
-                              className="h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-red-500/15 dark:text-red-400"
+                              className="h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-500/15 dark:text-red-400"
                             >
                               <Trash2 className="mr-2 size-4" />
                               Quitar
@@ -386,42 +384,41 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                   </tr>
                 ) : (
                   filteredCurrentProfesores.map((profesor) => (
-                    <tr key={profesor.profesorId} className="border-b border-border/60 transition hover:bg-muted/15 last:border-0">
-                      <td className="px-6 py-4">
+                    <tr key={profesor.profesorId} className="border-b border-border/40 transition-colors duration-200 hover:bg-muted/10 last:border-0">
+                      <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                             <GraduationCap className="size-4" />
                           </div>
                           <div>
-                            <p className="font-semibold text-foreground">
+                            <p className="font-semibold tracking-tight text-foreground">
                               {profesor.nombre} {profesor.apellido}
                             </p>
-                            
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 text-muted-foreground">
+                      <td className="px-6 py-5 text-muted-foreground">
                         <div className="inline-flex items-center gap-2">
                           <Mail className="size-4" />
                           {profesor.email}
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 text-muted-foreground">
+                      <td className="px-6 py-5 text-muted-foreground">
                         <div className="inline-flex items-center gap-2">
                           <IdCard className="size-4" />
                           {profesor.dni}
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="flex justify-end">
                           <Button
                             size="sm"
                             onClick={() => handleRemoveProfesor(profesor)}
                             disabled={actionLoadingId === profesor.profesorId}
-                            className="h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-red-500/15 dark:text-red-400"
+                            className="h-9 rounded-xl border border-red-500/15 bg-red-500/10 px-3 text-red-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-500/15 dark:text-red-400"
                           >
                             <Trash2 className="mr-2 size-4" />
                             Quitar
@@ -437,13 +434,13 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
         </CardContent>
       </Card>
 
-      <Card className="min-w-0 rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_40px_-22px_rgba(30,42,68,0.20)]">
+      <Card className="min-w-0 rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
         <CardHeader className="space-y-4">
           <div className="space-y-1">
-            <CardTitle className="text-xl font-semibold tracking-tight">
+            <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
               {tab === 'alumnos' ? 'Matricular alumnos' : 'Asignar profesores'}
             </CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm leading-6 text-muted-foreground">
               Seleccioná una o varias personas disponibles para agregarlas al curso.
             </p>
           </div>
@@ -458,7 +455,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
               }
               value={searchAssignable}
               onChange={(e) => setSearchAssignable(e.target.value)}
-              className="h-11 rounded-2xl border-border/70 bg-card/80 pl-10 shadow-sm"
+              className="h-11 rounded-2xl border-border/70 bg-card/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
             />
           </div>
 
@@ -468,14 +465,14 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
               assigning ||
               (tab === 'alumnos' ? selectedAlumnoIds.length === 0 : selectedProfesorIds.length === 0)
             }
-            className="h-11 rounded-2xl bg-primary/90 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]"
+            className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
           >
             <Plus className="mr-2 size-4" />
             {assigning
               ? 'Guardando...'
               : tab === 'alumnos'
-              ? `Agregar seleccionados (${selectedAlumnoIds.length})`
-              : `Agregar seleccionados (${selectedProfesorIds.length})`}
+                ? `Agregar seleccionados (${selectedAlumnoIds.length})`
+                : `Agregar seleccionados (${selectedProfesorIds.length})`}
           </Button>
         </CardHeader>
 
@@ -494,10 +491,10 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                     <label
                       key={student.id}
                       className={cn(
-                        'flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all',
+                        'flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all duration-200',
                         checked
                           ? 'border-primary/25 bg-primary/8 shadow-sm'
-                          : 'border-border/70 bg-background/60 hover:bg-muted/20'
+                          : 'border-border/70 bg-background/70 hover:bg-muted/20'
                       )}
                     >
                       <input
@@ -530,10 +527,10 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                   <label
                     key={teacher.id}
                     className={cn(
-                      'flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all',
+                      'flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all duration-200',
                       checked
                         ? 'border-primary/25 bg-primary/8 shadow-sm'
-                        : 'border-border/70 bg-background/60 hover:bg-muted/20'
+                        : 'border-border/70 bg-background/70 hover:bg-muted/20'
                     )}
                   >
                     <input
