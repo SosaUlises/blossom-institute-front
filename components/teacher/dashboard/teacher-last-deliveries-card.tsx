@@ -1,4 +1,4 @@
-import { ClipboardList, GraduationCap, CalendarClock, ArrowUpRight } from 'lucide-react'
+import { ClipboardList, GraduationCap, CalendarClock } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -24,11 +24,11 @@ function DeliveryMeta({
     accent === 'violet'
       ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
       : accent === 'emerald'
-      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-      : 'bg-primary/10 text-primary'
+        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+        : 'bg-primary/10 text-primary'
 
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+    <div className="rounded-2xl border border-border/60 bg-background/80 px-4 py-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
       <div className="flex items-start gap-3">
         <div className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${accentClasses}`}>
           <Icon className="size-4" />
@@ -38,7 +38,7 @@ function DeliveryMeta({
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {label}
           </p>
-          <p className="mt-1 text-sm font-medium text-foreground break-words">
+          <p className="mt-1 break-words text-sm font-medium text-foreground">
             {value}
           </p>
         </div>
@@ -53,12 +53,12 @@ export function TeacherLastDeliveriesCard({
   items: ProfesorDashboardUltimaEntregaItem[]
 }) {
   return (
-    <Card className="rounded-[28px] border border-border/70 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(30,42,68,0.16)]">
+    <Card className="rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-semibold tracking-tight">
           Últimas entregas
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm leading-6">
           Actividad reciente de entregas realizadas por tus alumnos.
         </CardDescription>
       </CardHeader>
@@ -73,7 +73,7 @@ export function TeacherLastDeliveriesCard({
             {items.map((item) => (
               <div
                 key={item.entregaId}
-                className="group rounded-[26px] border border-border/70 bg-background/70 p-5 transition-all hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_34px_-22px_rgba(30,42,68,0.22)]"
+                className="group rounded-[26px] border border-border/60 bg-background/70 p-5 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_34px_-22px_rgba(15,23,42,0.18)]"
               >
                 <div className="flex items-start gap-4">
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -95,7 +95,6 @@ export function TeacherLastDeliveriesCard({
                           {item.cursoNombre}
                         </div>
                       </div>
-
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -105,7 +104,6 @@ export function TeacherLastDeliveriesCard({
                         icon={GraduationCap}
                         accent="violet"
                       />
-
                       <DeliveryMeta
                         label="Fecha"
                         value={formatDateTime(item.fechaEntregaUtc)}

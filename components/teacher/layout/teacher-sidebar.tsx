@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -9,6 +8,7 @@ import {
   BookOpen,
   Settings,
   LogOut,
+  UserRound,
 } from 'lucide-react'
 
 import {
@@ -23,7 +23,6 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from '@/components/ui/sidebar'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +52,6 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
   }, [])
 
   const fullName = `${user.nombre} ${user.apellido}`.trim()
-  const initials = `${user.nombre?.charAt(0) ?? ''}${user.apellido?.charAt(0) ?? ''}`.toUpperCase()
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', {
@@ -66,22 +64,14 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
   }
 
   return (
-    <Sidebar className="border-r border-sidebar-border/80 bg-sidebar/95 text-sidebar-foreground backdrop-blur-2xl">
-      <SidebarHeader className="border-b border-sidebar-border/80 px-4 py-4">
-        <Link href="/teacher/dashboard" className="flex items-center gap-3 rounded-2xl">
-          <div className="overflow-hidden rounded-2xl border border-primary/10 bg-card shadow-[0_10px_28px_-16px_rgba(36,59,123,0.35)]">
-            <Image
-              src="/logo-blossom.png"
-              alt="Blossom Institute"
-              width={48}
-              height={48}
-              className="h-12 w-12 object-cover"
-              priority
-            />
-          </div>
-
+    <Sidebar className="border-r border-sidebar-border/70 bg-sidebar/95 text-sidebar-foreground backdrop-blur-2xl">
+      <SidebarHeader className="border-b border-sidebar-border/70 px-4 py-4">
+        <Link
+          href="/teacher/dashboard"
+          className="flex items-center justify-center rounded-2xl text-center"
+        >
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold tracking-tight text-foreground">
+            <p className="truncate text-[0.95rem] font-semibold tracking-tight text-foreground">
               Blossom Institute
             </p>
             <p className="truncate text-xs text-muted-foreground">
@@ -103,7 +93,8 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
                 <SidebarMenu className="space-y-1.5">
                   {teacherNavItems.map((item) => {
                     const isActive =
-                      pathname === item.url || pathname.startsWith(item.url)
+                      pathname === item.url ||
+                      (item.url !== '/teacher/dashboard' && pathname.startsWith(item.url))
 
                     return (
                       <SidebarMenuItem key={item.title}>
@@ -182,17 +173,18 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
 
           <div className="pt-5">
             {!mounted ? (
-              <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-card/80 px-3 py-3 shadow-sm">
-                <Avatar className="size-10 ring-1 ring-primary/10">
-                  <AvatarImage src="/avatars/teacher.jpg" alt={fullName} />
-                  <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
+              <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/85 px-3 py-3 shadow-sm">
+                <div className="flex size-10 items-center justify-center rounded-2xl border border-border/60 bg-primary/10 text-primary ring-1 ring-primary/10">
+                  <UserRound className="size-4.5" />
+                </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-foreground">{fullName}</p>
-                  <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {fullName}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {user.email}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -200,18 +192,19 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-card/85 px-3 py-3 text-left shadow-sm transition-all hover:bg-sidebar-accent/70"
+                    className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/85 px-3 py-3 text-left shadow-sm transition-all hover:bg-sidebar-accent/70"
                   >
-                    <Avatar className="size-10 ring-1 ring-primary/10">
-                      <AvatarImage src="/avatars/teacher.jpg" alt={fullName} />
-                      <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="flex size-10 items-center justify-center rounded-2xl border border-border/60 bg-primary/10 text-primary ring-1 ring-primary/10">
+                      <UserRound className="size-4.5" />
+                    </div>
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">{fullName}</p>
-                      <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {fullName}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
                     </div>
                   </button>
                 </DropdownMenuTrigger>
@@ -222,8 +215,12 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
                   className="w-64 rounded-2xl border border-border/70 bg-popover/95 p-2 shadow-[0_22px_50px_-24px_rgba(15,23,42,0.30)] backdrop-blur-xl"
                 >
                   <div className="mb-2 rounded-xl bg-muted/40 px-3 py-2">
-                    <p className="truncate text-sm font-semibold text-foreground">{fullName}</p>
-                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {fullName}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
                     <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">
                       {user.roles.join(', ')}
                     </p>

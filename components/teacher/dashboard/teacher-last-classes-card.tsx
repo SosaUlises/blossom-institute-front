@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, ArrowUpRight } from 'lucide-react'
+import { BookOpen, CalendarDays } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -48,7 +48,7 @@ function ClassMeta({
       : 'bg-primary/10 text-primary'
 
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+    <div className="rounded-2xl border border-border/60 bg-background/80 px-4 py-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
       <div className="flex items-start gap-3">
         <div className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${accentClasses}`}>
           <Icon className="size-4" />
@@ -73,12 +73,12 @@ export function TeacherLastClassesCard({
   items: ProfesorDashboardUltimaClaseItem[]
 }) {
   return (
-    <Card className="rounded-[28px] border border-border/70 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(30,42,68,0.16)]">
+    <Card className="rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-semibold tracking-tight">
           Últimas clases
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm leading-6">
           Historial reciente de clases vinculadas a tus cursos.
         </CardDescription>
       </CardHeader>
@@ -92,7 +92,7 @@ export function TeacherLastClassesCard({
           items.map((item) => (
             <div
               key={item.claseId}
-              className="group rounded-[26px] border border-border/70 bg-background/70 p-5 transition-all hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_34px_-22px_rgba(30,42,68,0.22)]"
+              className="group rounded-[26px] border border-border/60 bg-background/70 p-5 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_34px_-22px_rgba(15,23,42,0.18)]"
             >
               <div className="flex items-start gap-4">
                 <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -117,8 +117,6 @@ export function TeacherLastClassesCard({
                       >
                         {getEstadoClaseLabel(item.estadoClase)}
                       </span>
-
-                 
                     </div>
                   </div>
 
@@ -132,7 +130,7 @@ export function TeacherLastClassesCard({
                   </div>
 
                   {item.descripcion && (
-                    <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                    <div className="rounded-2xl border border-border/60 bg-background/80 px-4 py-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                         Descripción
                       </p>
