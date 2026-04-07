@@ -48,12 +48,12 @@ function AttendanceOptionButton({
         ? 'border-green-500/20 bg-green-500/12 text-green-700 dark:text-green-400 shadow-sm'
         : 'border-border/60 bg-background/80 text-muted-foreground hover:border-green-500/20 hover:bg-green-500/5 hover:text-green-700 dark:hover:text-green-400'
       : tone === 'danger'
-      ? active
-        ? 'border-red-500/20 bg-red-500/12 text-red-700 dark:text-red-400 shadow-sm'
-        : 'border-border/60 bg-background/80 text-muted-foreground hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-700 dark:hover:text-red-400'
-      : active
-      ? 'border-primary/20 bg-primary/10 text-primary shadow-sm'
-      : 'border-border/60 bg-background/80 text-muted-foreground hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
+        ? active
+          ? 'border-red-500/20 bg-red-500/12 text-red-700 dark:text-red-400 shadow-sm'
+          : 'border-border/60 bg-background/80 text-muted-foreground hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-700 dark:hover:text-red-400'
+        : active
+          ? 'border-primary/20 bg-primary/10 text-primary shadow-sm'
+          : 'border-border/60 bg-background/80 text-muted-foreground hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
 
   return (
     <button
@@ -163,16 +163,22 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
   }
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Cargando alumnos...</p>
+    return (
+      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
+        Cargando alumnos...
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[30px] border border-border/70 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(30,42,68,0.24)] md:p-8">
-        <div className="space-y-5">
+      <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.06),transparent_28%)]" />
+
+        <div className="relative space-y-5">
           <Button
             variant="outline"
-            className="rounded-2xl"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
             onClick={() => router.push(`/teacher/courses/${courseId}`)}
           >
             <ArrowLeft className="mr-2 size-4" />
@@ -180,6 +186,10 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
           </Button>
 
           <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+              <CheckSquare className="size-3.5" />
+              Attendance
+            </div>
 
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
               Tomar asistencia
@@ -197,7 +207,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
                 type="date"
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
-                className="w-full rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm outline-none"
+                className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
               />
             </div>
 
@@ -208,45 +218,45 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
               <input
                 value={descripcionClase}
                 onChange={(e) => setDescripcionClase(e.target.value)}
-                className="w-full rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm outline-none"
+                className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
                 placeholder="Temas vistos, observaciones, contenido trabajado..."
               />
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4 shadow-sm">
+            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Users className="size-4" />
                 <span className="text-xs font-medium uppercase tracking-[0.14em]">
                   Alumnos
                 </span>
               </div>
-              <p className="mt-3 text-2xl font-semibold text-foreground">
+              <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
                 {students.length}
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4 shadow-sm">
+            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <CheckSquare className="size-4" />
-                <span className="text-xs font-medium uppercase tracking-[0.14em]">
+                <span className="text-xs text-green-700 dark:text-green-400 font-medium uppercase tracking-[0.14em]">
                   Presentes
                 </span>
               </div>
-              <p className="mt-3 text-2xl font-semibold text-foreground">
+              <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
                 {presentCount}
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4 shadow-sm">
+            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <CheckSquare className="size-4" />
-                <span className="text-xs font-medium uppercase tracking-[0.14em]">
+                <span className="text-xs text-red-700 dark:text-red-400 font-medium uppercase tracking-[0.14em]">
                   Ausentes
                 </span>
               </div>
-              <p className="mt-3 text-2xl font-semibold text-foreground">
+              <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
                 {absentCount}
               </p>
             </div>
@@ -254,7 +264,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-border/70 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -265,7 +275,11 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
             </h2>
           </div>
 
-          <Button onClick={handleSave} disabled={saving} className="rounded-2xl">
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+          >
             <Save className="mr-2 size-4" />
             {saving ? 'Guardando...' : 'Guardar asistencia'}
           </Button>
@@ -283,70 +297,66 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
           </div>
         )}
 
-       
         <div className="space-y-3">
-  {students.map((student) => {
-    const statusLabel =
-      student.estado === EstadoAsistencia.Presente
-        ? 'Presente'
-        : student.estado === EstadoAsistencia.Ausente
-        ? 'Ausente'
-        : 'Sin registro'
+          {students.map((student) => {
+            const statusLabel =
+              student.estado === EstadoAsistencia.Presente
+                ? 'Presente'
+                : student.estado === EstadoAsistencia.Ausente
+                  ? 'Ausente'
+                  : 'Sin registro'
 
-    const statusClass =
-      student.estado === EstadoAsistencia.Presente
-        ? 'border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-400'
-        : student.estado === EstadoAsistencia.Ausente
-        ? 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400'
-        : 'border-border/60 bg-muted/40 text-muted-foreground'
+            const statusClass =
+              student.estado === EstadoAsistencia.Presente
+                ? 'border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-400'
+                : student.estado === EstadoAsistencia.Ausente
+                  ? 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400'
+                  : 'border-border/60 bg-muted/40 text-muted-foreground'
 
-    return (
-      <div
-        key={student.alumnoId}
-        className="rounded-[26px] border border-border/70 bg-background/75 p-4 shadow-sm transition-all hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-base font-semibold text-foreground">
-                {student.nombreCompleto}
-              </p>
-
-              <span
-                className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${statusClass}`}
+            return (
+              <div
+                key={student.alumnoId}
+                className="rounded-[26px] border border-border/60 bg-background/75 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
               >
-                {statusLabel}
-              </span>
-            </div>
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-base font-semibold text-foreground">
+                        {student.nombreCompleto}
+                      </p>
 
-          </div>
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${statusClass}`}
+                      >
+                        {statusLabel}
+                      </span>
+                    </div>
+                  </div>
 
-          <div className="flex flex-wrap gap-2">
-            <AttendanceOptionButton
-              label="Presente"
-              tone="success"
-              active={student.estado === EstadoAsistencia.Presente}
-              onClick={() =>
-                handleChangeEstado(student.alumnoId, EstadoAsistencia.Presente)
-              }
-            />
+                  <div className="flex flex-wrap gap-2">
+                    <AttendanceOptionButton
+                      label="Presente"
+                      tone="success"
+                      active={student.estado === EstadoAsistencia.Presente}
+                      onClick={() =>
+                        handleChangeEstado(student.alumnoId, EstadoAsistencia.Presente)
+                      }
+                    />
 
-            <AttendanceOptionButton
-              label="Ausente"
-              tone="danger"
-              active={student.estado === EstadoAsistencia.Ausente}
-              onClick={() =>
-                handleChangeEstado(student.alumnoId, EstadoAsistencia.Ausente)
-              }
-            />
-
-           
-          </div>
+                    <AttendanceOptionButton
+                      label="Ausente"
+                      tone="danger"
+                      active={student.estado === EstadoAsistencia.Ausente}
+                      onClick={() =>
+                        handleChangeEstado(student.alumnoId, EstadoAsistencia.Ausente)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
-      </div>
-    )
-  })}
-</div>
       </section>
     </div>
   )

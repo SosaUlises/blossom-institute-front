@@ -6,13 +6,15 @@ import {
   CalendarDays,
   FileText,
   CheckSquare,
+  CheckCircle2,
+  Users,
+  XCircle,
 } from 'lucide-react'
 
 import { RowActions } from '@/components/ui/row-actions'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/teacher/course-detail/formatters'
 import { getEstadoClaseConfig } from '@/lib/teacher/course-detail/status'
-import { CheckCircle2, Users, XCircle } from 'lucide-react'
 
 type CourseClass = {
   id: number
@@ -34,8 +36,6 @@ type PaginatedClassesEnvelope = {
   }
 }
 
-
-
 function ClassStat({
   label,
   value,
@@ -48,28 +48,28 @@ function ClassStat({
       ? {
           icon: CheckCircle2,
           container: 'border-emerald-500/20 bg-emerald-500/10',
-          iconWrap: 'bg-emerald-500/15 text-emerald-600',
+          iconWrap: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
           value: 'text-emerald-700 dark:text-emerald-400',
         }
       : label === 'Ausentes'
-      ? {
-          icon: XCircle,
-          container: 'border-rose-500/20 bg-rose-500/10',
-          iconWrap: 'bg-rose-500/15 text-rose-600',
-          value: 'text-rose-700 dark:text-rose-400',
-        }
-      : {
-          icon: Users,
-          container: 'border-border/70 bg-background/80',
-          iconWrap: 'bg-background text-muted-foreground',
-          value: 'text-foreground',
-        }
+        ? {
+            icon: XCircle,
+            container: 'border-rose-500/20 bg-rose-500/10',
+            iconWrap: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
+            value: 'text-rose-700 dark:text-rose-400',
+          }
+        : {
+            icon: Users,
+            container: 'border-border/60 bg-background/80',
+            iconWrap: 'bg-background text-muted-foreground',
+            value: 'text-foreground',
+          }
 
   const Icon = config.icon
 
   return (
     <div
-      className={`rounded-[22px] border px-4 py-3 shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md ${config.container}`}
+      className={`rounded-[22px] border px-4 py-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md ${config.container}`}
     >
       <div className="flex items-center gap-2">
         <div
@@ -83,7 +83,7 @@ function ClassStat({
         </span>
       </div>
 
-      <p className={`mt-2 text-xl font-bold ${config.value}`}>
+      <p className={`mt-2 text-xl font-semibold tracking-tight ${config.value}`}>
         {value}
       </p>
     </div>
@@ -143,11 +143,19 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
   }, [courseId, from, to, pageNumber])
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Cargando clases...</p>
+    return (
+      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
+        Cargando clases...
+      </div>
+    )
   }
 
   if (error) {
-    return <p className="text-sm text-destructive">{error}</p>
+    return (
+      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+        {error}
+      </div>
+    )
   }
 
   return (
@@ -159,16 +167,16 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
           </p>
         </div>
 
-       <Button
-        onClick={() => router.push(`/teacher/courses/${courseId}/classes/take`)}
-        className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_26px_-12px_rgba(36,59,123,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_16px_34px_-14px_rgba(36,59,123,0.55)] active:translate-y-0"
-      >
-        <CheckSquare className="mr-2 size-4 transition-transform duration-200 group-hover:scale-110" />
-        Tomar asistencia
-      </Button>
+        <Button
+          onClick={() => router.push(`/teacher/courses/${courseId}/classes/take`)}
+          className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+        >
+          <CheckSquare className="mr-2 size-4" />
+          Tomar asistencia
+        </Button>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-[24px] border border-border/70 bg-card/90 p-4 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4 rounded-[24px] border border-border/60 bg-card/90 p-4 md:flex-row md:items-end md:justify-between">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Desde</label>
@@ -179,7 +187,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
                 setFrom(e.target.value)
                 setPageNumber(1)
               }}
-              className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm outline-none"
+              className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
             />
           </div>
 
@@ -192,28 +200,30 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
                 setTo(e.target.value)
                 setPageNumber(1)
               }}
-              className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm outline-none"
+              className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
             />
           </div>
         </div>
 
         <div className="flex gap-2">
           <Button
-          variant="outline"
-          className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary hover:shadow-sm"
-          onClick={() => {
-            setFrom('')
-            setTo('')
-            setPageNumber(1)
-          }}
-        >
-          Limpiar filtros
-        </Button>
+            variant="outline"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary hover:shadow-sm"
+            onClick={() => {
+              setFrom('')
+              setTo('')
+              setPageNumber(1)
+            }}
+          >
+            Limpiar filtros
+          </Button>
         </div>
       </div>
 
       {data.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Sin clases.</p>
+        <div className="rounded-[24px] border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
+          Sin clases.
+        </div>
       ) : (
         <div className="space-y-4">
           {data.map((item) => {
@@ -222,7 +232,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
             return (
               <article
                 key={item.id}
-                className="relative rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] transition-all hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(30,42,68,0.22)] md:p-6"
+                className="relative rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(15,23,42,0.20)] md:p-6"
               >
                 <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.06),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
 
@@ -244,14 +254,14 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
                     <div className="pl-2">
                       <RowActions
                         actions={[
-                            {
+                          {
                             label: 'Gestionar asistencia',
                             icon: CheckSquare,
                             onClick: () =>
-                                router.push(`/teacher/courses/${courseId}/classes/${item.fecha}`),
-                            },
+                              router.push(`/teacher/courses/${courseId}/classes/${item.fecha}`),
+                          },
                         ]}
-                        />
+                      />
                     </div>
                   </div>
 

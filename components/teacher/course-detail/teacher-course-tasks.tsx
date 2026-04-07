@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   CalendarClock,
@@ -64,7 +64,6 @@ function TaskMetaItem({
         <div className={`flex size-8 items-center justify-center rounded-xl ${iconWrapClass}`}>
           <Icon className="size-4" />
         </div>
-
         <span className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${labelClass}`}>
           {label}
         </span>
@@ -133,54 +132,61 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
     load()
   }, [courseId, debouncedSearch, estado, pageNumber])
 
- const handleArchive = async (taskId: number) => {
-  const confirmed = window.confirm('¿Querés archivar esta tarea?')
-  if (!confirmed) return
+  const handleArchive = async (taskId: number) => {
+    const confirmed = window.confirm('¿Querés archivar esta tarea?')
+    if (!confirmed) return
 
-  try {
-    setError(null)
-    await archiveTeacherTask(courseId, taskId)
+    try {
+      setError(null)
+      await archiveTeacherTask(courseId, taskId)
 
-    setData((prev) =>
-      prev.map((item) =>
-        item.id === taskId
-          ? { ...item, estado: EstadoTarea.Archivada }
-          : item
+      setData((prev) =>
+        prev.map((item) =>
+          item.id === taskId
+            ? { ...item, estado: EstadoTarea.Archivada }
+            : item
+        )
       )
-    )
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Ocurrió un error.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ocurrió un error.')
+    }
   }
-}
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Cargando tareas...</p>
+    return (
+      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
+        Cargando tareas...
+      </div>
+    )
   }
 
   if (error) {
-    return <p className="text-sm text-destructive">{error}</p>
+    return (
+      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+        {error}
+      </div>
+    )
   }
 
-
   return (
-    
     <div className="space-y-5">
-        <div className="flex items-center justify-between gap-4">
-  <div>
-    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-      Tasks
-    </p>
-  </div>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Tasks
+          </p>
+        </div>
 
-  <Button
-    onClick={() => router.push(`/teacher/courses/${courseId}/tasks/create`)}
-    className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_26px_-12px_rgba(36,59,123,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_16px_34px_-14px_rgba(36,59,123,0.55)] active:translate-y-0"
-  >
-    <Plus className="mr-2 size-4" />
-    Crear tarea
-  </Button>
-</div>
-      <div className="flex flex-col gap-4 rounded-[24px] border border-border/70 bg-card/90 p-4 md:flex-row md:items-end md:justify-between">
+        <Button
+          onClick={() => router.push(`/teacher/courses/${courseId}/tasks/create`)}
+          className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+        >
+          <Plus className="mr-2 size-4" />
+          Crear tarea
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-[24px] border border-border/60 bg-card/90 p-4 md:flex-row md:items-end md:justify-between">
         <div className="grid gap-3 md:grid-cols-2">
           <div className="relative min-w-[260px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -191,7 +197,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
                 setSearch(e.target.value)
                 setPageNumber(1)
               }}
-              className="h-11 rounded-2xl border-border/70 bg-background/80 pl-10 shadow-sm"
+              className="h-11 rounded-2xl border-border/70 bg-background/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
             />
           </div>
 
@@ -201,7 +207,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
               setEstado(e.target.value)
               setPageNumber(1)
             }}
-            className="flex h-11 rounded-2xl border border-border/70 bg-background/80 px-3 py-2 text-sm shadow-sm outline-none"
+            className="flex h-11 rounded-2xl border border-border/70 bg-background/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
           >
             <option value="">Todos los estados</option>
             <option value={EstadoTarea.Borrador}>Borrador</option>
@@ -213,7 +219,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
         <div className="flex gap-2">
           <Button
             variant="outline"
-             className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary hover:shadow-sm"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary hover:shadow-sm"
             onClick={() => {
               setSearch('')
               setDebouncedSearch('')
@@ -227,7 +233,9 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
       </div>
 
       {data.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Sin tareas.</p>
+        <div className="rounded-[24px] border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
+          Sin tareas.
+        </div>
       ) : (
         <div className="space-y-4">
           {data.map((task) => {
@@ -236,7 +244,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
             return (
               <article
                 key={task.id}
-                className="relative rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] transition-all hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(30,42,68,0.22)] md:p-6"
+                className="relative rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(15,23,42,0.20)] md:p-6"
               >
                 <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.06),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
 
@@ -287,25 +295,25 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
                         {task.titulo}
                       </h3>
 
-                     <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                      Gestioná entregas, edición y estado de la actividad.
-                    </p>
+                      <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                        Gestioná entregas, edición y estado de la actividad.
+                      </p>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
-                    <TaskMetaItem
-                      icon={CalendarClock}
-                      label="Entrega"
-                      value={formatDateTime(task.fechaEntregaUtc)}
-                      tone="highlight"
-                    />
+                      <TaskMetaItem
+                        icon={CalendarClock}
+                        label="Entrega"
+                        value={formatDateTime(task.fechaEntregaUtc)}
+                        tone="highlight"
+                      />
 
-                    <TaskMetaItem
-                      icon={Clock3}
-                      label="Publicación"
-                      value={formatDateTime(task.createdAtUtc)}
-                    />
-                  </div>
+                      <TaskMetaItem
+                        icon={Clock3}
+                        label="Publicación"
+                        value={formatDateTime(task.createdAtUtc)}
+                      />
+                    </div>
                   </div>
                 </div>
               </article>

@@ -31,7 +31,7 @@ function StudentCard({
   const router = useRouter()
 
   return (
-    <article className="group relative rounded-[26px] border border-border/70 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(30,42,68,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_22px_48px_-24px_rgba(30,42,68,0.22)]">
+    <article className="group relative rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_22px_48px_-24px_rgba(15,23,42,0.20)]">
       <div className="pointer-events-none absolute inset-0 rounded-[26px] bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
 
       <div className="relative space-y-4">
@@ -58,7 +58,7 @@ function StudentCard({
           </div>
         </div>
 
-        <div className="rounded-[20px] border border-border/70 bg-background/75 p-3 shadow-sm">
+        <div className="rounded-[20px] border border-border/60 bg-background/75 p-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Mail className="size-4" />
             <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
@@ -71,19 +71,19 @@ function StudentCard({
           </p>
         </div>
 
-       <div className="pt-1">
-        <Button
-          className="rounded-2xl bg-amber-500 text-white shadow-[0_10px_24px_-12px_rgba(245,158,11,0.7)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-amber-600 hover:shadow-[0_14px_30px_-12px_rgba(245,158,11,0.85)] active:translate-y-0"
-          onClick={() =>
-            router.push(
-              `/teacher/courses/${courseId}/students/${student.alumnoId}/grades`
-            )
-          }
-        >
-          <Trophy className="mr-2 size-4" />
-          Calificaciones
-        </Button>
-      </div>
+        <div className="pt-1">
+          <Button
+            className="rounded-2xl bg-amber-500 text-white shadow-[0_10px_24px_-12px_rgba(245,158,11,0.7)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-amber-600 hover:shadow-[0_14px_30px_-12px_rgba(245,158,11,0.85)] active:translate-y-0"
+            onClick={() =>
+              router.push(
+                `/teacher/courses/${courseId}/students/${student.alumnoId}/grades`
+              )
+            }
+          >
+            <Trophy className="mr-2 size-4" />
+            Calificaciones
+          </Button>
+        </div>
       </div>
     </article>
   )
@@ -91,7 +91,7 @@ function StudentCard({
 
 function StudentCardSkeleton() {
   return (
-    <div className="rounded-[26px] border border-border/70 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(30,42,68,0.16)]">
+    <div className="rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)]">
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div className="h-12 w-12 animate-pulse rounded-[18px] bg-muted/40" />
@@ -153,7 +153,11 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
   }
 
   if (error) {
-    return <p className="text-sm text-destructive">{error}</p>
+    return (
+      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+        {error}
+      </div>
+    )
   }
 
   if (data.length === 0) {

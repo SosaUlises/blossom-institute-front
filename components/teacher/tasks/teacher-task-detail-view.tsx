@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
   CalendarClock,
-  Clock3,
   ClipboardList,
+  Clock3,
   Eye,
-  FileText,
   Link as LinkIcon,
   Paperclip,
   Search,
+  Star,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -23,7 +23,11 @@ import type {
   TeacherSubmissionsResponse,
   TeacherSubmissionListItem,
 } from '@/lib/teacher/tasks/types'
-import { getEstadoCorreccionConfig, getEstadoEntregaConfig, getEstadoTareaConfig } from '@/lib/teacher/tasks/utils'
+import {
+  getEstadoCorreccionConfig,
+  getEstadoEntregaConfig,
+  getEstadoTareaConfig,
+} from '@/lib/teacher/tasks/utils'
 
 type Props = {
   courseId: number
@@ -102,27 +106,39 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
   )
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Cargando tarea...</p>
+    return (
+      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
+        Cargando tarea...
+      </div>
+    )
   }
 
   if (error) {
-    return <p className="text-sm text-destructive">{error}</p>
+    return (
+      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+        {error}
+      </div>
+    )
   }
 
   if (!task) {
-    return <p className="text-sm text-muted-foreground">No se encontró la tarea.</p>
+    return (
+      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
+        No se encontró la tarea.
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[30px] border border-border/70 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(30,42,68,0.24)] md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.10),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_28%)]" />
+      <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.06),transparent_28%)]" />
 
         <div className="relative space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               variant="outline"
-              className="rounded-2xl"
+              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
               onClick={() => router.push(`/teacher/courses/${courseId}`)}
             >
               <ArrowLeft className="mr-2 size-4" />
@@ -156,7 +172,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4 shadow-sm">
+            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <CalendarClock className="size-4" />
                 <span className="text-xs font-medium uppercase tracking-[0.14em]">
@@ -164,11 +180,11 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                 </span>
               </div>
               <p className="mt-3 text-sm font-semibold text-foreground">
-                {formatDateTime(task.fechaEntregaUtc)}
+                {task.fechaEntregaUtc ? formatDateTime(task.fechaEntregaUtc) : 'Sin fecha'}
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4 shadow-sm">
+            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock3 className="size-4" />
                 <span className="text-xs font-medium uppercase tracking-[0.14em]">
@@ -180,7 +196,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4 shadow-sm">
+            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <ClipboardList className="size-4" />
                 <span className="text-xs font-medium uppercase tracking-[0.14em]">
@@ -196,7 +212,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
       </section>
 
       {task.recursos.length > 0 && (
-        <section className="rounded-[28px] border border-border/70 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+        <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
           <div className="mb-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Resources
@@ -213,7 +229,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                 href={resource.url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-3 rounded-[22px] border border-border/70 bg-background/75 p-4 transition hover:bg-background"
+                className="flex items-center gap-3 rounded-[22px] border border-border/60 bg-background/75 p-4 transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-sm"
               >
                 <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   {resource.tipo === 1 ? (
@@ -224,9 +240,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                 </div>
 
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">
-                    {resource.nombre}
-                  </p>
+                  <p className="truncate font-medium text-foreground">{resource.nombre}</p>
                   <p className="text-sm text-muted-foreground">
                     {resource.tipo === 1 ? 'Link' : 'Archivo'}
                   </p>
@@ -237,7 +251,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
         </section>
       )}
 
-      <section className="rounded-[28px] border border-border/70 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -257,13 +271,15 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                 setSearch(e.target.value)
                 setPageNumber(1)
               }}
-              className="h-11 rounded-2xl border-border/70 bg-background/80 pl-10 shadow-sm"
+              className="h-11 rounded-2xl border-border/70 bg-background/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)]"
             />
           </div>
         </div>
 
         {submissions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No hay entregas para esta tarea.</p>
+          <div className="rounded-[24px] border border-dashed border-border/70 bg-background/60 px-6 py-10 text-center text-sm text-muted-foreground">
+            No hay entregas para esta tarea.
+          </div>
         ) : (
           <div className="space-y-4">
             {submissions.map((submission) => {
@@ -273,7 +289,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
               return (
                 <article
                   key={submission.entregaId}
-                  className="rounded-[26px] border border-border/70 bg-background/75 p-4 shadow-sm transition hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
+                  className="rounded-[26px] border border-border/60 bg-background/75 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
                 >
                   <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                     <div className="min-w-0 space-y-2">
@@ -297,7 +313,12 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
 
                       <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                         <span>DNI: {submission.alumnoDni}</span>
-                        <span>Entrega: {formatDateTime(submission.fechaEntregaUtc)}</span>
+                        <span>
+                          Entrega:{' '}
+                          {submission.fechaEntregaUtc
+                            ? formatDateTime(submission.fechaEntregaUtc)
+                            : '-'}
+                        </span>
                         <span>{submission.tieneAdjuntos ? 'Con adjuntos' : 'Sin adjuntos'}</span>
                       </div>
                     </div>
@@ -329,7 +350,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              className="rounded-2xl"
+              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
               disabled={pageNumber === 1}
               onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
             >
@@ -338,7 +359,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
 
             <Button
               variant="outline"
-              className="rounded-2xl"
+              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
               disabled={pageNumber * pageSize >= total}
               onClick={() => setPageNumber((prev) => prev + 1)}
             >
