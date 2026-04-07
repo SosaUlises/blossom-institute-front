@@ -72,6 +72,7 @@ export function TeacherLastClassesCard({
 }: {
   items: ProfesorDashboardUltimaClaseItem[]
 }) {
+  const visibleItems = items.slice(0, 3)
   return (
     <Card className="rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
       <CardHeader className="pb-4">
@@ -82,14 +83,14 @@ export function TeacherLastClassesCard({
           Historial reciente de clases vinculadas a tus cursos.
         </CardDescription>
       </CardHeader>
-
+      
       <CardContent className="space-y-4 pt-0">
-        {items.length === 0 ? (
+        {visibleItems.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
             No hay clases recientes.
           </div>
         ) : (
-          items.map((item) => (
+          visibleItems.map((item) => (
             <div
               key={item.claseId}
               className="group rounded-[26px] border border-border/60 bg-background/70 p-5 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_34px_-22px_rgba(15,23,42,0.18)]"
