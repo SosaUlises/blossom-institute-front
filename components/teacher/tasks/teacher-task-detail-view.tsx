@@ -5,13 +5,12 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
   CalendarClock,
-  ClipboardList,
-  Clock3,
-  Eye,
+  FileText,
   Link as LinkIcon,
   Paperclip,
   Search,
-  Star,
+  ClipboardList,
+  Megaphone,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -23,11 +22,7 @@ import type {
   TeacherSubmissionsResponse,
   TeacherSubmissionListItem,
 } from '@/lib/teacher/tasks/types'
-import {
-  getEstadoCorreccionConfig,
-  getEstadoEntregaConfig,
-  getEstadoTareaConfig,
-} from '@/lib/teacher/tasks/utils'
+import { getEstadoCorreccionConfig, getEstadoEntregaConfig, getEstadoTareaConfig } from '@/lib/teacher/tasks/utils'
 
 type Props = {
   courseId: number
@@ -64,32 +59,39 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
         setLoading(true)
         setError(null)
 
-        const [taskResponse, submissionsResponse] = await Promise.all([
-          fetch(`/api/teacher/courses/${courseId}/tasks/${taskId}`, {
-            cache: 'no-store',
-          }),
-          fetch(
+        const taskResponse = await fetch(`/api/teacher/courses/${courseId}/tasks/${taskId}`, {
+          cache: 'no-store',
+        })
+
+        const taskResult = (await taskResponse.json()) as Envelope<TeacherTaskDetail>
+
+        if (!taskResponse.ok) {
+          throw new Error(taskResult.message || 'No se pudo obtener la publicación.')
+        }
+
+        setTask(taskResult.data ?? null)
+
+        if (taskResult.data && !taskResult.data.esAnuncio) {
+          const submissionsResponse = await fetch(
             `/api/teacher/courses/${courseId}/tasks/${taskId}/submissions?pageNumber=${pageNumber}&pageSize=${pageSize}&search=${encodeURIComponent(
               debouncedSearch
             )}`,
             { cache: 'no-store' }
-          ),
-        ])
+          )
 
-        const taskResult = (await taskResponse.json()) as Envelope<TeacherTaskDetail>
-        const submissionsResult = (await submissionsResponse.json()) as Envelope<TeacherSubmissionsResponse>
+          const submissionsResult = (await submissionsResponse.json()) as Envelope<TeacherSubmissionsResponse>
 
-        if (!taskResponse.ok) {
-          throw new Error(taskResult.message || 'No se pudo obtener la tarea.')
+          if (!submissionsResponse.ok) {
+            throw new Error(submissionsResult.message || 'No se pudieron obtener las entregas.')
+          }
+
+          setSubmissions(submissionsResult.data?.items ?? [])
+          setTotal(submissionsResult.data?.total ?? 0)
         }
-
-        if (!submissionsResponse.ok) {
-          throw new Error(submissionsResult.message || 'No se pudieron obtener las entregas.')
+        else {
+          setSubmissions([])
+          setTotal(0)
         }
-
-        setTask(taskResult.data ?? null)
-        setSubmissions(submissionsResult.data?.items ?? [])
-        setTotal(submissionsResult.data?.total ?? 0)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ocurrió un error.')
       } finally {
@@ -106,58 +108,54 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
   )
 
   if (loading) {
-    return (
-      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
-        Cargando tarea...
-      </div>
-    )
+    return <p className="text-sm text-muted-foreground">Cargando publicación...</p>
   }
 
   if (error) {
-    return (
-      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
-        {error}
-      </div>
-    )
+    return <p className="text-sm text-destructive">{error}</p>
   }
 
   if (!task) {
-    return (
-      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
-        No se encontró la tarea.
-      </div>
-    )
+    return <p className="text-sm text-muted-foreground">No se encontró la publicación.</p>
   }
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.06),transparent_28%)]" />
+      <section className="relative overflow-hidden rounded-[30px] border border-border/70 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(30,42,68,0.24)] md:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.10),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_28%)]" />
 
         <div className="relative space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              className="rounded-2xl"
               onClick={() => router.push(`/teacher/courses/${courseId}`)}
             >
               <ArrowLeft className="mr-2 size-4" />
               Volver al curso
             </Button>
 
-            {taskEstado && (
-              <span
-                className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${taskEstado.className}`}
-              >
-                {taskEstado.label}
-              </span>
-            )}
+            <div className="flex flex-wrap gap-2">
+              {task.esAnuncio && (
+                <span className="inline-flex items-center rounded-full border border-amber-500/15 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                  Anuncio
+                </span>
+              )}
+
+              {taskEstado && (
+                <span
+                  className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${taskEstado.className}`}
+                >
+                  {taskEstado.label}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-              <ClipboardList className="size-3.5" />
-              Task detail
+              {task.esAnuncio ? <Megaphone className="size-3.5" /> : <ClipboardList className="size-3.5" />}
+              {task.esAnuncio ? 'Announcement detail' : 'Task detail'}
             </div>
 
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
@@ -167,26 +165,28 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
               {task.consigna?.trim()
                 ? task.consigna
+                : task.esAnuncio
+                ? 'Anuncio publicado para el curso.'
                 : 'Sin consigna cargada para esta tarea.'}
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4 shadow-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <CalendarClock className="size-4" />
+                {task.esAnuncio ? <Megaphone className="size-4" /> : <CalendarClock className="size-4" />}
                 <span className="text-xs font-medium uppercase tracking-[0.14em]">
-                  Fecha de entrega
+                  {task.esAnuncio ? 'Tipo' : 'Fecha de entrega'}
                 </span>
               </div>
               <p className="mt-3 text-sm font-semibold text-foreground">
-                {task.fechaEntregaUtc ? formatDateTime(task.fechaEntregaUtc) : 'Sin fecha'}
+                {task.esAnuncio ? 'Anuncio' : formatDateTime(task.fechaEntregaUtc!)}
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4 shadow-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock3 className="size-4" />
+                <CalendarClock className="size-4" />
                 <span className="text-xs font-medium uppercase tracking-[0.14em]">
                   Publicación
                 </span>
@@ -196,9 +196,9 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4 shadow-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <ClipboardList className="size-4" />
+                <Paperclip className="size-4" />
                 <span className="text-xs font-medium uppercase tracking-[0.14em]">
                   Recursos
                 </span>
@@ -212,7 +212,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
       </section>
 
       {task.recursos.length > 0 && (
-        <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+        <section className="rounded-[28px] border border-border/70 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
           <div className="mb-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Resources
@@ -229,7 +229,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                 href={resource.url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-3 rounded-[22px] border border-border/60 bg-background/75 p-4 transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-sm"
+                className="flex items-center gap-3 rounded-[22px] border border-border/70 bg-background/75 p-4 transition hover:bg-background"
               >
                 <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   {resource.tipo === 1 ? (
@@ -240,7 +240,9 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                 </div>
 
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">{resource.nombre}</p>
+                  <p className="truncate font-medium text-foreground">
+                    {resource.nombre}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {resource.tipo === 1 ? 'Link' : 'Archivo'}
                   </p>
@@ -251,123 +253,118 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
         </section>
       )}
 
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Submissions
-            </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-              Entregas de alumnos
-            </h2>
+      {!task.esAnuncio && (
+        <section className="rounded-[28px] border border-border/70 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+          <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Submissions
+              </p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
+                Entregas de alumnos
+              </h2>
+            </div>
+
+            <div className="relative min-w-[280px]">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por alumno..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPageNumber(1)
+                }}
+                className="h-11 rounded-2xl border-border/70 bg-background/80 pl-10 shadow-sm"
+              />
+            </div>
           </div>
 
-          <div className="relative min-w-[280px]">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por alumno..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPageNumber(1)
-              }}
-              className="h-11 rounded-2xl border-border/70 bg-background/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)]"
-            />
-          </div>
-        </div>
+          {submissions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No hay entregas para esta tarea.</p>
+          ) : (
+            <div className="space-y-4">
+              {submissions.map((submission) => {
+                const entregaEstado = getEstadoEntregaConfig(submission.estadoEntrega)
+                const feedbackEstado = getEstadoCorreccionConfig(submission.feedbackVigente?.estado)
 
-        {submissions.length === 0 ? (
-          <div className="rounded-[24px] border border-dashed border-border/70 bg-background/60 px-6 py-10 text-center text-sm text-muted-foreground">
-            No hay entregas para esta tarea.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {submissions.map((submission) => {
-              const entregaEstado = getEstadoEntregaConfig(submission.estadoEntrega)
-              const feedbackEstado = getEstadoCorreccionConfig(submission.feedbackVigente?.estado)
+                return (
+                  <article
+                    key={submission.entregaId}
+                    className="rounded-[26px] border border-border/70 bg-background/75 p-4 shadow-sm transition hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
+                  >
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-base font-semibold text-foreground">
+                            {submission.alumnoNombre} {submission.alumnoApellido}
+                          </p>
 
-              return (
-                <article
-                  key={submission.entregaId}
-                  className="rounded-[26px] border border-border/60 bg-background/75 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
-                >
-                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                    <div className="min-w-0 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-base font-semibold text-foreground">
-                          {submission.alumnoNombre} {submission.alumnoApellido}
-                        </p>
+                          <span
+                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${entregaEstado.className}`}
+                          >
+                            {entregaEstado.label}
+                          </span>
 
-                        <span
-                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${entregaEstado.className}`}
-                        >
-                          {entregaEstado.label}
-                        </span>
+                          <span
+                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${feedbackEstado.className}`}
+                          >
+                            {feedbackEstado.label}
+                          </span>
+                        </div>
 
-                        <span
-                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${feedbackEstado.className}`}
-                        >
-                          {feedbackEstado.label}
-                        </span>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>DNI: {submission.alumnoDni}</span>
+                          <span>Entrega: {formatDateTime(submission.fechaEntregaUtc)}</span>
+                          <span>{submission.tieneAdjuntos ? 'Con adjuntos' : 'Sin adjuntos'}</span>
+                        </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                        <span>DNI: {submission.alumnoDni}</span>
-                        <span>
-                          Entrega:{' '}
-                          {submission.fechaEntregaUtc
-                            ? formatDateTime(submission.fechaEntregaUtc)
-                            : '-'}
-                        </span>
-                        <span>{submission.tieneAdjuntos ? 'Con adjuntos' : 'Sin adjuntos'}</span>
-                      </div>
+                      <RowActions
+                        actions={[
+                          {
+                            label: 'Ver entrega',
+                            icon: FileText,
+                            onClick: () =>
+                              router.push(
+                                `/teacher/courses/${courseId}/tasks/${taskId}/submissions/${submission.alumnoId}`
+                              ),
+                          },
+                        ]}
+                      />
                     </div>
+                  </article>
+                )
+              })}
+            </div>
+          )}
 
-                    <RowActions
-                      actions={[
-                        {
-                          label: 'Ver entrega',
-                          icon: Eye,
-                          onClick: () =>
-                            router.push(
-                              `/teacher/courses/${courseId}/tasks/${taskId}/submissions/${submission.alumnoId}`
-                            ),
-                        },
-                      ]}
-                    />
-                  </div>
-                </article>
-              )
-            })}
+          <div className="mt-5 flex items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              Página {pageNumber} · {total} entregas en total
+            </p>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="rounded-2xl"
+                disabled={pageNumber === 1}
+                onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
+              >
+                Anterior
+              </Button>
+
+              <Button
+                variant="outline"
+                className="rounded-2xl"
+                disabled={pageNumber * pageSize >= total}
+                onClick={() => setPageNumber((prev) => prev + 1)}
+              >
+                Siguiente
+              </Button>
+            </div>
           </div>
-        )}
-
-        <div className="mt-5 flex items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            Página {pageNumber} · {total} entregas en total
-          </p>
-
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
-              disabled={pageNumber === 1}
-              onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
-            >
-              Anterior
-            </Button>
-
-            <Button
-              variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
-              disabled={pageNumber * pageSize >= total}
-              onClick={() => setPageNumber((prev) => prev + 1)}
-            >
-              Siguiente
-            </Button>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   )
 }

@@ -229,17 +229,25 @@ export function TeacherTaskCreateView({ courseId }: Props) {
             </select>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Fecha de entrega</label>
+         <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Fecha de entrega
+            </label>
             <div className="relative">
               <CalendarClock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="datetime-local"
                 value={fechaEntregaUtc}
                 onChange={(e) => setFechaEntregaUtc(e.target.value)}
-                className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                className="h-11 w-full rounded-2xl border border-border/70 bg-background/80 pl-10 pr-4 text-sm outline-none"
               />
             </div>
+
+            {!fechaEntregaUtc && (
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                Si no definís fecha de entrega, esta publicación se guardará como anuncio y no admitirá entregas.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2 md:col-span-2">

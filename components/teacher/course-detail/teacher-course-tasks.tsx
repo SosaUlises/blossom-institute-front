@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   CalendarClock,
@@ -11,6 +11,7 @@ import {
   Archive,
   Search,
   Plus,
+  Megaphone,
 } from 'lucide-react'
 
 import { RowActions } from '@/components/ui/row-actions'
@@ -109,9 +110,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
         const response = await fetch(
           `/api/teacher/courses/${courseId}/tasks?${query.toString()}`,
-          {
-            cache: 'no-store',
-          }
+          { cache: 'no-store' }
         )
 
         const result = (await response.json()) as Envelope<TeacherTaskListResponse>
@@ -133,7 +132,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   }, [courseId, debouncedSearch, estado, pageNumber])
 
   const handleArchive = async (taskId: number) => {
-    const confirmed = window.confirm('¿Querés archivar esta tarea?')
+    const confirmed = window.confirm('¿Querés archivar esta publicación?')
     if (!confirmed) return
 
     try {
@@ -153,19 +152,11 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   }
 
   if (loading) {
-    return (
-      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
-        Cargando tareas...
-      </div>
-    )
+    return <p className="text-sm text-muted-foreground">Cargando tareas...</p>
   }
 
   if (error) {
-    return (
-      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
-        {error}
-      </div>
-    )
+    return <p className="text-sm text-destructive">{error}</p>
   }
 
   return (
@@ -179,25 +170,25 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
         <Button
           onClick={() => router.push(`/teacher/courses/${courseId}/tasks/create`)}
-          className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+          className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_26px_-12px_rgba(36,59,123,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_16px_34px_-14px_rgba(36,59,123,0.55)] active:translate-y-0"
         >
           <Plus className="mr-2 size-4" />
-          Crear tarea
+          Crear publicación
         </Button>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-[24px] border border-border/60 bg-card/90 p-4 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4 rounded-[24px] border border-border/70 bg-card/90 p-4 md:flex-row md:items-end md:justify-between">
         <div className="grid gap-3 md:grid-cols-2">
           <div className="relative min-w-[260px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar tarea..."
+              placeholder="Buscar publicación..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
                 setPageNumber(1)
               }}
-              className="h-11 rounded-2xl border-border/70 bg-background/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+              className="h-11 rounded-2xl border-border/70 bg-background/80 pl-10 shadow-sm"
             />
           </div>
 
@@ -207,7 +198,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
               setEstado(e.target.value)
               setPageNumber(1)
             }}
-            className="flex h-11 rounded-2xl border border-border/70 bg-background/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+            className="flex h-11 rounded-2xl border border-border/70 bg-background/80 px-3 py-2 text-sm shadow-sm outline-none"
           >
             <option value="">Todos los estados</option>
             <option value={EstadoTarea.Borrador}>Borrador</option>
@@ -233,9 +224,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
       </div>
 
       {data.length === 0 ? (
-        <div className="rounded-[24px] border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
-          Sin tareas.
-        </div>
+        <p className="text-sm text-muted-foreground">Sin publicaciones.</p>
       ) : (
         <div className="space-y-4">
           {data.map((task) => {
@@ -244,16 +233,22 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
             return (
               <article
                 key={task.id}
-                className="relative rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(15,23,42,0.20)] md:p-6"
+                className="relative rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] transition-all hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(30,42,68,0.22)] md:p-6"
               >
                 <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.06),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
 
                 <div className="relative space-y-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-                        <ClipboardList className="size-3.5" />
-                        Tarea
+                      <div
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
+                          task.esAnuncio
+                            ? 'border-amber-500/15 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                            : 'border-primary/15 bg-primary/5 text-primary'
+                        }`}
+                      >
+                        {task.esAnuncio ? <Megaphone className="size-3.5" /> : <ClipboardList className="size-3.5" />}
+                        {task.esAnuncio ? 'Anuncio' : 'Tarea'}
                       </div>
 
                       <span
@@ -267,7 +262,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
                       <RowActions
                         actions={[
                           {
-                            label: 'Ver entregas',
+                            label: 'Ver detalle',
                             icon: Eye,
                             onClick: () =>
                               router.push(`/teacher/courses/${courseId}/tasks/${task.id}`),
@@ -296,15 +291,17 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
                       </h3>
 
                       <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                        Gestioná entregas, edición y estado de la actividad.
+                        {task.esAnuncio
+                          ? 'Publicación informativa para el curso. No admite entregas ni feedback.'
+                          : 'Gestioná entregas, edición y estado de la actividad.'}
                       </p>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
                       <TaskMetaItem
-                        icon={CalendarClock}
-                        label="Entrega"
-                        value={formatDateTime(task.fechaEntregaUtc)}
+                        icon={task.esAnuncio ? Megaphone : CalendarClock}
+                        label={task.esAnuncio ? 'Tipo' : 'Entrega'}
+                        value={task.esAnuncio ? 'Anuncio' : formatDateTime(task.fechaEntregaUtc!)}
                         tone="highlight"
                       />
 
@@ -324,7 +321,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
       <div className="flex items-center justify-between gap-4 pt-2">
         <p className="text-sm text-muted-foreground">
-          Página {pageNumber} · {total} tareas en total
+          Página {pageNumber} · {total} publicaciones en total
         </p>
 
         <div className="flex gap-2">

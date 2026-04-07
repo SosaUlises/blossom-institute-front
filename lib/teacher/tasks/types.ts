@@ -19,16 +19,6 @@ export enum TipoAdjunto {
   Archivo = 2,
 }
 
-export interface TeacherTaskListItem {
-  id: number
-  cursoId: number
-  profesorId: number
-  titulo: string
-  estado: number
-  fechaEntregaUtc?: string | null
-  createdAtUtc: string
-}
-
 export interface TeacherTaskListResponse {
   total: number
   pageNumber: number
@@ -43,18 +33,6 @@ export interface TeacherTaskResourceItem {
   nombre: string
 }
 
-export interface TeacherTaskDetail {
-  id: number
-  cursoId: number
-  profesorId: number
-  titulo: string
-  consigna?: string | null
-  estado: number
-  fechaEntregaUtc?: string | null
-  createdAtUtc: string
-  updatedAtUtc?: string | null
-  recursos: TeacherTaskResourceItem[]
-}
 
 export interface TeacherFeedbackCurrent {
   feedbackId: number
@@ -132,19 +110,6 @@ export interface TeacherSubmissionDetail {
   feedbackHistorial: TeacherFeedbackHistoryItem[]
 }
 
-export interface TeacherSubmissionFeedbacksResponse {
-  entregaId: number
-  total: number
-  calificacionActual?: {
-    id: number
-    tipo: number
-    titulo: string
-    nota?: number | null
-    fecha: string
-  } | null
-  items: TeacherFeedbackHistoryItem[]
-}
-
 export interface TeacherTaskUpdateResourceInput {
   tipo: number
   url?: string | null
@@ -161,4 +126,76 @@ export interface TeacherTaskUpdatePayload {
   fechaEntregaUtc?: string | null
   estado: number
   recursos: TeacherTaskUpdateResourceInput[]
+}
+
+
+export type TeacherFeedbackAdjunto = {
+  id: number
+  tipo: number
+  url: string
+  nombre?: string | null
+  storageProvider?: number | null
+  storageKey?: string | null
+  contentType?: string | null
+  sizeBytes?: number | null
+}
+
+export type TeacherSubmissionFeedbackItem = {
+  feedbackId: number
+  esVigente: boolean
+  estado: number
+  nota?: number | null
+  comentario?: string | null
+  fechaCorreccionUtc: string
+  adjuntos: TeacherFeedbackAdjunto[]
+}
+
+export type TeacherSubmissionFeedbacksResponse = {
+  entregaId: number
+  total: number
+  calificacionActual?: {
+    id: number
+    tipo: number
+    titulo: string
+    nota?: number | null
+    fecha: string
+  } | null
+  items: TeacherSubmissionFeedbackItem[]
+}
+
+
+export interface TeacherTaskListItem {
+  id: number
+  cursoId: number
+  profesorId: number
+  titulo: string
+  estado: number
+  fechaEntregaUtc: string | null
+  esAnuncio: boolean
+  createdAtUtc: string
+}
+
+export interface TeacherTaskDetailResource {
+  id: number
+  tipo: number
+  url: string
+  nombre?: string | null
+  storageProvider?: number | null
+  storageKey?: string | null
+  contentType?: string | null
+  sizeBytes?: number | null
+}
+
+export interface TeacherTaskDetail {
+  id: number
+  cursoId: number
+  profesorId: number
+  titulo: string
+  consigna?: string | null
+  estado: number
+  fechaEntregaUtc: string | null
+  esAnuncio: boolean
+  createdAtUtc: string
+  updatedAtUtc?: string | null
+  recursos: TeacherTaskDetailResource[]
 }
