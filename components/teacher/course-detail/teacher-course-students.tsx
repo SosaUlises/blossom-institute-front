@@ -1,8 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { BadgeCheck, Mail, Trophy, Users } from 'lucide-react'
+import { Mail, Trophy, Users, IdCard } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 
@@ -28,60 +28,58 @@ function StudentCard({
   student: Student
   courseId: number
 }) {
-  const router = useRouter()
+  const fullName = `${student.nombre} ${student.apellido}`
 
   return (
-    <article className="group relative rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_22px_48px_-24px_rgba(15,23,42,0.20)]">
+    <article className="group relative rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 ease-out hover:-translate-y-[2px] hover:border-border/80 hover:bg-card hover:shadow-[0_22px_48px_-24px_rgba(15,23,42,0.20)]">
       <div className="pointer-events-none absolute inset-0 rounded-[26px] bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
 
-      <div className="relative space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-[18px] bg-sky-500/10 text-sky-600 shadow-sm dark:text-sky-400">
+      <div className="relative flex h-full flex-col">
+        <div className="flex items-start gap-3">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 shadow-sm dark:text-sky-400">
             <Users className="size-5" />
           </div>
 
-          <span className="inline-flex items-center gap-2 rounded-full border border-sky-500/15 bg-sky-500/10 px-3 py-1 text-xs font-medium text-sky-700 dark:text-sky-400">
-            <BadgeCheck className="size-3.5" />
-            Alumno
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-[17px] font-semibold tracking-tight text-foreground">
+              {fullName}
+            </h3>
+
+            <div className="mt-2 space-y-2 text-[12px] text-muted-foreground">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <IdCard className="size-3.5 shrink-0" />
+                <span className="truncate">DNI {student.dni}</span>
+              </div>
+
+              <div className="flex min-w-0 items-center gap-1.5">
+                <Mail className="size-3.5 shrink-0" />
+                <span
+                  className="truncate"
+                  title={student.email ?? 'Sin email registrado'}
+                >
+                  {student.email ?? 'Sin email registrado'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-4">
+          <span className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+            Ver calificaciones
           </span>
-        </div>
 
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">
-            {student.nombre} {student.apellido}
-          </h3>
-
-          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-            <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-3 py-1">
-              DNI {student.dni}
-            </span>
-          </div>
-        </div>
-
-        <div className="rounded-[20px] border border-border/60 bg-background/75 p-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Mail className="size-4" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
-              Email
-            </span>
-          </div>
-
-          <p className="mt-2 break-all text-sm font-medium text-foreground">
-            {student.email ?? 'Sin email registrado'}
-          </p>
-        </div>
-
-        <div className="pt-1">
           <Button
-            className="rounded-2xl bg-amber-500 text-white shadow-[0_10px_24px_-12px_rgba(245,158,11,0.7)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-amber-600 hover:shadow-[0_14px_30px_-12px_rgba(245,158,11,0.85)] active:translate-y-0"
-            onClick={() =>
-              router.push(
-                `/teacher/courses/${courseId}/students/${student.alumnoId}/grades`
-              )
-            }
+            asChild
+            size="sm"
+            className="rounded-xl bg-primary px-3.5 text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:translate-y-[-1px] hover:shadow-[0_14px_30px_-12px_rgba(245,158,11,0.85)]"
           >
-            <Trophy className="mr-2 size-4" />
-            Calificaciones
+            <Link
+              href={`/teacher/courses/${courseId}/students/${student.alumnoId}/grades`}
+            >
+              <Trophy className="mr-2 size-4" />
+              Calificaciones
+            </Link>
           </Button>
         </div>
       </div>
@@ -92,19 +90,21 @@ function StudentCard({
 function StudentCardSkeleton() {
   return (
     <div className="rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)]">
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="h-12 w-12 animate-pulse rounded-[18px] bg-muted/40" />
-          <div className="h-6 w-20 animate-pulse rounded-full bg-muted/40" />
+      <div className="space-y-5">
+        <div className="flex items-start gap-3">
+          <div className="h-11 w-11 animate-pulse rounded-2xl bg-muted/40" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-5 w-2/3 animate-pulse rounded-xl bg-muted/40" />
+            <div className="h-4 w-4/5 animate-pulse rounded-lg bg-muted/35" />
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="h-6 w-2/3 animate-pulse rounded-xl bg-muted/40" />
-          <div className="h-5 w-24 animate-pulse rounded-full bg-muted/40" />
+        <div className="border-t border-border/40 pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="h-4 w-28 animate-pulse rounded-lg bg-muted/35" />
+            <div className="h-9 w-32 animate-pulse rounded-xl bg-muted/40" />
+          </div>
         </div>
-
-        <div className="h-16 animate-pulse rounded-[20px] bg-muted/40" />
-        <div className="h-10 w-36 animate-pulse rounded-2xl bg-muted/40" />
       </div>
     </div>
   )
