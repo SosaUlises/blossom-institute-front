@@ -8,6 +8,8 @@ import {
   CheckSquare,
   Save,
   Users,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -22,6 +24,7 @@ import {
 } from '@/lib/teacher/course-detail/attendance-types'
 import { getEstadoClaseLabel as getAttendanceEstadoClaseLabel } from '@/lib/teacher/course-detail/attendance-utils'
 import { formatDate } from '@/lib/teacher/course-detail/formatters'
+import { cn } from '@/lib/utils'
 
 type Props = {
   courseId: number
@@ -48,24 +51,65 @@ function AttendanceOptionButton({
   const toneClass =
     tone === 'success'
       ? active
-        ? 'border-green-500/20 bg-green-500/12 text-green-700 dark:text-green-400 shadow-sm'
-        : 'border-border/60 bg-background/80 text-muted-foreground hover:border-green-500/20 hover:bg-green-500/5 hover:text-green-700 dark:hover:text-green-400'
+        ? 'border-emerald-500/20 bg-emerald-500/12 text-emerald-700 dark:text-emerald-400 shadow-sm'
+        : 'border-border/60 bg-background/85 text-muted-foreground hover:border-emerald-500/20 hover:bg-emerald-500/5 hover:text-emerald-700 dark:hover:text-emerald-400'
       : tone === 'danger'
         ? active
-          ? 'border-red-500/20 bg-red-500/12 text-red-700 dark:text-red-400 shadow-sm'
-          : 'border-border/60 bg-background/80 text-muted-foreground hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-700 dark:hover:text-red-400'
+          ? 'border-rose-500/20 bg-rose-500/12 text-rose-700 dark:text-rose-400 shadow-sm'
+          : 'border-border/60 bg-background/85 text-muted-foreground hover:border-rose-500/20 hover:bg-rose-500/5 hover:text-rose-700 dark:hover:text-rose-400'
         : active
           ? 'border-primary/20 bg-primary/10 text-primary shadow-sm'
-          : 'border-border/60 bg-background/80 text-muted-foreground hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
+          : 'border-border/60 bg-background/85 text-muted-foreground hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-2xl border px-4 py-2.5 text-sm font-medium transition-all hover:-translate-y-[1px] ${toneClass}`}
+      className={cn(
+        'rounded-2xl border px-4 py-2.5 text-sm font-medium transition-all duration-200',
+        'hover:-translate-y-[1px]',
+        toneClass,
+      )}
     >
       {label}
     </button>
+  )
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  tone = 'default',
+}: {
+  icon: React.ReactNode
+  label: string
+  value: number
+  tone?: 'default' | 'success' | 'danger'
+}) {
+  return (
+    <div
+      className={cn(
+        'rounded-[24px] border p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]',
+        tone === 'success' &&
+          'border-emerald-500/20 bg-emerald-500/[0.06]',
+        tone === 'danger' &&
+          'border-rose-500/20 bg-rose-500/[0.06]',
+        tone === 'default' &&
+          'border-border/60 bg-background/80',
+      )}
+    >
+      <div className="flex items-center gap-2 text-muted-foreground">
+        {icon}
+        <span className="text-xs font-medium uppercase tracking-[0.14em]">
+          {label}
+        </span>
+      </div>
+
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+        {value}
+      </p>
+    </div>
   )
 }
 
@@ -96,7 +140,7 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
             alumnoId: alumno.alumnoId,
             nombreCompleto: alumno.nombreCompleto,
             estado: alumno.estado ?? null,
-          }))
+          })),
         )
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ocurrió un error.')
@@ -110,27 +154,27 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
 
   const registeredCount = useMemo(
     () => students.filter((x) => x.estado != null).length,
-    [students]
+    [students],
   )
 
   const presentCount = useMemo(
     () => students.filter((x) => x.estado === EstadoAsistencia.Presente).length,
-    [students]
+    [students],
   )
 
   const absentCount = useMemo(
     () => students.filter((x) => x.estado === EstadoAsistencia.Ausente).length,
-    [students]
+    [students],
   )
 
   const handleChangeEstado = (
     alumnoId: number,
-    estado: EstadoAsistencia | null
+    estado: EstadoAsistencia | null,
   ) => {
     setStudents((prev) =>
       prev.map((item) =>
-        item.alumnoId === alumnoId ? { ...item, estado } : item
-      )
+        item.alumnoId === alumnoId ? { ...item, estado } : item,
+      ),
     )
   }
 
@@ -153,7 +197,9 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
       await saveTeacherClassAttendance(courseId, fecha, payload)
       setSuccess('Asistencia guardada correctamente.')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ocurrió un error al guardar.')
+      setError(
+        err instanceof Error ? err.message : 'Ocurrió un error al guardar.',
+      )
     } finally {
       setSaving(false)
     }
@@ -188,7 +234,7 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
       <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.06),transparent_28%)]" />
 
-        <div className="relative space-y-5">
+        <div className="relative space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               variant="outline"
@@ -204,57 +250,40 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
               <CheckSquare className="size-3.5" />
-              Attendance
+              Asistencia
             </div>
 
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
               Asistencia · {formatDate(detail.fecha)}
             </h1>
 
-            <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-              Registrá presentes y ausentes para la clase del día y guardá la descripción del contenido visto.
+            <p className="max-w-2xl text-[15px] leading-7 text-muted-foreground">
+              Registrá presentes y ausentes para la clase del día y guardá la
+              descripción del contenido visto.
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Users className="size-4" />
-                <span className="text-xs font-medium uppercase tracking-[0.14em]">
-                  Registros
-                </span>
-              </div>
-              <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-                {registeredCount}
-              </p>
-            </div>
-
-            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <CheckSquare className="size-4" />
-                <span className="text-xs font-medium uppercase tracking-[0.14em]">
-                  Presentes
-                </span>
-              </div>
-              <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-                {presentCount}
-              </p>
-            </div>
-
-            <div className="rounded-[24px] border border-border/60 bg-background/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <CalendarDays className="size-4" />
-                <span className="text-xs font-medium uppercase tracking-[0.14em]">
-                  Ausentes
-                </span>
-              </div>
-              <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-                {absentCount}
-              </p>
-            </div>
+            <StatCard
+              icon={<Users className="size-4" />}
+              label="Registros"
+              value={registeredCount}
+            />
+            <StatCard
+              icon={<CheckSquare className="size-4" />}
+              label="Presentes"
+              value={presentCount}
+              tone="success"
+            />
+            <StatCard
+              icon={<CalendarDays className="size-4" />}
+              label="Ausentes"
+              value={absentCount}
+              tone="danger"
+            />
           </div>
         </div>
       </section>
@@ -276,10 +305,10 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
       </section>
 
       <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-        <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Students
+              Alumnos
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
               Registro por alumno
@@ -297,13 +326,13 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+          <div className="mb-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-600 dark:text-rose-400">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 rounded-2xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-600 dark:text-green-400">
+          <div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
             {success}
           </div>
         )}
@@ -319,15 +348,15 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
 
             const statusClass =
               student.estado === EstadoAsistencia.Presente
-                ? 'border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-400'
+                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
                 : student.estado === EstadoAsistencia.Ausente
-                  ? 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400'
+                  ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
                   : 'border-border/60 bg-muted/40 text-muted-foreground'
 
             return (
               <div
                 key={student.alumnoId}
-                className="rounded-[26px] border border-border/60 bg-background/75 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
+                className="rounded-[26px] border border-border/60 bg-background/75 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0 space-y-2">
@@ -337,7 +366,10 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
                       </p>
 
                       <span
-                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${statusClass}`}
+                        className={cn(
+                          'inline-flex rounded-full border px-3 py-1 text-xs font-medium',
+                          statusClass,
+                        )}
                       >
                         {statusLabel}
                       </span>
@@ -350,7 +382,10 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
                       tone="success"
                       active={student.estado === EstadoAsistencia.Presente}
                       onClick={() =>
-                        handleChangeEstado(student.alumnoId, EstadoAsistencia.Presente)
+                        handleChangeEstado(
+                          student.alumnoId,
+                          EstadoAsistencia.Presente,
+                        )
                       }
                     />
 
@@ -359,7 +394,10 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
                       tone="danger"
                       active={student.estado === EstadoAsistencia.Ausente}
                       onClick={() =>
-                        handleChangeEstado(student.alumnoId, EstadoAsistencia.Ausente)
+                        handleChangeEstado(
+                          student.alumnoId,
+                          EstadoAsistencia.Ausente,
+                        )
                       }
                     />
                   </div>
