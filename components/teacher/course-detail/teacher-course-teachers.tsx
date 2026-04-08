@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { GraduationCap, Mail, BadgeCheck } from 'lucide-react'
+import { GraduationCap, Mail, IdCard } from 'lucide-react'
 
 type Teacher = {
   profesorId: number
@@ -19,46 +19,42 @@ type Envelope<T> = {
 }
 
 function TeacherCard({ teacher }: { teacher: Teacher }) {
+  const fullName = `${teacher.nombre} ${teacher.apellido}`
+
   return (
-    <article className="group relative rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_22px_48px_-24px_rgba(15,23,42,0.20)]">
+    <article className="group relative rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 ease-out hover:-translate-y-[2px] hover:border-border/80 hover:bg-card hover:shadow-[0_22px_48px_-24px_rgba(15,23,42,0.20)]">
       <div className="pointer-events-none absolute inset-0 rounded-[26px] bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
 
-      <div className="relative space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-[18px] bg-violet-500/10 text-violet-600 shadow-sm dark:text-violet-400">
+      <div className="relative flex h-full flex-col">
+        <div className="flex items-start gap-3">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 shadow-sm dark:text-violet-400">
             <GraduationCap className="size-5" />
           </div>
 
-          <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/15 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400">
-            <BadgeCheck className="size-3.5" />
-            Profesor
-          </span>
-        </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-[17px] font-semibold tracking-tight text-foreground">
+              {fullName}
+            </h3>
 
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">
-            {teacher.nombre} {teacher.apellido}
-          </h3>
+            <div className="mt-2 space-y-2 text-[12px] text-muted-foreground">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <IdCard className="size-3.5 shrink-0" />
+                <span className="truncate">DNI {teacher.dni}</span>
+              </div>
 
-          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-            <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-3 py-1">
-              DNI {teacher.dni}
-            </span>
+              <div className="flex min-w-0 items-center gap-1.5">
+                <Mail className="size-3.5 shrink-0" />
+                <span
+                  className="truncate"
+                  title={teacher.email ?? 'Sin email registrado'}
+                >
+                  {teacher.email ?? 'Sin email registrado'}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-[20px] border border-border/60 bg-background/75 p-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Mail className="size-4" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
-              Email
-            </span>
-          </div>
-
-          <p className="mt-2 break-all text-sm font-medium text-foreground">
-            {teacher.email ?? 'Sin email registrado'}
-          </p>
-        </div>
       </div>
     </article>
   )
@@ -67,18 +63,18 @@ function TeacherCard({ teacher }: { teacher: Teacher }) {
 function TeacherCardSkeleton() {
   return (
     <div className="rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)]">
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="h-12 w-12 animate-pulse rounded-[18px] bg-muted/40" />
-          <div className="h-6 w-24 animate-pulse rounded-full bg-muted/40" />
+      <div className="space-y-5">
+        <div className="flex items-start gap-3">
+          <div className="h-11 w-11 animate-pulse rounded-2xl bg-muted/40" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-5 w-2/3 animate-pulse rounded-xl bg-muted/40" />
+            <div className="h-4 w-4/5 animate-pulse rounded-lg bg-muted/35" />
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="h-6 w-2/3 animate-pulse rounded-xl bg-muted/40" />
-          <div className="h-5 w-24 animate-pulse rounded-full bg-muted/40" />
+        <div className="border-t border-border/40 pt-4">
+          <div className="h-4 w-36 animate-pulse rounded-lg bg-muted/35" />
         </div>
-
-        <div className="h-16 animate-pulse rounded-[20px] bg-muted/40" />
       </div>
     </div>
   )
@@ -146,7 +142,10 @@ export function TeacherCourseTeachers({ courseId }: { courseId: number }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {data.map((teacher) => (
-        <TeacherCard key={teacher.profesorId} teacher={teacher} />
+        <TeacherCard
+          key={teacher.profesorId}
+          teacher={teacher}
+        />
       ))}
     </div>
   )
