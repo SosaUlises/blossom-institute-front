@@ -30,10 +30,8 @@ export function TeacherCourseHero({ course }: Props) {
       <div className="relative p-7 md:p-9">
         <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl space-y-5">
-
-
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex size-14 items-center justify-center rounded-[20px] bg-primary/10 text-primary shadow-sm transition-transform duration-200 hover:scale-[1.02]">
+              <div className="flex size-14 items-center justify-center rounded-[20px] bg-primary/10 text-primary shadow-sm">
                 <BookOpen className="size-6" />
               </div>
 
@@ -49,7 +47,7 @@ export function TeacherCourseHero({ course }: Props) {
 
             <div className="space-y-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
-                Teacher course
+                Panel del curso
               </p>
 
               <h1 className="text-[2.35rem] font-semibold leading-[1.05] tracking-tight text-foreground md:text-[2.8rem]">
@@ -64,22 +62,26 @@ export function TeacherCourseHero({ course }: Props) {
             </div>
 
             <div className="flex flex-wrap gap-3 pt-1">
-              <Link href={`/teacher/courses/${course.id}/tasks/create`}>
-                <Button className="h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md">
+              <Button
+                asChild
+                className="h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+              >
+                <Link href={`/teacher/courses/${course.id}/tasks/create`}>
                   <Plus className="mr-2 size-4" />
                   Crear tarea
-                </Button>
-              </Link>
+                </Link>
+              </Button>
 
-              <Link href={`/teacher/courses/${course.id}/classes/take`}>
-                <Button
-                  variant="outline"
-                  className="h-11 rounded-2xl border-primary/15 bg-primary/5 px-5 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/10 hover:text-primary"
-                >
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 rounded-2xl border-primary/15 bg-primary/5 px-5 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/10 hover:text-primary"
+              >
+                <Link href={`/teacher/courses/${course.id}/classes/take`}>
                   <CheckSquare className="mr-2 size-4" />
                   Tomar asistencia
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
 
@@ -119,7 +121,7 @@ export function TeacherCourseHero({ course }: Props) {
 
                   <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary transition-colors group-hover:bg-primary/10">
                     <Clock3 className="size-3.5" />
-                    {schedule.horaInicio} · {schedule.horaFin}
+                    {schedule.horaInicio} – {schedule.horaFin}
                   </div>
                 </div>
               </div>
@@ -133,4 +135,4 @@ export function TeacherCourseHero({ course }: Props) {
       </div>
     </section>
   )
-}
+}

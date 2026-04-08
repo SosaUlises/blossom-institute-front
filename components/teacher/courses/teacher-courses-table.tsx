@@ -1,19 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
-  ArrowRight,
   BookOpen,
   CalendarRange,
   Clock,
   Inbox,
   Search,
+  ChevronRight,
 } from 'lucide-react'
 
-import { Card, CardContent } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -21,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Empty,
   EmptyHeader,
@@ -30,9 +30,7 @@ import {
 } from '@/components/ui/empty'
 import { getTeacherCourses } from '@/lib/teacher/courses/api'
 import type { TeacherCourseListItem } from '@/lib/teacher/courses/types'
-import { EstadoCurso } from '@/lib/teacher/dashboard/types'
-
-// ─── Constantes ──────────────────────────────────────────────────────────────
+import { EstadoCurso } from '@/lib/teacher/courses/types'
 
 const SELECT_ALL = 'all'
 
@@ -42,128 +40,123 @@ const ESTADO_OPTIONS = [
   { value: String(EstadoCurso.Archivado), label: 'Archivado' },
 ] as const
 
-
-const ESTADO_BADGE: Record<
+const ESTADO_CONFIG: Record<
   EstadoCurso,
-  { label: string; className: string }
+  { label: string; dot: string; pill: string }
 > = {
   [EstadoCurso.Activo]: {
     label: 'Activo',
-    className:
-      'border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-400',
+    dot: 'bg-emerald-500',
+    pill:
+      'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
   },
   [EstadoCurso.Inactivo]: {
     label: 'Inactivo',
-    className:
+    dot: 'bg-amber-500',
+    pill:
       'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400',
   },
   [EstadoCurso.Archivado]: {
     label: 'Archivado',
-    className:
-      'border-slate-500/20 bg-slate-500/10 text-slate-600 dark:text-slate-400',
+    dot: 'bg-slate-400',
+    pill:
+      'border-slate-400/20 bg-slate-500/10 text-slate-600 dark:text-slate-400',
   },
 }
 
-const ESTADO_BADGE_BASE =
-  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider'
-
 function EstadoBadge({ estado }: { estado: EstadoCurso }) {
-  const config = ESTADO_BADGE[estado] ?? {
+  const config = ESTADO_CONFIG[estado] ?? {
     label: 'Desconocido',
-    className: 'border-primary/20 bg-primary/10 text-primary',
+    dot: 'bg-muted-foreground',
+    pill: 'border-border/60 bg-muted/40 text-muted-foreground',
   }
 
   return (
-    <span className={`${ESTADO_BADGE_BASE} ${config.className}`}>
-      <span className="size-1.5 rounded-full bg-current" />
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider',
+        config.pill,
+      )}
+    >
+      <span className={cn('size-1.5 rounded-full', config.dot)} />
       {config.label}
     </span>
   )
 }
 
-// ─── Sub-componentes ──────────────────────────────────────────────────────────
-
-function TeacherCourseCard({ course }: { course: TeacherCourseListItem }) {
+function CourseCardSkeleton() {
   return (
-    <Card className="group relative flex flex-col overflow-hidden rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_26px_56px_-26px_rgba(15,23,42,0.22)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.06),transparent_24%)]" />
-
-      <CardContent className="relative flex flex-1 flex-col p-6">
-        {/* Header: badge de estado + ícono */}
-        <div className="flex items-start justify-between gap-4">
-          <EstadoBadge estado={course.estado} />
-
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-[18px] bg-primary/10 text-primary shadow-sm transition-transform duration-200 group-hover:scale-[1.04]">
-            <BookOpen className="size-5" />
-          </div>
-        </div>
-
-        {/* Título */}
-        <div className="mt-4 flex-1">
-          <h3 className="line-clamp-2 text-xl font-semibold leading-snug tracking-tight text-foreground transition-colors duration-200 group-hover:text-primary">
-            {course.nombre}
-          </h3>
-        </div>
-
-        {/* Chips de metadata */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-            <CalendarRange className="size-3.5 shrink-0" />
-            Año {course.anio}
-          </div>
-
-          {course.cantidadHorarios > 0 && (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-              <Clock className="size-3.5 shrink-0" />
-              {course.cantidadHorarios}{' '}
-              {course.cantidadHorarios === 1 ? 'horario' : 'horarios'}
-            </div>
-          )}
-        </div>
-
-        {/* Separador + acción */}
-        <div className="mt-5 border-t border-border/30 pt-4">
-          <Button
-            asChild
-            className="h-10 w-full rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
-          >
-            <Link href={`/teacher/courses/${course.id}`}>
-              Abrir curso
-              <ArrowRight className="gap-2 justify-center size-4" />
-            </Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function TeacherCourseCardSkeleton() {
-  return (
-    <div className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+    <li className="rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_12px_28px_-18px_rgba(15,23,42,0.14)]">
       <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="h-12 w-12 animate-pulse rounded-2xl bg-muted/60" />
+          <div className="space-y-2">
+            <div className="h-5 w-32 animate-pulse rounded-lg bg-muted/60" />
+            <div className="h-4 w-40 animate-pulse rounded-lg bg-muted/40" />
+          </div>
+        </div>
+
         <div className="h-6 w-20 animate-pulse rounded-full bg-muted/50" />
-        <div className="h-11 w-11 animate-pulse rounded-[18px] bg-muted/50" />
       </div>
 
-      <div className="mt-4 space-y-2">
-        <div className="h-5 w-4/5 animate-pulse rounded-lg bg-muted/50" />
-        <div className="h-5 w-3/5 animate-pulse rounded-lg bg-muted/50" />
+      <div className="mt-5 border-t border-border/40 pt-4">
+        <div className="h-4 w-32 animate-pulse rounded-lg bg-muted/40" />
       </div>
-
-      <div className="mt-3 flex gap-2">
-        <div className="h-6 w-24 animate-pulse rounded-full bg-muted/40" />
-        <div className="h-6 w-24 animate-pulse rounded-full bg-muted/40" />
-      </div>
-
-      <div className="mt-6 border-t border-border/30 pt-5">
-        <div className="h-10 w-full animate-pulse rounded-2xl bg-muted/50" />
-      </div>
-    </div>
+    </li>
   )
 }
 
-// ─── Componente principal ─────────────────────────────────────────────────────
+function CourseCard({ course }: { course: TeacherCourseListItem }) {
+  return (
+    <li>
+      <Link
+        href={`/teacher/courses/${course.id}`}
+        className="group block rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_12px_28px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 ease-out hover:-translate-y-[2px] hover:border-border/80 hover:bg-card hover:shadow-[0_18px_38px_-20px_rgba(15,23,42,0.18)]"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/8 text-primary shadow-sm transition-transform duration-200 group-hover:scale-[1.03]">
+              <BookOpen className="size-5" />
+            </div>
+
+            <div className="min-w-0">
+              <p className="truncate text-[17px] font-semibold tracking-tight text-foreground">
+                {course.nombre}
+              </p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-[12px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <CalendarRange className="size-3.5 shrink-0" />
+                  Año {course.anio}
+                </span>
+
+                {course.cantidadHorarios > 0 && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="size-3.5 shrink-0" />
+                    {course.cantidadHorarios}{' '}
+                    {course.cantidadHorarios === 1 ? 'horario' : 'horarios'}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <EstadoBadge estado={course.estado} />
+        </div>
+
+        <div className="mt-5 flex items-center justify-between border-t border-border/40 pt-4">
+          <span className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+            Ver detalle del curso
+          </span>
+
+          <div className="flex size-9 items-center justify-center rounded-full bg-muted/45 text-muted-foreground transition-all duration-200 group-hover:bg-primary/10 group-hover:text-primary">
+            <ChevronRight className="size-4" />
+          </div>
+        </div>
+      </Link>
+    </li>
+  )
+}
 
 export function TeacherCoursesTable() {
   const [items, setItems] = useState<TeacherCourseListItem[]>([])
@@ -200,67 +193,55 @@ export function TeacherCoursesTable() {
     loadCourses()
   }, [loadCourses])
 
-  const hasActiveFilters = debouncedSearch || anio || estado !== SELECT_ALL
-
-  const emptyStateText = hasActiveFilters
-    ? 'No se encontraron cursos con esos filtros.'
-    : 'Todavía no tenés cursos asignados.'
+  const hasActiveFilters = !!debouncedSearch || !!anio || estado !== SELECT_ALL
 
   return (
-    <div className="space-y-6">
-      {/* Filtros */}
-      <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
-        <CardContent className="p-5">
-          <div className="grid gap-4 xl:grid-cols-3">
-            {/* Buscador */}
-            <div className="relative min-w-[260px]">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar curso..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-11 rounded-2xl border-border/70 bg-card/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
-              />
-            </div>
-
-            {/* Filtro de año */}
-            <Input
-              type="number"
-              placeholder="Filtrar por año (ej. 2025)"
-              value={anio}
-              min={2000}
-              max={2100}
-              onChange={(e) => setAnio(e.target.value)}
-              className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
-            />
-
-            {/* Filtro de estado */}
-            <Select value={estado} onValueChange={setEstado}>
-              <SelectTrigger className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:ring-4 focus:ring-primary/15">
-                <SelectValue placeholder="Todos los estados" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/70">
-                <SelectItem value={SELECT_ALL}>Todos los estados</SelectItem>
-                {ESTADO_OPTIONS.map(({ value, label }) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Contenido */}
-      {loading ? (
-        <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <TeacherCourseCardSkeleton key={i} />
-          ))}
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="relative sm:col-span-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+          <Input
+            placeholder="Buscar por nombre..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-11 rounded-2xl border-border/60 bg-card/95 pl-9 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.12)] transition-all duration-200 hover:border-border/80 hover:bg-card focus-visible:ring-2 focus-visible:ring-primary/15"
+          />
         </div>
+
+        <Input
+          type="number"
+          placeholder="Año (ej. 2025)"
+          value={anio}
+          min={2000}
+          max={2100}
+          onChange={(e) => setAnio(e.target.value)}
+          className="h-11 rounded-2xl border-border/60 bg-card/95 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.12)] transition-all duration-200 hover:border-border/80 hover:bg-card focus-visible:ring-2 focus-visible:ring-primary/15"
+        />
+
+        <Select value={estado} onValueChange={setEstado}>
+          <SelectTrigger className="h-11 rounded-2xl border-border/60 bg-card/95 px-4 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.12)] transition-all duration-200 hover:border-border/80 hover:bg-card focus:ring-2 focus:ring-primary/15 data-[state=open]:border-primary/30 data-[state=open]:ring-2 data-[state=open]:ring-primary/10">
+            <SelectValue placeholder="Todos los estados" />
+          </SelectTrigger>
+
+          <SelectContent className="rounded-2xl border-border/60 bg-card/98 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+            <SelectItem value={SELECT_ALL}>Todos los estados</SelectItem>
+            {ESTADO_OPTIONS.map(({ value, label }) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {loading ? (
+        <ul className="grid gap-4 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <CourseCardSkeleton key={i} />
+          ))}
+        </ul>
       ) : items.length === 0 ? (
-        <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+        <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
           <CardContent className="px-6 py-14">
             <Empty className="border-0 p-0">
               <EmptyMedia variant="icon">
@@ -270,17 +251,21 @@ export function TeacherCoursesTable() {
                 <EmptyTitle>
                   {hasActiveFilters ? 'Sin resultados' : 'Sin cursos asignados'}
                 </EmptyTitle>
-                <EmptyDescription>{emptyStateText}</EmptyDescription>
+                <EmptyDescription>
+                  {hasActiveFilters
+                    ? 'No se encontraron cursos con esos filtros.'
+                    : 'Todavía no tenés cursos asignados.'}
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+        <ul className="grid gap-4 md:grid-cols-2">
           {items.map((course) => (
-            <TeacherCourseCard key={course.id} course={course} />
+            <CourseCard key={course.id} course={course} />
           ))}
-        </div>
+        </ul>
       )}
     </div>
   )
