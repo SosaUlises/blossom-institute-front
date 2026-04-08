@@ -1,175 +1,161 @@
 'use client'
 
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import {
   BookOpen,
-  ClipboardCheck,
   Users,
-  Sparkles,
-  CalendarRange,
-  GraduationCap,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
 } from 'lucide-react'
-
-import { TeacherStatCard } from '@/components/teacher/dashboard/teacher-stat-card'
+import Link from 'next/link'
 import { TeacherUpcomingClassesCard } from '@/components/teacher/dashboard/teacher-upcoming-classes-card'
-import { TeacherLastClassesCard } from '@/components/teacher/dashboard/teacher-last-classes-card'
 import { TeacherLastDeliveriesCard } from '@/components/teacher/dashboard/teacher-last-deliveries-card'
 import { TeacherCourseSummaryCard } from '@/components/teacher/dashboard/teacher-course-summary-card'
 import type { ProfesorDashboardResponse } from '@/lib/teacher/dashboard/types'
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatTodayLabel() {
+  return format(new Date(), "EEEE d 'de' MMMM", { locale: es })
+}
+
+// ─── Banner de urgencia (full-width, condicional) ─────────────────────────────
+
+function UrgentCorrectionsBanner({ count }: { count: number }) {
+  if (count === 0) return null
+
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-[22px] border border-amber-500/25 bg-amber-500/8 px-5 py-3.5">
+      <div className="flex items-center gap-3">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="size-3.5" />
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold text-foreground">
+            Tenés{' '}
+            <span className="text-amber-700 dark:text-amber-400">
+              {count} {count === 1 ? 'entrega pendiente' : 'entregas pendientes'} de corrección
+            </span>
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Revisalas antes de que pasen más días sin respuesta.
+          </p>
+        </div>
+      </div>
+
+
+      <Link
+        href="#entregas"
+        className="flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500/15 px-3.5 py-2 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-500/25 dark:text-amber-400 hover:-translate-y-[1px] hover:shadow-sm"
+      >
+        Ver entregas
+        <ChevronRight className="size-3.5" />
+      </Link>
+    </div>
+  )
+}
+
+// ─── Vista principal ──────────────────────────────────────────────────────────
 
 export function TeacherDashboardView({
   dashboard,
 }: {
   dashboard: ProfesorDashboardResponse
 }) {
+  const pendientes = dashboard.entregasPendientesCorreccionCount
+  const chipBase =
+    'flex items-center gap-2 rounded-xl border border-border/50 bg-background/60 px-3 py-1.5 transition-all duration-200 ease-out hover:bg-background hover:border-border hover:shadow-sm hover:-translate-y-[1px]'
+
   return (
-    <div className="space-y-10">
-      <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.05),transparent_24%)]" />
+    <div className="space-y-6">
 
-        <div className="relative space-y-6">
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-5 h-[3px] w-12 rounded-full bg-primary" />
+      {/* ── 1. Hero ─────────────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-7 py-6 shadow-[0_12px_36px_-18px_rgba(15,23,42,0.14)]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.07),transparent_40%)]" />
 
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                  <Sparkles className="size-3.5" />
-                  Blossom Institute
-                </span>
+        <div className="relative">
+          {/* Label */}
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/70">
+            Panel docente
+          </p>
 
-                <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/75 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                  <CalendarRange className="size-3.5" />
-                  Panel docente
-                </span>
-              </div>
+          {/* Title */}
+          <h2 className="mt-1.5 text-[1.75rem] font-semibold leading-tight tracking-tight text-foreground">
+            Hola, {dashboard.nombre} 👋
+          </h2>
 
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-[2.45rem]">
-                Resumen general del docente
-              </h2>
+          {/* Contexto dinámico */}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {pendientes > 0
+              ? `Tenés ${pendientes} ${pendientes === 1 ? 'entrega pendiente' : 'entregas pendientes'
+              } para corregir`
+              : 'Todo al día. Podés enfocarte en tus próximas clases'}
+          </p>
 
-              <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
-                Visualizá tus cursos, el seguimiento de clases y la actividad reciente de entregas desde una vista centralizada.
-              </p>
+          {/* Fecha */}
+          <p className="mt-0.5 text-[12px] capitalize text-muted-foreground/70">
+            {formatTodayLabel()}
+          </p>
+
+          {/* KPIs + acción */}
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            <div className={chipBase}>
+              <BookOpen className="size-3.5 text-muted-foreground/60" />
+              <span className="text-sm font-semibold tabular-nums text-foreground">
+                {dashboard.cantidadCursos}
+              </span>
+              <span className="text-xs text-muted-foreground">cursos</span>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:w-[380px] xl:grid-cols-1">
-              <div className="group rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-200 group-hover:scale-[1.05] group-hover:bg-primary/15">
-                    <GraduationCap className="size-5" />
-                  </div>
-
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      Docente
-                    </p>
-                    <p className="text-base font-semibold tracking-tight text-foreground">
-                      {dashboard.nombre} {dashboard.apellido}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="group rounded-2xl border border-border/60 bg-background/75 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.18)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Próxima actividad
-                </p>
-                <p className="mt-2 text-sm leading-6 text-foreground">
-                  {dashboard.proximasClases.length} clases agendadas ·{' '}
-                  {dashboard.entregasPendientesCorreccionCount} pendientes de corrección
-                </p>
-              </div>
+            <div className={chipBase}>
+              <Users className="size-3.5 text-muted-foreground/60" />
+              <span className="text-sm font-semibold tabular-nums text-foreground">
+                {dashboard.cantidadAlumnos}
+              </span>
+              <span className="text-xs text-muted-foreground">alumnos</span>
             </div>
+
+            {pendientes > 0 ? (
+              <a
+                href="/teacher/courses"
+                className="flex items-center gap-1.5 rounded-xl bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/15 transition-colors hover:-translate-y-[1px] hover:shadow-sm"
+              >
+                Ver cursos
+                <ChevronRight className="size-3.5" />
+              </a>
+
+            ) : (
+              <div className="flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-3 py-1.5 transition-all duration-200 ease-out cursor-pointer hover:bg-emerald-500/12 hover:-translate-y-[1px] hover:shadow-sm">
+                <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  Correcciones al día
+                </span>
+              </div>
+            )}
           </div>
         </div>
-      </section>
+      </div>
 
-      <section className="space-y-4">
-        <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Overview
-          </p>
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">
-            Métricas principales
-          </h3>
+      {/* ── 2. Banner urgente (solo si hay pendientes) ───────────────────────── */}
+      <UrgentCorrectionsBanner count={pendientes} />
+
+      {/* ── 3. Agenda / Entregas recientes ───────────────────────────────────── */}
+      <div className="grid gap-5 xl:grid-cols-[2fr_3fr]">
+        <TeacherUpcomingClassesCard
+          proximasClases={dashboard.proximasClases}
+        />
+
+        <div id="entregas">
+          <TeacherLastDeliveriesCard items={dashboard.ultimasEntregas} />
         </div>
+      </div>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <TeacherStatCard
-            title="Cursos"
-            value={dashboard.cantidadCursos.toLocaleString()}
-            icon={BookOpen}
-            accent="blue"
-            subtitle="Cursos asignados al docente"
-          />
+      {/* ── 4. Mis cursos (full-width) ───────────────────────────────────────── */}
+      <TeacherCourseSummaryCard items={dashboard.resumenPorCurso} />
 
-          <TeacherStatCard
-            title="Alumnos"
-            value={dashboard.cantidadAlumnos.toLocaleString()}
-            icon={Users}
-            accent="violet"
-            subtitle="Estudiantes vinculados a tus cursos"
-          />
-
-          <TeacherStatCard
-            title="Tareas publicadas"
-            value={dashboard.tareasPublicadasCount.toLocaleString()}
-            icon={ClipboardCheck}
-            accent="emerald"
-            subtitle="Actividades visibles para los alumnos"
-          />
-
-          <TeacherStatCard
-            title="Pend. corrección"
-            value={dashboard.entregasPendientesCorreccionCount.toLocaleString()}
-            icon={ClipboardCheck}
-            accent="amber"
-            subtitle="Entregas esperando revisión"
-          />
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Teaching flow
-          </p>
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">
-            Clases y seguimiento
-          </h3>
-        </div>
-
-        <div className="grid gap-5 xl:grid-cols-2">
-          <TeacherUpcomingClassesCard items={dashboard.proximasClases} />
-          <TeacherLastClassesCard items={dashboard.ultimasClases} />
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Recent activity
-          </p>
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">
-            Entregas recientes
-          </h3>
-        </div>
-
-        <TeacherLastDeliveriesCard items={dashboard.ultimasEntregas} />
-      </section>
-
-      <section className="space-y-4">
-        <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Course snapshot
-          </p>
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">
-            Resumen por curso
-          </h3>
-        </div>
-
-        <TeacherCourseSummaryCard items={dashboard.resumenPorCurso} />
-      </section>
     </div>
   )
 }

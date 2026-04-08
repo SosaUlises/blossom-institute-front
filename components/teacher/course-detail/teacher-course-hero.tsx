@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { MiniStatCard } from '@/components/shared/mini-stat-card'
 import type { TeacherCourseDetail } from '@/lib/teacher/course-detail/types'
 import {
   getDayLabel,
@@ -83,23 +84,23 @@ export function TeacherCourseHero({ course }: Props) {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[440px]">
-            <StatCard
+            <MiniStatCard
               icon={Users}
               label="Alumnos"
               value={course.cantidadAlumnos}
-              color="sky"
+              accent="sky"
             />
-            <StatCard
+            <MiniStatCard
               icon={GraduationCap}
               label="Profesores"
               value={course.cantidadProfesores}
-              color="violet"
+              accent="violet"
             />
-            <StatCard
+            <MiniStatCard
               icon={Clock3}
               label="Horarios"
               value={course.horarios.length}
-              color="amber"
+              accent="amber"
             />
           </div>
         </div>
@@ -132,41 +133,4 @@ export function TeacherCourseHero({ course }: Props) {
       </div>
     </section>
   )
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: number
-  color: 'sky' | 'violet' | 'amber'
-}) {
-  const iconWrapClass =
-    color === 'sky'
-      ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400'
-      : color === 'violet'
-        ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
-        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-
-  return (
-    <div className="rounded-[22px] border border-border/60 bg-background/85 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <div className={`flex size-8 items-center justify-center rounded-xl ${iconWrapClass}`}>
-          <Icon className="size-4" />
-        </div>
-
-        <span className="text-xs font-medium uppercase tracking-[0.14em]">
-          {label}
-        </span>
-      </div>
-
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-        {value}
-      </p>
-    </div>
-  )
-}
+}
