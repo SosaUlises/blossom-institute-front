@@ -204,18 +204,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="mb-5 flex flex-wrap items-center justify-end gap-4">
-  <Button
-    onClick={() => router.push(`/teacher/courses/${courseId}/tasks/create`)}
-    className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_26px_-12px_rgba(36,59,123,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_16px_34px_-14px_rgba(36,59,123,0.55)] active:translate-y-0"
-  >
-    <Plus className="mr-2 size-4" />
-    Crear publicación
-  </Button>
-</div>
-      </div>
-
+ 
       <div className="rounded-[24px] border border-border/70 bg-card/90 p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="grid gap-3 md:grid-cols-2">
@@ -251,17 +240,12 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
             </Select>
           </div>
 
-          <Button
-            variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary hover:shadow-sm"
-            onClick={() => {
-              setSearch('')
-              setDebouncedSearch('')
-              setEstado(SELECT_ALL)
-              setPageNumber(1)
-            }}
+           <Button
+            onClick={() => router.push(`/teacher/courses/${courseId}/tasks/create`)}
+            className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_26px_-12px_rgba(36,59,123,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_16px_34px_-14px_rgba(36,59,123,0.55)] active:translate-y-0"
           >
-            Limpiar filtros
+            <Plus className="mr-2 size-4" />
+            Crear publicación
           </Button>
         </div>
       </div>

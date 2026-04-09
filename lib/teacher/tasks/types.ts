@@ -99,6 +99,8 @@ export interface TeacherFeedbackHistoryItem {
 }
 
 export interface TeacherSubmissionDetail {
+  alumnoNombre: string
+  alumnoApellido: string
   entregaId: number
   tareaId: number
   alumnoId: number

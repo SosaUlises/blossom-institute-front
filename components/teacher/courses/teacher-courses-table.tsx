@@ -210,7 +210,7 @@ export function TeacherCoursesTable() {
 
         <Input
           type="number"
-          placeholder="Año (ej. 2025)"
+          placeholder="Año (ej. 2026)"
           value={anio}
           min={2000}
           max={2100}

@@ -40,10 +40,20 @@ export async function deleteUploadedFile(storageKey: string) {
     body: JSON.stringify({ storageKey }),
   })
 
-  const result = (await response.json()) as ApiEnvelope<boolean>
+  const text = await response.text()
+
+  let result: ApiEnvelope<boolean> | null = null
+
+  if (text) {
+    try {
+      result = JSON.parse(text) as ApiEnvelope<boolean>
+    } catch {
+      result = null
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(result.message || 'No se pudo eliminar el archivo.')
+    throw new Error(result?.message || 'No se pudo eliminar el archivo.')
   }
 
   return true
