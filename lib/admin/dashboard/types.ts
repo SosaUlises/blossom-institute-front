@@ -1,3 +1,11 @@
+
+export interface ApiResponse<T> {
+  message: string
+  success: boolean
+  statusCode: number
+  data: T
+}
+
 export interface DashboardOverview {
   studentsCount: number
   teachersCount: number
@@ -28,17 +36,19 @@ export interface DashboardUpcomingClass {
   proximaClase: string
 }
 
-export interface AdminDashboardData {
+export interface AdminDashboardResponse {
   overview: DashboardOverview
   generalAverage: number | null
+
   averageGradesByCourse: DashboardAverageGradeByCourse[]
+  manualAverageGradesByCourse: DashboardAverageGradeByCourse[]
+
+  studentsAtRiskThisMonthCount: number
+  studentsManualLowGradesThisMonthCount: number
+
+  coursesAtRiskByOverallAverage: DashboardAverageGradeByCourse[]
+  coursesAtRiskByManualAverage: DashboardAverageGradeByCourse[]
+
   upcomingAssignments: DashboardUpcomingAssignment[]
   upcomingClasses: DashboardUpcomingClass[]
-}
-
-export interface ApiResponse<T> {
-  message: string
-  success: boolean
-  statusCode: number
-  data: T
 }

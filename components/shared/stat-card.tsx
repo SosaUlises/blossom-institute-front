@@ -61,75 +61,86 @@ const ACCENT_CONFIG: Record<
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
+
+
+type Accent = 'blue' | 'emerald' | 'violet' | 'amber'
+
 export function StatCard({
   title,
   value,
-  icon: Icon,
   subtitle,
-  trend,
+  icon: Icon,
   accent = 'blue',
-  compact = false,
-  className,
-}: StatCardProps) {
-  const { border, icon: iconClass } = ACCENT_CONFIG[accent]
+}: {
+  title: string
+  value: string | number
+  subtitle?: string
+  icon: React.ComponentType<{ className?: string }>
+  accent?: Accent
+}) {
+  const accentStyles =
+    accent === 'emerald'
+      ? {
+          card: 'border-emerald-500/15 bg-emerald-500/[0.05] hover:bg-emerald-500/[0.07]',
+          iconWrap: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+          label: 'text-emerald-700/80 dark:text-emerald-400/90',
+        }
+      : accent === 'violet'
+        ? {
+            card: 'border-violet-500/15 bg-violet-500/[0.05] hover:bg-violet-500/[0.07]',
+            iconWrap: 'bg-violet-500/10 text-violet-700 dark:text-violet-400',
+            label: 'text-violet-700/80 dark:text-violet-400/90',
+          }
+        : accent === 'amber'
+          ? {
+              card: 'border-amber-500/15 bg-amber-500/[0.05] hover:bg-amber-500/[0.07]',
+              iconWrap: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+              label: 'text-amber-700/80 dark:text-amber-400/90',
+            }
+          : {
+              card: 'border-primary/15 bg-primary/[0.05] hover:bg-primary/[0.07]',
+              iconWrap: 'bg-primary/10 text-primary',
+              label: 'text-primary/80',
+            }
 
   return (
-    <Card
+    <div
       className={cn(
-        'group overflow-hidden rounded-[26px] border bg-card/95 text-card-foreground shadow-[0_16px_34px_-24px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-24px_rgba(15,23,42,0.22)]',
-        border,
-        className,
+        'group rounded-[26px] border p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_22px_40px_-24px_rgba(15,23,42,0.20)]',
+        accentStyles.card,
       )}
     >
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                {title}
-              </p>
-
-              <p
-                className={cn(
-                  'font-semibold leading-none tracking-tight text-foreground',
-                  compact ? 'text-3xl' : 'text-[2rem]',
-                )}
-              >
-                {value}
-              </p>
-            </div>
-
-            {subtitle && (
-              <p className="max-w-[18ch] text-sm leading-6 text-muted-foreground">
-                {subtitle}
-              </p>
-            )}
-
-            {trend && (
-              <p
-                className={cn(
-                  'text-xs font-medium',
-                  trend.isPositive
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-red-600 dark:text-red-400',
-                )}
-              >
-                {trend.isPositive ? '+' : ''}
-                {trend.value}% vs último período
-              </p>
-            )}
-          </div>
-
-          <div
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p
             className={cn(
-              'flex size-12 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-[1.02]',
-              iconClass,
+              'text-[11px] font-semibold uppercase tracking-[0.16em]',
+              accentStyles.label,
             )}
           >
-            <Icon className="size-5" />
-          </div>
+            {title}
+          </p>
+
+          <p className="mt-3 text-[2rem] font-semibold leading-none tracking-tight text-foreground">
+            {value}
+          </p>
+
+          {subtitle ? (
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              {subtitle}
+            </p>
+          ) : null}
         </div>
-      </CardContent>
-    </Card>
+
+        <div
+          className={cn(
+            'flex size-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-[1.03]',
+            accentStyles.iconWrap,
+          )}
+        >
+          <Icon className="size-5" />
+        </div>
+      </div>
+    </div>
   )
 }

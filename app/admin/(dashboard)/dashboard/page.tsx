@@ -2,28 +2,46 @@ import {
   Users,
   GraduationCap,
   BookOpen,
-  ClipboardList,
-  ChartColumn,
+  AlertTriangle,
+  CalendarDays,
 } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { StatCard } from '@/components/shared/stat-card'
-import { PerformanceChart } from '@/components/admin/dashboard/performance-chart'
-import { UpcomingAssignmentsCard } from '@/components/admin/dashboard/upcoming-assignments'
 import { UpcomingClassesCard } from '@/components/admin/dashboard/upcoming-classes'
+import { AdminAttentionRequiredCard } from '@/components/admin/dashboard/admin-attention-required-card'
+import { AdminCoursePerformanceOverviewCard } from '@/components/admin/dashboard/admin-course-performance-overview-card'
 import { getAdminDashboard } from '@/lib/admin/dashboard/get-admin-dashboard'
 
 export default async function DashboardPage() {
   const dashboard = await getAdminDashboard()
+
+  const todayClassesCount = dashboard.upcomingClasses.filter((item) => {
+    const datePart = item.proximaClase.split('T')[0]
+    const [year, month, day] = datePart.split('-').map(Number)
+
+    const classDate = new Date(year, month - 1, day)
+    const today = new Date()
+
+    return (
+      classDate.getFullYear() === today.getFullYear() &&
+      classDate.getMonth() === today.getMonth() &&
+      classDate.getDate() === today.getDate()
+    )
+  }).length
+
+  const alertCount =
+    dashboard.coursesAtRiskByManualAverage.length +
+    dashboard.studentsManualLowGradesThisMonthCount
 
   return (
     <>
       <AppHeader title="Dashboard" />
 
       <div className="flex-1 overflow-auto px-6 py-8 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-10">
+        <div className="mx-auto max-w-7xl space-y-8">
           <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.05),transparent_24%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(72,99,180,0.12),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.08),transparent_26%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_24%)]" />
 
             <div className="relative flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
               <div className="max-w-3xl">
@@ -38,39 +56,21 @@ export default async function DashboardPage() {
                 </h2>
 
                 <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
-                  Visualizá el estado académico y operativo desde una vista centralizada.
+                  Visualizá métricas académicas, actividad operativa y cursos que requieren seguimiento desde una vista centralizada.
                 </p>
               </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:w-[380px] xl:grid-cols-1">
-                {/* Promedio general */}
-                <div className="group rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-200 group-hover:scale-[1.05] group-hover:bg-primary/15">
-                      <ChartColumn className="size-5" />
-                    </div>
-
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        Promedio general
-                      </p>
-                      <p className="text-2xl font-semibold tracking-tight text-foreground">
-                        {dashboard.generalAverage !== null
-                          ? `${dashboard.generalAverage.toFixed(2)}%`
-                          : '-'}
-                      </p>
-                    </div>
-                  </div>
+              <div className="group inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <CalendarDays className="size-5" />
                 </div>
 
-                {/* Próxima actividad */}
-                <div className="group rounded-2xl border border-border/60 bg-background/75 px-4 py-4 shadow-[0_12px_26px_-22px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/15 hover:bg-background/90 hover:shadow-[0_20px_36px_-22px_rgba(15,23,42,0.20)]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Próxima actividad
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Hoy
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-foreground">
-                    {dashboard.upcomingClasses.length} clases agendadas ·{' '}
-                    {dashboard.upcomingAssignments.length} entregas cercanas
+                  <p className="text-sm font-semibold text-foreground">
+                    {todayClassesCount} {todayClassesCount === 1 ? 'clase programada' : 'clases programadas'}
                   </p>
                 </div>
               </div>
@@ -95,6 +95,7 @@ export default async function DashboardPage() {
                 accent="blue"
                 subtitle="Usuarios activos en el sistema"
               />
+
               <StatCard
                 title="Docentes"
                 value={dashboard.overview.teachersCount.toLocaleString()}
@@ -102,6 +103,7 @@ export default async function DashboardPage() {
                 accent="violet"
                 subtitle="Profesores con acceso vigente"
               />
+
               <StatCard
                 title="Cursos activos"
                 value={dashboard.overview.activeCoursesCount.toLocaleString()}
@@ -109,14 +111,26 @@ export default async function DashboardPage() {
                 accent="emerald"
                 subtitle="Oferta académica en curso"
               />
+
               <StatCard
-                title="Tareas pendientes"
-                value={dashboard.overview.pendingAssignmentsCount.toLocaleString()}
-                icon={ClipboardList}
+                title="Alertas"
+                value={alertCount.toLocaleString()}
+                icon={AlertTriangle}
                 accent="amber"
-                subtitle="Entregas próximas o activas"
+                subtitle="Señales de riesgo académico detectadas"
               />
             </div>
+          </section>
+
+          <section className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+            <UpcomingClassesCard items={dashboard.upcomingClasses} />
+
+            <AdminAttentionRequiredCard
+              studentsAtRiskThisMonthCount={dashboard.studentsAtRiskThisMonthCount}
+              studentsManualLowGradesThisMonthCount={dashboard.studentsManualLowGradesThisMonthCount}
+              coursesAtRiskByOverallAverage={dashboard.coursesAtRiskByOverallAverage}
+              coursesAtRiskByManualAverage={dashboard.coursesAtRiskByManualAverage}
+            />
           </section>
 
           <section className="space-y-4">
@@ -129,23 +143,10 @@ export default async function DashboardPage() {
               </h3>
             </div>
 
-            <PerformanceChart data={dashboard.averageGradesByCourse} />
-          </section>
-
-          <section className="space-y-4">
-            <div className="space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Operational snapshot
-              </p>
-              <h3 className="text-xl font-semibold tracking-tight text-foreground">
-                Próxima actividad
-              </h3>
-            </div>
-
-            <div className="grid gap-5 xl:grid-cols-2">
-              <UpcomingAssignmentsCard items={dashboard.upcomingAssignments} />
-              <UpcomingClassesCard items={dashboard.upcomingClasses} />
-            </div>
+            <AdminCoursePerformanceOverviewCard
+              data={dashboard.averageGradesByCourse}
+              generalAverage={dashboard.generalAverage}
+            />
           </section>
         </div>
       </div>
