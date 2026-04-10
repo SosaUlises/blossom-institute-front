@@ -92,25 +92,25 @@ export function ChangePasswordForm() {
 
   return (
     <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-      <CardHeader className="pb-4">
-        <div className="flex items-start gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+      <CardHeader className="pb-5">
+        <div className="flex items-start gap-4">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <ShieldCheck className="size-5" />
           </div>
 
           <div className="space-y-1">
-            <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
+            <CardTitle className="text-xl font-semibold tracking-tight">
               Seguridad
             </CardTitle>
-            <CardDescription className="text-sm leading-6 text-muted-foreground">
-              Cambiá tu contraseña de acceso y mantené tu cuenta protegida.
+            <CardDescription className="text-sm leading-6">
+              Actualizá tu contraseña para mantener tu cuenta protegida.
             </CardDescription>
           </div>
         </div>
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-7">
           <PasswordField
             label="Contraseña actual"
             value={formData.currentPassword}
@@ -145,13 +145,13 @@ export function ChangePasswordForm() {
           />
 
           {error && (
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-3 text-sm text-green-700 dark:text-green-400">
+            <div className="rounded-2xl border border-green-500/20 bg-green-500/5 px-4 py-3 text-sm text-green-700 dark:text-green-400">
               {success}
             </div>
           )}
@@ -160,7 +160,7 @@ export function ChangePasswordForm() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+              className="h-11 rounded-2xl px-6 shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               {isSubmitting ? (
                 <>

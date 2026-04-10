@@ -1,5 +1,25 @@
 import { AppHeader } from '@/components/layout/app-header'
+import { BookOpen, Sparkles } from 'lucide-react'
 import { TeacherCoursesTable } from '@/components/teacher/courses/teacher-courses-table'
+
+function HeroInfoCard() {
+  return (
+    <div className="group inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
+      <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <BookOpen className="size-5" />
+      </div>
+
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Módulo
+        </p>
+        <p className="text-sm font-semibold text-foreground">
+          Courses
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export default function TeacherCoursesPage() {
   return (
@@ -8,29 +28,31 @@ export default function TeacherCoursesPage() {
 
       <main className="flex-1 overflow-auto px-6 py-8 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
+          <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_24%)]" />
 
-          {/* ── Hero — mismo lenguaje que el dashboard ───────────────────────── */}
-          <div className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-7 py-6 shadow-[0_12px_36px_-18px_rgba(15,23,42,0.14)]">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.07),transparent_40%)]" />
+            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <div className="mb-5 h-[3px] w-12 rounded-full bg-primary" />
 
-            <div className="relative">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/70">
-                Panel docente
-              </p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+                  Panel docente
+                </p>
 
-              <h2 className="mt-1.5 text-[1.75rem] font-semibold leading-tight tracking-tight text-foreground">
-                Mis cursos
-              </h2>
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-[2.35rem]">
+                  Mis cursos
+                </h2>
 
-              <p className="mt-1 text-sm text-muted-foreground">
-                Accedé al detalle de cada curso, sus clases y entregas.
-              </p>
+                <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+                  Accedé al detalle de cada curso, sus clases, tareas y entregas desde un único espacio de trabajo.
+                </p>
+              </div>
+
+              <HeroInfoCard />
             </div>
-          </div>
+          </section>
 
-          {/* ── Lista de cursos ───────────────────────────────────────────────── */}
           <TeacherCoursesTable />
-
         </div>
       </main>
     </>

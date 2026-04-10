@@ -89,7 +89,9 @@ function getEstadoClass(estado: ClassItem['estado']) {
 }
 
 function formatDate(date: string) {
-  const d = new Date(date)
+  const [year, month, day] = date.split('-').map(Number)
+  const d = new Date(year, month - 1, day)
+
   return d.toLocaleDateString('es-AR', {
     weekday: 'short',
     day: 'numeric',
