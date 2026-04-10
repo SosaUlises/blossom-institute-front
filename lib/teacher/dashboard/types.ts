@@ -10,9 +10,8 @@ export enum EstadoClase {
 }
 
 export enum EstadoEntrega {
-  Pendiente = 1,
-  Entregada = 2,
-  Revisada = 3,
+  EntregadaEnTermino = 1,
+  FueraDeTermino = 2
 }
 
 export interface ProfesorDashboardCursoItem {

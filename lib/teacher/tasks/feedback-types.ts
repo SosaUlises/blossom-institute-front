@@ -19,3 +19,4 @@ export type CreateFeedbackPayload = {
   comentario?: string | null
   adjuntos: CreateFeedbackAttachmentPayload[]
 }
+

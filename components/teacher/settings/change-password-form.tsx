@@ -4,13 +4,7 @@ import { useState } from 'react'
 import { Eye, EyeOff, KeyRound, Loader2, ShieldCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { changeMyPassword } from '@/lib/teacher/settings/api'
 
@@ -41,7 +35,7 @@ function PasswordField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="h-11 rounded-2xl border-border/70 bg-card/80 pr-12 shadow-sm"
+          className="h-11 rounded-2xl border-border/70 bg-card/85 pr-12 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
           autoComplete="off"
         />
 
@@ -97,10 +91,10 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <Card className="rounded-[28px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
-      <CardHeader className="pb-4">
-        <div className="flex items-start gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+    <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+      <CardHeader className="pb-5">
+        <div className="flex items-start gap-4">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <ShieldCheck className="size-5" />
           </div>
 
@@ -108,15 +102,15 @@ export function ChangePasswordForm() {
             <CardTitle className="text-xl font-semibold tracking-tight">
               Seguridad
             </CardTitle>
-            <CardDescription>
-              Cambiá tu contraseña de acceso y mantené tu cuenta protegida.
+            <CardDescription className="text-sm leading-6">
+              Actualizá tu contraseña para mantener tu cuenta protegida.
             </CardDescription>
           </div>
         </div>
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-7">
           <PasswordField
             label="Contraseña actual"
             value={formData.currentPassword}
@@ -151,13 +145,13 @@ export function ChangePasswordForm() {
           />
 
           {error && (
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-3 text-sm text-green-700 dark:text-green-400">
+            <div className="rounded-2xl border border-green-500/20 bg-green-500/5 px-4 py-3 text-sm text-green-700 dark:text-green-400">
               {success}
             </div>
           )}
@@ -166,7 +160,7 @@ export function ChangePasswordForm() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-2xl bg-primary/90 px-5 text-primary-foreground shadow-[0_14px_30px_-18px_rgba(36,59,123,0.42)] transition-all hover:-translate-y-[1px] hover:bg-primary hover:shadow-[0_18px_36px_-18px_rgba(36,59,123,0.50)]"
+              className="h-11 rounded-2xl px-6 shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               {isSubmitting ? (
                 <>

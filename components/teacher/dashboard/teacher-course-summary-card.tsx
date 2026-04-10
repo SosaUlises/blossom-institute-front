@@ -1,47 +1,149 @@
-import { BookOpen, ClipboardCheck, Users, TrendingUp } from 'lucide-react'
-
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+import {
+  ChevronRight,
+  BookOpen,
+  Users,
+  ClipboardList,
+  BarChart3,
+} from 'lucide-react'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import type { ProfesorDashboardResumenCursoItem } from '@/lib/teacher/dashboard/types'
 
-function MiniStat({
-  label,
+// ─── Pill ─────────────────────────────────────────────────────────────
+
+function MetricPill({
+  icon,
   value,
-  icon: Icon,
-  accent = 'blue',
+  label,
+  tone = 'default',
 }: {
-  label: string
+  icon: React.ReactNode
   value: string | number
-  icon: React.ComponentType<{ className?: string }>
-  accent?: 'blue' | 'emerald' | 'amber' | 'violet'
+  label: string
+  tone?: 'default' | 'warning' | 'success' | 'primary'
 }) {
-  const accentClasses =
-    accent === 'emerald'
-      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-      : accent === 'amber'
-      ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-      : accent === 'violet'
-      ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
-      : 'bg-primary/10 text-primary'
-
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
-      <div className="flex items-start gap-3">
-        <div className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${accentClasses}`}>
-          <Icon className="size-4" />
-        </div>
+    <div
+      className={cn(
+        'inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 transition-colors',
+        tone === 'warning' &&
+        'border-amber-500/25 bg-amber-500/[0.08]',
+        tone === 'success' &&
+        'border-emerald-500/25 bg-emerald-500/[0.08]',
+        tone === 'primary' &&
+        'border-primary/20 bg-primary/[0.06]',
+        tone === 'default' &&
+        'border-border/60 bg-muted/[0.28]',
+      )}
+    >
+      <div
+        className={cn(
+          'flex size-8 items-center justify-center rounded-lg',
+          tone === 'warning' &&
+          'bg-amber-500/10 text-amber-600',
+          tone === 'success' &&
+          'bg-emerald-500/10 text-emerald-600',
+          tone === 'primary' &&
+          'bg-primary/10 text-primary',
+          tone === 'default' &&
+          'bg-background/80 text-muted-foreground',
+        )}
+      >
+        {icon}
+      </div>
 
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            {label}
-          </p>
-          <p className="mt-1 text-base font-semibold text-foreground">
-            {value}
-          </p>
-        </div>
+      <div className="leading-none">
+        <p
+          className={cn(
+            'text-[15px] font-semibold tabular-nums',
+            tone === 'warning' && 'text-amber-700',
+            tone === 'success' && 'text-emerald-700',
+            tone === 'primary' && 'text-primary',
+            tone === 'default' && 'text-foreground',
+          )}
+        >
+          {value}
+        </p>
+
+        <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+          {label}
+        </p>
       </div>
     </div>
   )
 }
+
+// ─── Row ─────────────────────────────────────────────────────────────
+
+function CourseRow({ item }: { item: ProfesorDashboardResumenCursoItem }) {
+  const tienePendientes = item.entregasPendientesCorreccion > 0
+
+  return (
+    <li>
+      <div className="group flex flex-col gap-5 rounded-3xl border border-border/50 bg-muted/[0.18] px-5 py-5 transition-all duration-200 ease-out hover:-translate-y-[2px] hover:bg-muted/[0.32] hover:shadow-md md:flex-row md:items-center md:justify-between">
+
+        {/* LEFT */}
+        <div className="min-w-0 flex items-center gap-4">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-background/90 text-primary shadow-sm">
+            <BookOpen className="size-5" />
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate text-[17px] font-semibold tracking-tight text-foreground">
+              {item.cursoNombre}
+            </p>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              Resumen rápido del curso
+            </p>
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex flex-wrap items-center gap-3 md:justify-end">
+
+          <MetricPill
+            icon={<Users className="size-4" />}
+            value={item.cantidadAlumnos}
+            label="Alumnos"
+          />
+
+          <MetricPill
+            icon={<ClipboardList className="size-4" />}
+            value={item.tareasPublicadas}
+            label="Tareas"
+          />
+
+          <MetricPill
+            icon={<ClipboardList className="size-4" />}
+            value={item.entregasPendientesCorreccion}
+            label="Pend."
+            tone={tienePendientes ? 'warning' : 'success'}
+          />
+
+          {/* PROMEDIO CON IDENTIDAD */}
+          <MetricPill
+            icon={<BarChart3 className="size-4" />}
+            value={item.promedioCurso?.toFixed(1) ?? '—'}
+            label="Prom."
+            tone="primary"
+          />
+
+          <div className="ml-1 hidden md:flex size-9 items-center justify-center rounded-full text-muted-foreground/40 transition-colors group-hover:text-muted-foreground/70">
+            <ChevronRight className="size-4" />
+          </div>
+        </div>
+      </div>
+    </li>
+  )
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────
 
 export function TeacherCourseSummaryCard({
   items,
@@ -49,88 +151,24 @@ export function TeacherCourseSummaryCard({
   items: ProfesorDashboardResumenCursoItem[]
 }) {
   return (
-    <Card className="rounded-[28px] border border-border/70 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(30,42,68,0.16)]">
-      <CardHeader className="pb-4">
+    <Card className="rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+      <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold tracking-tight">
-          Detalle por curso
+          Mis cursos
         </CardTitle>
-        <CardDescription>
-          Vista rápida del estado académico y operativo de los cursos asignados.
-        </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-4 pt-0">
+      <CardContent className="pt-0">
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-6 text-sm text-muted-foreground">
             No hay cursos para mostrar.
           </div>
         ) : (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <ul className="space-y-4">
             {items.map((item) => (
-              <div
-                key={item.cursoId}
-                className="group rounded-[26px] border border-border/70 bg-background/70 p-5 transition-all hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_34px_-22px_rgba(30,42,68,0.22)]"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <BookOpen className="size-5" />
-                  </div>
-
-                  <div className="min-w-0 flex-1 space-y-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                          Curso
-                        </p>
-                        <h4 className="mt-1 truncate text-lg font-semibold tracking-tight text-foreground">
-                          {item.cursoNombre}
-                        </h4>
-                      </div>
-
-                      <div className="rounded-2xl border border-primary/15 bg-primary/8 px-4 py-3 sm:min-w-[120px]">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
-                          Promedio
-                        </p>
-                        <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-                          {item.promedioCurso?.toFixed(2) ?? '-'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <MiniStat
-                        label="Alumnos"
-                        value={item.cantidadAlumnos}
-                        icon={Users}
-                        accent="blue"
-                      />
-
-                      <MiniStat
-                        label="Tareas publicadas"
-                        value={item.tareasPublicadas}
-                        icon={ClipboardCheck}
-                        accent="violet"
-                      />
-
-                      <MiniStat
-                        label="Pendientes"
-                        value={item.entregasPendientesCorreccion}
-                        icon={ClipboardCheck}
-                        accent="amber"
-                      />
-
-                      <MiniStat
-                        label="Rendimiento"
-                        value={item.promedioCurso?.toFixed(2) ?? '-'}
-                        icon={TrendingUp}
-                        accent="emerald"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CourseRow key={item.cursoId} item={item} />
             ))}
-          </div>
+          </ul>
         )}
       </CardContent>
     </Card>

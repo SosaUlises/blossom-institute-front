@@ -80,7 +80,7 @@ export function TeacherCourseTabs({ course }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-[26px] border border-border/70 bg-card/85 p-2 shadow-[0_14px_34px_-24px_rgba(30,42,68,0.18)] backdrop-blur-sm">
+      <div className="rounded-[26px] border border-border/60 bg-card/90 p-2 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.16)] backdrop-blur-sm">
         <div className="flex flex-wrap gap-2">
           {(Object.keys(tabStyles) as Tab[]).map((key) => {
             const tabConfig = tabStyles[key]
@@ -119,7 +119,7 @@ export function TeacherCourseTabs({ course }: Props) {
         </div>
       </div>
 
-      <div className="rounded-[30px] border border-border/70 bg-card/95 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+      <div className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
         <div className="border-b border-border/60 px-6 py-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Module view
