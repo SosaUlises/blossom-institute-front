@@ -26,7 +26,7 @@ export default function CoursesPage() {
                 </h2>
 
                 <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
-                  Administrá cursos, horarios, asignaciones y estado general del ciclo académico desde una vista clara y centralizada.
+                  Administrá cursos, horarios, estado general y asignaciones académicas desde una vista clara y centralizada.
                 </p>
               </div>
 

@@ -1,9 +1,9 @@
 import 'server-only'
 
 import { getSession } from '@/lib/auth/session'
-import type { AdminDashboardData, ApiResponse } from './types'
+import type { AdminDashboardResponse, ApiResponse } from './types'
 
-export async function getAdminDashboard(): Promise<AdminDashboardData> {
+export async function getAdminDashboard(): Promise<AdminDashboardResponse> {
   const session = await getSession()
 
   if (!session?.token) {
@@ -19,7 +19,7 @@ export async function getAdminDashboard(): Promise<AdminDashboardData> {
     cache: 'no-store',
   })
 
-  const result: ApiResponse<AdminDashboardData> = await response.json()
+  const result: ApiResponse<AdminDashboardResponse> = await response.json()
 
   if (!response.ok || !result.success) {
     throw new Error(result?.message || 'No se pudo obtener el dashboard.')

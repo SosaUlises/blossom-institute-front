@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { PencilLine } from 'lucide-react'
+import { PencilLine, Inbox } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { CourseForm } from '@/components/admin/courses/course-form'
 import { getCourseById, updateCourse } from '@/lib/admin/courses/api'
 import type { CreateCursoDTO, CursoById, UpdateCursoDTO } from '@/lib/admin/courses/types'
+import { Card, CardContent } from '@/components/ui/card'
 
 export default function EditCoursePage() {
   const params = useParams<{ id: string }>()
@@ -87,28 +88,72 @@ export default function EditCoursePage() {
           </section>
 
           {loading ? (
-            <div className="overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] sm:p-7">
-              <div className="space-y-5">
-                <div className="h-6 w-48 animate-pulse rounded-xl bg-muted/40" />
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
-                  <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
+            <div className="space-y-6">
+              <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
+                  <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
+                  <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
                 </div>
-                <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
-                <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
-                <div className="h-24 animate-pulse rounded-2xl bg-muted/35" />
-              </div>
+              </section>
+
+              <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+                <div className="space-y-5">
+                  <div className="h-6 w-48 animate-pulse rounded-xl bg-muted/40" />
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
+                    <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
+                  </div>
+                  <div className="h-12 w-80 animate-pulse rounded-2xl bg-muted/35" />
+                </div>
+              </section>
+
+              <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+                <div className="space-y-5">
+                  <div className="h-6 w-48 animate-pulse rounded-xl bg-muted/40" />
+                  <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
+                  <div className="h-24 animate-pulse rounded-2xl bg-muted/35" />
+                </div>
+              </section>
             </div>
           ) : loadError ? (
-            <div className="rounded-[28px] border border-border/60 bg-card/95 p-8 text-sm text-muted-foreground shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-              {loadError}
-            </div>
+            <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+              <CardContent className="px-6 py-14">
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="flex size-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
+                    <Inbox className="size-6" />
+                  </div>
+
+                  <h4 className="mt-4 text-lg font-semibold tracking-tight text-foreground">
+                    No se pudo cargar el curso
+                  </h4>
+
+                  <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                    {loadError}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           ) : course ? (
             <CourseForm mode="edit" initialData={course} onSubmit={handleSubmit} />
           ) : (
-            <div className="rounded-[28px] border border-border/60 bg-card/95 p-8 text-sm text-muted-foreground shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-              No se pudo cargar el curso.
-            </div>
+            <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+              <CardContent className="px-6 py-14">
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="flex size-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
+                    <Inbox className="size-6" />
+                  </div>
+
+                  <h4 className="mt-4 text-lg font-semibold tracking-tight text-foreground">
+                    Curso no disponible
+                  </h4>
+
+                  <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                    No se pudo cargar la información del curso seleccionado.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>

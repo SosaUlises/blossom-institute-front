@@ -26,7 +26,7 @@ export default function TeachersPage() {
                 </h2>
 
                 <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
-                  Administrá altas, edición y estado de los docentes del instituto desde una vista clara y centralizada.
+                  Gestioná altas, edición y estado de los profesores del instituto desde una vista clara y centralizada.
                 </p>
               </div>
 
