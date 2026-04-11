@@ -20,26 +20,26 @@ function getScoreTone(score: number, mode: 'positive' | 'warning') {
     if (score >= 85) {
       return {
         row: 'border-emerald-500/20 bg-emerald-500/[0.08]',
-        pill: 'border-emerald-400/25 bg-emerald-500/15 text-emerald-300',
+       pill: 'border-emerald-500/25 bg-emerald-500/12 text-emerald-700 shadow-[0_8px_18px_-10px_rgba(16,185,129,0.18)] dark:border-emerald-400/25 dark:bg-emerald-500/15 dark:text-emerald-200 dark:shadow-[0_8px_18px_-10px_rgba(16,185,129,0.45)]'
       }
     }
 
     return {
       row: 'border-emerald-500/18 bg-emerald-500/[0.06]',
-      pill: 'border-emerald-400/20 bg-emerald-500/12 text-emerald-300',
+     pill: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 shadow-[0_8px_18px_-10px_rgba(16,185,129,0.14)] dark:border-emerald-400/20 dark:bg-emerald-500/12 dark:text-emerald-200 dark:shadow-[0_8px_18px_-10px_rgba(16,185,129,0.35)]'
     }
   }
 
   if (score < 50) {
     return {
       row: 'border-rose-500/20 bg-rose-500/[0.08]',
-      pill: 'border-rose-400/25 bg-rose-500/15 text-rose-300',
+pill: 'border-rose-500/25 bg-rose-500/12 text-rose-700 shadow-[0_8px_18px_-10px_rgba(244,63,94,0.16)] dark:border-rose-400/25 dark:bg-rose-500/15 dark:text-rose-200 dark:shadow-[0_8px_18px_-10px_rgba(244,63,94,0.40)]'
     }
   }
 
   return {
     row: 'border-amber-500/20 bg-amber-500/[0.08]',
-    pill: 'border-amber-400/25 bg-amber-500/15 text-amber-300',
+pill: 'border-amber-500/25 bg-amber-500/12 text-amber-700 shadow-[0_8px_18px_-10px_rgba(245,158,11,0.16)] dark:border-amber-400/25 dark:bg-amber-500/15 dark:text-amber-200 dark:shadow-[0_8px_18px_-10px_rgba(245,158,11,0.40)]'
   }
 }
 
@@ -76,11 +76,11 @@ function RankRow({
       </div>
 
       <div
-        className={cn(
-          'inline-flex min-w-[88px] items-center justify-center rounded-full border px-3.5 py-1.5 text-sm font-semibold tabular-nums shadow-sm',
-          scoreTone.pill,
-        )}
-      >
+      className={cn(
+        'inline-flex min-w-[92px] items-center justify-center rounded-full border px-3.5 py-1.5 text-sm font-semibold tabular-nums tracking-tight backdrop-blur-sm transition-all duration-200',
+        scoreTone.pill,
+      )}
+    >
         {averageGrade.toFixed(2)}
       </div>
     </div>
