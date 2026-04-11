@@ -23,7 +23,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from '@/components/ui/sidebar'
 import {
   DropdownMenu,
@@ -38,11 +37,21 @@ import { cn } from '@/lib/utils'
 const teacherNavItems = [
   { title: 'Dashboard', url: '/teacher/dashboard', icon: LayoutDashboard },
   { title: 'Courses', url: '/teacher/courses', icon: BookOpen },
-]
-
-const systemNavItems = [
   { title: 'Settings', url: '/teacher/settings', icon: Settings },
 ]
+
+function getItemDescription(title: string) {
+  switch (title) {
+    case 'Dashboard':
+      return 'Resumen general'
+    case 'Courses':
+      return 'Cursos asignados'
+    case 'Settings':
+      return 'Configuración'
+    default:
+      return ''
+  }
+}
 
 function NavItem({
   item,
@@ -61,20 +70,14 @@ function NavItem({
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        tooltip={item.title}
-        className={cn(
-          'h-auto rounded-[22px] p-0 transition-none',
-        )}
-      >
+      <SidebarMenuButton asChild tooltip={item.title} className="h-auto rounded-[22px] p-0 transition-none">
         <Link
           href={item.url}
           className={cn(
             'group flex min-h-[52px] w-full items-center gap-3 rounded-[22px] border px-3 py-3 text-sm font-medium transition-all duration-200',
             isActive
               ? 'border-primary/15 bg-primary/8 text-foreground shadow-[0_16px_28px_-18px_rgba(36,59,123,0.28)] hover:bg-primary/10'
-              : 'border-transparent text-sidebar-foreground/85 hover:border-sidebar-border/60 hover:bg-sidebar-accent/55 hover:text-sidebar-accent-foreground',
+              : 'border-transparent bg-transparent text-sidebar-foreground/85 hover:border-sidebar-border/50 hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground',
           )}
         >
           <div
@@ -82,7 +85,7 @@ function NavItem({
               'flex size-10 shrink-0 items-center justify-center rounded-2xl border transition-all duration-200',
               isActive
                 ? 'border-primary/15 bg-primary/10 text-primary'
-                : 'border-border/50 bg-background/70 text-muted-foreground group-hover:border-primary/10 group-hover:bg-primary/5 group-hover:text-primary/80',
+                : 'border-border/50 bg-background/60 text-muted-foreground group-hover:border-primary/10 group-hover:bg-primary/5 group-hover:text-primary/80',
             )}
           >
             <item.icon className="size-4.5" />
@@ -91,19 +94,15 @@ function NavItem({
           <div className="min-w-0 flex-1">
             <p
               className={cn(
-                'truncate text-sm font-semibold',
+                'truncate text-sm font-semibold leading-tight',
                 isActive ? 'text-foreground' : 'text-sidebar-foreground/90',
               )}
             >
               {item.title}
             </p>
 
-            <p className="truncate text-[11px] text-muted-foreground">
-              {item.title === 'Dashboard'
-                ? 'Resumen general'
-                : item.title === 'Courses'
-                  ? 'Cursos asignados'
-                  : 'Configuración'}
+            <p className="mt-1 truncate text-[11px] leading-[1.25] text-muted-foreground">
+              {getItemDescription(item.title)}
             </p>
           </div>
 
@@ -147,21 +146,19 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
       <SidebarHeader className="border-b border-sidebar-border/70 px-4 py-4">
         <Link
           href="/teacher/dashboard"
-          className="block rounded-[24px] border border-sidebar-border/60 bg-card/80 p-4 shadow-[0_14px_28px_-20px_rgba(15,23,42,0.20)] transition-all duration-200 hover:bg-card"
+          className="flex items-center gap-3 rounded-2xl px-1 py-1 transition-all duration-200 hover:opacity-90"
         >
-          <div className="flex items-start gap-3">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Sparkles className="size-4.5" />
-            </div>
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Sparkles className="size-4.5" />
+          </div>
 
-            <div className="min-w-0">
-              <p className="truncate text-[0.98rem] font-semibold tracking-tight text-foreground">
-                Blossom Institute
-              </p>
-              <p className="mt-1 truncate text-xs text-muted-foreground">
-                Teacher Panel
-              </p>
-            </div>
+          <div className="min-w-0">
+            <p className="truncate text-[0.98rem] font-semibold tracking-tight text-foreground">
+              Blossom Institute
+            </p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              Teacher Panel
+            </p>
           </div>
         </Link>
       </SidebarHeader>
@@ -177,22 +174,6 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-2">
                   {teacherNavItems.map((item) => (
-                    <NavItem key={item.title} item={item} pathname={pathname} />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarSeparator className="bg-sidebar-border/80" />
-
-            <SidebarGroup>
-              <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-                System
-              </SidebarGroupLabel>
-
-              <SidebarGroupContent>
-                <SidebarMenu className="space-y-2">
-                  {systemNavItems.map((item) => (
                     <NavItem key={item.title} item={item} pathname={pathname} />
                   ))}
                 </SidebarMenu>
