@@ -35,7 +35,7 @@ function StudentsToolbar({
 }) {
   return (
     <section className="rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] md:p-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div className="flex flex-col gap-5 text-center xl:flex-row xl:items-end xl:justify-between xl:text-left">
         <div className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Gestión
@@ -48,19 +48,19 @@ function StudentsToolbar({
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="relative w-full min-w-[280px] max-w-md">
+        <div className="flex w-full flex-col items-center gap-3 md:flex-row md:items-center xl:w-auto">
+          <div className="relative w-full max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar por nombre, apellido, email o DNI..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-11 rounded-2xl border-border/70 bg-background/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+              className="h-11 rounded-2xl border-border/70 bg-background/85 pl-10 text-center shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15 md:text-left"
             />
           </div>
 
-          <Link href="/admin/dashboard/students/new">
-            <Button className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md">
+          <Link href="/admin/dashboard/students/new" className="w-full md:w-auto">
+            <Button className="h-11 w-full rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md md:w-auto">
               <Plus className="mr-2 size-4" />
               Nuevo alumno
             </Button>
@@ -126,15 +126,15 @@ function StudentCard({
     <article className="group relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:border-border/80 hover:shadow-[0_24px_52px_-24px_rgba(15,23,42,0.22)] md:p-6">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.05),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.04),transparent_22%)]" />
 
-      <div className="relative grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_auto_auto] xl:items-center">
+      <div className="relative grid gap-5 text-center xl:grid-cols-[minmax(0,1.3fr)_auto_auto] xl:items-center xl:text-left">
         <div className="min-w-0">
-          <div className="flex items-start gap-4">
+          <div className="flex flex-col items-center gap-4 xl:flex-row xl:items-start">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
               <UserRound className="size-5" />
             </div>
 
-            <div className="min-w-0 space-y-2">
-              <div className="flex flex-wrap items-center gap-2.5">
+            <div className="min-w-0 space-y-2 text-center xl:text-left">
+              <div className="flex flex-wrap items-center justify-center gap-2.5 xl:justify-start">
                 <h4 className="truncate text-[1.08rem] font-semibold tracking-tight text-foreground">
                   {student.nombre} {student.apellido}
                 </h4>
@@ -142,7 +142,7 @@ function StudentCard({
                 <StudentStatusBadge activo={student.activo} />
               </div>
 
-              <div className="inline-flex max-w-full items-center gap-2 text-sm text-muted-foreground">
+              <div className="inline-flex max-w-full items-center justify-center gap-2 text-sm text-muted-foreground xl:justify-start">
                 <Mail className="size-4 shrink-0" />
                 <span className="truncate">{student.email}</span>
               </div>
@@ -150,17 +150,17 @@ function StudentCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 xl:justify-center">
+        <div className="flex flex-wrap justify-center gap-3 xl:justify-center">
           <MetaPill icon={IdCard} label="DNI" value={String(student.dni)} />
           <MetaPill icon={Phone} label="Teléfono" value={student.telefono || '-'} />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+        <div className="flex flex-wrap items-center justify-center gap-2 xl:justify-end">
           <Link href={`/admin/dashboard/students/${student.id}`}>
             <Button
               size="sm"
               variant="outline"
-              className="h-10 rounded-xl border-border/70 bg-background/75 px-3 text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/8 hover:text-primary"
+              className="h-10 min-w-[128px] rounded-xl border-border/70 bg-background/75 px-3 text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/8 hover:text-primary sm:min-w-0"
             >
               <Pencil className="mr-2 size-4" />
               Editar
@@ -171,11 +171,12 @@ function StudentCard({
             size="sm"
             onClick={() => onToggleActive(student)}
             disabled={actionLoadingId === student.id}
-            className={
+            className={cn(
+              'h-10 min-w-[128px] rounded-xl px-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 sm:min-w-0',
               student.activo
-                ? 'h-10 rounded-xl border border-rose-500/15 bg-rose-500/10 px-3 text-rose-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-rose-500/15 dark:text-rose-400'
-                : 'h-10 rounded-xl border border-emerald-500/15 bg-emerald-500/10 px-3 text-emerald-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-500/15 dark:text-emerald-400'
-            }
+                ? 'border border-rose-500/15 bg-rose-500/10 text-rose-700 hover:bg-rose-500/15 dark:text-rose-400'
+                : 'border border-emerald-500/15 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400',
+            )}
           >
             {student.activo ? (
               <>
@@ -204,20 +205,20 @@ function StudentsSkeleton() {
           className="rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] md:p-6"
         >
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_auto_auto] xl:items-center">
-            <div className="flex items-start gap-4">
+            <div className="flex flex-col items-center gap-4 xl:flex-row xl:items-start">
               <div className="size-12 animate-pulse rounded-2xl bg-muted/35" />
-              <div className="space-y-2">
-                <div className="h-5 w-44 animate-pulse rounded-lg bg-muted/35" />
-                <div className="h-4 w-64 animate-pulse rounded-lg bg-muted/25" />
+              <div className="space-y-2 text-center xl:text-left">
+                <div className="mx-auto h-5 w-44 animate-pulse rounded-lg bg-muted/35 xl:mx-0" />
+                <div className="mx-auto h-4 w-64 animate-pulse rounded-lg bg-muted/25 xl:mx-0" />
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap justify-center gap-3 xl:justify-center">
               <div className="h-12 w-36 animate-pulse rounded-[18px] bg-muted/30" />
               <div className="h-12 w-40 animate-pulse rounded-[18px] bg-muted/30" />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap justify-center gap-2 xl:justify-end">
               <div className="h-10 w-24 animate-pulse rounded-xl bg-muted/30" />
               <div className="h-10 w-28 animate-pulse rounded-xl bg-muted/30" />
             </div>

@@ -5,7 +5,6 @@ import { es } from 'date-fns/locale'
 import {
   CalendarDays,
   Clock3,
-  GraduationCap,
   UserRound,
 } from 'lucide-react'
 
@@ -109,17 +108,17 @@ function AgendaMetaPill({
         : 'bg-background/80 text-muted-foreground'
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-background/70 px-4 py-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-      <div className="flex items-start gap-3">
+    <div className="min-w-0 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+      <div className="flex min-w-0 items-start gap-3">
         <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-xl', tone)}>
           <Icon className="size-4" />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {label}
           </p>
-          <p className="mt-1 text-sm font-medium text-foreground">
+          <p className="mt-1 truncate text-sm font-medium text-foreground">
             {value}
           </p>
         </div>
@@ -135,16 +134,16 @@ function FeaturedClass({ item }: { item: DashboardUpcomingClass }) {
   return (
     <div
       className={cn(
-        'rounded-3xl border px-5 py-5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-[1px] hover:shadow-md',
+        'w-full min-w-0 overflow-hidden rounded-3xl border px-4 py-5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-[1px] hover:shadow-md sm:px-5',
         isHoy
           ? 'border-primary/20 bg-gradient-to-br from-primary/[0.10] via-primary/[0.04] to-transparent hover:from-primary/[0.14]'
           : 'border-border/60 bg-muted/[0.30] hover:bg-muted/[0.42]',
       )}
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex min-w-0 items-start justify-between gap-3">
         <span
           className={cn(
-            'inline-flex items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]',
+            'inline-flex shrink-0 items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]',
             isHoy
               ? 'bg-primary/15 text-primary'
               : 'bg-background/80 text-muted-foreground',
@@ -153,7 +152,7 @@ function FeaturedClass({ item }: { item: DashboardUpcomingClass }) {
           {label}
         </span>
 
-        <div className="min-w-0 text-right">
+        <div className="min-w-0 flex-1 text-right">
           <p className="truncate text-base font-semibold tracking-tight text-foreground">
             {item.cursoNombre}
           </p>
@@ -161,18 +160,18 @@ function FeaturedClass({ item }: { item: DashboardUpcomingClass }) {
       </div>
 
       <div className="mt-5">
-        <div className="flex items-center gap-2">
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-background/80 text-muted-foreground shadow-sm">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-background/80 text-muted-foreground shadow-sm">
             <Clock3 className="size-4.5" />
           </div>
 
-          <p className="text-[2.4rem] font-bold leading-none tracking-tight text-foreground">
+          <p className="min-w-0 text-[2.1rem] font-bold leading-none tracking-tight text-foreground sm:text-[2.4rem]">
             {item.horaInicio.slice(0, 5)}
           </p>
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2">
         <AgendaMetaPill
           label="Día"
           value={item.diaSemana || format(date, 'EEEE', { locale: es })}
@@ -196,7 +195,7 @@ function CompactClass({ item }: { item: DashboardUpcomingClass }) {
 
   return (
     <li>
-      <div className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 transition-all duration-200 hover:-translate-y-[1px] hover:border-border/60 hover:bg-muted/55 hover:shadow-sm">
+      <div className="group flex w-full min-w-0 items-center gap-3 rounded-2xl border border-transparent px-3 py-3 transition-all duration-200 hover:-translate-y-[1px] hover:border-border/60 hover:bg-muted/55 hover:shadow-sm">
         <div
           className={cn(
             'flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-2xl shadow-sm transition-all duration-200',
@@ -243,7 +242,7 @@ export function UpcomingClassesCard({ items }: UpcomingClassesCardProps) {
   const [featured, ...rest] = futureClasses
 
   return (
-    <Card className="rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+    <Card className="min-w-0 overflow-hidden rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold tracking-tight">
           Próximas clases
@@ -253,13 +252,13 @@ export function UpcomingClassesCard({ items }: UpcomingClassesCardProps) {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="pt-0">
+      <CardContent className="min-w-0 pt-0">
         {futureClasses.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-6 text-sm text-muted-foreground">
             No hay clases próximas registradas.
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             <FeaturedClass item={featured} />
 
             {rest.length > 0 && (

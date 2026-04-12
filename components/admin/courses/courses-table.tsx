@@ -51,7 +51,7 @@ function CoursesToolbar({
 }) {
   return (
     <section className="rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] md:p-6">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5 text-center xl:text-left">
         <div className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Gestión
@@ -59,20 +59,20 @@ function CoursesToolbar({
           <h3 className="text-xl font-semibold tracking-tight text-foreground">
             Listado de cursos
           </h3>
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+          <p className="mx-auto max-w-2xl text-sm leading-6 text-muted-foreground xl:mx-0">
             Buscá, editá y administrá estado, horarios y asignaciones del ciclo académico.
           </p>
         </div>
 
         <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(280px,1.2fr)_180px_220px]">
-            <div className="relative">
+            <div className="relative w-full">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar curso..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-11 rounded-2xl border-border/70 bg-background/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-2xl border-border/70 bg-background/85 pl-10 text-center shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15 md:text-left"
               />
             </div>
 
@@ -80,13 +80,13 @@ function CoursesToolbar({
               placeholder="Filtrar por año"
               value={anio}
               onChange={(e) => setAnio(e.target.value)}
-              className="h-11 rounded-2xl border-border/70 bg-background/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+              className="h-11 rounded-2xl border-border/70 bg-background/85 text-center shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15 md:text-left"
             />
 
             <select
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
-              className="flex h-11 rounded-2xl border border-border/70 bg-background/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
+              className="flex h-11 rounded-2xl border border-border/70 bg-background/85 px-3 py-2 text-center text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15 md:text-left"
             >
               <option value="">Todos los estados</option>
               <option value={EstadoCurso.Activo}>Activo</option>
@@ -95,8 +95,8 @@ function CoursesToolbar({
             </select>
           </div>
 
-          <Link href="/admin/dashboard/courses/new">
-            <Button className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md">
+          <Link href="/admin/dashboard/courses/new" className="w-full xl:w-auto">
+            <Button className="h-11 w-full rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md xl:w-auto">
               <Plus className="mr-2 size-4" />
               Nuevo curso
             </Button>
@@ -150,6 +150,7 @@ function MetaPill({
     </div>
   )
 }
+
 function ActionChip({
   href,
   onClick,
@@ -166,7 +167,7 @@ function ActionChip({
   tone?: 'default' | 'primary' | 'warning' | 'danger' | 'success'
 }) {
   const className = cn(
-    'h-10 rounded-xl border px-3 text-sm shadow-sm transition-all duration-200 hover:-translate-y-0.5',
+    'h-10 min-w-[132px] rounded-xl border px-3 text-sm shadow-sm transition-all duration-200 hover:-translate-y-0.5 sm:min-w-0',
     tone === 'default' &&
       'border-border/70 bg-background/75 text-foreground hover:border-primary/20 hover:bg-primary/8 hover:text-primary',
     tone === 'primary' &&
@@ -218,18 +219,18 @@ function CourseCard({
   const isActive = course.estado === EstadoCurso.Activo
 
   return (
-    <article className="group relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:border-border/80 hover:shadow-[0_24px_52px_-24px_rgba(15,23,42,0.22)] md:p-6">
+    <article className="group relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-5 text-center shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:border-border/80 hover:shadow-[0_24px_52px_-24px_rgba(15,23,42,0.22)] md:p-6 xl:text-left">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.05),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.04),transparent_22%)]" />
 
       <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
         <div className="min-w-0 space-y-5">
-          <div className="flex items-start gap-4">
+          <div className="flex flex-col items-center gap-4 xl:flex-row xl:items-start">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
               <BookOpen className="size-5" />
             </div>
 
-            <div className="min-w-0 space-y-2">
-              <div className="flex flex-wrap items-center gap-2.5">
+            <div className="min-w-0 space-y-2 text-center xl:text-left">
+              <div className="flex flex-wrap items-center justify-center gap-2.5 xl:justify-start">
                 <h4 className="truncate text-[1.08rem] font-semibold tracking-tight text-foreground">
                   {course.nombre}
                 </h4>
@@ -237,13 +238,13 @@ function CourseCard({
                 <StatusBadge estado={course.estado} />
               </div>
 
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+              <p className="mx-auto max-w-2xl text-sm leading-6 text-muted-foreground xl:mx-0">
                 Curso académico con configuración activa para el ciclo lectivo.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap justify-center gap-3 xl:justify-start">
             <MetaPill icon={CalendarRange} label="Año" value={String(course.anio)} />
             <MetaPill
               icon={GraduationCap}
@@ -258,17 +259,19 @@ function CourseCard({
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-border/60 bg-background/70 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-          <div className="mb-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Acciones
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gestioná configuración, estado y asignaciones del curso.
+        <div className="flex flex-col justify-between gap-5">
+          <div className="rounded-[22px] border border-border/60 bg-background/70 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+            <div className="flex items-center justify-center gap-2 xl:justify-start">
+              <Settings2 className="size-4 text-primary" />
+              <p className="text-sm font-semibold text-foreground">Acciones del curso</p>
+            </div>
+
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Administrá configuración, asignaciones y estado general del curso.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap justify-center gap-2 xl:justify-end">
             <ActionChip
               href={`/admin/dashboard/courses/${course.id}`}
               icon={Pencil}
@@ -317,23 +320,30 @@ function CoursesSkeleton() {
           className="rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] md:p-6"
         >
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-            <div className="space-y-4">
-              <div className="flex items-start gap-4">
+            <div className="space-y-5">
+              <div className="flex flex-col items-center gap-4 xl:flex-row xl:items-start">
                 <div className="size-12 animate-pulse rounded-2xl bg-muted/35" />
-                <div className="space-y-2">
-                  <div className="h-5 w-52 animate-pulse rounded-lg bg-muted/35" />
-                  <div className="h-4 w-72 animate-pulse rounded-lg bg-muted/25" />
+                <div className="space-y-2 text-center xl:text-left">
+                  <div className="mx-auto h-5 w-40 animate-pulse rounded-lg bg-muted/35 xl:mx-0" />
+                  <div className="mx-auto h-4 w-64 animate-pulse rounded-lg bg-muted/25 xl:mx-0" />
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <div className="h-12 w-28 animate-pulse rounded-[18px] bg-muted/30" />
-                <div className="h-12 w-32 animate-pulse rounded-[18px] bg-muted/30" />
-                <div className="h-12 w-28 animate-pulse rounded-[18px] bg-muted/30" />
+              <div className="flex flex-wrap justify-center gap-3 xl:justify-start">
+                <div className="h-14 w-28 animate-pulse rounded-[20px] bg-muted/30" />
+                <div className="h-14 w-36 animate-pulse rounded-[20px] bg-muted/30" />
+                <div className="h-14 w-32 animate-pulse rounded-[20px] bg-muted/30" />
               </div>
             </div>
 
-            <div className="h-32 animate-pulse rounded-[24px] bg-muted/30" />
+            <div className="space-y-4">
+              <div className="h-24 animate-pulse rounded-[22px] bg-muted/30" />
+              <div className="flex flex-wrap justify-center gap-2 xl:justify-end">
+                <div className="h-10 w-24 animate-pulse rounded-xl bg-muted/30" />
+                <div className="h-10 w-28 animate-pulse rounded-xl bg-muted/30" />
+                <div className="h-10 w-32 animate-pulse rounded-xl bg-muted/30" />
+              </div>
+            </div>
           </div>
         </div>
       ))}
@@ -404,7 +414,7 @@ export function CoursesTable() {
       return 'No se encontraron cursos con esos filtros.'
     }
 
-    return 'Todavía no hay cursos cargados en el sistema.'
+    return 'Todavía no hay cursos cargados.'
   }, [debouncedSearch, anio, estado])
 
   const handleToggleActive = async (course: CursoListItem) => {
@@ -462,17 +472,135 @@ export function CoursesTable() {
       ) : items.length === 0 ? (
         <EmptyCoursesState text={emptyStateText} />
       ) : (
-        <div className="space-y-4">
-          {items.map((course) => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              actionLoadingId={actionLoadingId}
-              onToggleActive={handleToggleActive}
-              onArchive={handleArchive}
-            />
-          ))}
-        </div>
+        <>
+          <div className="space-y-4 xl:hidden">
+            {items.map((course) => (
+              <CourseCard
+                key={course.id}
+                course={course}
+                actionLoadingId={actionLoadingId}
+                onToggleActive={handleToggleActive}
+                onArchive={handleArchive}
+              />
+            ))}
+          </div>
+
+          <Card className="hidden overflow-hidden rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] xl:block">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[1180px] text-sm">
+                  <thead className="border-b border-border/60 bg-muted/20">
+                    <tr className="text-left">
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Curso
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Año
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Estado
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Profesores
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Alumnos
+                      </th>
+                      <th className="px-6 py-4 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {items.map((course) => (
+                      <tr
+                        key={course.id}
+                        className="border-b border-border/40 transition-colors duration-200 hover:bg-muted/10 last:border-0"
+                      >
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                              <BookOpen className="size-4.5" />
+                            </div>
+
+                            <div className="min-w-0">
+                              <p className="font-semibold tracking-tight text-foreground">
+                                {course.nombre}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <div className="inline-flex items-center gap-2 text-muted-foreground">
+                            <CalendarRange className="size-4 shrink-0" />
+                            <span>{course.anio}</span>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <StatusBadge estado={course.estado} />
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <div className="inline-flex items-center gap-2 text-muted-foreground">
+                            <GraduationCap className="size-4 shrink-0" />
+                            <span>{course.cantidadProfesores}</span>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <div className="inline-flex items-center gap-2 text-muted-foreground">
+                            <Users className="size-4 shrink-0" />
+                            <span>{course.cantidadAlumnos}</span>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <div className="flex justify-end gap-2">
+                            <ActionChip
+                              href={`/admin/dashboard/courses/${course.id}`}
+                              icon={Pencil}
+                              label="Editar"
+                            />
+
+                            <ActionChip
+                              href={`/admin/dashboard/courses/${course.id}/manage`}
+                              icon={Settings2}
+                              label="Gestionar"
+                              tone="primary"
+                            />
+
+                            {course.estado !== EstadoCurso.Archivado && (
+                              <ActionChip
+                                onClick={() => handleToggleActive(course)}
+                                disabled={actionLoadingId === course.id}
+                                icon={course.estado === EstadoCurso.Activo ? Power : UserCheck}
+                                label={course.estado === EstadoCurso.Activo ? 'Desactivar' : 'Activar'}
+                                tone={course.estado === EstadoCurso.Activo ? 'warning' : 'success'}
+                              />
+                            )}
+
+                            {course.estado !== EstadoCurso.Archivado && (
+                              <ActionChip
+                                onClick={() => handleArchive(course)}
+                                disabled={actionLoadingId === course.id}
+                                icon={Archive}
+                                label="Archivar"
+                                tone="danger"
+                              />
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   )
