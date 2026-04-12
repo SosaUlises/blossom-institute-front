@@ -126,7 +126,11 @@ function AttachmentGrid({
 
   return (
     <div className="space-y-3">
-      <div className={`flex items-center gap-2 ${muted ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
+      <div
+        className={`flex items-center gap-2 ${
+          muted ? 'text-muted-foreground/80' : 'text-muted-foreground'
+        }`}
+      >
         <Paperclip className="size-4" />
         <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
           {title}
@@ -140,7 +144,7 @@ function AttachmentGrid({
             href={attachment.url}
             target="_blank"
             rel="noreferrer"
-            className={`group flex items-center gap-4 rounded-[24px] border p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md ${
+            className={`group flex min-w-0 items-start gap-4 rounded-[24px] border p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md ${
               muted
                 ? 'border-border/50 bg-muted/30 hover:bg-muted/40'
                 : 'border-border/60 bg-background/75 hover:bg-background'
@@ -148,7 +152,9 @@ function AttachmentGrid({
           >
             <div
               className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${
-                muted ? 'bg-background/80 text-muted-foreground' : 'bg-primary/10 text-primary'
+                muted
+                  ? 'bg-background/80 text-muted-foreground'
+                  : 'bg-primary/10 text-primary'
               }`}
             >
               {attachment.tipo === 1 ? (
@@ -158,16 +164,16 @@ function AttachmentGrid({
               )}
             </div>
 
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-foreground">
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <p className="break-words text-sm font-semibold leading-6 text-foreground">
                 {attachment.nombre || 'Adjunto'}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 {attachment.tipo === 1 ? 'Link externo' : 'Archivo adjunto'}
               </p>
             </div>
 
-            <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
+            <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
           </a>
         ))}
       </div>

@@ -53,13 +53,13 @@ function DeliveryRow({ item }: { item: ProfesorDashboardUltimaEntregaItem }) {
     <li>
       <div
         className={cn(
-          'flex items-center justify-between gap-4 rounded-2xl px-4 py-3 transition-all duration-200 ease-out',
+          'flex flex-col items-center gap-4 rounded-2xl px-4 py-4 text-center transition-all duration-200 ease-out sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:text-left',
           esFuera
             ? 'bg-rose-500/[0.04] hover:bg-rose-500/[0.07]'
             : 'hover:bg-muted/60',
         )}
       >
-        <div className="min-w-0 flex items-center gap-3">
+        <div className="min-w-0 flex flex-col items-center gap-3 sm:flex-row sm:items-center">
           <div
             className={cn(
               'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
@@ -71,7 +71,7 @@ function DeliveryRow({ item }: { item: ProfesorDashboardUltimaEntregaItem }) {
             {getInitial(item)}
           </div>
 
-          <div className="min-w-0">
+          <div className="min-w-0 text-center sm:text-left">
             <p className="truncate text-sm font-semibold text-foreground">
               {item.alumnoApellido}, {item.alumnoNombre}
             </p>
@@ -84,7 +84,7 @@ function DeliveryRow({ item }: { item: ProfesorDashboardUltimaEntregaItem }) {
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex flex-col items-center gap-2 sm:shrink-0 sm:items-end">
           <span className="text-xs text-muted-foreground">
             {formatRelative(item.fechaEntregaUtc)}
           </span>
@@ -114,7 +114,7 @@ export function TeacherLastDeliveriesCard({
 
   return (
     <Card className="rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 text-center sm:text-left">
         <CardTitle className="text-lg font-semibold tracking-tight">
           Entregas recientes
         </CardTitle>
@@ -122,7 +122,7 @@ export function TeacherLastDeliveriesCard({
 
       <CardContent className="pt-0">
         {sorted.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-6 text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
             No hay entregas recientes.
           </div>
         ) : (

@@ -1,8 +1,6 @@
 import { cn } from '@/lib/utils'
 import type { StatCardAccent } from '@/components/shared/stat-card'
 
-// ─── Configuración de accent ──────────────────────────────────────────────────
-
 const ACCENT_ICON: Record<StatCardAccent, string> = {
   blue: 'bg-primary/10 text-primary',
   sky: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
@@ -20,11 +18,6 @@ interface MiniStatCardProps {
   className?: string
 }
 
-/**
- * MiniStatCard — variante compacta de stat.
- * Layout: ícono + label en columna (no en fila) para evitar wrapping
- * con labels largos ("Tareas publicadas", "Pend. corrección", etc.)
- */
 export function MiniStatCard({
   label,
   value,
@@ -35,21 +28,19 @@ export function MiniStatCard({
   return (
     <div
       className={cn(
-        'rounded-[20px] border border-border/60 bg-background/85 p-4 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md',
+        'rounded-[20px] border border-border/60 bg-background/85 p-4 text-center shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md sm:text-left',
         className,
       )}
     >
-      {/* Ícono */}
       <div
         className={cn(
-          'flex size-8 shrink-0 items-center justify-center rounded-xl',
+          'mx-auto flex size-8 shrink-0 items-center justify-center rounded-xl sm:mx-0',
           ACCENT_ICON[accent],
         )}
       >
         <Icon className="size-4" />
       </div>
 
-      {/* Label + valor en columna — evita wrapping con labels largos */}
       <p className="mt-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </p>
