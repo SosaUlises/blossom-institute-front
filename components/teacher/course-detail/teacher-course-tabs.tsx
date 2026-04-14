@@ -31,26 +31,6 @@ const tabStyles: Record<
     panelDescription: string
   }
 > = {
-  students: {
-    label: 'Alumnos',
-    icon: Users,
-    activeClass:
-      'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-400 shadow-sm',
-    idleIconClass: 'text-sky-600/80 dark:text-sky-400/80',
-    panelTitle: 'Alumnos del curso',
-    panelDescription:
-      'Listado y gestión de estudiantes asignados al curso.',
-  },
-  teachers: {
-    label: 'Profesores',
-    icon: GraduationCap,
-    activeClass:
-      'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400 shadow-sm',
-    idleIconClass: 'text-violet-600/80 dark:text-violet-400/80',
-    panelTitle: 'Profesores del curso',
-    panelDescription:
-      'Equipo docente asignado y vinculado al curso.',
-  },
   classes: {
     label: 'Clases',
     icon: CalendarDays,
@@ -71,6 +51,27 @@ const tabStyles: Record<
     panelDescription:
       'Actividades del curso, entregas de alumnos y feedback.',
   },
+  students: {
+    label: 'Alumnos',
+    icon: Users,
+    activeClass:
+      'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-400 shadow-sm',
+    idleIconClass: 'text-sky-600/80 dark:text-sky-400/80',
+    panelTitle: 'Alumnos del curso',
+    panelDescription:
+      'Listado y gestión de estudiantes asignados al curso.',
+  },
+  teachers: {
+    label: 'Profesores',
+    icon: GraduationCap,
+    activeClass:
+      'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400 shadow-sm',
+    idleIconClass: 'text-violet-600/80 dark:text-violet-400/80',
+    panelTitle: 'Profesores del curso',
+    panelDescription:
+      'Equipo docente asignado y vinculado al curso.',
+  },
+
 }
 
 export function TeacherCourseTabs({ course }: Props) {
@@ -121,9 +122,6 @@ export function TeacherCourseTabs({ course }: Props) {
 
       <div className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
         <div className="border-b border-border/60 px-6 py-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Module view
-          </p>
           <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
             {currentTab.panelTitle}
           </h2>
