@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Inbox,
   FileCheck2,
+  ChevronDown,
   Users,
   ShieldCheck,
 } from 'lucide-react'
@@ -26,8 +27,12 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import { getTeacherGrades, archiveTeacherGrade } from '@/lib/teacher/grades/api'
-import type { GradeListItem } from '@/lib/teacher/grades/types'
+import {
+  getTeacherGrades,
+  archiveTeacherGrade,
+  getTeacherGradeDetail,
+} from '@/lib/teacher/grades/api'
+import type { GradeDetail, GradeListItem } from '@/lib/teacher/grades/types'
 import {
   getTipoCalificacionBadgeClass,
   getTipoCalificacionLabel,
@@ -151,6 +156,27 @@ function getGradeTypeVisual(tipoLabel: string) {
   }
 }
 
+function getSkillLabel(skill: number) {
+  switch (skill) {
+    case 1:
+      return 'Reading'
+    case 2:
+      return 'Use of English'
+    case 3:
+      return 'Listening'
+    case 4:
+      return 'Writing'
+    case 5:
+      return 'Speaking'
+    default:
+      return 'Skill'
+  }
+}
+
+function isSkillBasedGrade(tipo: number) {
+  return tipo === 2 || tipo === 3
+}
+
 function GradeValueCard({ nota }: { nota: number }) {
   const tone = getGradeTone(nota)
 
@@ -166,6 +192,111 @@ function GradeValueCard({ nota }: { nota: number }) {
 
         <div className={tone.iconWrap}>
           <Trophy className="size-4.5" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+
+function GradeSkillsDetail({
+  detalles,
+}: {
+  detalles: Array<{
+    skill: number
+    puntajeObtenido: number
+    puntajeMaximo: number
+  }>
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  if (!detalles.length) return null
+
+  return (
+    <div className="overflow-hidden rounded-[26px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/[0.18] shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)]">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-all duration-200 hover:bg-muted/[0.28]"
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
+            <ClipboardList className="size-4.5" />
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
+              Skills evaluadas
+            </p>
+            <p className="text-sm font-semibold tracking-tight text-foreground">
+              Desglose por habilidad
+            </p>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden rounded-full border border-border/60 bg-background/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:inline-flex">
+            {detalles.length} skill{detalles.length === 1 ? '' : 's'}
+          </span>
+
+          <div className="flex size-9 items-center justify-center rounded-full border border-border/60 bg-background/85 shadow-sm">
+            <ChevronDown
+              className={`size-4 text-muted-foreground transition-transform duration-200 ${
+                isOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </div>
+        </div>
+      </button>
+
+      <div
+        className={`grid transition-all duration-300 ease-out ${
+          isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-border/50 px-5 pb-5 pt-4">
+            <div className="grid gap-3">
+              {detalles.map((detalle, index) => {
+                const percentage =
+                  detalle.puntajeMaximo > 0
+                    ? (detalle.puntajeObtenido / detalle.puntajeMaximo) * 100
+                    : 0
+
+                return (
+                  <div
+                    key={`${detalle.skill}-${index}`}
+                    className="rounded-[22px] border border-border/60 bg-card/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-card hover:shadow-md"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[15px] font-semibold tracking-tight text-foreground">
+                          {getSkillLabel(detalle.skill)}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {detalle.puntajeObtenido} / {detalle.puntajeMaximo} puntos
+                        </p>
+                      </div>
+
+                      <div className="shrink-0 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[11px] font-semibold text-primary">
+                        {percentage.toFixed(2)}%
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="h-2.5 overflow-hidden rounded-full bg-muted/70">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all duration-500"
+                          style={{ width: `${Math.min(percentage, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -213,6 +344,40 @@ function GradeCard({
   const tipoLabel = getTipoCalificacionLabel(grade.tipo)
   const visual = getGradeTypeVisual(tipoLabel)
   const TipoIcon = visual.icon
+
+  const [detail, setDetail] = useState<GradeDetail | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadDetail() {
+      if (!isSkillBasedGrade(grade.tipo)) return
+
+      try {
+        setDetailLoading(true)
+        const result = await getTeacherGradeDetail(courseId, alumnoId, grade.id)
+
+        if (!cancelled) {
+          setDetail(result)
+        }
+      } catch {
+        if (!cancelled) {
+          setDetail(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setDetailLoading(false)
+        }
+      }
+    }
+
+    loadDetail()
+
+    return () => {
+      cancelled = true
+    }
+  }, [courseId, alumnoId, grade.id, grade.tipo])
 
   return (
     <article className="relative rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(30,42,68,0.22)] md:p-6">
@@ -286,6 +451,25 @@ function GradeCard({
 
           <GradeValueCard nota={grade.nota} />
         </div>
+
+        {isSkillBasedGrade(grade.tipo) && (
+          <>
+            {detailLoading ? (
+              <div className="rounded-[24px] border border-border/60 bg-background/70 p-4">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="h-20 animate-pulse rounded-2xl bg-muted/30"
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : detail?.tieneDetalleSkills && detail.detalles?.length ? (
+              <GradeSkillsDetail detalles={detail.detalles} />
+            ) : null}
+          </>
+        )}
       </div>
     </article>
   )
