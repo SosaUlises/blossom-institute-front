@@ -21,7 +21,7 @@ export function AppHeader({ title }: AppHeaderProps) {
             variant="outline"
             size="icon"
             onClick={toggleSidebar}
-            className="size-11 shrink-0 rounded-2xl border-border/70 bg-background/85 shadow-sm"
+            className="size-11 shrink-0 rounded-2xl border-border/70 bg-background/85 shadow-sm hover:bg-muted hover:text-foreground "
           >
             <PanelLeft className="size-4.5" />
           </Button>
