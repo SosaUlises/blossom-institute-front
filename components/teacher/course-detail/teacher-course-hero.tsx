@@ -7,6 +7,7 @@ import {
   Plus,
   Users,
   CheckSquare,
+  ClipboardList,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -82,6 +83,17 @@ export function TeacherCourseHero({ course }: Props) {
                   Tomar asistencia
                 </Link>
               </Button>
+
+              <Button
+              asChild
+              variant="outline"
+              className="h-11 rounded-2xl border-primary/15 bg-primary/5 px-5 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/10 hover:text-primary"
+            >
+              <Link href={`/teacher/courses/${course.id}/grade-templates`}>
+                <ClipboardList className="mr-2 size-4" />
+                Gestionar calificaciones
+              </Link>
+            </Button>
             </div>
           </div>
 

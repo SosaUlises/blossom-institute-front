@@ -36,7 +36,7 @@ export async function GET(
       cache: 'no-store',
     })
 
-    const result = await response.json()
+    const result = await response.json().catch(() => null)
 
     return NextResponse.json(result, { status: response.status })
   } catch {

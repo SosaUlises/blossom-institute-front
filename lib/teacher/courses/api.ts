@@ -8,14 +8,26 @@ export interface GetTeacherCoursesParams {
   estado?: number
 }
 
+type ApiEnvelope<T> = {
+  statusCode?: number
+  message?: string
+  data?: T
+}
+
 async function parseResponse<T>(response: Response): Promise<T> {
-  const result = await response.json().catch(() => null)
+  const result = (await response.json().catch(() => null)) as
+    | ApiEnvelope<T>
+    | T
+    | null
 
   if (!response.ok) {
-    throw new Error(result?.message || 'Ocurrió un error en la solicitud.')
+    throw new Error(
+      (result as ApiEnvelope<T> | null)?.message ||
+        'Ocurrió un error en la solicitud.'
+    )
   }
 
-  return (result?.data ?? result) as T
+  return (((result as ApiEnvelope<T> | null)?.data ?? result) as T)
 }
 
 export async function getTeacherCourses(
