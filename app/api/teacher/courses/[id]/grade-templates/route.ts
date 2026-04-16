@@ -40,14 +40,14 @@ export async function GET(
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    const pageNumber = request.nextUrl.searchParams.get('pageNumber') ?? '1'
-    const pageSize = request.nextUrl.searchParams.get('pageSize') ?? '10'
-    const search = request.nextUrl.searchParams.get('search')?.trim()
+    const searchParams = request.nextUrl.searchParams
+    const pageNumber = searchParams.get('pageNumber') ?? '1'
+    const pageSize = searchParams.get('pageSize') ?? '10'
+    const search = searchParams.get('search')?.trim()
 
-    const query = new URLSearchParams({
-      pageNumber,
-      pageSize,
-    })
+    const query = new URLSearchParams()
+    query.set('pageNumber', pageNumber)
+    query.set('pageSize', pageSize)
 
     if (search) {
       query.set('search', search)
@@ -65,10 +65,13 @@ export async function GET(
     )
 
     const result = await safeJson(response)
+
     return NextResponse.json(result, { status: response.status })
-  } catch {
+  } catch (error) {
+    console.error('Teacher grade templates GET route error:', error)
+
     return NextResponse.json(
-      { message: 'Ocurrió un error al obtener las plantillas de calificación.' },
+      { message: 'Ocurrió un error al obtener las plantillas.' },
       { status: 500 }
     )
   }
@@ -115,10 +118,17 @@ export async function POST(
     )
 
     const result = await safeJson(response)
+    console.error('Teacher grade templates POST backend response:', {
+  status: response.status,
+  result,
+})
+
     return NextResponse.json(result, { status: response.status })
-  } catch {
+  } catch (error) {
+    console.error('Teacher grade templates POST route error:', error)
+
     return NextResponse.json(
-      { message: 'Ocurrió un error al crear la plantilla de calificación.' },
+      { message: 'Ocurrió un error al crear la plantilla.' },
       { status: 500 }
     )
   }

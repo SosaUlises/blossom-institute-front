@@ -15,6 +15,7 @@ export enum SkillEvaluada {
 }
 
 export interface GradeTemplateSkillItem {
+  id?: number
   skill: number
   puntajeMaximo: number
 }
@@ -29,7 +30,6 @@ export interface GradeTemplateFormPayload {
   tipo: number
   titulo: string
   descripcion?: string | null
-  notaDefault?: number | null
   detalles: GradeTemplateSkillItem[]
 }
 
@@ -37,7 +37,6 @@ export interface GradeTemplateFormValues {
   tipo: string
   titulo: string
   descripcion: string
-  notaDefault?: string
   detalles: GradeTemplateDetailFormValue[]
 }
 
@@ -47,10 +46,10 @@ export interface GradeTemplateListItem {
   tipo: number
   titulo: string
   descripcion?: string | null
-  archivado: boolean
+  tieneDetalleSkills: boolean
+  cantidadSkills: number
+  puntajeMaximoTotal: number | null
   createdAtUtc: string
-  updatedAtUtc?: string | null
-  detalles: GradeTemplateSkillItem[]
 }
 
 export interface GradeTemplateListResponse {
@@ -66,7 +65,8 @@ export interface GradeTemplateDetail {
   tipo: number
   titulo: string
   descripcion?: string | null
-  archivado: boolean
+  tieneDetalleSkills: boolean
+  puntajeMaximoTotal: number | null
   createdAtUtc: string
   updatedAtUtc?: string | null
   detalles: GradeTemplateSkillItem[]

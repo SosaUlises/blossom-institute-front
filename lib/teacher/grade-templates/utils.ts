@@ -1,4 +1,4 @@
-import { SkillEvaluada, TipoCalificacion } from './types'
+import { GradeTemplateDetail, GradeTemplateFormValues, SkillEvaluada, TipoCalificacion } from './types'
 
 export const gradeTemplateTipoOptions = [
   { value: String(TipoCalificacion.Quiz), label: 'Quiz' },
@@ -117,5 +117,29 @@ export function getGradeTemplateSkillLabel(skill: number) {
       return 'Speaking'
     default:
       return 'Unknown'
+  }
+}
+
+export function mapGradeTemplateDetailToFormValues(
+  template: GradeTemplateDetail
+): GradeTemplateFormValues {
+  return {
+    tipo: String(template.tipo),
+    titulo: template.titulo ?? '',
+    descripcion: template.descripcion ?? '',
+    detalles:
+      template.detalles?.length > 0
+        ? template.detalles.map((detail) => ({
+            id: crypto.randomUUID(),
+            skill: String(detail.skill),
+            puntajeMaximo: String(detail.puntajeMaximo),
+          }))
+        : [
+            {
+              id: crypto.randomUUID(),
+              skill: '',
+              puntajeMaximo: '',
+            },
+          ],
   }
 }

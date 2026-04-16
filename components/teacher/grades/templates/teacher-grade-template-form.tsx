@@ -134,7 +134,6 @@ export function TeacherGradeTemplateForm({
   const [tipo, setTipo] = useState(initialValues?.tipo ?? '')
   const [titulo, setTitulo] = useState(initialValues?.titulo ?? '')
   const [descripcion, setDescripcion] = useState(initialValues?.descripcion ?? '')
-  const [notaDefault, setNotaDefault] = useState(initialValues?.notaDefault ?? '')
   const [detalles, setDetalles] = useState<GradeTemplateDetailFormValue[]>(
     initialValues?.detalles?.length ? initialValues.detalles : [createEmptyDetail()],
   )
@@ -214,16 +213,6 @@ export function TeacherGradeTemplateForm({
         throw new Error('No se puede repetir la misma skill dentro de una misma plantilla.')
       }
 
-      if (useDirectNote) {
-        if (!notaDefault.trim()) {
-          throw new Error('La nota por defecto es obligatoria para este tipo.')
-        }
-
-        const nota = Number(notaDefault)
-        if (Number.isNaN(nota) || nota < 0 || nota > 100) {
-          throw new Error('La nota por defecto debe estar entre 0 y 100.')
-        }
-      }
 
       if (useSkills) {
         const detallesValidos = detalles.filter(
@@ -243,7 +232,6 @@ export function TeacherGradeTemplateForm({
         tipo: Number(tipo),
         titulo: titulo.trim(),
         descripcion: descripcion.trim() || null,
-        notaDefault: useSkills ? null : Number(notaDefault),
         detalles: useSkills
           ? detalles
               .filter((item) => item.skill && item.puntajeMaximo !== '')
@@ -366,34 +354,7 @@ export function TeacherGradeTemplateForm({
             </select>
           </div>
 
-          {!useSkills && useDirectNote ? (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Nota por defecto</label>
-              <div className="relative">
-                <Percent className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="number"
-                  step="0.01"
-                  max="100"
-                  value={notaDefault}
-                  onChange={(e) => setNotaDefault(e.target.value)}
-                  className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
-                  placeholder="0 - 100"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Resumen</label>
-              <div className="flex h-11 items-center rounded-2xl border border-border/70 bg-background/85 px-4 text-sm text-muted-foreground shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)]">
-                {useSkills
-                  ? 'Configuración por skills y puntaje máximo.'
-                  : 'Seleccioná un tipo para continuar.'}
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2 md:col-span-2">
+          <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Título</label>
             <input
               value={titulo}
@@ -416,61 +377,60 @@ export function TeacherGradeTemplateForm({
         </div>
       </section>
 
-      {useDirectNote && (
-        <section className={`rounded-[28px] border p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] ${tipoVisual.accent}`}>
-          <div className="mb-5 space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Nota directa
+    {useDirectNote && (
+  <section
+    className={`rounded-[28px] border p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] ${tipoVisual.accent}`}
+  >
+    <div className="mb-5 space-y-1">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        Nota directa
+      </p>
+      <h3 className="text-lg font-semibold tracking-tight text-foreground">
+        Configuración de plantilla
+      </h3>
+    </div>
+
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="rounded-[24px] border border-border/60 bg-card/80 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+        <div className="flex items-start gap-3">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground shadow-sm">
+            <Percent className="size-4.5" />
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              Plantilla sin nota precargada
             </p>
-            <h3 className="text-lg font-semibold tracking-tight text-foreground">
-              Configuración base
-            </h3>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Para calificaciones de tipo Participation o Behaviour, esta plantilla
+              reutiliza el título y la descripción. La nota final se carga al momento
+              de registrar la evaluación de cada alumno.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[24px] border border-primary/15 bg-primary/5 px-5 py-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
+          Vista previa
+        </p>
+
+        <div className="mt-2 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-3xl font-semibold tracking-tight text-primary">--</p>
+            <p className="mt-1 text-xs text-primary/70">
+              La nota se define al aplicar la plantilla
+            </p>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Nota por defecto</label>
-              <div className="relative">
-                <Percent className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="number"
-                  step="0.01"
-                  max="100"
-                  value={notaDefault}
-                  onChange={(e) => setNotaDefault(e.target.value)}
-                  className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
-                  placeholder="0 - 100"
-                />
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                Este valor quedará precargado al aplicar la plantilla.
-              </p>
-            </div>
-
-            <div className="rounded-[24px] border border-primary/15 bg-primary/5 px-5 py-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
-                Vista previa
-              </p>
-
-              <div className="mt-2 flex items-end justify-between gap-3">
-                <div>
-                  <p className="text-3xl font-semibold tracking-tight text-primary">
-                    {notaDefault.trim() ? Number(notaDefault).toFixed(2) : '--'}
-                  </p>
-                  <p className="mt-1 text-xs text-primary/70">
-                    Nota sugerida de la plantilla
-                  </p>
-                </div>
-
-                <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Trophy className="size-4.5" />
-                </div>
-              </div>
-            </div>
+          <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Trophy className="size-4.5" />
           </div>
-        </section>
-      )}
+        </div>
+      </div>
+    </div>
+  </section>
+)}
 
       {useSkills && (
         <section className={`rounded-[28px] border p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] ${tipoVisual.accent}`}>

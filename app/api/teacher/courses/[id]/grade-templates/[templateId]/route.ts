@@ -3,25 +3,9 @@ import { getSession } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
 
-async function safeJson(response: Response) {
-  const text = await response.text()
-
-  if (!text) return null
-
-  try {
-    return JSON.parse(text)
-  } catch {
-    return { raw: text }
-  }
-}
-
-interface RouteContext {
-  params: Promise<{ id: string; templateId: string }>
-}
-
 export async function GET(
   _request: NextRequest,
-  context: RouteContext
+  context: { params: Promise<{ id: string; templateId: string }> }
 ) {
   try {
     if (!BASE) {
@@ -38,19 +22,20 @@ export async function GET(
     }
 
     const { id, templateId } = await context.params
+
     const courseId = Number(id)
-    const parsedTemplateId = Number(templateId)
+    const plantillaId = Number(templateId)
 
     if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    if (!parsedTemplateId || Number.isNaN(parsedTemplateId) || parsedTemplateId <= 0) {
+    if (!plantillaId || Number.isNaN(plantillaId) || plantillaId <= 0) {
       return NextResponse.json({ message: 'Plantilla inválida.' }, { status: 400 })
     }
 
     const response = await fetch(
-      `${BASE}/api/v1/cursos/${courseId}/plantillas-calificaciones/${parsedTemplateId}`,
+      `${BASE}/api/v1/cursos/${courseId}/plantillas-calificaciones/${plantillaId}`,
       {
         method: 'GET',
         headers: {
@@ -60,11 +45,12 @@ export async function GET(
       }
     )
 
-    const result = await safeJson(response)
+    const result = await response.json().catch(() => null)
+
     return NextResponse.json(result, { status: response.status })
   } catch {
     return NextResponse.json(
-      { message: 'Ocurrió un error al obtener la plantilla de calificación.' },
+      { message: 'Ocurrió un error al obtener la plantilla.' },
       { status: 500 }
     )
   }
@@ -72,7 +58,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: RouteContext
+  context: { params: Promise<{ id: string; templateId: string }> }
 ) {
   try {
     if (!BASE) {
@@ -89,21 +75,22 @@ export async function PUT(
     }
 
     const { id, templateId } = await context.params
+
     const courseId = Number(id)
-    const parsedTemplateId = Number(templateId)
+    const plantillaId = Number(templateId)
 
     if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    if (!parsedTemplateId || Number.isNaN(parsedTemplateId) || parsedTemplateId <= 0) {
+    if (!plantillaId || Number.isNaN(plantillaId) || plantillaId <= 0) {
       return NextResponse.json({ message: 'Plantilla inválida.' }, { status: 400 })
     }
 
     const body = await request.json()
 
     const response = await fetch(
-      `${BASE}/api/v1/cursos/${courseId}/plantillas-calificaciones/${parsedTemplateId}`,
+      `${BASE}/api/v1/cursos/${courseId}/plantillas-calificaciones/${plantillaId}`,
       {
         method: 'PUT',
         headers: {
@@ -115,11 +102,12 @@ export async function PUT(
       }
     )
 
-    const result = await safeJson(response)
+    const result = await response.json().catch(() => null)
+
     return NextResponse.json(result, { status: response.status })
   } catch {
     return NextResponse.json(
-      { message: 'Ocurrió un error al actualizar la plantilla de calificación.' },
+      { message: 'Ocurrió un error al actualizar la plantilla.' },
       { status: 500 }
     )
   }
