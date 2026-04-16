@@ -1,5 +1,6 @@
 import type {
   ApplyGradeTemplatePayload,
+  CourseStudentSimpleResponse,
   GradeTemplateDetail,
   GradeTemplateFormPayload,
   GradeTemplateListResponse,
@@ -20,7 +21,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
     )
   }
 
-  return (((result as ApiEnvelope<T> | null)?.data ?? result) as T)
+  return ((result as ApiEnvelope<T> | null)?.data ?? result) as T
 }
 
 export async function getTeacherGradeTemplates(
@@ -128,4 +129,29 @@ export async function applyTeacherGradeTemplate(
   )
 
   return parseResponse<unknown>(response)
+}
+
+export async function getTeacherCourseStudentsSimple(
+  courseId: number,
+  pageNumber = 1,
+  pageSize = 100,
+  search = ''
+) {
+  const query = new URLSearchParams()
+  query.set('pageNumber', String(pageNumber))
+  query.set('pageSize', String(pageSize))
+
+  if (search.trim()) {
+    query.set('search', search.trim())
+  }
+
+  const response = await fetch(
+    `/api/teacher/courses/${courseId}/students?${query.toString()}`,
+    {
+      method: 'GET',
+      cache: 'no-store',
+    }
+  )
+
+  return parseResponse<CourseStudentSimpleResponse>(response)
 }

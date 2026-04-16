@@ -15,7 +15,12 @@ export enum SkillEvaluada {
 }
 
 export interface GradeTemplateSkillItem {
-  id?: number
+  skill: number
+  puntajeMaximo: number
+}
+
+export interface GradeTemplateDetailSkillItem {
+  id: number
   skill: number
   puntajeMaximo: number
 }
@@ -46,10 +51,12 @@ export interface GradeTemplateListItem {
   tipo: number
   titulo: string
   descripcion?: string | null
-  tieneDetalleSkills: boolean
-  cantidadSkills: number
-  puntajeMaximoTotal: number | null
+  archivado?: boolean
+  tieneDetalleSkills?: boolean
+  cantidadSkills?: number
+  puntajeMaximoTotal?: number | null
   createdAtUtc: string
+  updatedAtUtc?: string | null
 }
 
 export interface GradeTemplateListResponse {
@@ -65,19 +72,37 @@ export interface GradeTemplateDetail {
   tipo: number
   titulo: string
   descripcion?: string | null
-  tieneDetalleSkills: boolean
-  puntajeMaximoTotal: number | null
+  archivado?: boolean
+  tieneDetalleSkills?: boolean
+  puntajeMaximoTotal?: number | null
   createdAtUtc: string
   updatedAtUtc?: string | null
-  detalles: GradeTemplateSkillItem[]
+  detalles: GradeTemplateDetailSkillItem[]
+}
+
+export interface CourseStudentSimpleItem {
+  alumnoId: number
+  nombre: string
+  apellido: string
+  dni: number
+  email: string
+}
+
+export interface CourseStudentSimpleResponse {
+  total: number
+  pageNumber: number
+  pageSize: number
+  items: CourseStudentSimpleItem[]
+}
+
+export interface ApplyGradeTemplateAlumnoDetailItem {
+  skill: number
+  puntajeObtenido: number
 }
 
 export interface ApplyGradeTemplateAlumnoItem {
   alumnoId: number
-  detalles: Array<{
-    skill: number
-    puntajeObtenido: number
-  }>
+  detalles: ApplyGradeTemplateAlumnoDetailItem[]
 }
 
 export interface ApplyGradeTemplatePayload {

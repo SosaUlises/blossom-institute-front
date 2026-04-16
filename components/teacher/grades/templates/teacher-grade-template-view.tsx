@@ -584,114 +584,129 @@ export function TeacherGradeTemplateView({
                 const tipoVisual = getTipoVisual(template.tipo)
                 const TipoIcon = tipoVisual.icon
 
-                return (
-                  <article
-                    key={template.id}
-                    className="group relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_14px_32px_-20px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_24px_42px_-24px_rgba(15,23,42,0.22)]"
-                  >
-                    <div
-                      className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-r ${tipoVisual.accent}`}
-                    />
+               return (
+  <article
+    key={template.id}
+    className="group relative flex h-full flex-col overflow-hidden rounded-[30px] border border-border/60 bg-card/95 p-6 shadow-[0_16px_38px_-22px_rgba(15,23,42,0.16)] transition-all duration-300 hover:-translate-y-[3px] hover:border-primary/20 hover:shadow-[0_28px_48px_-24px_rgba(15,23,42,0.22)]"
+  >
+    <div
+      className={`pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-r ${tipoVisual.accent} opacity-90`}
+    />
+    <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/40 dark:bg-white/10" />
 
-                    <div className="relative">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span
-                              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${tipoVisual.badgeClass}`}
-                            >
-                              <TipoIcon className="size-3.5" />
-                              {getTipoCalificacionLabel(template.tipo)}
-                            </span>
+    <div className="relative flex h-full flex-col">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold ${tipoVisual.badgeClass}`}
+            >
+              <TipoIcon className="size-3.5" />
+              {getTipoCalificacionLabel(template.tipo)}
+            </span>
 
-                            {template.tieneDetalleSkills && (
-                              <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                                {template.cantidadSkills} skills
-                              </span>
-                            )}
-                          </div>
+            {template.tieneDetalleSkills && (
+              <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                {template.cantidadSkills} skills
+              </span>
+            )}
+          </div>
 
-                          <h3 className="mt-4 text-xl font-semibold tracking-tight text-foreground">
-                            {template.titulo}
-                          </h3>
+          <h3 className="mt-4 text-xl font-semibold tracking-tight text-foreground">
+            {template.titulo}
+          </h3>
 
-                          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                            {template.descripcion?.trim()
-                              ? template.descripcion
-                              : 'Sin descripción adicional.'}
-                          </p>
-                        </div>
+          <p className="mt-2 min-h-[48px] text-sm leading-6 text-muted-foreground">
+            {template.descripcion?.trim()
+              ? template.descripcion
+              : 'Sin descripción adicional.'}
+          </p>
+        </div>
 
-                        <div
-                          className={`hidden shrink-0 rounded-[22px] border px-4 py-4 shadow-sm md:block ${tipoVisual.softCard}`}
-                        >
-                          <div
-                            className={`flex size-11 items-center justify-center rounded-2xl ${tipoVisual.iconTone}`}
-                          >
-                            <TipoIcon className="size-5" />
-                          </div>
-                        </div>
-                      </div>
+        <div
+          className={`hidden shrink-0 rounded-[24px] border px-4 py-4 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.16)] md:block ${tipoVisual.softCard}`}
+        >
+          <div
+            className={`flex size-12 items-center justify-center rounded-2xl ${tipoVisual.iconTone}`}
+          >
+            <TipoIcon className="size-5" />
+          </div>
+        </div>
+      </div>
 
-                      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                        <StatMiniCard
-                          icon={Layers3}
-                          label="Skills"
-                          value={String(template.cantidadSkills ?? 0)}
-                        />
-                        <StatMiniCard
-                          icon={Trophy}
-                          label="Puntaje total"
-                          value={
-                            template.puntajeMaximoTotal != null
-                              ? String(template.puntajeMaximoTotal)
-                              : '—'
-                          }
-                        />
-                        <StatMiniCard
-                          icon={CalendarDays}
-                          label="Creada"
-                          value={new Date(template.createdAtUtc).toLocaleDateString('es-AR')}
-                        />
-                      </div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <StatMiniCard
+          icon={Layers3}
+          label="Skills"
+          value={String(template.cantidadSkills ?? 0)}
+        />
+        <StatMiniCard
+          icon={Trophy}
+          label="Puntaje total"
+          value={
+            template.puntajeMaximoTotal != null
+              ? String(template.puntajeMaximoTotal)
+              : '—'
+          }
+        />
+        <StatMiniCard
+          icon={CalendarDays}
+          label="Creada"
+          value={new Date(template.createdAtUtc).toLocaleDateString('es-AR')}
+        />
+      </div>
 
+      <div className="mt-5 rounded-[24px] border border-border/50 bg-background/55 p-3 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.12)]">
+        <div className="flex flex-col gap-2 lg:grid lg:grid-cols-2">
+          <Button
+            variant="outline"
+            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            onClick={() => handleViewDetails(template.id)}
+          >
+            <Eye className="mr-2 size-4" />
+            Ver detalles
+          </Button>
 
-                      <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
-                          onClick={() => handleViewDetails(template.id)}
-                        >
-                          <Eye className="mr-2 size-4" />
-                          Ver detalles
-                        </Button>
+          <Button
+            variant="outline"
+            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            onClick={() =>
+              router.push(
+                `/teacher/courses/${courseId}/grade-templates/${template.id}/apply`
+              )
+            }
+          >
+            <Sparkles className="mr-2 size-4" />
+            Aplicar plantilla
+          </Button>
 
-                        <Button
-                          variant="outline"
-                          className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
-                          onClick={() =>
-                            router.push(
-                              `/teacher/courses/${courseId}/grade-templates/${template.id}/edit`
-                            )
-                          }
-                        >
-                          <Pencil className="mr-2 size-4" />
-                          Editar
-                        </Button>
+          <Button
+            variant="outline"
+            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            onClick={() =>
+              router.push(
+                `/teacher/courses/${courseId}/grade-templates/${template.id}/edit`
+              )
+            }
+          >
+            <Pencil className="mr-2 size-4" />
+            Editar
+          </Button>
 
-                        <Button
-                          variant="outline"
-                          disabled={archivingId === template.id}
-                          className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
-                          onClick={() => handleArchive(template.id)}
-                        >
-                          <Archive className="mr-2 size-4" />
-                          {archivingId === template.id ? 'Archivando...' : 'Archivar'}
-                        </Button>
-                      </div>
-                    </div>
-                  </article>
-                )
+          <Button
+            variant="outline"
+            disabled={archivingId === template.id}
+            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:-translate-y-[1px] hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
+            onClick={() => handleArchive(template.id)}
+          >
+            <Archive className="mr-2 size-4" />
+            {archivingId === template.id ? 'Archivando...' : 'Archivar'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  </article>
+)
               })}
             </div>
           )}

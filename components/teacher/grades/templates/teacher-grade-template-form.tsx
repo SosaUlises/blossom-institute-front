@@ -2,17 +2,13 @@
 
 import { useMemo, useState } from 'react'
 import {
-  CalendarDays,
   ClipboardList,
   FileCheck2,
-  Percent,
   Plus,
   Save,
-  ShieldCheck,
   Sparkles,
   Trash2,
   Trophy,
-  Users,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -25,7 +21,6 @@ import {
   calculateTemplateGradeFromSkills,
   gradeTemplateSkillOptions,
   gradeTemplateTipoOptions,
-  requiresTemplateDirectNote,
   supportsTemplateSkills,
 } from '@/lib/teacher/grade-templates/utils'
 
@@ -58,25 +53,10 @@ function getTipoVisual(tipo: number) {
       return {
         icon: FileCheck2,
         title: 'Test',
-        description: 'Plantilla estructurada con detalle por skills y puntajes máximos.',
+        description:
+          'Plantilla estructurada con detalle por skills y puntajes máximos.',
         accent: 'border-sky-500/20 bg-sky-500/[0.06]',
         iconTone: 'bg-sky-500/10 text-sky-700 dark:text-sky-400',
-      }
-    case 4:
-      return {
-        icon: Users,
-        title: 'Participation',
-        description: 'Plantilla para registrar participación con nota directa.',
-        accent: 'border-cyan-500/20 bg-cyan-500/[0.06]',
-        iconTone: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-400',
-      }
-    case 5:
-      return {
-        icon: ShieldCheck,
-        title: 'Behaviour',
-        description: 'Plantilla para conducta con nota directa.',
-        accent: 'border-orange-500/20 bg-orange-500/[0.06]',
-        iconTone: 'bg-orange-500/10 text-orange-700 dark:text-orange-400',
       }
     default:
       return {
@@ -135,7 +115,9 @@ export function TeacherGradeTemplateForm({
   const [titulo, setTitulo] = useState(initialValues?.titulo ?? '')
   const [descripcion, setDescripcion] = useState(initialValues?.descripcion ?? '')
   const [detalles, setDetalles] = useState<GradeTemplateDetailFormValue[]>(
-    initialValues?.detalles?.length ? initialValues.detalles : [createEmptyDetail()],
+    initialValues?.detalles?.length
+      ? initialValues.detalles
+      : [createEmptyDetail()]
   )
 
   const [saving, setSaving] = useState(false)
@@ -144,7 +126,6 @@ export function TeacherGradeTemplateForm({
 
   const tipoNumber = Number(tipo || 0)
   const useSkills = supportsTemplateSkills(tipoNumber)
-  const useDirectNote = requiresTemplateDirectNote(tipoNumber)
   const tipoVisual = getTipoVisual(tipoNumber)
   const TipoIcon = tipoVisual.icon
 
@@ -157,6 +138,7 @@ export function TeacherGradeTemplateForm({
       }))
 
     if (!parsed.length) return 0
+
     return calculateTemplateGradeFromSkills(parsed)
   }, [detalles])
 
@@ -164,7 +146,7 @@ export function TeacherGradeTemplateForm({
 
   const validSkillsCount = useMemo(() => {
     return detalles.filter(
-      (item) => item.skill && item.puntajeMaximo !== '',
+      (item) => item.skill && item.puntajeMaximo !== ''
     ).length
   }, [detalles])
 
@@ -193,10 +175,10 @@ export function TeacherGradeTemplateForm({
   const handleChangeDetail = (
     id: string,
     field: 'skill' | 'puntajeMaximo',
-    value: string,
+    value: string
   ) => {
     setDetalles((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     )
   }
 
@@ -209,37 +191,36 @@ export function TeacherGradeTemplateForm({
       if (!tipo) throw new Error('El tipo es obligatorio.')
       if (!titulo.trim()) throw new Error('El título es obligatorio.')
 
-      if (useSkills && hasDuplicateSkills()) {
-        throw new Error('No se puede repetir la misma skill dentro de una misma plantilla.')
+      if (!useSkills) {
+        throw new Error('El tipo seleccionado no es válido para una plantilla.')
       }
 
-
-      if (useSkills) {
-        const detallesValidos = detalles.filter(
-          (item) => item.skill && item.puntajeMaximo !== '',
+      if (hasDuplicateSkills()) {
+        throw new Error(
+          'No se puede repetir la misma skill dentro de una misma plantilla.'
         )
+      }
 
-        if (!detallesValidos.length) {
-          throw new Error('Debés cargar al menos una skill.')
-        }
+      const detallesValidos = detalles.filter(
+        (item) => item.skill && item.puntajeMaximo !== ''
+      )
 
-        if (detallesValidos.some((item) => Number(item.puntajeMaximo) <= 0)) {
-          throw new Error('El puntaje máximo debe ser mayor a cero.')
-        }
+      if (!detallesValidos.length) {
+        throw new Error('Debés cargar al menos una skill.')
+      }
+
+      if (detallesValidos.some((item) => Number(item.puntajeMaximo) <= 0)) {
+        throw new Error('El puntaje máximo debe ser mayor a cero.')
       }
 
       const payload: GradeTemplateFormPayload = {
         tipo: Number(tipo),
         titulo: titulo.trim(),
         descripcion: descripcion.trim() || null,
-        detalles: useSkills
-          ? detalles
-              .filter((item) => item.skill && item.puntajeMaximo !== '')
-              .map((item) => ({
-                skill: Number(item.skill),
-                puntajeMaximo: Number(item.puntajeMaximo),
-              }))
-          : [],
+        detalles: detallesValidos.map((item) => ({
+          skill: Number(item.skill),
+          puntajeMaximo: Number(item.puntajeMaximo),
+        })),
       }
 
       await onSubmit(payload)
@@ -247,7 +228,7 @@ export function TeacherGradeTemplateForm({
       setSuccess(
         mode === 'create'
           ? 'Plantilla creada correctamente.'
-          : 'Plantilla actualizada correctamente.',
+          : 'Plantilla actualizada correctamente.'
       )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ocurrió un error.')
@@ -291,18 +272,12 @@ export function TeacherGradeTemplateForm({
                   Modo
                 </p>
                 <p className="mt-2 text-base font-semibold tracking-tight text-foreground">
-                  {useSkills
-                    ? 'Plantilla con skills'
-                    : useDirectNote
-                      ? 'Plantilla con nota directa'
-                      : 'Seleccioná un tipo'}
+                  {useSkills ? 'Plantilla con skills' : 'Seleccioná un tipo'}
                 </p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
                   {useSkills
                     ? 'Define las skills y sus puntajes máximos una sola vez.'
-                    : useDirectNote
-                      ? 'Define una nota base reutilizable.'
-                      : 'El tipo define cómo se completa la plantilla.'}
+                    : 'El tipo define cómo se completa la plantilla.'}
                 </p>
               </div>
             </div>
@@ -311,11 +286,7 @@ export function TeacherGradeTemplateForm({
           <div className="group rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.12)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.16)]">
             <div className="flex items-start gap-3">
               <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground transition-transform duration-200 group-hover:scale-[1.02]">
-                {useSkills ? (
-                  <Trophy className="size-4.5" />
-                ) : (
-                  <Percent className="size-4.5" />
-                )}
+                <Trophy className="size-4.5" />
               </div>
 
               <div className="min-w-0">
@@ -325,9 +296,7 @@ export function TeacherGradeTemplateForm({
                 <p className="mt-2 text-base font-semibold tracking-tight text-foreground">
                   {useSkills
                     ? `${validSkillsCount} skill${validSkillsCount === 1 ? '' : 's'} definida${validSkillsCount === 1 ? '' : 's'}`
-                    : useDirectNote
-                      ? 'Lista para aplicar'
-                      : 'Pendiente'}
+                    : 'Pendiente'}
                 </p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
                   La plantilla se podrá aplicar después a múltiples alumnos del curso.
@@ -360,7 +329,7 @@ export function TeacherGradeTemplateForm({
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
-              placeholder="Ej. Quiz Unit 5, Test Midterm, Participation April..."
+              placeholder="Ej. Quiz Unit 5, Test Midterm..."
             />
           </div>
 
@@ -377,63 +346,10 @@ export function TeacherGradeTemplateForm({
         </div>
       </section>
 
-    {useDirectNote && (
-  <section
-    className={`rounded-[28px] border p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] ${tipoVisual.accent}`}
-  >
-    <div className="mb-5 space-y-1">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        Nota directa
-      </p>
-      <h3 className="text-lg font-semibold tracking-tight text-foreground">
-        Configuración de plantilla
-      </h3>
-    </div>
-
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-      <div className="rounded-[24px] border border-border/60 bg-card/80 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-        <div className="flex items-start gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground shadow-sm">
-            <Percent className="size-4.5" />
-          </div>
-
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">
-              Plantilla sin nota precargada
-            </p>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Para calificaciones de tipo Participation o Behaviour, esta plantilla
-              reutiliza el título y la descripción. La nota final se carga al momento
-              de registrar la evaluación de cada alumno.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-[24px] border border-primary/15 bg-primary/5 px-5 py-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
-          Vista previa
-        </p>
-
-        <div className="mt-2 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-3xl font-semibold tracking-tight text-primary">--</p>
-            <p className="mt-1 text-xs text-primary/70">
-              La nota se define al aplicar la plantilla
-            </p>
-          </div>
-
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Trophy className="size-4.5" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-)}
-
       {useSkills && (
-        <section className={`rounded-[28px] border p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] ${tipoVisual.accent}`}>
+        <section
+          className={`rounded-[28px] border p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] ${tipoVisual.accent}`}
+        >
           <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -465,7 +381,9 @@ export function TeacherGradeTemplateForm({
               >
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    <div className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${tipoVisual.iconTone}`}>
+                    <div
+                      className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${tipoVisual.iconTone}`}
+                    >
                       <TipoIcon className="size-4.5" />
                     </div>
 
@@ -503,7 +421,7 @@ export function TeacherGradeTemplateForm({
                         .filter(
                           (option) =>
                             option.value === detail.skill ||
-                            !getSelectedSkills(detail.id).includes(option.value),
+                            !getSelectedSkills(detail.id).includes(option.value)
                         )
                         .map((option) => (
                           <option key={option.value} value={option.value}>
@@ -525,6 +443,7 @@ export function TeacherGradeTemplateForm({
                         handleChangeDetail(detail.id, 'puntajeMaximo', e.target.value)
                       }
                       className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                      placeholder="Ej. 100"
                     />
                   </div>
                 </div>
@@ -560,18 +479,26 @@ export function TeacherGradeTemplateForm({
               </div>
             </div>
 
-            <div className={`group rounded-[26px] border p-5 transition-all duration-200 hover:-translate-y-[1px] ${calculatedTone.card}`}>
+            <div
+              className={`group rounded-[26px] border p-5 transition-all duration-200 hover:-translate-y-[1px] ${calculatedTone.card}`}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${calculatedTone.label}`}>
+                  <p
+                    className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${calculatedTone.label}`}
+                  >
                     Resultado teórico
                   </p>
 
                   <div className="mt-3 flex items-end gap-3">
-                    <p className={`text-[2.25rem] font-semibold leading-none tracking-tight ${calculatedTone.value}`}>
+                    <p
+                      className={`text-[2.25rem] font-semibold leading-none tracking-tight ${calculatedTone.value}`}
+                    >
                       {calculatedGrade.toFixed(2)}
                     </p>
-                    <span className={`pb-1 text-xs font-medium ${calculatedTone.suffix}`}>
+                    <span
+                      className={`pb-1 text-xs font-medium ${calculatedTone.suffix}`}
+                    >
                       / 100
                     </span>
                   </div>
@@ -581,15 +508,21 @@ export function TeacherGradeTemplateForm({
                   </p>
                 </div>
 
-                <div className={`flex size-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-[1.03] ${calculatedTone.icon}`}>
+                <div
+                  className={`flex size-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-[1.03] ${calculatedTone.icon}`}
+                >
                   <Trophy className="size-5" />
                 </div>
               </div>
 
-              <div className={`mt-5 h-2 overflow-hidden rounded-full ${calculatedTone.barBg}`}>
+              <div
+                className={`mt-5 h-2 overflow-hidden rounded-full ${calculatedTone.barBg}`}
+              >
                 <div
                   className={`h-full rounded-full transition-all duration-300 ${calculatedTone.barFill}`}
-                  style={{ width: `${Math.max(0, Math.min(100, calculatedGrade))}%` }}
+                  style={{
+                    width: `${Math.max(0, Math.min(100, calculatedGrade))}%`,
+                  }}
                 />
               </div>
             </div>

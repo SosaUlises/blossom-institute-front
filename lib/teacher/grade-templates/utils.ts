@@ -1,11 +1,17 @@
-import { GradeTemplateDetail, GradeTemplateFormValues, SkillEvaluada, TipoCalificacion } from './types'
+import type { GradeTemplateDetail, GradeTemplateFormValues } from './types'
+import { SkillEvaluada, TipoCalificacion } from './types'
 
-export const gradeTemplateTipoOptions = [
+type SelectOption = {
+  value: string
+  label: string
+}
+
+export const gradeTemplateTipoOptions: SelectOption[] = [
   { value: String(TipoCalificacion.Quiz), label: 'Quiz' },
   { value: String(TipoCalificacion.Test), label: 'Test' },
 ]
 
-export const skillOptions = [
+export const gradeTemplateSkillOptions: SelectOption[] = [
   { value: String(SkillEvaluada.Reading), label: 'Reading' },
   { value: String(SkillEvaluada.UseOfEnglish), label: 'Use of English' },
   { value: String(SkillEvaluada.Listening), label: 'Listening' },
@@ -13,7 +19,7 @@ export const skillOptions = [
   { value: String(SkillEvaluada.Speaking), label: 'Speaking' },
 ]
 
-export function supportsSkills(tipo: number) {
+export function supportsTemplateSkills(tipo: number) {
   return tipo === TipoCalificacion.Test || tipo === TipoCalificacion.Quiz
 }
 
@@ -45,64 +51,6 @@ export function getTipoCalificacionBadgeClass(tipo: number) {
   }
 }
 
-export function calculateGradeFromTemplateSkills(
-  details: Array<{ puntajeObtenido: number; puntajeMaximo: number }>
-) {
-  const totalObtained = details.reduce(
-    (acc, item) => acc + item.puntajeObtenido,
-    0
-  )
-  const totalMax = details.reduce((acc, item) => acc + item.puntajeMaximo, 0)
-
-  if (totalMax <= 0) return 0
-
-  return Number(((totalObtained / totalMax) * 100).toFixed(2))
-}
-
-export function createEmptyTemplateDetail() {
-  return {
-    id: crypto.randomUUID(),
-    skill: '',
-    puntajeMaximo: '',
-  }
-}
-
-
-type SelectOption = {
-  value: string
-  label: string
-}
-
-export const gradeTemplateSkillOptions: SelectOption[] = [
-  { value: String(SkillEvaluada.Reading), label: 'Reading' },
-  { value: String(SkillEvaluada.UseOfEnglish), label: 'Use of English' },
-  { value: String(SkillEvaluada.Listening), label: 'Listening' },
-  { value: String(SkillEvaluada.Writing), label: 'Writing' },
-  { value: String(SkillEvaluada.Speaking), label: 'Speaking' },
-]
-
-export function supportsTemplateSkills(tipo: number) {
-  return tipo === TipoCalificacion.Test || tipo === TipoCalificacion.Quiz
-}
-
-export function requiresTemplateDirectNote(tipo: number) {
-  return (
-    tipo === TipoCalificacion.Participation ||
-    tipo === TipoCalificacion.Behaviour
-  )
-}
-
-export function calculateTemplateGradeFromSkills(
-  details: Array<{ puntajeObtenido: number; puntajeMaximo: number }>
-) {
-  const totalObtained = details.reduce((acc, item) => acc + item.puntajeObtenido, 0)
-  const totalMax = details.reduce((acc, item) => acc + item.puntajeMaximo, 0)
-
-  if (totalMax <= 0) return 0
-
-  return Number(((totalObtained / totalMax) * 100).toFixed(2))
-}
-
 export function getGradeTemplateSkillLabel(skill: number) {
   switch (skill) {
     case SkillEvaluada.Reading:
@@ -117,6 +65,25 @@ export function getGradeTemplateSkillLabel(skill: number) {
       return 'Speaking'
     default:
       return 'Unknown'
+  }
+}
+
+export function calculateTemplateGradeFromSkills(
+  details: Array<{ puntajeObtenido: number; puntajeMaximo: number }>
+) {
+  const totalObtained = details.reduce((acc, item) => acc + item.puntajeObtenido, 0)
+  const totalMax = details.reduce((acc, item) => acc + item.puntajeMaximo, 0)
+
+  if (totalMax <= 0) return 0
+
+  return Number(((totalObtained / totalMax) * 100).toFixed(2))
+}
+
+export function createEmptyTemplateDetail() {
+  return {
+    id: crypto.randomUUID(),
+    skill: '',
+    puntajeMaximo: '',
   }
 }
 
