@@ -1,5 +1,5 @@
 'use client'
-
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -143,26 +143,23 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
 
   return (
     <Sidebar className="border-r border-sidebar-border/70 bg-sidebar/95 text-sidebar-foreground backdrop-blur-2xl">
-      <SidebarHeader className="border-b border-sidebar-border/70 px-4 py-4">
-        <Link
-          href="/teacher/dashboard"
-          className="flex items-center gap-3 rounded-2xl px-1 py-1 transition-all duration-200 hover:opacity-90"
-        >
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Sparkles className="size-4.5" />
-          </div>
-
-          <div className="min-w-0">
-            <p className="truncate text-[0.98rem] font-semibold tracking-tight text-foreground">
-              Blossom Institute
-            </p>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              Teacher Panel
-            </p>
-          </div>
-        </Link>
-      </SidebarHeader>
-
+   <SidebarHeader className="border-b border-sidebar-border/70 px-4 py-5">
+  <Link
+    href="/teacher/dashboard"
+    className="group flex items-center justify-center rounded-[24px] px-2 py-2 transition-all duration-200 hover:bg-sidebar-accent/30"
+  >
+    <div className="flex h-[55px] w-full items-center justify-center overflow-hidden rounded-[24px] px-3 transition-all duration-200 group-hover:scale-[1.01]">
+      <Image
+        src="/blossom-logo.png"
+        alt="Blossom Institute"
+        width={180}
+        height={54}
+        className="h-auto max-h-[52px] w-auto object-contain"
+        priority
+      />
+    </div>
+  </Link>
+</SidebarHeader>
       <SidebarContent className="flex h-full flex-col px-3 py-4">
         <div className="flex min-h-0 flex-1 flex-col justify-between">
           <div className="space-y-5">

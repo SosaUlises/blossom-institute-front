@@ -70,7 +70,7 @@ export function getEstadoCorreccionConfig(estado?: number | null) {
       return {
         label: 'Sin feedback',
         className:
-          'border-border/60 bg-muted/40 text-muted-foreground',
+          'border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400',
       }
   }
 }

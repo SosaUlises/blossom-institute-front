@@ -108,3 +108,4 @@ export async function archiveTeacherGrade(
 
   return parseResponse<unknown>(response)
 }
+

@@ -7,6 +7,7 @@ import {
   Plus,
   Users,
   CheckSquare,
+  ClipboardList,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -61,28 +62,48 @@ export function TeacherCourseHero({ course }: Props) {
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:flex-wrap sm:justify-center xl:justify-start">
-              <Button
-                asChild
-                className="h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
-              >
-                <Link href={`/teacher/courses/${course.id}/tasks/create`}>
-                  <Plus className="mr-2 size-4" />
-                  Crear tarea
-                </Link>
-              </Button>
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+  <Button
+    asChild
+    className="h-11 min-w-[210px] rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+  >
+    <Link
+      href={`/teacher/courses/${course.id}/tasks/create`}
+      className="flex items-center justify-center"
+    >
+      <Plus className="mr-2 size-4" />
+      Crear tarea
+    </Link>
+  </Button>
 
-              <Button
-                asChild
-                variant="outline"
-                className="h-11 rounded-2xl border-primary/15 bg-primary/5 px-5 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/10 hover:text-primary"
-              >
-                <Link href={`/teacher/courses/${course.id}/classes/take`}>
-                  <CheckSquare className="mr-2 size-4" />
-                  Tomar asistencia
-                </Link>
-              </Button>
-            </div>
+  <Button
+    asChild
+    variant="outline"
+    className="h-11 min-w-[210px] rounded-2xl border-primary/15 bg-primary/5 px-5 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/10 hover:text-primary"
+  >
+    <Link
+      href={`/teacher/courses/${course.id}/classes/take`}
+      className="flex items-center justify-center"
+    >
+      <CheckSquare className="mr-2 size-4" />
+      Tomar asistencia
+    </Link>
+  </Button>
+
+  <Button
+    asChild
+    variant="outline"
+    className="h-11 min-w-[210px] rounded-2xl border-primary/15 bg-primary/5 px-5 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/10 hover:text-primary"
+  >
+    <Link
+      href={`/teacher/courses/${course.id}/grade-templates`}
+      className="flex items-center justify-center"
+    >
+      <ClipboardList className="mr-2 size-4" />
+      Gestionar calificaciones
+    </Link>
+  </Button>
+</div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 xl:min-w-[440px] xl:grid-cols-3">

@@ -97,8 +97,6 @@ function DetailMetaCard({
 
 function SubmissionCard({
   submission,
-  courseId,
-  taskId,
   onView,
 }: {
   submission: TeacherSubmissionListItem

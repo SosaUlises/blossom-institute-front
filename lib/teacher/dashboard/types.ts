@@ -40,6 +40,13 @@ export interface ProfesorDashboardUltimaClaseItem {
   descripcion?: string | null
 }
 
+export interface ProfesorDashboardFeedbackVigente {
+  feedbackId: number
+  estado: number
+  nota?: number | null
+  fechaCorreccionUtc: string
+}
+
 export interface ProfesorDashboardUltimaEntregaItem {
   entregaId: number
   tareaId: number
@@ -51,6 +58,7 @@ export interface ProfesorDashboardUltimaEntregaItem {
   alumnoApellido: string
   fechaEntregaUtc: string
   estadoEntrega: EstadoEntrega
+  tieneFeedbackVigente: boolean
 }
 
 export interface ProfesorDashboardResumenCursoItem {

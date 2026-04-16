@@ -27,7 +27,7 @@ import {
   removeProfesor,
 } from '@/lib/admin/courses/people-api'
 import type { CursoAlumno, CursoProfesor } from '@/lib/admin/courses/people-types'
-import { getStudents } from '@/lib/admin/students/api'
+import { getAssignableStudents } from '@/lib/admin/students/api'
 import { getTeachers } from '@/lib/admin/teachers/api'
 import type { Alumno } from '@/lib/admin/students/types'
 import type { Profesor } from '@/lib/admin/teachers/types'
@@ -143,7 +143,12 @@ function CurrentPersonCard({
     >
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="min-w-0 flex items-start gap-3">
-          <div className={cn('flex size-11 shrink-0 items-center justify-center rounded-2xl', iconClass)}>
+          <div
+            className={cn(
+              'flex size-11 shrink-0 items-center justify-center rounded-2xl',
+              iconClass,
+            )}
+          >
             <Icon className="size-4.5" />
           </div>
 
@@ -238,13 +243,20 @@ function AssignablePersonCard({
       />
 
       <div className="flex min-w-0 flex-1 items-start gap-3">
-        <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-2xl', iconTone)}>
+        <div
+          className={cn(
+            'flex size-10 shrink-0 items-center justify-center rounded-2xl',
+            iconTone,
+          )}
+        >
           <Icon className="size-4.5" />
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-sm font-semibold text-foreground">{name}</p>
+            <p className="truncate text-sm font-semibold text-foreground">
+              {name}
+            </p>
 
             {checked && (
               <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/15 bg-emerald-500/10 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-400">
@@ -262,10 +274,10 @@ function AssignablePersonCard({
   )
 }
 
-
 export function CoursePeople({ cursoId }: { cursoId: number }) {
   const [tab, setTab] = useState<TabKey>('alumnos')
   const [loading, setLoading] = useState(true)
+  const [assignableLoading, setAssignableLoading] = useState(false)
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null)
   const [assigning, setAssigning] = useState(false)
 
@@ -280,26 +292,27 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
 
   const [selectedAlumnoIds, setSelectedAlumnoIds] = useState<number[]>([])
   const [selectedProfesorIds, setSelectedProfesorIds] = useState<number[]>([])
- const rightPanelTone =
-  tab === 'alumnos'
-    ? {
-        card: 'border-blue-600/15 bg-blue-600/[0.03] dark:border-blue-500/15 dark:bg-blue-500/[0.04]',
-        selection: 'border-blue-600/15 bg-blue-600/[0.06] dark:border-blue-500/15 dark:bg-blue-500/[0.08]',
-        selectionIcon: 'bg-blue-600/10 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
-        selectionLabel: 'text-blue-700/80 dark:text-blue-300/90',
-        selectionValue: 'text-blue-700 dark:text-blue-300',
-        button:
-          'bg-blue-700 text-white shadow-md shadow-blue-700/20 hover:bg-blue-700/90 dark:bg-blue-600 dark:hover:bg-blue-600/90',
-      }
-    : {
-        card: 'border-violet-500/15 bg-violet-500/[0.03]',
-        selection: 'border-violet-500/15 bg-violet-500/[0.06]',
-        selectionIcon: 'bg-violet-500/10 text-violet-700 dark:text-violet-400',
-        selectionLabel: 'text-violet-700/80 dark:text-violet-400/90',
-        selectionValue: 'text-violet-700 dark:text-violet-400',
-        button:
-          'bg-violet-600 text-white shadow-md shadow-violet-600/20 hover:bg-violet-600/90 dark:bg-violet-500 dark:hover:bg-violet-500/90',
-      }
+
+  const rightPanelTone =
+    tab === 'alumnos'
+      ? {
+          card: 'border-blue-600/15 bg-blue-600/[0.03] dark:border-blue-500/15 dark:bg-blue-500/[0.04]',
+          selection: 'border-blue-600/15 bg-blue-600/[0.06] dark:border-blue-500/15 dark:bg-blue-500/[0.08]',
+          selectionIcon: 'bg-blue-600/10 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+          selectionLabel: 'text-blue-700/80 dark:text-blue-300/90',
+          selectionValue: 'text-blue-700 dark:text-blue-300',
+          button:
+            'bg-blue-700 text-white shadow-md shadow-blue-700/20 hover:bg-blue-700/90 dark:bg-blue-600 dark:hover:bg-blue-600/90',
+        }
+      : {
+          card: 'border-violet-500/15 bg-violet-500/[0.03]',
+          selection: 'border-violet-500/15 bg-violet-500/[0.06]',
+          selectionIcon: 'bg-violet-500/10 text-violet-700 dark:text-violet-400',
+          selectionLabel: 'text-violet-700/80 dark:text-violet-400/90',
+          selectionValue: 'text-violet-700 dark:text-violet-400',
+          button:
+            'bg-violet-600 text-white shadow-md shadow-violet-600/20 hover:bg-violet-600/90 dark:bg-violet-500 dark:hover:bg-violet-500/90',
+        }
 
   const loadCurrent = async () => {
     setLoading(true)
@@ -318,12 +331,22 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
   }
 
   const loadAssignable = async () => {
-    if (tab === 'alumnos') {
-      const students = await getStudents({ pageNumber: 1, pageSize: 100 })
-      setAllStudents(students.items)
-    } else {
-      const teachers = await getTeachers({ pageNumber: 1, pageSize: 100 })
-      setAllTeachers(teachers.items)
+    setAssignableLoading(true)
+
+    try {
+      if (tab === 'alumnos') {
+        const students = await getAssignableStudents({
+          cursoId,
+          pageNumber: 1,
+          pageSize: 100,
+        })
+        setAllStudents(students.items)
+      } else {
+        const teachers = await getTeachers({ pageNumber: 1, pageSize: 100 })
+        setAllTeachers(teachers.items)
+      }
+    } finally {
+      setAssignableLoading(false)
     }
   }
 
@@ -340,10 +363,11 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
     const q = searchCurrent.trim().toLowerCase()
     if (!q) return cursoAlumnos
 
-    return cursoAlumnos.filter((a) =>
-      `${a.nombre} ${a.apellido}`.toLowerCase().includes(q) ||
-      a.email.toLowerCase().includes(q) ||
-      String(a.dni).includes(q)
+    return cursoAlumnos.filter(
+      (a) =>
+        `${a.nombre} ${a.apellido}`.toLowerCase().includes(q) ||
+        a.email.toLowerCase().includes(q) ||
+        String(a.dni).includes(q),
     )
   }, [cursoAlumnos, searchCurrent])
 
@@ -351,20 +375,19 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
     const q = searchCurrent.trim().toLowerCase()
     if (!q) return cursoProfesores
 
-    return cursoProfesores.filter((p) =>
-      `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
-      p.email.toLowerCase().includes(q) ||
-      String(p.dni).includes(q)
+    return cursoProfesores.filter(
+      (p) =>
+        `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
+        p.email.toLowerCase().includes(q) ||
+        String(p.dni).includes(q),
     )
   }, [cursoProfesores, searchCurrent])
 
   const assignableStudents = useMemo(() => {
-    const currentIds = new Set(cursoAlumnos.map((a) => a.alumnoId))
     const q = searchAssignable.trim().toLowerCase()
 
     return allStudents.filter((s) => {
       if (!s.activo) return false
-      if (currentIds.has(s.id)) return false
 
       if (!q) return true
 
@@ -374,7 +397,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
         String(s.dni).includes(q)
       )
     })
-  }, [allStudents, cursoAlumnos, searchAssignable])
+  }, [allStudents, searchAssignable])
 
   const assignableTeachers = useMemo(() => {
     const currentIds = new Set(cursoProfesores.map((p) => p.profesorId))
@@ -396,13 +419,13 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
 
   const toggleAlumnoSelection = (id: number) => {
     setSelectedAlumnoIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     )
   }
 
   const toggleProfesorSelection = (id: number) => {
     setSelectedProfesorIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     )
   }
 
@@ -429,7 +452,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
 
   const handleRemoveAlumno = async (alumno: CursoAlumno) => {
     const confirmed = window.confirm(
-      `¿Querés quitar a ${alumno.nombre} ${alumno.apellido} de este curso?`
+      `¿Querés quitar a ${alumno.nombre} ${alumno.apellido} de este curso?`,
     )
     if (!confirmed) return
 
@@ -446,7 +469,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
 
   const handleRemoveProfesor = async (profesor: CursoProfesor) => {
     const confirmed = window.confirm(
-      `¿Querés quitar a ${profesor.nombre} ${profesor.apellido} de este curso?`
+      `¿Querés quitar a ${profesor.nombre} ${profesor.apellido} de este curso?`,
     )
     if (!confirmed) return
 
@@ -461,11 +484,14 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
     }
   }
 
-  const currentCount = tab === 'alumnos' ? cursoAlumnos.length : cursoProfesores.length
+  const currentCount =
+    tab === 'alumnos' ? cursoAlumnos.length : cursoProfesores.length
+
   const assignableCount =
     tab === 'alumnos' ? assignableStudents.length : assignableTeachers.length
 
-  const selectedCount = tab === 'alumnos' ? selectedAlumnoIds.length : selectedProfesorIds.length
+  const selectedCount =
+    tab === 'alumnos' ? selectedAlumnoIds.length : selectedProfesorIds.length
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
@@ -530,7 +556,10 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
           <div className="space-y-3">
             {loading ? (
               Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
+                <div
+                  key={index}
+                  className="h-24 animate-pulse rounded-[24px] bg-muted/30"
+                />
               ))
             ) : tab === 'alumnos' ? (
               filteredCurrentAlumnos.length === 0 ? (
@@ -572,135 +601,142 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
       </Card>
 
       <Card
-  className={cn(
-    'min-w-0 rounded-[28px] border bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)] transition-colors duration-200',
-    rightPanelTone.card,
-  )}
->
-  <CardHeader className="space-y-4">
-    <div className="space-y-1">
-      <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
-        {tab === 'alumnos' ? 'Asignar alumnos' : 'Asignar profesores'}
-      </CardTitle>
-      <p className="text-sm leading-6 text-muted-foreground">
-        Seleccioná una o varias personas disponibles para agregarlas al curso.
-      </p>
-    </div>
-
-    <div className="grid gap-3">
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder={
-            tab === 'alumnos'
-              ? 'Buscar alumnos disponibles...'
-              : 'Buscar profesores disponibles...'
-          }
-          value={searchAssignable}
-          onChange={(e) => setSearchAssignable(e.target.value)}
-          className="h-11 rounded-2xl border-border/70 bg-card/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
-        />
-      </div>
-
-      <div
         className={cn(
-          'rounded-[22px] border px-4 py-3 transition-colors duration-200',
-          rightPanelTone.selection,
+          'min-w-0 rounded-[28px] border bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)] transition-colors duration-200',
+          rightPanelTone.card,
         )}
       >
-        <div className="flex items-center gap-3">
-          <div
+        <CardHeader className="space-y-4">
+          <div className="space-y-1">
+            <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
+              {tab === 'alumnos' ? 'Asignar alumnos' : 'Asignar profesores'}
+            </CardTitle>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Seleccioná una o varias personas disponibles para agregarlas al curso.
+            </p>
+          </div>
+
+          <div className="grid gap-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={
+                  tab === 'alumnos'
+                    ? 'Buscar alumnos disponibles...'
+                    : 'Buscar profesores disponibles...'
+                }
+                value={searchAssignable}
+                onChange={(e) => setSearchAssignable(e.target.value)}
+                className="h-11 rounded-2xl border-border/70 bg-card/85 pl-10 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+              />
+            </div>
+
+            <div
+              className={cn(
+                'rounded-[22px] border px-4 py-3 transition-colors duration-200',
+                rightPanelTone.selection,
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    'flex size-10 items-center justify-center rounded-2xl transition-colors duration-200',
+                    rightPanelTone.selectionIcon,
+                  )}
+                >
+                  <Sparkles className="size-4.5" />
+                </div>
+
+                <div>
+                  <p
+                    className={cn(
+                      'text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-200',
+                      rightPanelTone.selectionLabel,
+                    )}
+                  >
+                    Selección actual
+                  </p>
+                  <p
+                    className={cn(
+                      'text-sm font-semibold transition-colors duration-200',
+                      rightPanelTone.selectionValue,
+                    )}
+                  >
+                    {selectedCount} seleccionado{selectedCount === 1 ? '' : 's'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleAssign}
+            disabled={assigning || selectedCount === 0}
             className={cn(
-              'flex size-10 items-center justify-center rounded-2xl transition-colors duration-200',
-              rightPanelTone.selectionIcon,
+              'h-11 rounded-2xl px-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0',
+              rightPanelTone.button,
             )}
           >
-            <Sparkles className="size-4.5" />
+            <Plus className="mr-2 size-4" />
+            {assigning ? 'Guardando...' : `Agregar seleccionados (${selectedCount})`}
+          </Button>
+        </CardHeader>
+
+        <CardContent className="min-w-0 pt-0">
+          <div className="max-h-[560px] space-y-3 overflow-y-auto overflow-x-hidden pr-1">
+            {assignableLoading ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-24 animate-pulse rounded-[22px] bg-muted/30"
+                />
+              ))
+            ) : tab === 'alumnos' ? (
+              assignableStudents.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
+                  No hay alumnos disponibles para asignar.
+                </div>
+              ) : (
+                assignableStudents.map((student) => {
+                  const checked = selectedAlumnoIds.includes(student.id)
+
+                  return (
+                    <AssignablePersonCard
+                      key={student.id}
+                      checked={checked}
+                      onToggle={() => toggleAlumnoSelection(student.id)}
+                      name={`${student.nombre} ${student.apellido}`}
+                      email={student.email}
+                      dni={student.dni}
+                      type="alumno"
+                    />
+                  )
+                })
+              )
+            ) : assignableTeachers.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
+                No hay profesores disponibles para asignar.
+              </div>
+            ) : (
+              assignableTeachers.map((teacher) => {
+                const checked = selectedProfesorIds.includes(teacher.id)
+
+                return (
+                  <AssignablePersonCard
+                    key={teacher.id}
+                    checked={checked}
+                    onToggle={() => toggleProfesorSelection(teacher.id)}
+                    name={`${teacher.nombre} ${teacher.apellido}`}
+                    email={teacher.email}
+                    dni={teacher.dni}
+                    type="profesor"
+                  />
+                )
+              })
+            )}
           </div>
-
-          <div>
-            <p
-              className={cn(
-                'text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-200',
-                rightPanelTone.selectionLabel,
-              )}
-            >
-              Selección actual
-            </p>
-            <p
-              className={cn(
-                'text-sm font-semibold transition-colors duration-200',
-                rightPanelTone.selectionValue,
-              )}
-            >
-              {selectedCount} seleccionado{selectedCount === 1 ? '' : 's'}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <Button
-      onClick={handleAssign}
-      disabled={assigning || selectedCount === 0}
-      className={cn(
-        'h-11 rounded-2xl px-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0',
-        rightPanelTone.button,
-      )}
-    >
-      <Plus className="mr-2 size-4" />
-      {assigning ? 'Guardando...' : `Agregar seleccionados (${selectedCount})`}
-    </Button>
-  </CardHeader>
-
-  <CardContent className="min-w-0 pt-0">
-    <div className="max-h-[560px] space-y-3 overflow-y-auto overflow-x-hidden pr-1">
-      {tab === 'alumnos' ? (
-        assignableStudents.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
-            No hay alumnos disponibles para asignar.
-          </div>
-        ) : (
-          assignableStudents.map((student) => {
-            const checked = selectedAlumnoIds.includes(student.id)
-
-            return (
-              <AssignablePersonCard
-                key={student.id}
-                checked={checked}
-                onToggle={() => toggleAlumnoSelection(student.id)}
-                name={`${student.nombre} ${student.apellido}`}
-                email={student.email}
-                dni={student.dni}
-                type="alumno"
-              />
-            )
-          })
-        )
-      ) : assignableTeachers.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
-          No hay profesores disponibles para asignar.
-        </div>
-      ) : (
-        assignableTeachers.map((teacher) => {
-          const checked = selectedProfesorIds.includes(teacher.id)
-
-          return (
-            <AssignablePersonCard
-              key={teacher.id}
-              checked={checked}
-              onToggle={() => toggleProfesorSelection(teacher.id)}
-              name={`${teacher.nombre} ${teacher.apellido}`}
-              email={teacher.email}
-              dni={teacher.dni}
-              type="profesor"
-            />
-          )
-        })
-      )}
-    </div>
-  </CardContent>
-</Card>
+        </CardContent>
+      </Card>
     </div>
   )
 }
