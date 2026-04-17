@@ -18,7 +18,7 @@ type Props = {
   course: TeacherCourseDetail
 }
 
-type Tab = 'students' | 'teachers' | 'classes' | 'tasks'
+type Tab = 'classes' | 'tasks' | 'students' | 'teachers' 
 
 const tabStyles: Record<
   Tab,
@@ -75,7 +75,7 @@ const tabStyles: Record<
 }
 
 export function TeacherCourseTabs({ course }: Props) {
-  const [tab, setTab] = useState<Tab>('students')
+  const [tab, setTab] = useState<Tab>('classes')
 
   const currentTab = tabStyles[tab]
 
