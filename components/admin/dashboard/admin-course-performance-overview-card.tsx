@@ -15,31 +15,72 @@ type Props = {
   generalAverage: number | null
 }
 
-function getScoreTone(score: number, mode: 'positive' | 'warning') {
-  if (mode === 'positive') {
-    if (score >= 85) {
-      return {
-        row: 'border-emerald-500/20 bg-emerald-500/[0.08]',
-       pill: 'border-emerald-500/25 bg-emerald-500/12 text-emerald-700 shadow-[0_8px_18px_-10px_rgba(16,185,129,0.18)] dark:border-emerald-400/25 dark:bg-emerald-500/15 dark:text-emerald-200 dark:shadow-[0_8px_18px_-10px_rgba(16,185,129,0.45)]'
-      }
-    }
+type RankTone = 'default' | 'warning' | 'success'
 
+function getRowTone(score: number, mode: 'positive' | 'warning') {
+  if (mode === 'positive') {
     return {
-      row: 'border-emerald-500/18 bg-emerald-500/[0.06]',
-     pill: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 shadow-[0_8px_18px_-10px_rgba(16,185,129,0.14)] dark:border-emerald-400/20 dark:bg-emerald-500/12 dark:text-emerald-200 dark:shadow-[0_8px_18px_-10px_rgba(16,185,129,0.35)]'
+      row: `
+        border-emerald-500/18 bg-emerald-500/[0.04]
+        dark:border-emerald-400/14 dark:bg-emerald-400/[0.045]
+      `,
+      hover: `
+        hover:border-emerald-500/28 hover:bg-emerald-500/[0.055]
+        dark:hover:border-emerald-400/22 dark:hover:bg-emerald-400/[0.06]
+      `,
     }
   }
 
   if (score < 50) {
     return {
-      row: 'border-rose-500/20 bg-rose-500/[0.08]',
-pill: 'border-rose-500/25 bg-rose-500/12 text-rose-700 shadow-[0_8px_18px_-10px_rgba(244,63,94,0.16)] dark:border-rose-400/25 dark:bg-rose-500/15 dark:text-rose-200 dark:shadow-[0_8px_18px_-10px_rgba(244,63,94,0.40)]'
+      row: `
+        border-rose-500/16 bg-rose-500/[0.035]
+        dark:border-rose-400/14 dark:bg-rose-400/[0.04]
+      `,
+      hover: `
+        hover:border-rose-500/24 hover:bg-rose-500/[0.045]
+        dark:hover:border-rose-400/20 dark:hover:bg-rose-400/[0.05]
+      `,
     }
   }
 
   return {
-    row: 'border-amber-500/20 bg-amber-500/[0.08]',
-pill: 'border-amber-500/25 bg-amber-500/12 text-amber-700 shadow-[0_8px_18px_-10px_rgba(245,158,11,0.16)] dark:border-amber-400/25 dark:bg-amber-500/15 dark:text-amber-200 dark:shadow-[0_8px_18px_-10px_rgba(245,158,11,0.40)]'
+    row: `
+      border-amber-500/16 bg-amber-500/[0.035]
+      dark:border-amber-400/14 dark:bg-amber-400/[0.04]
+    `,
+    hover: `
+      hover:border-amber-500/24 hover:bg-amber-500/[0.045]
+      dark:hover:border-amber-400/20 dark:hover:bg-amber-400/[0.05]
+    `,
+  }
+}
+
+function getPillTone(tone: RankTone) {
+  switch (tone) {
+    case 'success':
+  return `
+    border-emerald-300/70 bg-emerald-100/85
+    dark:border-emerald-400/22 dark:bg-emerald-400/[0.16]
+    group-hover:border-emerald-400/80 group-hover:bg-emerald-100/95
+    dark:group-hover:border-emerald-300/28 dark:group-hover:bg-emerald-400/[0.2]
+  `
+
+case 'warning':
+  return `
+    border-amber-300/70 bg-amber-100/85
+    dark:border-amber-400/22 dark:bg-amber-400/[0.16]
+    group-hover:border-amber-400/80 group-hover:bg-amber-100/95
+    dark:group-hover:border-amber-300/28 dark:group-hover:bg-amber-400/[0.2]
+  `
+
+    default:
+      return `
+        border-border/60 bg-background/85
+        dark:border-white/10 dark:bg-white/[0.06]
+        group-hover:bg-background
+        dark:group-hover:bg-white/[0.08]
+      `
   }
 }
 
@@ -50,39 +91,68 @@ function RankRow({
 }: {
   cursoNombre: string
   averageGrade: number
-  tone?: 'default' | 'warning' | 'success'
+  tone?: RankTone
 }) {
-  const scoreTone =
+  const rowTone =
     tone === 'success'
-      ? getScoreTone(averageGrade, 'positive')
+      ? getRowTone(averageGrade, 'positive')
       : tone === 'warning'
-        ? getScoreTone(averageGrade, 'warning')
+        ? getRowTone(averageGrade, 'warning')
         : {
-            row: 'border-border/60 bg-background/75',
-            pill: 'border-border/60 bg-background/70 text-foreground',
+            row: `
+              border-border/60 bg-background/70
+              dark:border-white/10 dark:bg-white/[0.03]
+            `,
+            hover: `
+              hover:border-border hover:bg-background/85
+              dark:hover:border-white/15 dark:hover:bg-white/[0.05]
+            `,
           }
+
+  const pillTone = getPillTone(tone)
 
   return (
     <div
       className={cn(
-        'flex items-center justify-between gap-3 rounded-[20px] border px-4 py-3.5 transition-all duration-200 hover:-translate-y-[1px] hover:shadow-sm',
-        scoreTone.row,
+        'group flex items-center justify-between gap-3 rounded-[20px] border px-4 py-3.5',
+        'transition-all duration-200 ease-out',
+        'hover:-translate-y-[1px] hover:shadow-[0_10px_28px_-22px_rgba(15,23,42,0.35)]',
+        'dark:hover:shadow-[0_14px_34px_-24px_rgba(0,0,0,0.55)]',
+        rowTone.row,
+        rowTone.hover,
       )}
     >
       <div className="min-w-0">
-        <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
+        <p
+          className={cn(
+            'truncate text-[15px] font-semibold tracking-tight text-foreground transition-colors duration-200',
+            tone === 'success' &&
+              'group-hover:text-emerald-800 dark:group-hover:text-emerald-200',
+            tone === 'warning' &&
+              'group-hover:text-amber-800 dark:group-hover:text-amber-200',
+          )}
+        >
           {cursoNombre}
         </p>
       </div>
 
-      <div
-      className={cn(
-        'inline-flex min-w-[92px] items-center justify-center rounded-full border px-3.5 py-1.5 text-sm font-semibold tabular-nums tracking-tight backdrop-blur-sm transition-all duration-200',
-        scoreTone.pill,
-      )}
-    >
-        {averageGrade.toFixed(2)}
-      </div>
+    <div
+  className={cn(
+    'inline-flex min-w-[96px] items-center justify-center rounded-full border px-3.5 py-1.5',
+    'text-sm font-bold tabular-nums tracking-tight',
+    'backdrop-blur-[2px] transition-all duration-200 ease-out',
+    'group-hover:scale-[1.02]',
+    tone === 'success' &&
+      'text-emerald-00 dark:text-emerald-500',
+    tone === 'warning' &&
+      'text-amber-100 dark:text-amber-500',
+    tone === 'default' &&
+      'text-foreground',
+    pillTone,
+  )}
+>
+  {averageGrade.toFixed(2)}
+</div>
     </div>
   )
 }

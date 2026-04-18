@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getTeacherCourseByIdServer } from '@/lib/teacher/courses/server-api'
+import { getTeacherCourseByIdServer, ApiError } from '@/lib/teacher/courses/server-api'
 import { TeacherGradeTemplateView } from '@/components/teacher/grades/templates/teacher-grade-template-view'
 
 type PageProps = {
@@ -14,23 +14,26 @@ export default async function TeacherCourseGradeTemplatesPage({
   const { id } = await params
   const courseId = Number(id)
 
-  if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+  if (!Number.isInteger(courseId) || courseId <= 0) {
     notFound()
   }
-
-  let course: Awaited<ReturnType<typeof getTeacherCourseByIdServer>>
 
   try {
-    course = await getTeacherCourseByIdServer(courseId)
-  } catch {
-    notFound()
-  }
+    const course = await getTeacherCourseByIdServer(courseId)
 
-  return (
-    <TeacherGradeTemplateView
-      courseId={courseId}
-      courseName={course.nombre}
-      courseYear={course.anio}
-    />
-  )
+    return (
+      <TeacherGradeTemplateView
+        courseId={courseId}
+        courseName={course.nombre}
+        courseYear={course.anio}
+      />
+    )
+  } catch (error) {
+    if (error instanceof ApiError && error.statusCode === 404) {
+      notFound()
+    }
+
+    console.error('Error loading teacher course grade templates page:', error)
+    throw error
+  }
 }
