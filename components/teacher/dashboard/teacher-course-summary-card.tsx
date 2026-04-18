@@ -23,33 +23,27 @@ function MetricPill({
   icon: React.ReactNode
   value: string | number
   label: string
-  tone?: 'default' | 'warning' | 'success' | 'primary'
+  tone?: 'default' | 'warning' | 'success' | 'primary' | 'danger'
 }) {
   return (
     <div
       className={cn(
         'inline-flex w-full items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-center transition-colors md:w-auto',
-        tone === 'warning' &&
-          'border-amber-500/25 bg-amber-500/[0.08]',
-        tone === 'success' &&
-          'border-emerald-500/25 bg-emerald-500/[0.08]',
-        tone === 'primary' &&
-          'border-primary/20 bg-primary/[0.06]',
-        tone === 'default' &&
-          'border-border/60 bg-muted/[0.28]',
+        tone === 'warning' && 'border-amber-500/25 bg-amber-500/[0.08]',
+        tone === 'success' && 'border-emerald-500/25 bg-emerald-500/[0.08]',
+        tone === 'primary' && 'border-primary/20 bg-primary/[0.06]',
+        tone === 'danger' && 'border-rose-500/25 bg-rose-500/[0.08]',
+        tone === 'default' && 'border-border/60 bg-muted/[0.28]',
       )}
     >
       <div
         className={cn(
           'flex size-8 items-center justify-center rounded-lg',
-          tone === 'warning' &&
-            'bg-amber-500/10 text-amber-600',
-          tone === 'success' &&
-            'bg-emerald-500/10 text-emerald-600',
-          tone === 'primary' &&
-            'bg-primary/10 text-primary',
-          tone === 'default' &&
-            'bg-background/80 text-muted-foreground',
+          tone === 'warning' && 'bg-amber-500/10 text-amber-600',
+          tone === 'success' && 'bg-emerald-500/10 text-emerald-600',
+          tone === 'primary' && 'bg-primary/10 text-primary',
+          tone === 'danger' && 'bg-rose-500/10 text-rose-600',
+          tone === 'default' && 'bg-background/80 text-muted-foreground',
         )}
       >
         {icon}
@@ -62,12 +56,12 @@ function MetricPill({
             tone === 'warning' && 'text-amber-700 dark:text-amber-400',
             tone === 'success' && 'text-emerald-700 dark:text-emerald-400',
             tone === 'primary' && 'text-primary',
+            tone === 'danger' && 'text-rose-700 dark:text-rose-400',
             tone === 'default' && 'text-foreground',
           )}
         >
           {value}
         </p>
-
         <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
           {label}
         </p>
@@ -76,8 +70,16 @@ function MetricPill({
   )
 }
 
+function getAverageTone(
+  promedioCurso: number | null | undefined,
+): 'default' | 'success' | 'danger' {
+  if (promedioCurso == null) return 'default'
+  return promedioCurso < 60 ? 'danger' : 'success'
+}
+
 function CourseRow({ item }: { item: ProfesorDashboardResumenCursoItem }) {
   const tienePendientes = item.entregasPendientesCorreccion > 0
+  const promedioTone = getAverageTone(item.promedioCurso)
 
   return (
     <li>
@@ -98,37 +100,37 @@ function CourseRow({ item }: { item: ProfesorDashboardResumenCursoItem }) {
           </div>
         </div>
 
-       <div className="grid w-full grid-cols-2 gap-3 md:flex md:w-auto md:flex-wrap md:justify-end">
-      <MetricPill
-        icon={<Users className="size-4" />}
-        value={item.cantidadAlumnos}
-        label="Alumnos"
-      />
+        <div className="grid w-full grid-cols-2 gap-3 md:flex md:w-auto md:flex-wrap md:justify-end">
+          <MetricPill
+            icon={<Users className="size-4" />}
+            value={item.cantidadAlumnos}
+            label="Alumnos"
+          />
 
-      <MetricPill
-        icon={<ClipboardList className="size-4" />}
-        value={item.tareasPublicadas}
-        label="Tareas"
-      />
+          <MetricPill
+            icon={<ClipboardList className="size-4" />}
+            value={item.tareasPublicadas}
+            label="Tareas"
+          />
 
-      <MetricPill
-        icon={<ClipboardList className="size-4" />}
-        value={item.entregasPendientesCorreccion}
-        label="Pend."
-        tone={tienePendientes ? 'warning' : 'success'}
-      />
+          <MetricPill
+            icon={<ClipboardList className="size-4" />}
+            value={item.entregasPendientesCorreccion}
+            label="Pend."
+            tone={tienePendientes ? 'warning' : 'success'}
+          />
 
-      <MetricPill
-        icon={<BarChart3 className="size-4" />}
-        value={item.promedioCurso?.toFixed(1) ?? '—'}
-        label="Prom."
-        tone="primary"
-      />
+          <MetricPill
+            icon={<BarChart3 className="size-4" />}
+            value={item.promedioCurso?.toFixed(1) ?? '—'}
+            label="Prom."
+            tone={promedioTone}
+          />
 
-      <div className="hidden md:flex size-9 items-center justify-center rounded-full text-muted-foreground/40 transition-colors group-hover:text-muted-foreground/70">
-        <ChevronRight className="size-4" />
-      </div>
-    </div>
+          <div className="hidden md:flex size-9 items-center justify-center rounded-full text-muted-foreground/40 transition-colors group-hover:text-muted-foreground/70">
+            <ChevronRight className="size-4" />
+          </div>
+        </div>
       </div>
     </li>
   )

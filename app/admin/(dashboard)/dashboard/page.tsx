@@ -16,7 +16,12 @@ import { getAdminDashboard } from '@/lib/admin/dashboard/get-admin-dashboard'
 export default async function DashboardPage() {
   const dashboard = await getAdminDashboard()
 
-  const todayClassesCount = dashboard.upcomingClasses.filter((item) => {
+  const upcomingClasses = dashboard.upcomingClasses ?? []
+  const averageGradesByCourse = dashboard.averageGradesByCourse ?? []
+  const coursesAtRiskByManualAverage = dashboard.coursesAtRiskByManualAverage ?? []
+  const studentsManualLowPerformance = dashboard.studentsManualLowPerformance ?? []
+
+  const todayClassesCount = upcomingClasses.filter((item) => {
     const datePart = item.proximaClase.split('T')[0]
     const [year, month, day] = datePart.split('-').map(Number)
 
@@ -31,8 +36,7 @@ export default async function DashboardPage() {
   }).length
 
   const alertCount =
-    dashboard.coursesAtRiskByManualAverage.length +
-    dashboard.studentsManualLowGradesThisMonthCount
+    coursesAtRiskByManualAverage.length + studentsManualLowPerformance.length
 
   return (
     <>
@@ -123,13 +127,13 @@ export default async function DashboardPage() {
           </section>
 
           <section className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-            <UpcomingClassesCard items={dashboard.upcomingClasses} />
+            <UpcomingClassesCard items={upcomingClasses} />
 
             <AdminAttentionRequiredCard
               studentsAtRiskThisMonthCount={dashboard.studentsAtRiskThisMonthCount}
               studentsManualLowGradesThisMonthCount={dashboard.studentsManualLowGradesThisMonthCount}
-              coursesAtRiskByOverallAverage={dashboard.coursesAtRiskByOverallAverage}
-              coursesAtRiskByManualAverage={dashboard.coursesAtRiskByManualAverage}
+              studentsManualLowPerformance={studentsManualLowPerformance}
+              coursesAtRiskByManualAverage={coursesAtRiskByManualAverage}
             />
           </section>
 
@@ -144,7 +148,7 @@ export default async function DashboardPage() {
             </div>
 
             <AdminCoursePerformanceOverviewCard
-              data={dashboard.averageGradesByCourse}
+              data={averageGradesByCourse}
               generalAverage={dashboard.generalAverage}
             />
           </section>

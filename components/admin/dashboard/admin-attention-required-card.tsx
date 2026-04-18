@@ -1,20 +1,29 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+
 import {
   AlertTriangle,
   Users,
-  BarChart3,
   ChevronRight,
   FileWarning,
+  UserRoundX,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-import type { DashboardAverageGradeByCourse } from '@/lib/admin/dashboard/types'
+import type {
+  DashboardAverageGradeByCourse,
+  DashboardLowManualGradeAlert,
+} from '@/lib/admin/dashboard/types'
 import { cn } from '@/lib/utils'
 
 type Props = {
   studentsAtRiskThisMonthCount: number
   studentsManualLowGradesThisMonthCount: number
-  coursesAtRiskByOverallAverage: DashboardAverageGradeByCourse[]
-  coursesAtRiskByManualAverage: DashboardAverageGradeByCourse[]
+  studentsManualLowPerformance?: DashboardLowManualGradeAlert[]
+  coursesAtRiskByManualAverage?: DashboardAverageGradeByCourse[]
 }
 
 function RiskStatCard({
@@ -89,39 +98,126 @@ function RiskStatCard({
   )
 }
 
-function CourseRiskList({
+
+function StudentRiskList({
   title,
-  items,
-  tone = 'overall',
+  items = [],
 }: {
   title: string
-  items: DashboardAverageGradeByCourse[]
-  tone?: 'overall' | 'manual'
+  items?: DashboardLowManualGradeAlert[]
 }) {
-  const headerTone =
-    tone === 'manual'
-      ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400'
-      : 'bg-primary/10 text-primary'
+  const PAGE_SIZE = 1
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
-  const badgeTone =
-    tone === 'manual'
-      ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
-      : 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+  const visibleItems = useMemo(() => {
+    return items.slice(0, visibleCount)
+  }, [items, visibleCount])
+
+  const hasMore = items.length > visibleCount
+  const canCollapse = visibleCount > PAGE_SIZE
+
+  const handleShowMore = () => {
+    setVisibleCount((prev) => prev + PAGE_SIZE)
+  }
+
+  const handleShowLess = () => {
+    setVisibleCount(PAGE_SIZE)
+  }
 
   return (
     <div className="rounded-[24px] border border-border/60 bg-background/75 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
       <div className="mb-3 flex items-center gap-2">
-        <div
-          className={cn(
-            'flex size-9 items-center justify-center rounded-xl',
-            headerTone,
+        <div className="flex size-9 items-center justify-center rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400">
+          <UserRoundX className="size-4" />
+        </div>
+
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            {title}
+          </p>
+        </div>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
+          No hay alumnos con alertas este mes.
+        </div>
+      ) : (
+        <>
+          <ul className="space-y-2.5">
+            {visibleItems.map((item) => (
+              <li
+                key={`${item.calificacionId}-${item.alumnoId}`}
+                className="rounded-2xl border border-border/50 bg-card/80 px-4 py-3 transition-all duration-200 hover:-translate-y-[1px] hover:shadow-sm"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {item.alumnoNombre}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      {item.cursoNombre} · {item.titulo}
+                    </p>
+                  </div>
+
+                  <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-medium text-rose-700 dark:text-rose-400">
+                    {item.nota.toFixed(2)}
+                    <ChevronRight className="size-3.5" />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {(hasMore || canCollapse) && (
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-border/50 bg-card/60 px-4 py-3">
+              <p className="text-xs text-muted-foreground">
+                Mostrando {visibleItems.length} de {items.length} alertas
+              </p>
+
+              <div className="flex items-center gap-2">
+                {canCollapse && (
+                  <button
+                    type="button"
+                    onClick={handleShowLess}
+                    className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs font-medium text-foreground transition-all duration-200 hover:border-primary/20 hover:bg-primary/5 hover:text-primary"
+                  >
+                    <ChevronUp className="size-3.5" />
+                    Ver menos
+                  </button>
+                )}
+
+                {hasMore && (
+                  <button
+                    type="button"
+                    onClick={handleShowMore}
+                    className="inline-flex items-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-700 transition-all duration-200 hover:bg-rose-500/15 dark:text-rose-400"
+                  >
+                    <ChevronDown className="size-3.5" />
+                    Ver más
+                  </button>
+                )}
+              </div>
+            </div>
           )}
-        >
-          {tone === 'manual' ? (
-            <FileWarning className="size-4" />
-          ) : (
-            <BarChart3 className="size-4" />
-          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function CourseRiskList({
+  title,
+  items = [],
+}: {
+  title: string
+  items?: DashboardAverageGradeByCourse[]
+}) {
+  return (
+    <div className="rounded-[24px] border border-border/60 bg-background/75 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+      <div className="mb-3 flex items-center gap-2">
+        <div className="flex size-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400">
+          <FileWarning className="size-4" />
         </div>
 
         <div className="min-w-0">
@@ -139,7 +235,7 @@ function CourseRiskList({
         <ul className="space-y-2.5">
           {items.map((course) => (
             <li
-              key={`${tone}-${course.cursoId}`}
+              key={course.cursoId}
               className="rounded-2xl border border-border/50 bg-card/80 px-4 py-3 transition-all duration-200 hover:-translate-y-[1px] hover:shadow-sm"
             >
               <div className="flex items-center justify-between gap-3">
@@ -148,18 +244,11 @@ function CourseRiskList({
                     {course.cursoNombre}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    {tone === 'manual'
-                      ? 'Bajo desempeño en calificaciones manuales'
-                      : 'Promedio general por debajo del objetivo'}
+                    Promedio manual del curso por debajo de 60.
                   </p>
                 </div>
 
-                <div
-                  className={cn(
-                    'inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium',
-                    badgeTone,
-                  )}
-                >
+                <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
                   {course.averageGrade.toFixed(2)}
                   <ChevronRight className="size-3.5" />
                 </div>
@@ -175,8 +264,8 @@ function CourseRiskList({
 export function AdminAttentionRequiredCard({
   studentsAtRiskThisMonthCount,
   studentsManualLowGradesThisMonthCount,
-  coursesAtRiskByOverallAverage,
-  coursesAtRiskByManualAverage,
+  studentsManualLowPerformance = [],
+  coursesAtRiskByManualAverage = [],
 }: Props) {
   return (
     <Card className="rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
@@ -199,7 +288,7 @@ export function AdminAttentionRequiredCard({
           <RiskStatCard
             title="Desempeño manual bajo"
             value={studentsManualLowGradesThisMonthCount}
-            description="Promedio mensual menor a 60 en Test, Quiz, Participation o Behaviour."
+            description="Alumnos con al menos una calificación menor a 60 este mes."
             icon={AlertTriangle}
             tone={studentsManualLowGradesThisMonthCount > 0 ? 'warning' : 'default'}
             highlight
@@ -207,16 +296,14 @@ export function AdminAttentionRequiredCard({
         </div>
 
         <div className="grid gap-4 2xl:grid-cols-2">
-          <CourseRiskList
-            title="Cursos con promedio general bajo"
-            items={coursesAtRiskByOverallAverage}
-            tone="overall"
+          <StudentRiskList
+            title="Alumnos con bajo desempeño"
+            items={studentsManualLowPerformance}
           />
 
           <CourseRiskList
             title="Cursos con evaluaciones bajas"
             items={coursesAtRiskByManualAverage}
-            tone="manual"
           />
         </div>
       </CardContent>

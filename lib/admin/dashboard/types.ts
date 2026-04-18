@@ -1,4 +1,3 @@
-
 export interface ApiResponse<T> {
   message: string
   success: boolean
@@ -17,6 +16,18 @@ export interface DashboardAverageGradeByCourse {
   cursoId: number
   cursoNombre: string
   averageGrade: number
+}
+
+export interface DashboardLowManualGradeAlert {
+  alumnoId: number
+  alumnoNombre: string
+  cursoId: number
+  cursoNombre: string
+  calificacionId: number
+  titulo: string
+  tipo: number
+  nota: number
+  fecha: string
 }
 
 export interface DashboardUpcomingAssignment {
@@ -45,6 +56,7 @@ export interface AdminDashboardResponse {
 
   studentsAtRiskThisMonthCount: number
   studentsManualLowGradesThisMonthCount: number
+  studentsManualLowPerformance: DashboardLowManualGradeAlert[]
 
   coursesAtRiskByOverallAverage: DashboardAverageGradeByCourse[]
   coursesAtRiskByManualAverage: DashboardAverageGradeByCourse[]
