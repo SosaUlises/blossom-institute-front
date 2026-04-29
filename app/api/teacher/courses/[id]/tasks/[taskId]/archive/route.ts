@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { proxyJson } from '@/lib/auth/api-guards'
 import { getSession, hasRole } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
@@ -49,9 +50,7 @@ export async function PATCH(_request: NextRequest, context: Context) {
         },
       }
     )
-
-    const result = await response.json()
-    return NextResponse.json(result, { status: response.status })
+    return proxyJson(response)
   } catch {
     return NextResponse.json(
       { message: 'Ocurrió un error al archivar la tarea.' },

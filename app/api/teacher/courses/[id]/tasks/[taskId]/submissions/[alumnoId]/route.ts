@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { proxyJson } from '@/lib/auth/api-guards'
 import { getSession, hasRole } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
@@ -55,9 +56,7 @@ export async function GET(_request: NextRequest, context: Context) {
         cache: 'no-store',
       }
     )
-
-    const result = await response.json()
-    return NextResponse.json(result, { status: response.status })
+    return proxyJson(response)
   } catch {
     return NextResponse.json(
       { message: 'Ocurrió un error al obtener la entrega.' },

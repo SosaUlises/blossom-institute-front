@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { proxyFile } from '@/lib/auth/api-guards'
 import { getSession, hasRole } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
@@ -52,19 +53,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
       },
     })
 
-    const blob = await response.arrayBuffer()
-
-    return new NextResponse(blob, {
-      status: response.status,
-      headers: {
-        'Content-Type':
-          response.headers.get('Content-Type') ||
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition':
-          response.headers.get('Content-Disposition') ||
-          `attachment; filename="marks-report.xlsx"`,
-      },
-    })
+    return proxyFile(
+      response,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'marks-report.xlsx'
+    )
   } catch {
     return new NextResponse('Error exportando Excel.', { status: 500 })
   }

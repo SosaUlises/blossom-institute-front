@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession, hasRole } from '@/lib/auth/session'
+import { authHeaders, requireApiSession } from '@/lib/auth/api-guards'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -17,23 +17,13 @@ async function safeJson(response: Response) {
 
 export async function GET() {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
-    if (!hasRole(session, 'Administrador')) {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const response = await fetch(`${BASE}/api/v1/settings/account`, {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session),
       cache: 'no-store',
     })
 
@@ -61,26 +51,15 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
-    if (!hasRole(session, 'Administrador')) {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const body = await request.json()
 
     const response = await fetch(`${BASE}/api/v1/settings/account`, {
       method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(session, true),
       body: JSON.stringify(body),
     })
 

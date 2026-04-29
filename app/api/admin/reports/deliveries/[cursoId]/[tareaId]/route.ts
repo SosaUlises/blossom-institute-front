@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession, hasRole } from '@/lib/auth/session'
+import { authHeaders, parsePositiveInt, requireApiSession } from '@/lib/auth/api-guards'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -24,21 +24,13 @@ async function safeJson(response: Response) {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
-    if (!hasRole(session, 'Administrador')) {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { cursoId, tareaId } = await context.params
-    const cursoIdNumber = Number(cursoId)
-    const tareaIdNumber = Number(tareaId)
+    const cursoIdNumber = parsePositiveInt(cursoId, 'cursoIdNumber')
+    const tareaIdNumber = parsePositiveInt(tareaId, 'tareaIdNumber')
 
     const searchParams = request.nextUrl.searchParams
     const pageNumber = searchParams.get('pageNumber') ?? '1'
@@ -46,23 +38,23 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const search = searchParams.get('search') ?? ''
     const estado = searchParams.get('estado') ?? ''
     const pendienteCorreccion = searchParams.get('pendienteCorreccion') ?? ''
-    const pageNumberValue = Number(pageNumber)
-    const pageSizeValue = Number(pageSize)
-    const estadoValue = estado.trim() ? Number(estado) : null
+    const pageNumberValue = parsePositiveInt(pageNumber, 'pageNumberValue')
+    const pageSizeValue = parsePositiveInt(pageSize, 'pageSizeValue')
+    const estadoValue = estado.trim() ? parsePositiveInt(estado, 'estadoValue') : null
 
-    if (!Number.isFinite(cursoIdNumber) || cursoIdNumber <= 0) {
+    if (cursoIdNumber === null) {
       return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
     }
-    if (!Number.isFinite(tareaIdNumber) || tareaIdNumber <= 0) {
+    if (tareaIdNumber === null) {
       return NextResponse.json({ success: false, message: 'Tarea inválida.' }, { status: 400 })
     }
-    if (!Number.isFinite(pageNumberValue) || pageNumberValue <= 0) {
+    if (pageNumberValue === null) {
       return NextResponse.json({ success: false, message: 'Página inválida.' }, { status: 400 })
     }
-    if (!Number.isFinite(pageSizeValue) || pageSizeValue <= 0) {
+    if (pageSizeValue === null) {
       return NextResponse.json({ success: false, message: 'Page size inválido.' }, { status: 400 })
     }
-    if (estado.trim() && (!Number.isFinite(estadoValue) || estadoValue <= 0)) {
+    if (estado.trim() && (estadoValue === null)) {
       return NextResponse.json({ success: false, message: 'Estado inválido.' }, { status: 400 })
     }
 
@@ -87,9 +79,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     const response = await fetch(url.toString(), {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session),
       cache: 'no-store',
     })
 

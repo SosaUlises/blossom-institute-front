@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession, hasRole } from '@/lib/auth/session'
+import { authHeaders, parsePositiveInt, requireApiSession } from '@/lib/auth/api-guards'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -21,28 +21,18 @@ async function safeJson(response: Response) {
 
 export async function GET(_: NextRequest, context: RouteContext) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
-    if (!hasRole(session, 'Administrador')) {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { id } = await context.params
-    const idNumber = Number(id)
-    if (!Number.isFinite(idNumber) || idNumber <= 0) {
+    const idNumber = parsePositiveInt(id, 'idNumber')
+    if (idNumber === null) {
       return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
     }
 
     const res = await fetch(`${BASE}/api/v1/cursos/${idNumber}/profesores`, {
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session),
       cache: 'no-store',
     })
 
@@ -68,31 +58,20 @@ export async function GET(_: NextRequest, context: RouteContext) {
 
 export async function POST(req: Request, context: RouteContext) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
-    if (!hasRole(session, 'Administrador')) {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { id } = await context.params
-    const idNumber = Number(id)
-    if (!Number.isFinite(idNumber) || idNumber <= 0) {
+    const idNumber = parsePositiveInt(id, 'idNumber')
+    if (idNumber === null) {
       return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
     }
     const body = await req.json()
 
     const res = await fetch(`${BASE}/api/v1/cursos/${idNumber}/assign/profesores`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(session, true),
       body: JSON.stringify(body),
     })
 

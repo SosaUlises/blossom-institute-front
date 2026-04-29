@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession, hasRole } from '@/lib/auth/session'
+import { authHeaders, proxyJson, requireApiSession } from '@/lib/auth/api-guards'
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
-    if (!hasRole(session, 'Administrador')) {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const searchParams = request.nextUrl.searchParams
     const pageNumber = searchParams.get('pageNumber') ?? '1'
@@ -32,15 +24,10 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(backendUrl.toString(), {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session),
       cache: 'no-store',
     })
-
-    const result = await response.json()
-
-    return NextResponse.json(result, { status: response.status })
+    return proxyJson(response)
   } catch {
     return NextResponse.json(
       { success: false, message: 'No se pudieron obtener los alumnos.' },
@@ -51,32 +38,18 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
-    if (!hasRole(session, 'Administrador')) {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const body = await request.json()
 
     const response = await fetch(`${BACKEND_API_URL}/api/v1/alumnos`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session, true),
       body: JSON.stringify(body),
     })
-
-    const result = await response.json()
-
-    return NextResponse.json(result, { status: response.status })
+    return proxyJson(response)
   } catch {
     return NextResponse.json(
       { success: false, message: 'No se pudo crear el alumno.' },

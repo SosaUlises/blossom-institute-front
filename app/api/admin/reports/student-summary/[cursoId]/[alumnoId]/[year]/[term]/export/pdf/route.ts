@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { proxyFile } from '@/lib/auth/api-guards'
 import { getSession, hasRole } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
@@ -51,17 +52,7 @@ export async function GET(_: NextRequest, context: RouteContext) {
       },
     })
 
-    const blob = await response.arrayBuffer()
-
-    return new NextResponse(blob, {
-      status: response.status,
-      headers: {
-        'Content-Type': response.headers.get('Content-Type') || 'application/pdf',
-        'Content-Disposition':
-          response.headers.get('Content-Disposition') ||
-          'attachment; filename="student-summary.pdf"',
-      },
-    })
+    return proxyFile(response, 'application/pdf', 'student-summary.pdf')
   } catch (error) {
     console.error('Student summary export pdf route error:', error)
     return new NextResponse('Error exportando PDF.', { status: 500 })
