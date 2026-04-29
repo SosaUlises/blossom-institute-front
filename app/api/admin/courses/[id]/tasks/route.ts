@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { authHeaders, requireApiSession } from '@/lib/auth/api-guards'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -21,14 +21,9 @@ async function safeJson(response: Response) {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { id } = await context.params
 
@@ -47,9 +42,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     const response = await fetch(url.toString(), {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session),
       cache: 'no-store',
     })
 

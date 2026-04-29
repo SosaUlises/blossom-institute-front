@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { getSession, hasRole } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -24,6 +24,9 @@ export async function GET() {
         { success: false, message: 'No autenticado.' },
         { status: 401 }
       )
+    }
+    if (!hasRole(session, 'Profesor')) {
+      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
     }
 
     const response = await fetch(`${BASE}/api/v1/settings/account`, {
@@ -65,6 +68,9 @@ export async function PUT(request: NextRequest) {
         { success: false, message: 'No autenticado.' },
         { status: 401 }
       )
+    }
+    if (!hasRole(session, 'Profesor')) {
+      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json()

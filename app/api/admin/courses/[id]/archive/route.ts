@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { authHeaders, parsePositiveInt, requireApiSession } from '@/lib/auth/api-guards'
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL
 
@@ -20,19 +20,19 @@ async function safeJson(response: Response) {
 
 export async function PUT(_: Request, context: RouteContext) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json({ success: false, message: 'No autenticado.' }, { status: 401 })
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { id } = await context.params
+    const idNumber = parsePositiveInt(id, 'idNumber')
+    if (idNumber === null) {
+      return NextResponse.json({ success: false, message: 'Id inválido.' }, { status: 400 })
+    }
 
-    const backendResponse = await fetch(`${BACKEND_API_URL}/api/v1/cursos/${id}/archivar`, {
+    const backendResponse = await fetch(`${BACKEND_API_URL}/api/v1/cursos/${idNumber}/archivar`, {
       method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session),
       cache: 'no-store',
     })
 

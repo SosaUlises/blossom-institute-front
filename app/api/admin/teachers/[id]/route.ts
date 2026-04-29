@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { authHeaders, parsePositiveInt, proxyJson, requireApiSession } from '@/lib/auth/api-guards'
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL
 
@@ -9,28 +9,22 @@ interface RouteContext {
 
 export async function GET(_: NextRequest, context: RouteContext) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { id } = await context.params
+    const idNumber = parsePositiveInt(id, 'idNumber')
+    if (idNumber === null) {
+      return NextResponse.json({ success: false, message: 'Id inválido.' }, { status: 400 })
+    }
 
-    const response = await fetch(`${BACKEND_API_URL}/api/v1/profesores/${id}`, {
+    const response = await fetch(`${BACKEND_API_URL}/api/v1/profesores/${idNumber}`, {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session),
       cache: 'no-store',
     })
-
-    const result = await response.json()
-
-    return NextResponse.json(result, { status: response.status })
+    return proxyJson(response)
   } catch {
     return NextResponse.json(
       { success: false, message: 'No se pudo obtener el profesor.' },
@@ -41,30 +35,23 @@ export async function GET(_: NextRequest, context: RouteContext) {
 
 export async function PUT(request: Request, context: RouteContext) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { id } = await context.params
+    const idNumber = parsePositiveInt(id, 'idNumber')
+    if (idNumber === null) {
+      return NextResponse.json({ success: false, message: 'Id inválido.' }, { status: 400 })
+    }
     const body = await request.json()
 
-    const response = await fetch(`${BACKEND_API_URL}/api/v1/profesores/${id}`, {
+    const response = await fetch(`${BACKEND_API_URL}/api/v1/profesores/${idNumber}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session, true),
       body: JSON.stringify(body),
     })
-
-    const result = await response.json()
-
-    return NextResponse.json(result, { status: response.status })
+    return proxyJson(response)
   } catch {
     return NextResponse.json(
       { success: false, message: 'No se pudo actualizar el profesor.' },

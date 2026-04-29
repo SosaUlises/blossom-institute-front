@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { authHeaders, parsePositiveInt, proxyJson, requireApiSession } from '@/lib/auth/api-guards'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -20,29 +20,33 @@ export async function GET(_request: NextRequest, context: Context) {
       )
     }
 
-    const session = await getSession()
-    if (!session?.token) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireApiSession('Profesor')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { id, alumnoId, gradeId } = await context.params
-    const courseId = Number(id)
-    const parsedAlumnoId = Number(alumnoId)
-    const parsedGradeId = Number(gradeId)
+    const courseId = parsePositiveInt(id, 'courseId')
+    const parsedAlumnoId = parsePositiveInt(alumnoId, 'parsedAlumnoId')
+    const parsedGradeId = parsePositiveInt(gradeId, 'parsedGradeId')
+    if (courseId === null) {
+      return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (parsedAlumnoId === null) {
+      return NextResponse.json({ message: 'Alumno inválido.' }, { status: 400 })
+    }
+    if (parsedGradeId === null) {
+      return NextResponse.json({ message: 'Calificación inválida.' }, { status: 400 })
+    }
 
     const response = await fetch(
       `${BASE}/api/v1/cursos/${courseId}/alumnos/${parsedAlumnoId}/calificaciones/${parsedGradeId}`,
       {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
+        headers: authHeaders(session),
         cache: 'no-store',
       }
     )
-
-    const result = await response.json()
-    return NextResponse.json(result, { status: response.status })
+    return proxyJson(response)
   } catch {
     return NextResponse.json(
       { message: 'Ocurrió un error al obtener la calificación.' },
@@ -60,31 +64,34 @@ export async function PUT(request: NextRequest, context: Context) {
       )
     }
 
-    const session = await getSession()
-    if (!session?.token) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireApiSession('Profesor')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { id, alumnoId, gradeId } = await context.params
-    const courseId = Number(id)
-    const parsedAlumnoId = Number(alumnoId)
-    const parsedGradeId = Number(gradeId)
+    const courseId = parsePositiveInt(id, 'courseId')
+    const parsedAlumnoId = parsePositiveInt(alumnoId, 'parsedAlumnoId')
+    const parsedGradeId = parsePositiveInt(gradeId, 'parsedGradeId')
+    if (courseId === null) {
+      return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (parsedAlumnoId === null) {
+      return NextResponse.json({ message: 'Alumno inválido.' }, { status: 400 })
+    }
+    if (parsedGradeId === null) {
+      return NextResponse.json({ message: 'Calificación inválida.' }, { status: 400 })
+    }
     const body = await request.json()
 
     const response = await fetch(
       `${BASE}/api/v1/cursos/${courseId}/alumnos/${parsedAlumnoId}/calificaciones/${parsedGradeId}`,
       {
         method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: authHeaders(session, true),
         body: JSON.stringify(body),
       }
     )
-
-    const result = await response.json()
-    return NextResponse.json(result, { status: response.status })
+    return proxyJson(response)
   } catch {
     return NextResponse.json(
       { message: 'Ocurrió un error al actualizar la calificación.' },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { proxyJson } from '@/lib/auth/api-guards'
+import { getSession, hasRole } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -24,10 +25,21 @@ export async function PATCH(_request: NextRequest, context: Context) {
     if (!session?.token) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
+    if (!hasRole(session, 'Profesor')) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
 
     const { id, taskId } = await context.params
     const courseId = Number(id)
     const parsedTaskId = Number(taskId)
+
+    if (!Number.isFinite(courseId) || courseId <= 0) {
+      return NextResponse.json({ message: 'Curso invalido.' }, { status: 400 })
+    }
+
+    if (!Number.isFinite(parsedTaskId) || parsedTaskId <= 0) {
+      return NextResponse.json({ message: 'Tarea invalida.' }, { status: 400 })
+    }
 
     const response = await fetch(
       `${BASE}/api/v1/cursos/${courseId}/tareas/${parsedTaskId}/archivar`,
@@ -38,9 +50,7 @@ export async function PATCH(_request: NextRequest, context: Context) {
         },
       }
     )
-
-    const result = await response.json()
-    return NextResponse.json(result, { status: response.status })
+    return proxyJson(response)
   } catch {
     return NextResponse.json(
       { message: 'Ocurrió un error al archivar la tarea.' },

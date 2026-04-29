@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { getSession, hasRole } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -20,17 +20,20 @@ export async function GET(
     if (!session?.token) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
+    if (!hasRole(session, 'Profesor')) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
 
     const { id, templateId } = await context.params
 
     const courseId = Number(id)
     const plantillaId = Number(templateId)
 
-    if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+    if (!Number.isFinite(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    if (!plantillaId || Number.isNaN(plantillaId) || plantillaId <= 0) {
+    if (!Number.isFinite(plantillaId) || plantillaId <= 0) {
       return NextResponse.json({ message: 'Plantilla inválida.' }, { status: 400 })
     }
 
@@ -73,17 +76,20 @@ export async function PUT(
     if (!session?.token) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
+    if (!hasRole(session, 'Profesor')) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
 
     const { id, templateId } = await context.params
 
     const courseId = Number(id)
     const plantillaId = Number(templateId)
 
-    if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+    if (!Number.isFinite(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    if (!plantillaId || Number.isNaN(plantillaId) || plantillaId <= 0) {
+    if (!Number.isFinite(plantillaId) || plantillaId <= 0) {
       return NextResponse.json({ message: 'Plantilla inválida.' }, { status: 400 })
     }
 

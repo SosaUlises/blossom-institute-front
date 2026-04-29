@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { authHeaders, parsePositiveInt, requireApiSession } from '@/lib/auth/api-guards'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -24,16 +24,13 @@ async function safeJson(response: Response) {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { cursoId, tareaId } = await context.params
+    const cursoIdNumber = parsePositiveInt(cursoId, 'cursoIdNumber')
+    const tareaIdNumber = parsePositiveInt(tareaId, 'tareaIdNumber')
 
     const searchParams = request.nextUrl.searchParams
     const pageNumber = searchParams.get('pageNumber') ?? '1'
@@ -41,20 +38,39 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const search = searchParams.get('search') ?? ''
     const estado = searchParams.get('estado') ?? ''
     const pendienteCorreccion = searchParams.get('pendienteCorreccion') ?? ''
+    const pageNumberValue = parsePositiveInt(pageNumber, 'pageNumberValue')
+    const pageSizeValue = parsePositiveInt(pageSize, 'pageSizeValue')
+    const estadoValue = estado.trim() ? parsePositiveInt(estado, 'estadoValue') : null
+
+    if (cursoIdNumber === null) {
+      return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (tareaIdNumber === null) {
+      return NextResponse.json({ success: false, message: 'Tarea inválida.' }, { status: 400 })
+    }
+    if (pageNumberValue === null) {
+      return NextResponse.json({ success: false, message: 'Página inválida.' }, { status: 400 })
+    }
+    if (pageSizeValue === null) {
+      return NextResponse.json({ success: false, message: 'Page size inválido.' }, { status: 400 })
+    }
+    if (estado.trim() && (estadoValue === null)) {
+      return NextResponse.json({ success: false, message: 'Estado inválido.' }, { status: 400 })
+    }
 
     const url = new URL(
-      `${BASE}/api/v1/reportes/cursos/${cursoId}/tareas/${tareaId}/entregas`
+      `${BASE}/api/v1/reportes/cursos/${cursoIdNumber}/tareas/${tareaIdNumber}/entregas`
     )
 
-    url.searchParams.set('pageNumber', pageNumber)
-    url.searchParams.set('pageSize', pageSize)
+    url.searchParams.set('pageNumber', String(pageNumberValue))
+    url.searchParams.set('pageSize', String(pageSizeValue))
 
     if (search.trim()) {
       url.searchParams.set('search', search.trim())
     }
 
     if (estado.trim()) {
-      url.searchParams.set('estado', estado)
+      url.searchParams.set('estado', String(estadoValue))
     }
 
     if (pendienteCorreccion.trim()) {
@@ -63,9 +79,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     const response = await fetch(url.toString(), {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session),
       cache: 'no-store',
     })
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { proxyJson } from '@/lib/auth/api-guards'
+import { getSession, hasRole } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -25,21 +26,24 @@ export async function GET(_request: NextRequest, context: Context) {
     if (!session?.token) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
+    if (!hasRole(session, 'Profesor')) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
 
     const { id, taskId, alumnoId } = await context.params
     const courseId = Number(id)
     const parsedTaskId = Number(taskId)
     const parsedAlumnoId = Number(alumnoId)
 
-    if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+    if (!Number.isFinite(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    if (!parsedTaskId || Number.isNaN(parsedTaskId) || parsedTaskId <= 0) {
+    if (!Number.isFinite(parsedTaskId) || parsedTaskId <= 0) {
       return NextResponse.json({ message: 'Tarea inválida.' }, { status: 400 })
     }
 
-    if (!parsedAlumnoId || Number.isNaN(parsedAlumnoId) || parsedAlumnoId <= 0) {
+    if (!Number.isFinite(parsedAlumnoId) || parsedAlumnoId <= 0) {
       return NextResponse.json({ message: 'Alumno inválido.' }, { status: 400 })
     }
 
@@ -52,9 +56,7 @@ export async function GET(_request: NextRequest, context: Context) {
         cache: 'no-store',
       }
     )
-
-    const result = await response.json()
-    return NextResponse.json(result, { status: response.status })
+    return proxyJson(response)
   } catch {
     return NextResponse.json(
       { message: 'Ocurrió un error al obtener la entrega.' },

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { authHeaders, parsePositiveInt, requireApiSession } from '@/lib/auth/api-guards'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -26,24 +26,34 @@ async function safeJson(response: Response) {
 
 export async function GET(_: Request, context: RouteContext) {
   try {
-    const session = await getSession()
-
-    if (!session?.token) {
-      return NextResponse.json(
-        { success: false, message: 'No autenticado.' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireApiSession('Administrador')
+    if (auth.response) return auth.response
+    const { session } = auth
 
     const { cursoId, alumnoId, year, term } = await context.params
+    const cursoIdNumber = parsePositiveInt(cursoId, 'cursoIdNumber')
+    const alumnoIdNumber = parsePositiveInt(alumnoId, 'alumnoIdNumber')
+    const yearNumber = parsePositiveInt(year, 'yearNumber')
+    const termNumber = parsePositiveInt(term, 'termNumber')
 
-    const url = `${BASE}/api/v1/reportes/cursos/${cursoId}/alumnos/${alumnoId}/years/${year}/terms/${term}/summary`
+    if (cursoIdNumber === null) {
+      return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (alumnoIdNumber === null) {
+      return NextResponse.json({ success: false, message: 'Alumno inválido.' }, { status: 400 })
+    }
+    if (yearNumber === null) {
+      return NextResponse.json({ success: false, message: 'Año inválido.' }, { status: 400 })
+    }
+    if (termNumber === null) {
+      return NextResponse.json({ success: false, message: 'Term inválido.' }, { status: 400 })
+    }
+
+    const url = `${BASE}/api/v1/reportes/cursos/${cursoIdNumber}/alumnos/${alumnoIdNumber}/years/${yearNumber}/terms/${termNumber}/summary`
 
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
+      headers: authHeaders(session),
       cache: 'no-store',
     })
 
