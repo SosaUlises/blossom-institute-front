@@ -30,6 +30,12 @@ export async function GET(request: NextRequest, context: Context) {
     const { id, alumnoId } = await context.params
     const courseId = Number(id)
     const parsedAlumnoId = Number(alumnoId)
+    if (!Number.isFinite(courseId) || courseId <= 0) {
+      return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(parsedAlumnoId) || parsedAlumnoId <= 0) {
+      return NextResponse.json({ message: 'Alumno inválido.' }, { status: 400 })
+    }
 
     const searchParams = request.nextUrl.searchParams
     const query = new URLSearchParams(searchParams)
@@ -76,6 +82,12 @@ export async function POST(request: NextRequest, context: Context) {
     const { id, alumnoId } = await context.params
     const courseId = Number(id)
     const parsedAlumnoId = Number(alumnoId)
+    if (!Number.isFinite(courseId) || courseId <= 0) {
+      return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(parsedAlumnoId) || parsedAlumnoId <= 0) {
+      return NextResponse.json({ message: 'Alumno inválido.' }, { status: 400 })
+    }
     const body = await request.json()
 
     const response = await fetch(

@@ -32,6 +32,14 @@ export async function PATCH(_request: NextRequest, context: Context) {
     const courseId = Number(id)
     const parsedTaskId = Number(taskId)
 
+    if (!Number.isFinite(courseId) || courseId <= 0) {
+      return NextResponse.json({ message: 'Curso invalido.' }, { status: 400 })
+    }
+
+    if (!Number.isFinite(parsedTaskId) || parsedTaskId <= 0) {
+      return NextResponse.json({ message: 'Tarea invalida.' }, { status: 400 })
+    }
+
     const response = await fetch(
       `${BASE}/api/v1/cursos/${courseId}/tareas/${parsedTaskId}/archivar`,
       {

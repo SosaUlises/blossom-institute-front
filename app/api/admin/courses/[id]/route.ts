@@ -22,8 +22,12 @@ export async function GET(_: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params
+    const idNumber = Number(id)
+    if (!Number.isFinite(idNumber) || idNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Id inválido.' }, { status: 400 })
+    }
 
-    const response = await fetch(`${BACKEND_API_URL}/api/v1/cursos/${id}`, {
+    const response = await fetch(`${BACKEND_API_URL}/api/v1/cursos/${idNumber}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${session.token}`,
@@ -57,9 +61,13 @@ export async function PUT(request: Request, context: RouteContext) {
     }
 
     const { id } = await context.params
+    const idNumber = Number(id)
+    if (!Number.isFinite(idNumber) || idNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Id inválido.' }, { status: 400 })
+    }
     const body = await request.json()
 
-    const response = await fetch(`${BACKEND_API_URL}/api/v1/cursos/${id}`, {
+    const response = await fetch(`${BACKEND_API_URL}/api/v1/cursos/${idNumber}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

@@ -32,6 +32,15 @@ export async function GET(_request: NextRequest, context: Context) {
     const courseId = Number(id)
     const parsedAlumnoId = Number(alumnoId)
     const parsedGradeId = Number(gradeId)
+    if (!Number.isFinite(courseId) || courseId <= 0) {
+      return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(parsedAlumnoId) || parsedAlumnoId <= 0) {
+      return NextResponse.json({ message: 'Alumno inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(parsedGradeId) || parsedGradeId <= 0) {
+      return NextResponse.json({ message: 'Calificación inválida.' }, { status: 400 })
+    }
 
     const response = await fetch(
       `${BASE}/api/v1/cursos/${courseId}/alumnos/${parsedAlumnoId}/calificaciones/${parsedGradeId}`,
@@ -75,6 +84,15 @@ export async function PUT(request: NextRequest, context: Context) {
     const courseId = Number(id)
     const parsedAlumnoId = Number(alumnoId)
     const parsedGradeId = Number(gradeId)
+    if (!Number.isFinite(courseId) || courseId <= 0) {
+      return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(parsedAlumnoId) || parsedAlumnoId <= 0) {
+      return NextResponse.json({ message: 'Alumno inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(parsedGradeId) || parsedGradeId <= 0) {
+      return NextResponse.json({ message: 'Calificación inválida.' }, { status: 400 })
+    }
     const body = await request.json()
 
     const response = await fetch(

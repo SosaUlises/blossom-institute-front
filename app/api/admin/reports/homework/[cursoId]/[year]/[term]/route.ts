@@ -38,18 +38,39 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const { cursoId, year, term } = await context.params
+    const cursoIdNumber = Number(cursoId)
+    const yearNumber = Number(year)
+    const termNumber = Number(term)
 
     const searchParams = request.nextUrl.searchParams
     const pageNumber = searchParams.get('pageNumber') ?? '1'
     const pageSize = searchParams.get('pageSize') ?? '10'
     const search = searchParams.get('search') ?? ''
+    const pageNumberValue = Number(pageNumber)
+    const pageSizeValue = Number(pageSize)
+
+    if (!Number.isFinite(cursoIdNumber) || cursoIdNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(yearNumber) || yearNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Año inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(termNumber) || termNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Term inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(pageNumberValue) || pageNumberValue <= 0) {
+      return NextResponse.json({ success: false, message: 'Página inválida.' }, { status: 400 })
+    }
+    if (!Number.isFinite(pageSizeValue) || pageSizeValue <= 0) {
+      return NextResponse.json({ success: false, message: 'Page size inválido.' }, { status: 400 })
+    }
 
     const url = new URL(
-      `${BASE}/api/v1/reportes/cursos/${cursoId}/years/${year}/terms/${term}/homework`
+      `${BASE}/api/v1/reportes/cursos/${cursoIdNumber}/years/${yearNumber}/terms/${termNumber}/homework`
     )
 
-    url.searchParams.set('pageNumber', pageNumber)
-    url.searchParams.set('pageSize', pageSize)
+    url.searchParams.set('pageNumber', String(pageNumberValue))
+    url.searchParams.set('pageSize', String(pageSizeValue))
 
     if (search.trim()) {
       url.searchParams.set('search', search.trim())

@@ -33,8 +33,16 @@ export async function DELETE(_: Request, context: RouteContext) {
     }
 
     const { id, alumnoId } = await context.params
+    const idNumber = Number(id)
+    const alumnoIdNumber = Number(alumnoId)
+    if (!Number.isFinite(idNumber) || idNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(alumnoIdNumber) || alumnoIdNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Alumno inválido.' }, { status: 400 })
+    }
 
-    const res = await fetch(`${BASE}/api/v1/cursos/${id}/remove/alumnos/${alumnoId}`, {
+    const res = await fetch(`${BASE}/api/v1/cursos/${idNumber}/remove/alumnos/${alumnoIdNumber}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${session.token}`,

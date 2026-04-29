@@ -39,8 +39,25 @@ export async function GET(_: Request, context: RouteContext) {
     }
 
     const { cursoId, alumnoId, year, term } = await context.params
+    const cursoIdNumber = Number(cursoId)
+    const alumnoIdNumber = Number(alumnoId)
+    const yearNumber = Number(year)
+    const termNumber = Number(term)
 
-    const url = `${BASE}/api/v1/reportes/cursos/${cursoId}/alumnos/${alumnoId}/years/${year}/terms/${term}/summary`
+    if (!Number.isFinite(cursoIdNumber) || cursoIdNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(alumnoIdNumber) || alumnoIdNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Alumno inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(yearNumber) || yearNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Año inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(termNumber) || termNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Term inválido.' }, { status: 400 })
+    }
+
+    const url = `${BASE}/api/v1/reportes/cursos/${cursoIdNumber}/alumnos/${alumnoIdNumber}/years/${yearNumber}/terms/${termNumber}/summary`
 
     const response = await fetch(url, {
       method: 'GET',

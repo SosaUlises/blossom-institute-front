@@ -34,8 +34,12 @@ export async function PATCH(_: Request, context: RouteContext) {
     }
 
     const { id } = await context.params
+    const idNumber = Number(id)
+    if (!Number.isFinite(idNumber) || idNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Id inválido.' }, { status: 400 })
+    }
 
-    const backendResponse = await fetch(`${BACKEND_API_URL}/api/v1/alumnos/${id}/activar`, {
+    const backendResponse = await fetch(`${BACKEND_API_URL}/api/v1/alumnos/${idNumber}/activar`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${session.token}`,

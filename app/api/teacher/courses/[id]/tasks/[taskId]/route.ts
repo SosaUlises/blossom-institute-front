@@ -32,11 +32,11 @@ export async function GET(_request: NextRequest, context: Context) {
     const courseId = Number(id)
     const parsedTaskId = Number(taskId)
 
-    if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+    if (!Number.isFinite(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    if (!parsedTaskId || Number.isNaN(parsedTaskId) || parsedTaskId <= 0) {
+    if (!Number.isFinite(parsedTaskId) || parsedTaskId <= 0) {
       return NextResponse.json({ message: 'Tarea inválida.' }, { status: 400 })
     }
 
@@ -82,11 +82,11 @@ export async function PUT(request: NextRequest, context: Context) {
     const courseId = Number(id)
     const parsedTaskId = Number(taskId)
 
-    if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+    if (!Number.isFinite(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    if (!parsedTaskId || Number.isNaN(parsedTaskId) || parsedTaskId <= 0) {
+    if (!Number.isFinite(parsedTaskId) || parsedTaskId <= 0) {
       return NextResponse.json({ message: 'Tarea inválida.' }, { status: 400 })
     }
 

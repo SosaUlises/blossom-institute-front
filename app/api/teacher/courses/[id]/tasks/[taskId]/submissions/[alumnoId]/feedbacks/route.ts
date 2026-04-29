@@ -34,6 +34,18 @@ export async function GET(_request: NextRequest, context: Context) {
     const parsedTaskId = Number(taskId)
     const parsedAlumnoId = Number(alumnoId)
 
+    if (!Number.isFinite(courseId) || courseId <= 0) {
+      return NextResponse.json({ message: 'Curso invalido.' }, { status: 400 })
+    }
+
+    if (!Number.isFinite(parsedTaskId) || parsedTaskId <= 0) {
+      return NextResponse.json({ message: 'Tarea invalida.' }, { status: 400 })
+    }
+
+    if (!Number.isFinite(parsedAlumnoId) || parsedAlumnoId <= 0) {
+      return NextResponse.json({ message: 'Alumno invalido.' }, { status: 400 })
+    }
+
     const response = await fetch(
       `${BASE}/api/v1/cursos/${courseId}/tareas/${parsedTaskId}/entregas/${parsedAlumnoId}/feedbacks`,
       {
@@ -76,6 +88,18 @@ export async function POST(request: NextRequest, context: Context) {
     const courseId = Number(id)
     const parsedTaskId = Number(taskId)
     const parsedAlumnoId = Number(alumnoId)
+
+    if (!Number.isFinite(courseId) || courseId <= 0) {
+      return NextResponse.json({ message: 'Curso invalido.' }, { status: 400 })
+    }
+
+    if (!Number.isFinite(parsedTaskId) || parsedTaskId <= 0) {
+      return NextResponse.json({ message: 'Tarea invalida.' }, { status: 400 })
+    }
+
+    if (!Number.isFinite(parsedAlumnoId) || parsedAlumnoId <= 0) {
+      return NextResponse.json({ message: 'Alumno invalido.' }, { status: 400 })
+    }
 
     const body = await request.json()
 

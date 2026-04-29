@@ -24,14 +24,34 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const { cursoId, alumnoId, year, term } = await context.params
+    const cursoIdNumber = Number(cursoId)
+    const alumnoIdNumber = Number(alumnoId)
+    const yearNumber = Number(year)
+    const termNumber = Number(term)
+    if (!Number.isFinite(cursoIdNumber) || cursoIdNumber <= 0) {
+      return new NextResponse('Curso inválido.', { status: 400 })
+    }
+    if (!Number.isFinite(alumnoIdNumber) || alumnoIdNumber <= 0) {
+      return new NextResponse('Alumno inválido.', { status: 400 })
+    }
+    if (!Number.isFinite(yearNumber) || yearNumber <= 0) {
+      return new NextResponse('Año inválido.', { status: 400 })
+    }
+    if (!Number.isFinite(termNumber) || termNumber <= 0) {
+      return new NextResponse('Term inválido.', { status: 400 })
+    }
     const tipo = request.nextUrl.searchParams.get('tipo') ?? ''
+    const tipoValue = tipo.trim() ? Number(tipo) : null
+    if (tipo.trim() && (!Number.isFinite(tipoValue) || tipoValue <= 0)) {
+      return new NextResponse('Tipo inválido.', { status: 400 })
+    }
 
     const url = new URL(
-      `${BASE}/api/v1/reportes/cursos/${cursoId}/alumnos/${alumnoId}/years/${year}/terms/${term}/marks-detail/export/pdf`
+      `${BASE}/api/v1/reportes/cursos/${cursoIdNumber}/alumnos/${alumnoIdNumber}/years/${yearNumber}/terms/${termNumber}/marks-detail/export/pdf`
     )
 
     if (tipo.trim()) {
-      url.searchParams.set('tipo', tipo)
+      url.searchParams.set('tipo', String(tipoValue))
     }
 
     const response = await fetch(url.toString(), {

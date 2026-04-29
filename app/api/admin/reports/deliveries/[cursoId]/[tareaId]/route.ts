@@ -37,6 +37,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const { cursoId, tareaId } = await context.params
+    const cursoIdNumber = Number(cursoId)
+    const tareaIdNumber = Number(tareaId)
 
     const searchParams = request.nextUrl.searchParams
     const pageNumber = searchParams.get('pageNumber') ?? '1'
@@ -44,20 +46,39 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const search = searchParams.get('search') ?? ''
     const estado = searchParams.get('estado') ?? ''
     const pendienteCorreccion = searchParams.get('pendienteCorreccion') ?? ''
+    const pageNumberValue = Number(pageNumber)
+    const pageSizeValue = Number(pageSize)
+    const estadoValue = estado.trim() ? Number(estado) : null
+
+    if (!Number.isFinite(cursoIdNumber) || cursoIdNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
+    }
+    if (!Number.isFinite(tareaIdNumber) || tareaIdNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Tarea inválida.' }, { status: 400 })
+    }
+    if (!Number.isFinite(pageNumberValue) || pageNumberValue <= 0) {
+      return NextResponse.json({ success: false, message: 'Página inválida.' }, { status: 400 })
+    }
+    if (!Number.isFinite(pageSizeValue) || pageSizeValue <= 0) {
+      return NextResponse.json({ success: false, message: 'Page size inválido.' }, { status: 400 })
+    }
+    if (estado.trim() && (!Number.isFinite(estadoValue) || estadoValue <= 0)) {
+      return NextResponse.json({ success: false, message: 'Estado inválido.' }, { status: 400 })
+    }
 
     const url = new URL(
-      `${BASE}/api/v1/reportes/cursos/${cursoId}/tareas/${tareaId}/entregas`
+      `${BASE}/api/v1/reportes/cursos/${cursoIdNumber}/tareas/${tareaIdNumber}/entregas`
     )
 
-    url.searchParams.set('pageNumber', pageNumber)
-    url.searchParams.set('pageSize', pageSize)
+    url.searchParams.set('pageNumber', String(pageNumberValue))
+    url.searchParams.set('pageSize', String(pageSizeValue))
 
     if (search.trim()) {
       url.searchParams.set('search', search.trim())
     }
 
     if (estado.trim()) {
-      url.searchParams.set('estado', estado)
+      url.searchParams.set('estado', String(estadoValue))
     }
 
     if (pendienteCorreccion.trim()) {

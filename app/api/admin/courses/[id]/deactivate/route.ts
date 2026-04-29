@@ -30,8 +30,12 @@ export async function PUT(_: Request, context: RouteContext) {
     }
 
     const { id } = await context.params
+    const idNumber = Number(id)
+    if (!Number.isFinite(idNumber) || idNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Id inválido.' }, { status: 400 })
+    }
 
-    const backendResponse = await fetch(`${BACKEND_API_URL}/api/v1/cursos/${id}/desactivar`, {
+    const backendResponse = await fetch(`${BACKEND_API_URL}/api/v1/cursos/${idNumber}/desactivar`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${session.token}`,

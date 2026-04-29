@@ -34,8 +34,12 @@ export async function GET(_: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params
+    const idNumber = Number(id)
+    if (!Number.isFinite(idNumber) || idNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
+    }
 
-    const res = await fetch(`${BASE}/api/v1/cursos/${id}/profesores`, {
+    const res = await fetch(`${BASE}/api/v1/cursos/${idNumber}/profesores`, {
       headers: {
         Authorization: `Bearer ${session.token}`,
       },
@@ -77,9 +81,13 @@ export async function POST(req: Request, context: RouteContext) {
     }
 
     const { id } = await context.params
+    const idNumber = Number(id)
+    if (!Number.isFinite(idNumber) || idNumber <= 0) {
+      return NextResponse.json({ success: false, message: 'Curso inválido.' }, { status: 400 })
+    }
     const body = await req.json()
 
-    const res = await fetch(`${BASE}/api/v1/cursos/${id}/assign/profesores`, {
+    const res = await fetch(`${BASE}/api/v1/cursos/${idNumber}/assign/profesores`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${session.token}`,

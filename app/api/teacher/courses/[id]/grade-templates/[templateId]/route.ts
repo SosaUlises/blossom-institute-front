@@ -29,11 +29,11 @@ export async function GET(
     const courseId = Number(id)
     const plantillaId = Number(templateId)
 
-    if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+    if (!Number.isFinite(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    if (!plantillaId || Number.isNaN(plantillaId) || plantillaId <= 0) {
+    if (!Number.isFinite(plantillaId) || plantillaId <= 0) {
       return NextResponse.json({ message: 'Plantilla inválida.' }, { status: 400 })
     }
 
@@ -85,11 +85,11 @@ export async function PUT(
     const courseId = Number(id)
     const plantillaId = Number(templateId)
 
-    if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+    if (!Number.isFinite(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    if (!plantillaId || Number.isNaN(plantillaId) || plantillaId <= 0) {
+    if (!Number.isFinite(plantillaId) || plantillaId <= 0) {
       return NextResponse.json({ message: 'Plantilla inválida.' }, { status: 400 })
     }
 

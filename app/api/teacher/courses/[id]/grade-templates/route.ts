@@ -39,7 +39,7 @@ export async function GET(
     const { id } = await context.params
     const courseId = Number(id)
 
-    if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+    if (!Number.isFinite(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
@@ -104,7 +104,7 @@ export async function POST(
     const { id } = await context.params
     const courseId = Number(id)
 
-    if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+    if (!Number.isFinite(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 

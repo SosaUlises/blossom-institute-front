@@ -41,11 +41,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const courseId = Number(id)
     const parsedTemplateId = Number(templateId)
 
-    if (!courseId || Number.isNaN(courseId) || courseId <= 0) {
+    if (!Number.isFinite(courseId) || courseId <= 0) {
       return NextResponse.json({ message: 'Curso inválido.' }, { status: 400 })
     }
 
-    if (!parsedTemplateId || Number.isNaN(parsedTemplateId) || parsedTemplateId <= 0) {
+    if (!Number.isFinite(parsedTemplateId) || parsedTemplateId <= 0) {
       return NextResponse.json({ message: 'Plantilla inválida.' }, { status: 400 })
     }
 

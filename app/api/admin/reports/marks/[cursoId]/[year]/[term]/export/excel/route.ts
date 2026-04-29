@@ -23,10 +23,22 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const { cursoId, year, term } = await context.params
+    const cursoIdNumber = Number(cursoId)
+    const yearNumber = Number(year)
+    const termNumber = Number(term)
+    if (!Number.isFinite(cursoIdNumber) || cursoIdNumber <= 0) {
+      return new NextResponse('Curso inválido.', { status: 400 })
+    }
+    if (!Number.isFinite(yearNumber) || yearNumber <= 0) {
+      return new NextResponse('Año inválido.', { status: 400 })
+    }
+    if (!Number.isFinite(termNumber) || termNumber <= 0) {
+      return new NextResponse('Term inválido.', { status: 400 })
+    }
     const search = request.nextUrl.searchParams.get('search') ?? ''
 
     const url = new URL(
-      `${BASE}/api/v1/reportes/cursos/${cursoId}/years/${year}/terms/${term}/marks/export/excel`
+      `${BASE}/api/v1/reportes/cursos/${cursoIdNumber}/years/${yearNumber}/terms/${termNumber}/marks/export/excel`
     )
 
     if (search.trim()) {
