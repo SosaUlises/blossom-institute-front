@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { getSession, hasRole } from '@/lib/auth/session'
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL
 
@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
         { success: false, message: 'No autenticado.' },
         { status: 401 }
       )
+    }
+    if (!hasRole(session, 'Administrador')) {
+      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
     }
 
     const searchParams = request.nextUrl.searchParams
@@ -55,6 +58,9 @@ export async function POST(request: Request) {
         { success: false, message: 'No autenticado.' },
         { status: 401 }
       )
+    }
+    if (!hasRole(session, 'Administrador')) {
+      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json()

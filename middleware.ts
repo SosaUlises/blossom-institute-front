@@ -58,7 +58,8 @@ function clearAuthCookie(response: NextResponse) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  const isDashboardRoute = pathname.startsWith('/dashboard')
+  const isAdminRoute = pathname.startsWith('/admin')
+  const isTeacherRoute = pathname.startsWith('/teacher')
   const isAuthPage =
     pathname === '/login' ||
     pathname === '/forgot-password' ||
@@ -66,14 +67,16 @@ export async function middleware(request: NextRequest) {
 
   const session = await getSessionFromRequest(request)
 
-  if (isDashboardRoute) {
+  if (isAdminRoute || isTeacherRoute) {
     if (!session) {
       const response = NextResponse.redirect(new URL('/login', request.url))
       clearAuthCookie(response)
       return response
     }
 
-    if (!session.roles.includes('Administrador')) {
+    const requiredRole = isAdminRoute ? 'Administrador' : 'Profesor'
+
+    if (!session.roles.includes(requiredRole)) {
       const response = NextResponse.redirect(new URL('/login', request.url))
       clearAuthCookie(response)
       return response
@@ -90,5 +93,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/forgot-password', '/reset-password'],
+  matcher: ['/admin/:path*', '/teacher/:path*', '/login', '/forgot-password', '/reset-password'],
 }

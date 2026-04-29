@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { getSession, hasRole } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -23,6 +23,9 @@ export async function GET(_request: NextRequest, context: Context) {
     const session = await getSession()
     if (!session?.token) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+    if (!hasRole(session, 'Profesor')) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
     }
 
     const { id, alumnoId, gradeId } = await context.params
@@ -63,6 +66,9 @@ export async function PUT(request: NextRequest, context: Context) {
     const session = await getSession()
     if (!session?.token) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+    if (!hasRole(session, 'Profesor')) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
     }
 
     const { id, alumnoId, gradeId } = await context.params

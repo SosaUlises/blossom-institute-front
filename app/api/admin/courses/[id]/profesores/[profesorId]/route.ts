@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth/session'
+import { getSession, hasRole } from '@/lib/auth/session'
 
 const BASE = process.env.BACKEND_API_URL
 
@@ -27,6 +27,9 @@ export async function DELETE(_: Request, context: RouteContext) {
         { success: false, message: 'No autenticado.' },
         { status: 401 }
       )
+    }
+    if (!hasRole(session, 'Administrador')) {
+      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
     }
 
     const { id, profesorId } = await context.params
