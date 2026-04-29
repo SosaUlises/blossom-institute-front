@@ -33,6 +33,17 @@ type Props = {
   submitLabel?: string
 }
 
+const qualitativeNoteOptions = [
+  { label: 'E', value: '100' },
+  { label: 'VG', value: '90' },
+  { label: 'G', value: '80' },
+  { label: 'R', value: '65' },
+]
+
+function isQualitativeNoteValue(value: string) {
+  return qualitativeNoteOptions.some((option) => option.value === value)
+}
+
 function createEmptyDetail() {
   return {
     id: crypto.randomUUID(),
@@ -417,15 +428,23 @@ export function TeacherGradeForm({
               <label className="text-sm font-medium text-foreground">Nota</label>
               <div className="relative">
                 <Percent className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="number"
-                  step="0.01"
-                  max="100"
+                <select
                   value={nota}
                   onChange={(e) => setNota(e.target.value)}
                   className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
-                  placeholder="0 - 100"
-                />
+                >
+                  <option value="">Seleccionar nota</option>
+                  {nota.trim() && !isQualitativeNoteValue(nota) && (
+                    <option value={nota} disabled>
+                      Valor no compatible ({Number(nota).toFixed(2)})
+                    </option>
+                  )}
+                  {qualitativeNoteOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <p className="text-xs text-muted-foreground">
