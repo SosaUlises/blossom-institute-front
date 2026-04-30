@@ -95,6 +95,14 @@ function formatDate(value: string | null | undefined) {
   }).format(date)
 }
 
+function formatTodayLabel() {
+  return new Intl.DateTimeFormat('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(new Date())
+}
+
 function getGradeTypeLabel(value: unknown) {
   const type = Number(value)
 
@@ -335,7 +343,7 @@ function StudentDashboardContent({
   dashboard: StudentDashboardResponse | null
   firstName: string
 }) {
-  const fullName = [dashboard?.nombre, dashboard?.apellido]
+  const fullName = [dashboard?.nombre]
     .filter(Boolean)
     .join(' ')
     .trim()
@@ -370,7 +378,13 @@ function StudentDashboardContent({
               </h2>
 
               <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
-                Consulta tu actividad academica, tareas pendientes, calificaciones y asistencia desde un unico espacio.
+                {hasHeroPending
+                  ? 'Tenés pendientes por resolver. Revisá tus tareas y feedbacks.'
+                  : 'Todo al día. Podés concentrarte en tu estudio.'}
+              </p>
+
+              <p className="mt-1 text-[12px] capitalize text-muted-foreground/70">
+                {formatTodayLabel()}
               </p>
             </div>
 
@@ -398,7 +412,7 @@ function StudentDashboardContent({
                   Hoy
                 </p>
                 <p className="text-sm font-semibold text-foreground">
-                  {hasHeroPending ? 'Tenes pendientes' : 'Todo al dia'}
+                  {hasHeroPending ? 'Tenés pendientes' : 'Todo al día'}
                 </p>
               </div>
             </div>
