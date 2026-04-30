@@ -60,6 +60,7 @@ export async function middleware(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith('/admin')
   const isTeacherRoute = pathname.startsWith('/teacher')
+  const isStudentRoute = pathname.startsWith('/student')
   const isAuthPage =
     pathname === '/login' ||
     pathname === '/forgot-password' ||
@@ -67,14 +68,18 @@ export async function middleware(request: NextRequest) {
 
   const session = await getSessionFromRequest(request)
 
-  if (isAdminRoute || isTeacherRoute) {
+  if (isAdminRoute || isTeacherRoute || isStudentRoute) {
     if (!session) {
       const response = NextResponse.redirect(new URL('/login', request.url))
       clearAuthCookie(response)
       return response
     }
 
-    const requiredRole = isAdminRoute ? 'Administrador' : 'Profesor'
+    const requiredRole = isAdminRoute
+      ? 'Administrador'
+      : isTeacherRoute
+        ? 'Profesor'
+        : 'Alumno'
 
     if (!session.roles.includes(requiredRole)) {
       const response = NextResponse.redirect(new URL('/login', request.url))
@@ -93,5 +98,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/teacher/:path*', '/login', '/forgot-password', '/reset-password'],
+  matcher: ['/admin/:path*', '/teacher/:path*', '/student/:path*', '/login', '/forgot-password', '/reset-password'],
 }
