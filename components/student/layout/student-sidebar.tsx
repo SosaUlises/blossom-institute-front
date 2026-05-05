@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
+  BookOpen,
   ChevronRight,
   LayoutDashboard,
   LogOut,
@@ -34,12 +35,15 @@ import { cn } from '@/lib/utils'
 
 const studentNavItems = [
   { title: 'Dashboard', url: '/student/dashboard', icon: LayoutDashboard },
+  { title: 'Courses', url: '/student/courses', icon: BookOpen },
 ]
 
 function getItemDescription(title: string) {
   switch (title) {
     case 'Dashboard':
       return 'Resumen general'
+    case 'Courses':
+      return 'Cursos asignados'
     default:
       return ''
   }
@@ -56,7 +60,9 @@ function NavItem({
   }
   pathname: string
 }) {
-  const isActive = pathname === item.url
+  const isActive =
+    pathname === item.url ||
+    (item.url !== '/student/dashboard' && pathname.startsWith(item.url))
 
   return (
     <SidebarMenuItem>
