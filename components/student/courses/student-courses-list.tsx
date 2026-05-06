@@ -6,7 +6,6 @@ import {
   BookOpen,
   CalendarRange,
   ChevronRight,
-  Clock,
   Inbox,
   Search,
 } from 'lucide-react'
@@ -74,6 +73,27 @@ function getCourseName(course: StudentCourseListItem) {
   return course.nombre ?? course.cursoNombre ?? 'Curso'
 }
 
+function getText(course: StudentCourseListItem, keys: string[]) {
+  for (const key of keys) {
+    const value = course[key]
+
+    if (typeof value === 'string' && value.trim()) return value.trim()
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  }
+
+  return null
+}
+
+function getUsefulMeta(course: StudentCourseListItem) {
+  return (
+    getText(course, ['profesorPrincipal', 'profesorNombre', 'teacherName']) ??
+    getText(course, ['tareasPendientes', 'tareasPendientesCount']) ??
+    getText(course, ['promedio', 'promedioGeneral']) ??
+    getText(course, ['proximaClase', 'proximaClaseFecha']) ??
+    getText(course, ['asistencia', 'porcentajeAsistencia'])
+  )
+}
+
 function EstadoBadge({ estado }: { estado?: number }) {
   const config = ESTADO_CONFIG[estado as EstadoCurso] ?? {
     label: 'Desconocido',
@@ -136,12 +156,13 @@ function CourseCardSkeleton() {
 function CourseCard({ course }: { course: StudentCourseListItem }) {
   const courseId = getCourseId(course)
   const courseName = getCourseName(course)
+  const usefulMeta = getUsefulMeta(course)
 
   return (
     <li>
       <Link
         href={`/student/courses/${courseId ?? 0}`}
-        className="group block rounded-[30px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-[0_24px_48px_-24px_rgba(15,23,42,0.18)]"
+        className="group block rounded-[30px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-[2px] hover:border-primary/20 hover:shadow-[0_26px_54px_-24px_rgba(15,23,42,0.24)]"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
@@ -153,7 +174,7 @@ function CourseCard({ course }: { course: StudentCourseListItem }) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary/75">
                 Curso
               </p>
-              <h3 className="mt-2 truncate text-[2rem] font-semibold leading-none tracking-tight text-foreground">
+              <h3 className="mt-2 truncate text-[2.1rem] font-semibold leading-none tracking-tight text-foreground">
                 {courseName}
               </h3>
             </div>
@@ -167,20 +188,20 @@ function CourseCard({ course }: { course: StudentCourseListItem }) {
             <MetaPill icon={CalendarRange}>Año {course.anio}</MetaPill>
           ) : null}
 
-          {typeof course.cantidadHorarios === 'number' &&
-          course.cantidadHorarios > 0 ? (
-            <MetaPill icon={Clock}>
-              {course.cantidadHorarios}{' '}
-              {course.cantidadHorarios === 1 ? 'horario' : 'horarios'}
-            </MetaPill>
+          {usefulMeta ? (
+            <span className="inline-flex rounded-full border border-border/60 bg-muted/[0.22] px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              {usefulMeta}
+            </span>
           ) : null}
         </div>
 
-        <div className="mt-6 rounded-[22px] border border-border/60 bg-muted/[0.16] px-4 py-3.5 transition-all duration-200 group-hover:border-primary/15 group-hover:bg-primary/[0.04]">
+        <div className="mt-4 rounded-[20px] border border-border/60 bg-muted/[0.14] px-4 py-3 transition-all duration-200 group-hover:border-primary/20 group-hover:bg-primary/[0.06]">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-foreground">Ver curso</p>
+            <p className="text-sm font-semibold text-foreground">
+              Entrar al curso
+            </p>
 
-            <div className="flex size-10 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground transition-all duration-200 group-hover:border-primary/20 group-hover:bg-primary/10 group-hover:text-primary">
+            <div className="flex size-9 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground transition-all duration-200 group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/10 group-hover:text-primary">
               <ChevronRight className="size-4" />
             </div>
           </div>
