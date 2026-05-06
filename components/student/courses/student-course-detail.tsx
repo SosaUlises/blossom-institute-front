@@ -1,16 +1,16 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   BookOpen,
   CalendarCheck2,
   CalendarDays,
   CheckCircle2,
   ClipboardList,
-  FileCheck2,
   GraduationCap,
   Users,
 } from 'lucide-react'
+import Link from 'next/link'
 
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -24,17 +24,18 @@ type Tab =
   | 'tasks'
   | 'grades'
   | 'attendance'
-  | 'deliveries'
   | 'people'
 
 type SectionState = {
   loading: boolean
+  loaded: boolean
   items: StudentCourseSectionItem[]
   error: string | null
 }
 
 const initialSectionState: SectionState = {
   loading: false,
+  loaded: false,
   items: [],
   error: null,
 }
@@ -77,15 +78,6 @@ const tabStyles: Record<
     title: 'Asistencia',
     description: 'Registros de asistencia asociados al curso.',
   },
-  deliveries: {
-    label: 'Entregas',
-    icon: FileCheck2,
-    activeClass:
-      'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-400 shadow-sm',
-    idleIconClass: 'text-sky-600/80 dark:text-sky-400/80',
-    title: 'Entregas',
-    description: 'Entregas realizadas y estado de seguimiento.',
-  },
   people: {
     label: 'Personas',
     icon: Users,
@@ -101,7 +93,6 @@ const sectionPaths: Partial<Record<Tab, string>> = {
   tasks: 'tasks',
   grades: 'grades',
   attendance: 'attendance',
-  deliveries: 'deliveries',
   people: 'people',
 }
 
@@ -380,12 +371,14 @@ function SectionCard({
   badge,
   badgeClassName = badgeStyles.neutral,
   description,
+  action,
 }: {
   title: string
   meta: Array<string | null | undefined>
   badge?: string | null
   badgeClassName?: string
   description?: string | null
+  action?: React.ReactNode
 }) {
   return (
     <article className="rounded-[24px] border border-border/60 bg-background/75 p-4 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_40px_-24px_rgba(15,23,42,0.18)]">
@@ -412,6 +405,8 @@ function SectionCard({
       ) : null}
 
       <MetaPills values={meta} />
+
+      {action ? <div className="mt-4">{action}</div> : null}
     </article>
   )
 }
@@ -448,9 +443,14 @@ function PersonCard({ name, role }: { name: string; role: string }) {
   )
 }
 
-function renderSectionCard(item: StudentCourseSectionItem, tab: Tab) {
+function renderSectionCard(
+  item: StudentCourseSectionItem,
+  tab: Tab,
+  courseId: number
+) {
   if (tab === 'tasks') {
     const badge = getTaskBadgeLabel(item)
+    const taskId = item.tareaId ?? item.id
 
     return (
       <SectionCard
@@ -463,6 +463,16 @@ function renderSectionCard(item: StudentCourseSectionItem, tab: Tab) {
             ? `Entrega ${formatDate(item.fechaEntregaUtc)}`
             : null,
         ]}
+        action={
+          taskId != null ? (
+            <Link
+              href={`/student/courses/${courseId}/tasks/${taskId}`}
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-primary/15 bg-primary/5 px-3 text-sm font-semibold text-primary shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/10 hover:shadow-md"
+            >
+              Ver detalle
+            </Link>
+          ) : null
+        }
       />
     )
   }
@@ -499,25 +509,6 @@ function renderSectionCard(item: StudentCourseSectionItem, tab: Tab) {
         meta={[
           getValue(item, ['cursoNombre']),
         ]}
-      />
-    )
-  }
-
-  if (tab === 'deliveries') {
-    return (
-      <SectionCard
-        title={
-          getValue(item, ['titulo', 'tareaTitulo', 'nombre']) ?? 'Sin titulo'
-        }
-        badge={getValue(item, ['estado'])}
-        badgeClassName={badgeStyles.sky}
-        meta={[
-          formatDate(item.fechaEntregaUtc) ?? formatDate(item.fechaEntregadaUtc),
-          getValue(item, ['requiereRehacer'])
-            ? `Rehacer: ${getValue(item, ['requiereRehacer'])}`
-            : null,
-        ]}
-        description={getValue(item, ['feedback', 'feedbackVigente', 'feedbacks'])}
       />
     )
   }
@@ -603,9 +594,11 @@ function EmptyPanel({ text }: { text: string }) {
 function SectionList({
   tab,
   state,
+  courseId,
 }: {
   tab: Tab
   state: SectionState
+  courseId: number
 }) {
   if (state.loading) return <SectionSkeleton />
 
@@ -623,7 +616,7 @@ function SectionList({
         <div
           key={String(item.id ?? item.tareaId ?? item.calificacionId ?? index)}
         >
-          {renderSectionCard(item, tab)}
+          {renderSectionCard(item, tab, courseId)}
         </div>
       ))}
     </div>
@@ -639,47 +632,38 @@ export function StudentCourseDetail({
 }) {
   const [tab, setTab] = useState<Tab>('grades')
   const [sections, setSections] = useState<Record<string, SectionState>>({})
-  const requestedTabsRef = useRef<Set<Tab>>(new Set())
   const currentTab = tabStyles[tab]
   const estado = typeof course.estado === 'number' ? course.estado : undefined
   const sectionPath = sectionPaths[tab]
   const sectionState = sections[tab] ?? initialSectionState
 
   useEffect(() => {
-    if (!sectionPath || requestedTabsRef.current.has(tab)) return
-
-    let cancelled = false
-    requestedTabsRef.current.add(tab)
+    if (!sectionPath || sectionState.loading || sectionState.loaded) return
 
     setSections((current) => ({
       ...current,
-      [tab]: { ...initialSectionState, loading: true },
+      [tab]: { ...initialSectionState, loading: true, loaded: false },
     }))
 
     loadSection(courseId, sectionPath)
       .then((items) => {
-        if (cancelled) return
         setSections((current) => ({
           ...current,
-          [tab]: { loading: false, items, error: null },
+          [tab]: { loading: false, loaded: true, items, error: null },
         }))
       })
       .catch((error) => {
-        if (cancelled) return
         setSections((current) => ({
           ...current,
           [tab]: {
             loading: false,
+            loaded: true,
             items: [],
             error: error instanceof Error ? error.message : 'No se pudo cargar.',
           },
         }))
       })
-
-    return () => {
-      cancelled = true
-    }
-  }, [courseId, sectionPath, tab])
+  }, [courseId, sectionPath, sectionState.loaded, sectionState.loading, tab])
 
   const tabs = useMemo(() => Object.keys(tabStyles) as Tab[], [])
 
@@ -783,7 +767,7 @@ export function StudentCourseDetail({
           </div>
 
           <div className="p-6">
-            <SectionList tab={tab} state={sectionState} />
+            <SectionList tab={tab} state={sectionState} courseId={courseId} />
           </div>
         </div>
       </div>
