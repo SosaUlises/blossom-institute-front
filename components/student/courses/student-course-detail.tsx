@@ -70,13 +70,13 @@ const tabStyles: Record<
     description: 'Notas registradas para este curso.',
   },
   attendance: {
-    label: 'Asistencia',
+    label: 'Clases',
     icon: CalendarCheck2,
     activeClass:
       'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shadow-sm',
     idleIconClass: 'text-emerald-600/80 dark:text-emerald-400/80',
-    title: 'Asistencia',
-    description: 'Registros de asistencia asociados al curso.',
+    title: 'Clases',
+    description: 'Clases y asistencia registradas para este curso.',
   },
   people: {
     label: 'Personas',
@@ -122,6 +122,21 @@ function getCourseName(course: StudentCourseDetailType) {
 
 function getCourseYear(course: StudentCourseDetailType) {
   return typeof course.anio === 'number' ? course.anio : null
+}
+
+function getCourseMeta(course: StudentCourseDetailType, keys: string[]) {
+  for (const key of keys) {
+    const value = course[key]
+
+    if (typeof value === 'string' && value.trim()) return value.trim()
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  }
+
+  return null
+}
+
+function getCourseSubtitle(course: StudentCourseDetailType) {
+  return course.descripcion?.trim() || null
 }
 
 function getEstadoClass(estado?: number) {
@@ -630,12 +645,13 @@ export function StudentCourseDetail({
   course: StudentCourseDetailType
   courseId: number
 }) {
-  const [tab, setTab] = useState<Tab>('grades')
+  const [tab, setTab] = useState<Tab>('attendance')
   const [sections, setSections] = useState<Record<string, SectionState>>({})
   const currentTab = tabStyles[tab]
   const estado = typeof course.estado === 'number' ? course.estado : undefined
   const sectionPath = sectionPaths[tab]
   const sectionState = sections[tab] ?? initialSectionState
+  const courseSubtitle = getCourseSubtitle(course)
 
   useEffect(() => {
     if (!sectionPath || sectionState.loading || sectionState.loaded) return
@@ -665,21 +681,28 @@ export function StudentCourseDetail({
       })
   }, [courseId, sectionPath, sectionState.loaded, sectionState.loading, tab])
 
-  const tabs = useMemo(() => Object.keys(tabStyles) as Tab[], [])
+  const tabs = useMemo(
+    () => ['attendance', 'tasks', 'grades', 'people'] as Tab[],
+    []
+  )
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-[32px] border border-border/60 bg-card/95 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.22)] backdrop-blur-xl">
-        <div className="absolute inset-x-0 top-0 h-40 bg-[linear-gradient(135deg,rgba(36,59,123,0.92),rgba(91,110,225,0.82))] dark:bg-[linear-gradient(135deg,rgba(36,59,123,0.72),rgba(91,110,225,0.56))]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_24%),radial-gradient(circle_at_left,rgba(255,255,255,0.04),transparent_28%)]" />
+      <div className="space-y-5">
+        <section className="rounded-[26px] border border-border/60 bg-card/90 px-5 py-4 shadow-[0_14px_34px_-26px_rgba(15,23,42,0.16)] backdrop-blur-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground sm:text-[1.9rem]">
+                {getCourseName(course)}
+              </h1>
+              {courseSubtitle ? (
+                <p className="mt-1 truncate text-sm text-muted-foreground">
+                  {courseSubtitle}
+                </p>
+              ) : null}
+            </div>
 
-        <div className="relative p-4 sm:p-5 lg:p-6">
-          <div className="rounded-[30px] border border-border/60 bg-card/92 p-6 shadow-[0_24px_50px_-30px_rgba(15,23,42,0.24)] backdrop-blur-md sm:p-7">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex size-16 items-center justify-center rounded-[22px] bg-primary/10 text-primary shadow-sm">
-                <BookOpen className="size-7" />
-              </div>
-
+            <div className="flex flex-wrap items-center gap-2">
               <span
                 className={cn(
                   'inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]',
@@ -695,26 +718,16 @@ export function StudentCourseDetail({
                   Año {getCourseYear(course)}
                 </span>
               ) : null}
-            </div>
 
-            <div className="mt-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
-                Espacio del curso
-              </p>
-              <h1 className="mt-3 text-[2.2rem] font-semibold leading-[1.02] tracking-tight text-foreground sm:text-[2.6rem] lg:text-[3rem]">
-                {getCourseName(course)}
-              </h1>
-              <p className="mt-3 max-w-2xl text-[15px] leading-7 text-muted-foreground">
-                {course.descripcion?.trim()
-                  ? course.descripcion
-                  : 'Consulta tareas, calificaciones, asistencia y entregas de este curso.'}
-              </p>
+              {getCourseMeta(course, ['turno', 'modalidad', 'shift', 'mode']) ? (
+                <span className="inline-flex rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {getCourseMeta(course, ['turno', 'modalidad', 'shift', 'mode'])}
+                </span>
+              ) : null}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <div className="space-y-5">
         <div className="rounded-[26px] border border-border/60 bg-card/90 p-2 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.16)] backdrop-blur-sm">
           <div className="flex flex-wrap gap-2">
             {tabs.map((key) => {
