@@ -14,6 +14,13 @@ export type StudentCourseListItem = Record<string, unknown> & {
   cantidadHorarios?: number
 }
 
+export type StudentCourseDetail = StudentCourseListItem & {
+  descripcion?: string | null
+  cantidadProfesores?: number
+  cantidadAlumnos?: number
+  horarios?: unknown[] | null
+}
+
 export type StudentCoursesResponse = {
   pageNumber?: number
   pageSize?: number
@@ -28,3 +35,5 @@ export type GetStudentCoursesParams = {
   anio?: number
   estado?: number
 }
+
+export type StudentCourseSectionItem = Record<string, unknown>
