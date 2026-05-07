@@ -68,6 +68,9 @@ type LoadState = {
   task: StudentTask | null
 }
 
+const UPLOADED_FILE_ATTACHMENT_TYPE = 1
+const STUDENT_UPLOAD_STORAGE_PROVIDER = 1
+
 function unwrap<T>(value: unknown): T {
   const record = value as ApiEnvelope<T> | null
   return (record?.data ?? value) as T
@@ -108,10 +111,10 @@ function formatBytes(value: unknown) {
 
 function normalizeAttachments(attachments: StudentAttachment[]) {
   return attachments.map((attachment) => ({
-    tipo: attachment.tipo ?? null,
+    tipo: attachment.tipo ?? UPLOADED_FILE_ATTACHMENT_TYPE,
     url: attachment.url ?? '',
     nombre: attachment.nombre ?? 'Adjunto',
-    storageProvider: attachment.storageProvider ?? null,
+    storageProvider: attachment.storageProvider ?? STUDENT_UPLOAD_STORAGE_PROVIDER,
     storageKey: attachment.storageKey ?? '',
     contentType: attachment.contentType ?? null,
     sizeBytes: attachment.sizeBytes ?? null,
