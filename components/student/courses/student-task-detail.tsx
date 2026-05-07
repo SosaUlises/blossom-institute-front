@@ -10,6 +10,7 @@ import {
   Download,
   FileText,
   Loader2,
+  MessageSquareText,
   Paperclip,
   Save,
   Trash2,
@@ -41,12 +42,21 @@ type StudentDelivery = {
   entregaId?: number | null
   contenido?: string | null
   archivoUrl?: string | null
-  feedbackVigente?: string | null
+  feedbackVigente?: StudentCurrentFeedback | null
   texto?: string | null
   adjuntos?: StudentAttachment[] | null
   fechaEntregaUtc?: string | null
   fechaEntregadaUtc?: string | null
   estado?: string | number | null
+}
+
+type StudentCurrentFeedback = {
+  feedbackId?: number | null
+  estado?: string | number | null
+  comentario?: string | null
+  nota?: string | number | null
+  fechaCorreccionUtc?: string | null
+  adjuntos?: StudentAttachment[] | null
 }
 
 type StudentTask = {
@@ -86,6 +96,21 @@ function formatDate(value: unknown) {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
+  }).format(date)
+}
+
+function formatDateTime(value: unknown) {
+  if (typeof value !== 'string' || !value.trim()) return null
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  return new Intl.DateTimeFormat('es-AR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   }).format(date)
 }
 
@@ -132,6 +157,42 @@ function getDeliveryFile(delivery?: StudentDelivery | null): StudentAttachment |
   return {
     url,
     nombre: 'Archivo entregado',
+  }
+}
+
+function getFeedbackEstado(feedback?: StudentCurrentFeedback | null) {
+  const rawEstado = feedback?.estado
+  const estado =
+    typeof rawEstado === 'string' ? rawEstado.trim().toLowerCase() : rawEstado
+
+  if (estado === 1 || estado === '1' || estado === 'aprobado') {
+    return {
+      label: 'Aprobado',
+      iconClass: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+      badgeClass:
+        'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+      cardClass:
+        'border-emerald-500/20 bg-emerald-500/[0.07] shadow-[0_18px_44px_-24px_rgba(16,185,129,0.25)]',
+    }
+  }
+
+  if (estado === 2 || estado === '2' || estado === 'rehacer') {
+    return {
+      label: 'Rehacer',
+      iconClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+      badgeClass:
+        'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-300',
+      cardClass:
+        'border-amber-500/25 bg-amber-500/[0.08] shadow-[0_18px_44px_-24px_rgba(245,158,11,0.24)]',
+    }
+  }
+
+  return {
+    label: 'Feedback',
+    iconClass: 'bg-primary/10 text-primary',
+    badgeClass: 'border-primary/15 bg-primary/10 text-primary',
+    cardClass:
+      'border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]',
   }
 }
 
@@ -344,7 +405,12 @@ export function StudentTaskDetail({
     formatDate(currentDelivery?.fechaEntregaUtc)
   const deliveryContent = getDeliveryContent(currentDelivery)
   const deliveryStatus = displayValue(currentDelivery?.estado)
-  const deliveryFeedback = safeText(currentDelivery?.feedbackVigente)
+  const currentFeedback = currentDelivery?.feedbackVigente ?? null
+  const feedbackEstado = getFeedbackEstado(currentFeedback)
+  const feedbackComment = safeText(currentFeedback?.comentario)
+  const feedbackNote = displayValue(currentFeedback?.nota)
+  const feedbackDate = formatDateTime(currentFeedback?.fechaCorreccionUtc)
+  const feedbackAttachments = currentFeedback?.adjuntos ?? []
 
   async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? [])
@@ -585,13 +651,6 @@ export function StudentTaskDetail({
                       ))}
                     </div>
                   ) : null}
-
-                  {deliveryFeedback ? (
-                    <div className="rounded-2xl border border-sky-500/20 bg-sky-500/10 p-4 text-sm leading-6 text-sky-700 dark:text-sky-400">
-                      <p className="font-semibold">Feedback</p>
-                      <p className="mt-1 whitespace-pre-wrap">{deliveryFeedback}</p>
-                    </div>
-                  ) : null}
                 </div>
               ) : null}
 
@@ -682,6 +741,73 @@ export function StudentTaskDetail({
               ) : null}
             </CardContent>
           </Card>
+
+          {currentFeedback ? (
+            <Card className={cn('rounded-[30px]', feedbackEstado.cardClass)}>
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span
+                      className={cn(
+                        'flex size-11 shrink-0 items-center justify-center rounded-2xl',
+                        feedbackEstado.iconClass
+                      )}
+                    >
+                      <MessageSquareText className="size-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                        Feedback del profesor
+                      </h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {feedbackDate ?? 'Fecha de correccion no disponible'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span
+                    className={cn(
+                      'shrink-0 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]',
+                      feedbackEstado.badgeClass
+                    )}
+                  >
+                    {feedbackEstado.label}
+                  </span>
+                </div>
+
+                {feedbackNote ? (
+                  <div className="mt-5 rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      Nota
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+                      {feedbackNote}
+                    </p>
+                  </div>
+                ) : null}
+
+                <div className="mt-5 rounded-[24px] border border-border/60 bg-background/75 p-4">
+                  <p className="text-sm font-semibold text-foreground">
+                    Comentario
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                    {feedbackComment ?? 'Sin comentario cargado.'}
+                  </p>
+                </div>
+
+                {feedbackAttachments.length > 0 ? (
+                  <div className="mt-5 space-y-2">
+                    {feedbackAttachments.map((attachment, index) => (
+                      <AttachmentLink
+                        key={attachment.storageKey ?? attachment.url ?? index}
+                        attachment={attachment}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
         </aside>
       </div>
     </div>
