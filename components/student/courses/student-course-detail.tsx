@@ -4,20 +4,14 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   BookOpen,
   CalendarCheck2,
-  CalendarDays,
   CheckCircle2,
   ClipboardList,
-  GraduationCap,
   Users,
 } from 'lucide-react'
 import Link from 'next/link'
 
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  EstadoCurso,
-  type StudentCourseDetail as StudentCourseDetailType,
-  type StudentCourseSectionItem,
-} from '@/lib/student/courses/types'
+import type { StudentCourseSectionItem } from '@/lib/student/courses/types'
 import { cn } from '@/lib/utils'
 
 type Tab =
@@ -45,8 +39,6 @@ const tabStyles: Record<
   {
     label: string
     icon: React.ComponentType<{ className?: string }>
-    activeClass: string
-    idleIconClass: string
     title: string
     description: string
   }
@@ -54,36 +46,24 @@ const tabStyles: Record<
   tasks: {
     label: 'Tareas',
     icon: ClipboardList,
-    activeClass:
-      'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400 shadow-sm',
-    idleIconClass: 'text-amber-600/80 dark:text-amber-400/80',
     title: 'Tareas del curso',
     description: 'Actividades asignadas para este curso.',
   },
   grades: {
     label: 'Calificaciones',
     icon: CheckCircle2,
-    activeClass:
-      'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400 shadow-sm',
-    idleIconClass: 'text-violet-600/80 dark:text-violet-400/80',
     title: 'Calificaciones',
     description: 'Notas registradas para este curso.',
   },
   attendance: {
     label: 'Clases',
     icon: CalendarCheck2,
-    activeClass:
-      'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shadow-sm',
-    idleIconClass: 'text-emerald-600/80 dark:text-emerald-400/80',
     title: 'Clases',
     description: 'Clases y asistencia registradas para este curso.',
   },
   people: {
     label: 'Personas',
     icon: Users,
-    activeClass:
-      'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400 shadow-sm',
-    idleIconClass: 'text-rose-600/80 dark:text-rose-400/80',
     title: 'Personas',
     description: 'Equipo docente y personas vinculadas al curso.',
   },
@@ -94,12 +74,6 @@ const sectionPaths: Partial<Record<Tab, string>> = {
   grades: 'grades',
   attendance: 'attendance',
   people: 'people',
-}
-
-const estadoLabels: Record<number, string> = {
-  [EstadoCurso.Activo]: 'Activo',
-  [EstadoCurso.Inactivo]: 'Inactivo',
-  [EstadoCurso.Archivado]: 'Archivado',
 }
 
 const badgeStyles = {
@@ -114,45 +88,6 @@ const badgeStyles = {
     'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400',
   sky:
     'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-400',
-}
-
-function getCourseName(course: StudentCourseDetailType) {
-  return course.nombre ?? course.cursoNombre ?? 'Curso'
-}
-
-function getCourseYear(course: StudentCourseDetailType) {
-  return typeof course.anio === 'number' ? course.anio : null
-}
-
-function getCourseMeta(course: StudentCourseDetailType, keys: string[]) {
-  for (const key of keys) {
-    const value = course[key]
-
-    if (typeof value === 'string' && value.trim()) return value.trim()
-    if (typeof value === 'number' && Number.isFinite(value)) return String(value)
-  }
-
-  return null
-}
-
-function getCourseSubtitle(course: StudentCourseDetailType) {
-  return course.descripcion?.trim() || null
-}
-
-function getEstadoClass(estado?: number) {
-  if (estado === EstadoCurso.Activo) {
-    return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-  }
-
-  if (estado === EstadoCurso.Inactivo) {
-    return 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400'
-  }
-
-  if (estado === EstadoCurso.Archivado) {
-    return 'border-slate-500/20 bg-slate-500/10 text-slate-700 dark:text-slate-400'
-  }
-
-  return 'border-border/60 bg-muted/40 text-muted-foreground'
 }
 
 function asItems(value: unknown): StudentCourseSectionItem[] {
@@ -202,7 +137,16 @@ function asItems(value: unknown): StudentCourseSectionItem[] {
 function formatDate(value: unknown) {
   if (typeof value !== 'string' || !value.trim()) return null
 
-  const date = new Date(value)
+  const trimmed = value.trim()
+  const localDateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed)
+  const date = localDateMatch
+    ? new Date(
+        Number(localDateMatch[1]),
+        Number(localDateMatch[2]) - 1,
+        Number(localDateMatch[3]),
+      )
+    : new Date(trimmed)
+
   if (Number.isNaN(date.getTime())) return value
 
   return new Intl.DateTimeFormat('es-AR', {
@@ -295,7 +239,6 @@ function getEstadoLabel(value: unknown) {
 
   if (normalized === '1') return 'Presente'
   if (normalized === '2') return 'Ausente'
-  if (normalized === '3') return 'Tarde'
 
   return raw
 }
@@ -422,6 +365,45 @@ function SectionCard({
       <MetaPills values={meta} />
 
       {action ? <div className="mt-4">{action}</div> : null}
+    </article>
+  )
+}
+
+function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
+  const estado = getEstadoLabel(item.estado) ?? getEstadoLabel(item.estadoClase)
+  const fecha =
+    formatDate(item.fecha) ??
+    formatDate(item.fechaClase) ??
+    formatDate(item.claseFecha) ??
+    'Sin fecha'
+  const description = getValue(item, ['descripcionClase']) ?? 'Clase registrada'
+  
+
+  return (
+    <article className="flex flex-col gap-3 rounded-[22px] border border-border/60 bg-card/90 p-4 sm:flex-row sm:items-start sm:gap-4">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl border border-border/60 bg-muted/25 text-muted-foreground">
+        <CalendarCheck2 className="size-4" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <time className="block text-xs font-medium leading-5 text-muted-foreground">
+          {fecha}
+        </time>
+        <p className="mt-1 text-sm font-medium leading-6 text-foreground">
+          {description}
+        </p>
+      </div>
+
+      {estado ? (
+        <span
+          className={cn(
+            'inline-flex w-fit shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-medium sm:ml-auto',
+            getAttendanceBadgeClass(estado),
+          )}
+        >
+          {estado}
+        </span>
+      ) : null}
     </article>
   )
 }
@@ -606,6 +588,16 @@ function EmptyPanel({ text }: { text: string }) {
   )
 }
 
+function AttendanceEmptyState() {
+  return (
+    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 px-5 py-8 text-center">
+      <p className="text-sm font-medium text-muted-foreground">
+        Todavía no hay clases registradas para este curso.
+      </p>
+    </div>
+  )
+}
+
 function SectionList({
   tab,
   state,
@@ -622,7 +614,22 @@ function SectionList({
   }
 
   if (state.items.length === 0) {
+    if (tab === 'attendance') return <AttendanceEmptyState />
+
     return <EmptyPanel text="No hay registros para mostrar." />
+  }
+
+  if (tab === 'attendance') {
+    return (
+      <div className="space-y-3">
+        {state.items.map((item, index) => (
+          <AttendanceRow
+            key={String(item.id ?? item.asistenciaId ?? item.claseId ?? index)}
+            item={item}
+          />
+        ))}
+      </div>
+    )
   }
 
   return (
@@ -639,19 +646,15 @@ function SectionList({
 }
 
 export function StudentCourseDetail({
-  course,
   courseId,
 }: {
-  course: StudentCourseDetailType
   courseId: number
 }) {
   const [tab, setTab] = useState<Tab>('attendance')
   const [sections, setSections] = useState<Record<string, SectionState>>({})
   const currentTab = tabStyles[tab]
-  const estado = typeof course.estado === 'number' ? course.estado : undefined
   const sectionPath = sectionPaths[tab]
   const sectionState = sections[tab] ?? initialSectionState
-  const courseSubtitle = getCourseSubtitle(course)
 
   useEffect(() => {
     if (!sectionPath || sectionState.loading || sectionState.loaded) return
@@ -688,98 +691,48 @@ export function StudentCourseDetail({
 
   return (
     <>
-      <div className="space-y-5">
-        <section className="rounded-[26px] border border-border/60 bg-card/90 px-5 py-4 shadow-[0_14px_34px_-26px_rgba(15,23,42,0.16)] backdrop-blur-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0">
-              <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground sm:text-[1.9rem]">
-                {getCourseName(course)}
-              </h1>
-              {courseSubtitle ? (
-                <p className="mt-1 truncate text-sm text-muted-foreground">
-                  {courseSubtitle}
-                </p>
-              ) : null}
-            </div>
+      <div className="space-y-4">
+        <nav
+          aria-label="Secciones del curso"
+          className="flex flex-wrap gap-1 border-b border-border/60"
+        >
+          {tabs.map((key) => {
+            const tabConfig = tabStyles[key]
+            const Icon = tabConfig.icon
+            const active = tab === key
 
-            <div className="flex flex-wrap items-center gap-2">
-              <span
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTab(key)}
                 className={cn(
-                  'inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]',
-                  getEstadoClass(estado),
+                  'group -mb-px inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                  active
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
                 )}
               >
-                {estado ? estadoLabels[estado] ?? 'Desconocido' : 'Desconocido'}
-              </span>
-
-              {getCourseYear(course) != null ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
-                  <CalendarDays className="size-3.5" />
-                  Año {getCourseYear(course)}
-                </span>
-              ) : null}
-
-              {getCourseMeta(course, ['turno', 'modalidad', 'shift', 'mode']) ? (
-                <span className="inline-flex rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {getCourseMeta(course, ['turno', 'modalidad', 'shift', 'mode'])}
-                </span>
-              ) : null}
-            </div>
-          </div>
-        </section>
-
-        <div className="rounded-[26px] border border-border/60 bg-card/90 p-2 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.16)] backdrop-blur-sm">
-          <div className="flex flex-wrap gap-2">
-            {tabs.map((key) => {
-              const tabConfig = tabStyles[key]
-              const Icon = tabConfig.icon
-              const active = tab === key
-
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setTab(key)}
-                  className={cn(
-                    'group inline-flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-all',
-                    active
-                      ? tabConfig.activeClass
-                      : 'border-transparent bg-transparent text-muted-foreground hover:border-border/60 hover:bg-background/80 hover:text-foreground',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'flex size-8 items-center justify-center rounded-xl border',
-                      active
-                        ? 'border-current/15 bg-white/40 dark:bg-white/5'
-                        : 'border-border/60 bg-background/70',
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        'size-4',
-                        active ? 'text-current' : tabConfig.idleIconClass,
-                      )}
-                    />
-                  </span>
-                  <span>{tabConfig.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
+                <Icon className="size-4" />
+                <span>{tabConfig.label}</span>
+              </button>
+            )
+          })}
+        </nav>
 
         <div className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-          <div className="border-b border-border/60 px-6 py-5">
-            <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-              {currentTab.title}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {currentTab.description}
-            </p>
-          </div>
+          {tab !== 'attendance' ? (
+            <div className="border-b border-border/60 px-6 py-5">
+              <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
+                {currentTab.title}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {currentTab.description}
+              </p>
+            </div>
+          ) : null}
 
-          <div className="p-6">
+          <div className={cn(tab === 'attendance' ? 'p-4' : 'p-6')}>
             <SectionList tab={tab} state={sectionState} courseId={courseId} />
           </div>
         </div>

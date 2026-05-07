@@ -9,6 +9,7 @@ import { useSidebar } from '@/components/ui/sidebar'
 
 type AppHeaderProps = {
   title: string
+  subtitle?: string
 }
 
 const titleLabels: Record<string, string> = {
@@ -62,12 +63,12 @@ function getHeaderSubtitle(pathname: string) {
   return 'Blossom Institute'
 }
 
-export function AppHeader({ title }: AppHeaderProps) {
+export function AppHeader({ title, subtitle }: AppHeaderProps) {
   const { toggleSidebar } = useSidebar()
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
   const displayTitle = titleLabels[title] ?? title
-  const subtitle = getHeaderSubtitle(pathname)
+  const displaySubtitle = subtitle ?? getHeaderSubtitle(pathname)
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -87,7 +88,7 @@ export function AppHeader({ title }: AppHeaderProps) {
               {displayTitle}
             </h1>
             <p className="truncate text-xs text-muted-foreground sm:text-sm">
-              {subtitle}
+              {displaySubtitle}
             </p>
           </div>
         </div>
