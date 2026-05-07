@@ -17,6 +17,29 @@ export type StudentDashboardGrade = Record<string, unknown> & {
   fecha?: string
 }
 
+export type StudentDashboardFeedback = Record<string, unknown> & {
+  cursoId?: number
+  cursoNombre?: string
+  tareaId?: number
+  tituloTarea?: string
+  entregaId?: number
+  feedbackId?: number
+  estado?: number | string | null
+  comentario?: string | null
+  nota?: number | string | null
+  fechaCorreccionUtc?: string | null
+  CursoId?: number
+  CursoNombre?: string
+  TareaId?: number
+  TituloTarea?: string
+  EntregaId?: number
+  FeedbackId?: number
+  Estado?: number | string | null
+  Comentario?: string | null
+  Nota?: number | string | null
+  FechaCorreccionUtc?: string | null
+}
+
 export type StudentCourseSummary = Record<string, unknown> & {
   cursoId?: number
   cursoNombre?: string
@@ -36,6 +59,8 @@ export type StudentDashboardResponse = Record<string, unknown> & {
   entregasRealizadasCount?: number
   feedbacksRehacerCount?: number
   feedbacksPendientesAccionCount?: number
+  FeedbacksRehacerCount?: number
+  FeedbacksPendientesAccionCount?: number
   promedioGeneral?: number | null
   porcentajeAsistenciaGeneral?: number | null
   cursos?: unknown[] | null
@@ -44,5 +69,7 @@ export type StudentDashboardResponse = Record<string, unknown> & {
   tareasPendientes?: StudentDashboardTask[] | null
   ultimasEntregas?: unknown[] | null
   ultimasCalificaciones?: StudentDashboardGrade[] | null
+  feedbacksRecientes?: StudentDashboardFeedback[] | null
+  FeedbacksRecientes?: StudentDashboardFeedback[] | null
   resumenPorCurso?: StudentCourseSummary[] | null
 }

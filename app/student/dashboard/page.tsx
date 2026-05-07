@@ -1,4 +1,5 @@
 import {
+  ArrowRight,
   BookOpen,
   CalendarDays,
   CheckCircle2,
@@ -9,6 +10,7 @@ import {
   MessageSquareWarning,
   UserRound,
 } from 'lucide-react'
+import Link from 'next/link'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,6 +18,7 @@ import { getSession } from '@/lib/auth/session'
 import { getStudentDashboard } from '@/lib/student/dashboard/server-api'
 import type {
   StudentCourseSummary,
+  StudentDashboardFeedback,
   StudentDashboardGrade,
   StudentDashboardResponse,
   StudentDashboardTask,
@@ -128,6 +131,21 @@ function getCountTone(value: number) {
   return 'rose'
 }
 
+function getFeedbackMetricTone({
+  pending,
+  recentApproved,
+  recentTotal,
+}: {
+  pending: number
+  recentApproved: number
+  recentTotal: number
+}): SemanticTone {
+  if (pending > 0) return pending > 2 ? 'rose' : 'amber'
+  if (recentApproved > 0) return 'emerald'
+  if (recentTotal > 0) return 'blue'
+  return 'neutral'
+}
+
 function getAverageTone(value: number | null | undefined) {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 'neutral'
   if (value < 65) return 'rose'
@@ -140,6 +158,39 @@ function getAttendanceTone(value: number | null | undefined) {
   if (value < 70) return 'rose'
   if (value < 85) return 'amber'
   return 'emerald'
+}
+
+function getFeedbackEstado(feedback: StudentDashboardFeedback) {
+  const rawEstado = feedback.estado ?? feedback.Estado
+  const estado =
+    typeof rawEstado === 'string' ? rawEstado.trim().toLowerCase() : rawEstado
+
+  if (estado === 1 || estado === '1' || estado === 'aprobado') {
+    return {
+      label: 'Aprobado',
+      tone: 'emerald' as const,
+    }
+  }
+
+  if (estado === 2 || estado === '2' || estado === 'rehacer') {
+    return {
+      label: 'Requiere revision',
+      tone: 'rose' as const,
+    }
+  }
+
+  return {
+    label: 'Feedback',
+    tone: 'blue' as const,
+  }
+}
+
+function getTextField(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function getNumberField(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
 function MetricCard({
@@ -192,6 +243,67 @@ function MetricCard({
         </div>
       </div>
     </div>
+  )
+}
+
+function FeedbackItem({ feedback }: { feedback: StudentDashboardFeedback }) {
+  const estado = getFeedbackEstado(feedback)
+  const cursoId = getNumberField(feedback.cursoId ?? feedback.CursoId)
+  const tareaId = getNumberField(feedback.tareaId ?? feedback.TareaId)
+  const cursoNombre =
+    getTextField(feedback.cursoNombre ?? feedback.CursoNombre) ?? 'Curso'
+  const tituloTarea =
+    getTextField(feedback.tituloTarea ?? feedback.TituloTarea) ?? 'Tarea'
+  const comentario = getTextField(feedback.comentario ?? feedback.Comentario)
+  const nota = feedback.nota ?? feedback.Nota
+  const fecha = formatDate(
+    getTextField(feedback.fechaCorreccionUtc ?? feedback.FechaCorreccionUtc),
+  )
+  const href =
+    cursoId && tareaId ? `/student/courses/${cursoId}/tasks/${tareaId}` : null
+
+  const content = (
+    <article className="group rounded-[24px] border border-border/60 bg-background/70 px-4 py-4 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/15 hover:bg-card hover:shadow-[0_18px_36px_-24px_rgba(15,23,42,0.18)]">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 space-y-1">
+          <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
+            {tituloTarea}
+          </p>
+          <p className="truncate text-xs font-medium text-primary/80">
+            {cursoNombre}
+          </p>
+          <p className="line-clamp-2 text-xs leading-5 text-muted-foreground">
+            {comentario ?? 'Sin comentario cargado.'}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {fecha}
+            {nota != null ? ` · Nota ${nota}` : ''}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <span
+            className={cn(
+              'inline-flex w-fit rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
+              toneStyles[estado.tone].badge,
+            )}
+          >
+            {estado.label}
+          </span>
+          {href ? (
+            <ArrowRight className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
+          ) : null}
+        </div>
+      </div>
+    </article>
+  )
+
+  return href ? (
+    <li>
+      <Link href={href}>{content}</Link>
+    </li>
+  ) : (
+    <li>{content}</li>
   )
 }
 
@@ -349,14 +461,38 @@ function StudentDashboardContent({
     .trim()
   const studentName = fullName || firstName || 'Alumno'
   const tareasPendientes = asArray(dashboard?.tareasPendientes)
+  const feedbacksRecientes = asArray(
+    dashboard?.feedbacksRecientes ?? dashboard?.FeedbacksRecientes,
+  )
   const ultimasCalificaciones = asArray(dashboard?.ultimasCalificaciones)
   const resumenPorCurso = asArray(dashboard?.resumenPorCurso)
 
   const tareasPendientesCount =
     dashboard?.tareasPendientesCount ?? tareasPendientes.length
+  const feedbacksRehacerCount =
+    dashboard?.feedbacksRehacerCount ?? dashboard?.FeedbacksRehacerCount ?? 0
+  const feedbacksPendientesAccionCount =
+    dashboard?.feedbacksPendientesAccionCount ??
+    dashboard?.FeedbacksPendientesAccionCount ??
+    0
   const feedbacksPendientes =
-    (dashboard?.feedbacksPendientesAccionCount ?? 0) +
-    (dashboard?.feedbacksRehacerCount ?? 0)
+    feedbacksPendientesAccionCount + feedbacksRehacerCount
+  const recentApprovedFeedbacks = feedbacksRecientes.filter(
+    (feedback) => getFeedbackEstado(feedback).tone === 'emerald',
+  ).length
+  const feedbackMetricValue =
+    feedbacksPendientes > 0 ? feedbacksPendientes : feedbacksRecientes.length
+  const feedbackMetricSubtitle =
+    feedbacksPendientes > 0
+      ? 'Pendientes o para rehacer'
+      : feedbacksRecientes.length > 0
+        ? 'Feedbacks recientes'
+        : 'Sin novedades recientes'
+  const feedbackMetricTone = getFeedbackMetricTone({
+    pending: feedbacksPendientes,
+    recentApproved: recentApprovedFeedbacks,
+    recentTotal: feedbacksRecientes.length,
+  })
   const hasHeroPending = tareasPendientesCount > 0 || feedbacksPendientes > 0
 
   return (
@@ -443,10 +579,10 @@ function StudentDashboardContent({
           />
           <MetricCard
             title="Feedbacks"
-            value={feedbacksPendientes}
+            value={feedbackMetricValue}
             icon={MessageSquareWarning}
-            tone={getCountTone(feedbacksPendientes)}
-            subtitle="Pendientes o para rehacer"
+            tone={feedbackMetricTone}
+            subtitle={feedbackMetricSubtitle}
           />
           <MetricCard
             title="Promedio"
@@ -464,7 +600,7 @@ function StudentDashboardContent({
           />
         </section>
 
-        <section className="grid gap-5 xl:grid-cols-2">
+        <section className="grid gap-5 xl:grid-cols-3">
           <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
@@ -479,6 +615,29 @@ function StudentDashboardContent({
                 <ul className="space-y-2">
                   {tareasPendientes.slice(0, 3).map((task, index) => (
                     <TaskItem key={task.tareaId ?? index} task={task} />
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+                <MessageSquareWarning className="size-5 text-primary" />
+                Feedback reciente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {feedbacksRecientes.length === 0 ? (
+                <EmptyState>No tenes feedback pendiente por revisar.</EmptyState>
+              ) : (
+                <ul className="space-y-2">
+                  {feedbacksRecientes.slice(0, 3).map((feedback, index) => (
+                    <FeedbackItem
+                      key={feedback.feedbackId ?? feedback.FeedbackId ?? index}
+                      feedback={feedback}
+                    />
                   ))}
                 </ul>
               )}
