@@ -6,6 +6,9 @@ import {
   CalendarCheck2,
   CheckCircle2,
   ClipboardList,
+  FileText,
+  Megaphone,
+  Paperclip,
   Users,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -44,10 +47,10 @@ const tabStyles: Record<
   }
 > = {
   tasks: {
-    label: 'Tareas',
+    label: 'Tablón',
     icon: ClipboardList,
-    title: 'Tareas del curso',
-    description: 'Actividades asignadas para este curso.',
+    title: 'Tablón',
+    description: 'Publicaciones y actividades del curso.',
   },
   grades: {
     label: 'Calificaciones',
@@ -154,6 +157,38 @@ function formatDate(value: unknown) {
     month: 'short',
     year: 'numeric',
   }).format(date)
+}
+
+function parseLocalDate(value: unknown) {
+  if (typeof value !== 'string' || !value.trim()) return null
+
+  const trimmed = value.trim()
+  const datePartMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed)
+  const date = datePartMatch
+    ? new Date(
+        Number(datePartMatch[1]),
+        Number(datePartMatch[2]) - 1,
+        Number(datePartMatch[3]),
+      )
+    : new Date(trimmed)
+
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function formatCompactDate(value: unknown) {
+  const date = parseLocalDate(value)
+
+  if (!date) return typeof value === 'string' && value.trim() ? value : null
+
+  const includeYear = date.getFullYear() !== new Date().getFullYear()
+
+  return new Intl.DateTimeFormat('es-AR', {
+    day: 'numeric',
+    month: 'short',
+    ...(includeYear ? { year: 'numeric' } : {}),
+  })
+    .format(date)
+    .replace('.', '')
 }
 
 function safeText(value: unknown) {
@@ -263,21 +298,84 @@ function getAttendanceBadgeClass(value: unknown) {
 }
 
 function getTaskBadgeClass(item: StudentCourseSectionItem) {
-  const vencida = item.vencida === true
-  const estado = displayValue(item.estado)?.toLowerCase() ?? ''
-  const tieneEntrega = item.tieneEntrega === true
+  const status = getTaskBadgeLabel(item)
 
-  if (vencida || estado.includes('venc')) return badgeStyles.rose
-  if (tieneEntrega || estado.includes('entreg')) return badgeStyles.emerald
-  return badgeStyles.amber
+  if (status === 'Rehacer') {
+    return 'border-amber-400/35 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'
+  }
+
+  if (status === 'Entregada') {
+    return 'border-emerald-500/15 bg-transparent text-emerald-700 dark:text-emerald-400'
+  }
+
+  if (status === 'Vencida') {
+    return 'border-rose-500/20 bg-rose-50/60 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
+  }
+
+  return 'border-border/60 bg-muted/25 text-muted-foreground'
 }
 
 function getTaskBadgeLabel(item: StudentCourseSectionItem) {
-  const estado = displayValue(item.estado)
+  const hasDueDate = hasTaskDueDate(item)
 
-  if (item.vencida === true) return 'Vencida'
+  if (item.feedbackPendienteAccion === true) return 'Rehacer'
   if (item.tieneEntrega === true) return 'Entregada'
-  return estado ?? 'Pendiente'
+  if (item.vencida === true && !item.tieneEntrega) return 'Vencida'
+  if (hasDueDate) return 'Pendiente'
+  return 'Anuncio'
+}
+
+function hasTaskDueDate(item: StudentCourseSectionItem) {
+  return typeof item.fechaEntregaUtc === 'string' && item.fechaEntregaUtc.trim().length > 0
+}
+
+function isAnnouncement(item: StudentCourseSectionItem) {
+  return item.esAnuncio === true || !hasTaskDueDate(item)
+}
+
+function getTeacherDisplayName(item: StudentCourseSectionItem) {
+  const firstName = safeText(item.profesorNombre)
+  const lastName = safeText(item.profesorApellido)
+  return [firstName, lastName].filter(Boolean).join(' ').trim() || 'Profesor'
+}
+
+function getResourceLabel(item: StudentCourseSectionItem) {
+  if (item.tieneRecursos !== true) return null
+
+  const count = Number(item.recursosCount)
+  if (!Number.isFinite(count) || count <= 0) return 'Recursos'
+
+  return `${count} ${count === 1 ? 'recurso' : 'recursos'}`
+}
+
+function getTaskDueMeta(item: StudentCourseSectionItem) {
+  const dueDate = formatCompactDate(item.fechaEntregaUtc)
+
+  if (!dueDate) {
+    return {
+      label: 'Anuncio',
+      className: 'text-muted-foreground',
+    }
+  }
+
+  if (item.tieneEntrega === true) {
+    return {
+      label: `Vencía el ${dueDate}`,
+      className: 'text-emerald-700/75 dark:text-emerald-400/75',
+    }
+  }
+
+  if (item.vencida === true) {
+    return {
+      label: `Vencida · ${dueDate}`,
+      className: 'text-rose-700 dark:text-rose-400',
+    }
+  }
+
+  return {
+    label: `Vence el ${dueDate}`,
+    className: 'text-amber-700 dark:text-amber-400',
+  }
 }
 
 function getPersonBadgeClass(role?: string | null) {
@@ -369,6 +467,155 @@ function SectionCard({
   )
 }
 
+function TaskPostCard({
+  item,
+  courseId,
+}: {
+  item: StudentCourseSectionItem
+  courseId: number
+}) {
+  const announcement = isAnnouncement(item)
+  const teacherName = getTeacherDisplayName(item)
+  const title = getValue(item, ['titulo', 'nombre', 'tareaTitulo']) ?? 'Sin titulo'
+  const description = getValue(item, ['descripcion', 'consigna'])
+  const taskId = item.tareaId ?? item.id
+  const status = getTaskBadgeLabel(item)
+  const dueMeta = getTaskDueMeta(item)
+  const createdAt = formatCompactDate(item.createdAtUtc)
+  const resourceLabel = getResourceLabel(item)
+
+  if (!announcement) {
+    return (
+      <article className="rounded-xl border border-border/60 bg-muted/30 transition-colors hover:border-border hover:bg-muted/40">
+        <div className="flex flex-col gap-3.5 p-4 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground">
+            <FileText className="size-4" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium leading-5 text-muted-foreground">
+              {teacherName} publicó una nueva tarea
+            </p>
+            <p className="truncate text-[15px] font-semibold leading-6 text-foreground">
+              {title}
+            </p>
+
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              {createdAt ? <time>{createdAt}</time> : null}
+              {createdAt ? <span aria-hidden="true">·</span> : null}
+              <span className={cn('inline-flex items-center gap-1.5 font-medium', dueMeta.className)}>
+                <CalendarCheck2 className="size-3.5" />
+                {dueMeta.label}
+              </span>
+              {resourceLabel ? (
+                <>
+                <span aria-hidden="true">·</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Paperclip className="size-3.5" />
+                  {resourceLabel}
+                </span>
+                </>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center justify-between gap-2 sm:justify-end">
+            <span
+              className={cn(
+                'inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[11px] font-medium',
+                getTaskBadgeClass(item),
+              )}
+            >
+              {status}
+            </span>
+
+            {taskId != null ? (
+              <Link
+                href={`/student/courses/${courseId}/tasks/${taskId}`}
+                className="inline-flex h-8 w-fit items-center justify-center rounded-full border border-border/70 bg-background/70 px-3 text-sm font-medium text-foreground transition-colors hover:border-primary/20 hover:bg-muted/50 hover:text-primary"
+              >
+                Ver detalle
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      </article>
+    )
+  }
+
+  return (
+    <article className="rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.08)] transition-colors hover:border-primary/20">
+      <div className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-primary/10 bg-primary/10 text-xs font-semibold text-primary">
+              {getInitials(teacherName) || '?'}
+            </div>
+
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium leading-5 text-muted-foreground">
+                {teacherName} publicó {announcement ? 'un anuncio' : 'una tarea'}
+              </p>
+              {createdAt ? (
+                <time className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                  {createdAt}
+                </time>
+              ) : null}
+            </div>
+          </div>
+
+          <span
+            className={cn(
+              'inline-flex w-fit shrink-0 items-center rounded-full border px-2 py-0.5 text-xs font-medium',
+              getTaskBadgeClass(item),
+            )}
+          >
+            <Megaphone className="mr-1 size-3" />
+            {status}
+          </span>
+        </div>
+
+        <div className="mt-4 sm:ml-12">
+          <h3 className="text-[15px] font-semibold leading-6 text-foreground">
+            {title}
+          </h3>
+          {description ? (
+            <p className="mt-1 line-clamp-3 text-sm leading-6 text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="mt-4 flex flex-col gap-2 border-t border-border/60 pt-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            {!announcement ? (
+              <span className={cn('inline-flex items-center gap-1.5 font-medium', dueMeta.className)}>
+                <CalendarCheck2 className="size-4" />
+                {dueMeta.label}
+              </span>
+            ) : null}
+            {resourceLabel ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Paperclip className="size-4" />
+                {resourceLabel}
+              </span>
+            ) : null}
+          </div>
+
+          {taskId != null ? (
+            <Link
+              href={`/student/courses/${courseId}/tasks/${taskId}`}
+                className="inline-flex h-8 w-fit items-center justify-center rounded-full border border-border/70 bg-background/70 px-3 text-sm font-medium text-foreground transition-colors hover:border-primary/20 hover:bg-muted/50 hover:text-primary"
+            >
+              Ver detalle
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  )
+}
+
 function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
   const estado = getEstadoLabel(item.estado) ?? getEstadoLabel(item.estadoClase)
   const fecha =
@@ -446,32 +693,7 @@ function renderSectionCard(
   courseId: number
 ) {
   if (tab === 'tasks') {
-    const badge = getTaskBadgeLabel(item)
-    const taskId = item.tareaId ?? item.id
-
-    return (
-      <SectionCard
-        title={getValue(item, ['titulo', 'nombre', 'tareaTitulo']) ?? 'Sin titulo'}
-        badge={badge}
-        badgeClassName={getTaskBadgeClass(item)}
-        description={getValue(item, ['descripcion', 'consigna'])}
-        meta={[
-          formatDate(item.fechaEntregaUtc)
-            ? `Entrega ${formatDate(item.fechaEntregaUtc)}`
-            : null,
-        ]}
-        action={
-          taskId != null ? (
-            <Link
-              href={`/student/courses/${courseId}/tasks/${taskId}`}
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-primary/15 bg-primary/5 px-3 text-sm font-semibold text-primary shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/10 hover:shadow-md"
-            >
-              Ver detalle
-            </Link>
-          ) : null
-        }
-      />
-    )
+    return <TaskPostCard item={item} courseId={courseId} />
   }
 
   if (tab === 'grades') {
@@ -598,6 +820,39 @@ function AttendanceEmptyState() {
   )
 }
 
+function TaskFeedSkeleton() {
+  return (
+    <div className="mx-auto max-w-[900px] space-y-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div
+          key={index}
+          className="h-36 animate-pulse rounded-2xl border border-border/60 bg-muted/25"
+        />
+      ))}
+    </div>
+  )
+}
+
+function TaskFeed({
+  items,
+  courseId,
+}: {
+  items: StudentCourseSectionItem[]
+  courseId: number
+}) {
+  return (
+    <div className="mx-auto max-w-[900px] space-y-4">
+      {items.map((item, index) => (
+        <TaskPostCard
+          key={String(item.id ?? item.tareaId ?? index)}
+          item={item}
+          courseId={courseId}
+        />
+      ))}
+    </div>
+  )
+}
+
 function SectionList({
   tab,
   state,
@@ -607,6 +862,7 @@ function SectionList({
   state: SectionState
   courseId: number
 }) {
+  if (state.loading && tab === 'tasks') return <TaskFeedSkeleton />
   if (state.loading) return <SectionSkeleton />
 
   if (state.error) {
@@ -615,6 +871,9 @@ function SectionList({
 
   if (state.items.length === 0) {
     if (tab === 'attendance') return <AttendanceEmptyState />
+    if (tab === 'tasks') {
+      return <EmptyPanel text="Todavía no hay publicaciones en el tablón." />
+    }
 
     return <EmptyPanel text="No hay registros para mostrar." />
   }
@@ -630,6 +889,10 @@ function SectionList({
         ))}
       </div>
     )
+  }
+
+  if (tab === 'tasks') {
+    return <TaskFeed items={state.items} courseId={courseId} />
   }
 
   return (
@@ -650,7 +913,7 @@ export function StudentCourseDetail({
 }: {
   courseId: number
 }) {
-  const [tab, setTab] = useState<Tab>('attendance')
+  const [tab, setTab] = useState<Tab>('tasks')
   const [sections, setSections] = useState<Record<string, SectionState>>({})
   const currentTab = tabStyles[tab]
   const sectionPath = sectionPaths[tab]
@@ -685,7 +948,7 @@ export function StudentCourseDetail({
   }, [courseId, sectionPath, sectionState.loaded, sectionState.loading, tab])
 
   const tabs = useMemo(
-    () => ['attendance', 'tasks', 'grades', 'people'] as Tab[],
+    () => ['tasks', 'attendance', 'grades', 'people'] as Tab[],
     []
   )
 
@@ -720,22 +983,26 @@ export function StudentCourseDetail({
           })}
         </nav>
 
-        <div className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-          {tab !== 'attendance' ? (
-            <div className="border-b border-border/60 px-6 py-5">
-              <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-                {currentTab.title}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {currentTab.description}
-              </p>
-            </div>
-          ) : null}
+        {tab === 'tasks' ? (
+          <SectionList tab={tab} state={sectionState} courseId={courseId} />
+        ) : (
+          <div className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+            {tab !== 'attendance' ? (
+              <div className="border-b border-border/60 px-6 py-5">
+                <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
+                  {currentTab.title}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {currentTab.description}
+                </p>
+              </div>
+            ) : null}
 
-          <div className={cn(tab === 'attendance' ? 'p-4' : 'p-6')}>
+            <div className={cn(tab === 'attendance' ? 'p-4' : 'p-6')}>
             <SectionList tab={tab} state={sectionState} courseId={courseId} />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   )
