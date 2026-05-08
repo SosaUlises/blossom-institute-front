@@ -10,6 +10,7 @@ import {
   Download,
   FileText,
   Loader2,
+  Megaphone,
   MessageSquareText,
   Paperclip,
   Save,
@@ -63,10 +64,14 @@ type StudentTask = {
   tareaId?: number
   cursoId?: number
   cursoNombre?: string | null
+  profesorNombre?: string | null
+  profesorApellido?: string | null
   titulo?: string | null
   descripcion?: string | null
   consigna?: string | null
   fechaEntregaUtc?: string | null
+  createdAtUtc?: string | null
+  esAnuncio?: boolean | null
   recursos?: StudentAttachment[] | null
   vencida?: boolean | null
   miEntrega?: StudentDelivery | null
@@ -158,6 +163,22 @@ function getDeliveryFile(delivery?: StudentDelivery | null): StudentAttachment |
     url,
     nombre: 'Archivo entregado',
   }
+}
+
+function getTeacherName(task?: StudentTask | null) {
+  const firstName = safeText(task?.profesorNombre)
+  const lastName = safeText(task?.profesorApellido)
+  return [firstName, lastName].filter(Boolean).join(' ').trim() || 'Profesor'
+}
+
+function getAnnouncementTeacherName(task?: StudentTask | null) {
+  const firstName = safeText(task?.profesorNombre)
+  const lastName = safeText(task?.profesorApellido)
+  return [firstName, lastName].filter(Boolean).join(' ').trim() || null
+}
+
+function isAnnouncementTask(task?: StudentTask | null) {
+  return task?.esAnuncio === true || !safeText(task?.fechaEntregaUtc)
 }
 
 function getFeedbackEstado(feedback?: StudentCurrentFeedback | null) {
@@ -411,6 +432,10 @@ export function StudentTaskDetail({
   const feedbackNote = displayValue(currentFeedback?.nota)
   const feedbackDate = formatDateTime(currentFeedback?.fechaCorreccionUtc)
   const feedbackAttachments = currentFeedback?.adjuntos ?? []
+  const isAnnouncement = isAnnouncementTask(task)
+  const teacherName = getTeacherName(task)
+  const announcementTeacherName = getAnnouncementTeacherName(task)
+  const createdAt = formatDate(task?.createdAtUtc)
 
   async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? [])
@@ -505,68 +530,148 @@ export function StudentTaskDetail({
     )
   }
 
-  return (
-    <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[32px] border border-border/60 bg-card/95 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.22)]">
-        <div className="absolute inset-x-0 top-0 h-36 bg-[linear-gradient(135deg,rgba(36,59,123,0.92),rgba(91,110,225,0.82))]" />
-        <div className="relative p-4 sm:p-5 lg:p-6">
-          <div className="rounded-[30px] border border-border/60 bg-card/92 p-6 shadow-[0_24px_50px_-30px_rgba(15,23,42,0.24)] backdrop-blur-md sm:p-7">
-            <Button
-              asChild
-              variant="ghost"
-              className="mb-5 rounded-xl px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
-            >
-              <Link href={`/student/courses/${courseId}`}>
-                <ArrowLeft className="size-4" />
-                Volver al curso
-              </Link>
-            </Button>
+  if (isAnnouncement) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-5">
+        <Button
+          asChild
+          variant="ghost"
+          className="rounded-xl px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+        >
+          <Link href={`/student/courses/${courseId}`}>
+            <ArrowLeft className="size-4" />
+            Volver al curso
+          </Link>
+        </Button>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={cn(
-                  'inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]',
-                  task.vencida
-                    ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
-                    : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+        <article className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.08)] sm:p-6">
+          <header className="flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground">
+                {announcementTeacherName ? (
+                  <span className="text-xs font-semibold text-primary">
+                    {announcementTeacherName
+                      .split(' ')
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((part) => part[0])
+                      .join('')
+                      .toUpperCase()}
+                  </span>
+                ) : (
+                  <Megaphone className="size-4" />
                 )}
-              >
-                {task.vencida ? 'Vencida' : 'En fecha'}
-              </span>
+              </div>
 
-              {dueDate ? (
-                <span className="inline-flex rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
-                  Entrega {dueDate}
-                </span>
-              ) : null}
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {announcementTeacherName
+                    ? `${announcementTeacherName} publicó un anuncio`
+                    : 'Anuncio del curso'}
+                </p>
+                {createdAt ? (
+                  <time className="mt-0.5 block text-xs text-muted-foreground">
+                    {createdAt}
+                  </time>
+                ) : null}
+              </div>
             </div>
 
-            <h1 className="mt-5 text-[2.1rem] font-semibold leading-[1.04] tracking-tight text-foreground sm:text-[2.6rem]">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border/70 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              <Megaphone className="size-3" />
+              Anuncio
+            </span>
+          </header>
+
+          <div className="mt-5 sm:ml-[52px]">
+            <h1 className="text-xl font-semibold leading-7 tracking-tight text-foreground sm:text-2xl">
               {safeText(task.titulo) ?? 'Sin título'}
             </h1>
+
+            <div className="mt-3 text-sm leading-7 text-muted-foreground">
+              {safeText(task.consigna) ?? safeText(task.descripcion) ? (
+                <p className="whitespace-pre-wrap">
+                  {safeText(task.consigna) ?? safeText(task.descripcion)}
+                </p>
+              ) : (
+                <p>Sin contenido cargado.</p>
+              )}
+            </div>
           </div>
+        </article>
+
+        <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
+          <h2 className="text-base font-semibold tracking-tight text-foreground">
+            Recursos
+          </h2>
+
+          <div className="mt-3 space-y-2">
+            {resources.length > 0 ? (
+              resources.map((resource, index) => (
+                <AttachmentLink
+                  key={resource.storageKey ?? resource.url ?? index}
+                  attachment={resource}
+                />
+              ))
+            ) : (
+              <EmptyBox text="No hay recursos adjuntos para este anuncio." />
+            )}
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.08)] sm:p-6">
+        <Button
+          asChild
+          variant="ghost"
+          className="mb-5 rounded-xl px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+        >
+          <Link href={`/student/courses/${courseId}`}>
+            <ArrowLeft className="size-4" />
+            Volver al curso
+          </Link>
+        </Button>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn(
+              'inline-flex rounded-full border px-2.5 py-1 text-xs font-medium',
+              task.vencida
+                ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
+                : 'border-emerald-500/15 bg-emerald-500/10 text-emerald-700/80 dark:text-emerald-400/80'
+            )}
+          >
+            {task.vencida ? 'Vencida' : 'En fecha'}
+          </span>
+
+          {dueDate ? (
+            <span className="inline-flex rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              Entrega {dueDate}
+            </span>
+          ) : null}
+        </div>
+
+        <h1 className="mt-4 text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+          {safeText(task.titulo) ?? 'Sin título'}
+        </h1>
+
+        <div className="mt-5 border-t border-border/60 pt-5 text-sm leading-7 text-muted-foreground">
+          {safeText(task.consigna) ? (
+            <p className="whitespace-pre-wrap">{task.consigna}</p>
+          ) : (
+            <EmptyBox text="Esta tarea no tiene consigna cargada." />
+          )}
         </div>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
         <div className="space-y-6">
-          <Card className="rounded-[30px] border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Consigna
-              </h2>
-              <div className="mt-4 space-y-4 text-sm leading-7 text-muted-foreground">
-                {safeText(task.consigna) ? (
-                  <p className="whitespace-pre-wrap">{task.consigna}</p>
-                ) : (
-                  <EmptyBox text="Esta tarea no tiene consigna cargada." />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[30px] border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-            <CardContent className="p-6">
+          <Card className="rounded-2xl border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.08)]">
+            <CardContent className="p-5">
               <h2 className="text-lg font-semibold tracking-tight text-foreground">
                 Recursos
               </h2>
@@ -588,8 +693,77 @@ export function StudentTaskDetail({
         </div>
 
         <aside className="space-y-6">
-          <Card className="rounded-[30px] border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-            <CardContent className="p-6">
+          {currentFeedback ? (
+            <Card className={cn('rounded-2xl', feedbackEstado.cardClass)}>
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span
+                      className={cn(
+                        'flex size-10 shrink-0 items-center justify-center rounded-xl',
+                        feedbackEstado.iconClass
+                      )}
+                    >
+                      <MessageSquareText className="size-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                        Feedback del profesor
+                      </h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {feedbackDate ?? 'Fecha de correccion no disponible'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span
+                    className={cn(
+                      'shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium',
+                      feedbackEstado.badgeClass
+                    )}
+                  >
+                    {feedbackEstado.label}
+                  </span>
+                </div>
+
+                {feedbackNote ? (
+                  <div className="mt-4 rounded-xl border border-border/60 bg-background/70 px-4 py-3">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Nota
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+                      {feedbackNote}
+                    </p>
+                  </div>
+                ) : null}
+
+                {feedbackComment ? (
+                  <div className="mt-4 rounded-xl border border-border/60 bg-background/75 p-4">
+                    <p className="text-sm font-semibold text-foreground">
+                      Comentario
+                    </p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                      {feedbackComment}
+                    </p>
+                  </div>
+                ) : null}
+
+                {feedbackAttachments.length > 0 ? (
+                  <div className="mt-4 space-y-2">
+                    {feedbackAttachments.map((attachment, index) => (
+                      <AttachmentLink
+                        key={attachment.storageKey ?? attachment.url ?? index}
+                        attachment={attachment}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
+
+          <Card className="rounded-2xl border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.08)]">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-semibold tracking-tight text-foreground">
@@ -742,72 +916,6 @@ export function StudentTaskDetail({
             </CardContent>
           </Card>
 
-          {currentFeedback ? (
-            <Card className={cn('rounded-[30px]', feedbackEstado.cardClass)}>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <span
-                      className={cn(
-                        'flex size-11 shrink-0 items-center justify-center rounded-2xl',
-                        feedbackEstado.iconClass
-                      )}
-                    >
-                      <MessageSquareText className="size-5" />
-                    </span>
-                    <div className="min-w-0">
-                      <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                        Feedback del profesor
-                      </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {feedbackDate ?? 'Fecha de correccion no disponible'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <span
-                    className={cn(
-                      'shrink-0 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]',
-                      feedbackEstado.badgeClass
-                    )}
-                  >
-                    {feedbackEstado.label}
-                  </span>
-                </div>
-
-                {feedbackNote ? (
-                  <div className="mt-5 rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      Nota
-                    </p>
-                    <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-                      {feedbackNote}
-                    </p>
-                  </div>
-                ) : null}
-
-                <div className="mt-5 rounded-[24px] border border-border/60 bg-background/75 p-4">
-                  <p className="text-sm font-semibold text-foreground">
-                    Comentario
-                  </p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                    {feedbackComment ?? 'Sin comentario cargado.'}
-                  </p>
-                </div>
-
-                {feedbackAttachments.length > 0 ? (
-                  <div className="mt-5 space-y-2">
-                    {feedbackAttachments.map((attachment, index) => (
-                      <AttachmentLink
-                        key={attachment.storageKey ?? attachment.url ?? index}
-                        attachment={attachment}
-                      />
-                    ))}
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
-          ) : null}
         </aside>
       </div>
     </div>
