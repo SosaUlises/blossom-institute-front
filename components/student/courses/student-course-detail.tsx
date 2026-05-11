@@ -295,8 +295,57 @@ function getAttendanceBadgeClass(value: unknown) {
 
   if (label === 'presente') return badgeStyles.emerald
   if (label === 'ausente') return badgeStyles.rose
-  if (label === 'tarde') return badgeStyles.amber
   return badgeStyles.neutral
+}
+
+type AttendanceStatus = {
+  key: 'present' | 'absent' | 'unknown'
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  badgeClassName: string
+  iconClassName: string
+  dotClassName: string
+}
+
+function getAttendanceStatus(value: unknown): AttendanceStatus {
+  const label = getEstadoLabel(value)?.toLowerCase()
+
+  if (label === 'presente') {
+    return {
+      key: 'present',
+      label: 'Estuviste presente',
+      icon: CheckCircle2,
+      badgeClassName:
+        'border-emerald-200 bg-emerald-50/70 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
+      iconClassName:
+        'border-emerald-200 bg-emerald-50/70 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
+      dotClassName: 'bg-emerald-500',
+    }
+  }
+
+  if (label === 'ausente') {
+    return {
+      key: 'absent',
+      label: 'No asististe',
+      icon: AlertCircle,
+      badgeClassName:
+        'border-rose-200 bg-rose-50/70 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300',
+      iconClassName:
+        'border-rose-200 bg-rose-50/70 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300',
+      dotClassName: 'bg-rose-400 dark:bg-rose-500',
+    }
+  }
+
+  return {
+    key: 'unknown',
+    label: 'Sin asistencia cargada',
+    icon: CalendarCheck2,
+    badgeClassName:
+      'border-border/70 bg-muted/35 text-muted-foreground',
+    iconClassName:
+      'border-border/70 bg-muted/35 text-muted-foreground',
+    dotClassName: 'bg-muted-foreground/45',
+  }
 }
 
 type TaskStatus = {
@@ -684,40 +733,130 @@ function TaskPostCard({
 
 function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
   const estado = getEstadoLabel(item.estado) ?? getEstadoLabel(item.estadoClase)
+  const status = getAttendanceStatus(estado)
+  const StatusIcon = status.icon
   const fecha =
     formatDate(item.fecha) ??
     formatDate(item.fechaClase) ??
     formatDate(item.claseFecha) ??
-    'Sin fecha'
-  const description = getValue(item, ['descripcionClase']) ?? 'Clase registrada'
-  
+    'Fecha sin cargar.'
+  const description = getValue(item, ['descripcionClase']) ?? 'Clase registrada.'
 
   return (
-    <article className="flex flex-col gap-3 rounded-[22px] border border-border/60 bg-card/90 p-4 sm:flex-row sm:items-start sm:gap-4">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl border border-border/60 bg-muted/25 text-muted-foreground">
-        <CalendarCheck2 className="size-4" />
-      </div>
+    <article className="relative pl-8">
+      <span
+        className={cn(
+          'absolute left-0 top-2.5 z-10 flex size-3.5 items-center justify-center rounded-full ring-4 ring-card',
+          status.dotClassName,
+        )}
+      >
+        <span className="size-1 rounded-full bg-white" />
+      </span>
 
-      <div className="min-w-0 flex-1">
-        <time className="block text-xs font-medium leading-5 text-muted-foreground">
-          {fecha}
-        </time>
-        <p className="mt-1 text-sm font-medium leading-6 text-foreground">
-          {description}
+      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-4 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <time className="block text-xs font-medium text-muted-foreground">
+            {fecha}
+          </time>
+          <p className="mt-1 text-[15px] font-semibold leading-6 text-foreground">
+            {description}
+          </p>
+        </div>
+
+        <span
+          className={cn(
+            'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+            status.badgeClassName,
+          )}
+        >
+          <StatusIcon className="size-3.5" />
+          {status.label}
+        </span>
+      </div>
+    </article>
+  )
+}
+
+function AttendanceSummary({
+  items,
+}: {
+  items: StudentCourseSectionItem[]
+}) {
+  const summary = items.reduce<{ present: number; absent: number }>(
+    (current, item) => {
+      const estado = getEstadoLabel(item.estado) ?? getEstadoLabel(item.estadoClase)
+      const status = getAttendanceStatus(estado)
+
+      if (status.key === 'present') current.present += 1
+      if (status.key === 'absent') current.absent += 1
+
+      return current
+    },
+    { present: 0, absent: 0 },
+  )
+
+  const stats = [
+    {
+      label: 'Clases registradas',
+      value: items.length,
+      className: 'border-border/60 bg-muted/20 text-foreground',
+    },
+    {
+      label: 'Presentes',
+      value: summary.present,
+      className: 'border-emerald-200/70 bg-emerald-50/40 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/5 dark:text-emerald-300',
+    },
+    {
+      label: 'Ausentes',
+      value: summary.absent,
+      className: 'border-rose-200/70 bg-rose-50/40 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/5 dark:text-rose-300',
+    },
+  ]
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-3">
+      {stats.map((stat) => (
+        <div
+          key={stat.label}
+          className={cn('rounded-2xl border px-4 py-3', stat.className)}
+        >
+          <p className="text-xl font-semibold leading-none tracking-tight">
+            {stat.value}
+          </p>
+          <p className="mt-1 text-xs font-medium">{stat.label}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function AttendanceHistory({
+  items,
+}: {
+  items: StudentCourseSectionItem[]
+}) {
+  return (
+    <section className="space-y-5">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          Historial de clases
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Estas son las clases registradas y tu asistencia.
         </p>
       </div>
 
-      {estado ? (
-        <span
-          className={cn(
-            'inline-flex w-fit shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-medium sm:ml-auto',
-            getAttendanceBadgeClass(estado),
-          )}
-        >
-          {estado}
-        </span>
-      ) : null}
-    </article>
+      <AttendanceSummary items={items} />
+
+      <div className="relative space-y-3 before:absolute before:left-[7px] before:bottom-4 before:top-4 before:w-px before:bg-border/70">
+        {items.map((item, index) => (
+          <AttendanceRow
+            key={String(item.id ?? item.asistenciaId ?? item.claseId ?? index)}
+            item={item}
+          />
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -878,9 +1017,12 @@ function EmptyPanel({ text }: { text: string }) {
 
 function AttendanceEmptyState() {
   return (
-    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 px-5 py-8 text-center">
-      <p className="text-sm font-medium text-muted-foreground">
-        Todavía no hay clases registradas para este curso.
+    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 px-5 py-10 text-center">
+      <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <CalendarCheck2 className="size-5" />
+      </div>
+      <p className="mt-3 text-sm font-medium text-muted-foreground">
+        Todavía no hay clases cargadas para este curso.
       </p>
     </div>
   )
@@ -945,16 +1087,7 @@ function SectionList({
   }
 
   if (tab === 'attendance') {
-    return (
-      <div className="space-y-3">
-        {state.items.map((item, index) => (
-          <AttendanceRow
-            key={String(item.id ?? item.asistenciaId ?? item.claseId ?? index)}
-            item={item}
-          />
-        ))}
-      </div>
-    )
+    return <AttendanceHistory items={state.items} />
   }
 
   if (tab === 'tasks') {
