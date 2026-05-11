@@ -26,7 +26,7 @@ export default async function StudentTaskDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <AppHeader title="Detalle" />
+      <AppHeader title="Tarea" subtitle="Actividad del curso" />
 
       <main className="flex-1 overflow-auto px-6 py-8 lg:px-8">
         <div className="mx-auto max-w-6xl">

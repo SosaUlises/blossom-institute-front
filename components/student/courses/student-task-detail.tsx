@@ -1,18 +1,24 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
+  AlertCircle,
   ArrowLeft,
+  Archive,
   CheckCircle2,
   ChevronDown,
+  Clock3,
   Download,
+  CalendarCheck2,
+  FileAudio,
+  FileImage,
   FileText,
+  FileVideo,
   Loader2,
   Megaphone,
   MessageSquareText,
-  Paperclip,
   Save,
   Trash2,
   Upload,
@@ -139,6 +145,33 @@ function formatBytes(value: unknown) {
   return `${(value / 1024 / 1024).toFixed(1)} MB`
 }
 
+function getAttachmentIcon(attachment: StudentAttachment) {
+  const contentType = safeText(attachment.contentType)?.toLowerCase() ?? ''
+  const name = safeText(attachment.nombre)?.toLowerCase() ?? ''
+
+  if (contentType.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/.test(name)) {
+    return FileImage
+  }
+
+  if (contentType.startsWith('video/') || /\.(mp4|mov|webm)$/.test(name)) {
+    return FileVideo
+  }
+
+  if (contentType.startsWith('audio/') || /\.(mp3|wav|ogg)$/.test(name)) {
+    return FileAudio
+  }
+
+  if (
+    contentType.includes('zip') ||
+    contentType.includes('compressed') ||
+    /\.(zip|rar|7z)$/.test(name)
+  ) {
+    return Archive
+  }
+
+  return FileText
+}
+
 function normalizeAttachments(attachments: StudentAttachment[]) {
   return attachments.map((attachment) => ({
     tipo: attachment.tipo ?? UPLOADED_FILE_ATTACHMENT_TYPE,
@@ -189,31 +222,32 @@ function getFeedbackEstado(feedback?: StudentCurrentFeedback | null) {
   if (estado === 1 || estado === '1' || estado === 'aprobado') {
     return {
       label: 'Aprobado',
-      iconClass: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+      intent: 'approved' as const,
+      title: 'Tu entrega fue aprobada',
+      iconClass:
+        'border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
       badgeClass:
-        'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-      cardClass:
-        'border-emerald-500/20 bg-emerald-500/[0.07] shadow-[0_18px_44px_-24px_rgba(16,185,129,0.25)]',
+        'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300',
     }
   }
 
   if (estado === 2 || estado === '2' || estado === 'rehacer') {
     return {
-      label: 'Rehacer',
+      label: 'Necesita cambios',
+      intent: 'redo' as const,
+      title: 'Tu profe pidió algunos cambios',
       iconClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
       badgeClass:
         'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-300',
-      cardClass:
-        'border-amber-500/25 bg-amber-500/[0.08] shadow-[0_18px_44px_-24px_rgba(245,158,11,0.24)]',
     }
   }
 
   return {
     label: 'Feedback',
+    intent: 'neutral' as const,
+    title: 'Mensaje de tu profe',
     iconClass: 'bg-primary/10 text-primary',
     badgeClass: 'border-primary/15 bg-primary/10 text-primary',
-    cardClass:
-      'border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]',
   }
 }
 
@@ -310,57 +344,66 @@ function AttachmentLink({
 }) {
   const name = safeText(attachment.nombre) ?? 'Adjunto'
   const size = formatBytes(attachment.sizeBytes)
+  const AttachmentIcon = getAttachmentIcon(attachment)
+  const rowClassName =
+    'flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/50 bg-background/60 px-3 py-2 transition-all hover:border-primary/25 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
+  const content = (
+    <>
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/10">
+        <AttachmentIcon className="size-4.5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold text-foreground">
+          {name}
+        </span>
+        <span className="block text-xs text-muted-foreground">
+          {size ?? attachment.contentType ?? 'Archivo'}
+        </span>
+      </span>
+    </>
+  )
 
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/75 px-3 py-3 transition-all hover:border-primary/20 hover:bg-card">
+  if (!onRemove) {
+    return (
       <a
         href={attachment.url ?? '#'}
         target="_blank"
         rel="noreferrer"
-        className="flex min-w-0 items-center gap-3"
+        className={rowClassName}
       >
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <FileText className="size-4" />
+        <span className="flex min-w-0 flex-1 items-center gap-3">
+          {content}
         </span>
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-semibold text-foreground">
-            {name}
-          </span>
-          <span className="block text-xs text-muted-foreground">
-            {size ?? attachment.contentType ?? 'Archivo'}
-          </span>
-        </span>
+        <Download className="size-4 shrink-0 text-muted-foreground" />
+      </a>
+    )
+  }
+
+  return (
+    <div className={rowClassName}>
+      <a
+        href={attachment.url ?? '#'}
+        target="_blank"
+        rel="noreferrer"
+        className="flex min-w-0 flex-1 items-center gap-3"
+      >
+        {content}
       </a>
 
-      {onRemove ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={onRemove}
-          disabled={removing}
-          className="shrink-0 text-muted-foreground hover:text-destructive"
-        >
-          {removing ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Trash2 className="size-4" />
-          )}
-        </Button>
-      ) : (
-        <Download className="size-4 shrink-0 text-muted-foreground" />
-      )}
-    </div>
-  )
-}
-
-function EmptyBox({ text }: { text: string }) {
-  return (
-    <div className="rounded-[24px] border border-dashed border-border/70 bg-muted/20 px-5 py-8 text-center">
-      <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-        <Paperclip className="size-5" />
-      </div>
-      <p className="mt-3 text-sm font-medium text-muted-foreground">{text}</p>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        onClick={onRemove}
+        disabled={removing}
+        className="shrink-0 text-muted-foreground hover:text-destructive"
+      >
+        {removing ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Trash2 className="size-4" />
+        )}
+      </Button>
     </div>
   )
 }
@@ -399,7 +442,10 @@ export function StudentTaskDetail({
         setState({ loading: false, error: null, task })
         setText(getDeliveryContent(task.miEntrega))
         setAttachments(task.miEntrega?.adjuntos ?? [])
-        setShowForm(!task.miEntrega)
+        setShowForm(
+          (!task.miEntrega && task.vencida !== true) ||
+            getFeedbackEstado(task.miEntrega?.feedbackVigente).intent === 'redo',
+        )
       })
       .catch((error) => {
         if (!mounted) return
@@ -436,6 +482,116 @@ export function StudentTaskDetail({
   const teacherName = getTeacherName(task)
   const announcementTeacherName = getAnnouncementTeacherName(task)
   const createdAt = formatDate(task?.createdAtUtc)
+  const feedbackNeedsChanges = feedbackEstado.intent === 'redo'
+  const feedbackApproved = feedbackEstado.intent === 'approved'
+  const taskStatusLabel = feedbackNeedsChanges
+    ? 'Necesita cambios'
+    : feedbackApproved
+      ? 'Aprobada'
+    : currentDelivery
+      ? 'Entregada'
+      : task?.vencida
+        ? 'Se venció'
+        : 'Para entregar'
+  const taskStatusClassName = feedbackNeedsChanges
+    ? 'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-300'
+    : feedbackApproved
+      ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300'
+    : currentDelivery
+      ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300'
+      : task?.vencida
+        ? 'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+        : 'border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300'
+  const taskStatusTextClassName = feedbackNeedsChanges
+    ? 'text-amber-700 dark:text-amber-300'
+    : feedbackApproved
+      ? 'text-emerald-800 dark:text-emerald-300'
+    : currentDelivery
+      ? 'text-emerald-800 dark:text-emerald-300'
+      : task?.vencida
+        ? 'text-rose-700 dark:text-rose-300'
+        : 'text-sky-700 dark:text-sky-300'
+  const saveButtonLabel = currentDelivery
+    ? feedbackNeedsChanges
+      ? 'Volver a entregar'
+      : 'Guardar cambios'
+    : 'Entregar tarea'
+  const actionState = feedbackNeedsChanges
+    ? {
+        title: 'Tu profe pidió cambios',
+        description: 'Revisá el mensaje y corregí tu entrega.',
+        cta: 'Corregir entrega',
+        icon: AlertCircle,
+        className:
+          'border-amber-500/30 bg-amber-500/[0.08] text-amber-900 dark:text-amber-100',
+        iconClassName: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+        buttonClassName: 'bg-amber-600 text-white hover:bg-amber-700',
+      }
+    : feedbackApproved
+      ? {
+          title: 'Tu profe aprobó tu entrega',
+          description: 'Tu trabajo ya está revisado.',
+          cta: 'Ver entrega',
+          icon: CheckCircle2,
+          className:
+            'border-emerald-200 bg-card text-foreground dark:border-emerald-500/20 dark:bg-card dark:text-foreground',
+          iconClassName:
+            'border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
+          buttonClassName: '',
+        }
+      : currentDelivery
+        ? {
+            title: 'Tu tarea está entregada',
+            description: 'Podés revisar o editar lo que enviaste.',
+            cta: 'Editar entrega',
+            icon: CheckCircle2,
+            className:
+              'border-emerald-300 bg-card text-foreground dark:border-emerald-500/25',
+            iconClassName:
+              'border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
+            buttonClassName: '',
+          }
+        : task?.vencida
+          ? {
+              title: 'La fecha ya pasó',
+              description: 'Leé la consigna y consultá con tu profe si hace falta.',
+              cta: null,
+              icon: AlertCircle,
+              className:
+                'border-rose-500/25 bg-rose-500/[0.06] text-rose-900 dark:text-rose-100',
+              iconClassName: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+              buttonClassName: '',
+            }
+          : {
+              title: 'Tenés que entregar esta tarea',
+              description: 'Leé la consigna, usá los materiales y enviá tu trabajo.',
+              cta: 'Entregar tarea',
+              icon: Clock3,
+              className:
+                'border-sky-500/25 bg-sky-500/[0.06] text-sky-900 dark:text-sky-100',
+              iconClassName: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
+              buttonClassName: '',
+            }
+  const ActionIcon = actionState.icon
+
+  useEffect(() => {
+    if (!task) return
+
+    const fallbackSubtitle = safeText(task.cursoNombre) ?? 'Blossom Institute · Alumno'
+
+    window.dispatchEvent(
+      new CustomEvent('app-header:update', {
+        detail: {
+          title: safeText(task.cursoNombre) ?? (isAnnouncement ? 'Anuncio' : 'Tarea'),
+          subtitle: safeText(task.cursoNombre)
+            ? isAnnouncement
+              ? 'Anuncio'
+              : 'Tarea'
+            : fallbackSubtitle,
+        },
+      }),
+    )
+  }, [isAnnouncement, task])
 
   async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? [])
@@ -507,10 +663,322 @@ export function StudentTaskDetail({
     }
   }
 
+  function renderActionPanel() {
+    return (
+      <section
+        className={cn(
+          'rounded-[22px] border p-5 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.22)]',
+          actionState.className,
+        )}
+      >
+        <div className="flex items-start gap-3">
+          <span
+            className={cn(
+              'flex size-11 shrink-0 items-center justify-center rounded-2xl',
+              actionState.iconClassName,
+            )}
+          >
+            <ActionIcon className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold leading-6 tracking-tight">
+              {actionState.title}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              {actionState.description}
+            </p>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          className={cn(
+            'mt-4 w-full rounded-xl focus-visible:ring-primary/30',
+            feedbackApproved ? 'h-9 text-sm' : 'h-11',
+            actionState.buttonClassName ||
+              'border-border/70 bg-background text-foreground hover:border-primary/20 hover:bg-muted/50 hover:text-foreground',
+          )}
+          variant={actionState.buttonClassName ? 'default' : 'outline'}
+          onClick={() => {
+            if (feedbackApproved || (task?.vencida && !currentDelivery)) {
+              setShowForm(false)
+              return
+            }
+
+            setShowForm(true)
+          }}
+        >
+          {actionState.cta}
+        </Button>
+      </section>
+    )
+  }
+
+  function renderDeliveryPanel() {
+    return (
+      <section
+        id="tu-trabajo"
+        className={cn(
+          'rounded-[22px] border bg-card p-5',
+          feedbackNeedsChanges
+            ? 'border-amber-500/25'
+            : currentFeedback?.estado
+              ? 'border-emerald-300 dark:border-emerald-500/25'
+              : 'border-border/70',
+        )}
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              Tu trabajo
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {currentDelivery
+                ? 'Este es el estado de tu tarea.'
+                : 'Todavía no cargaste una entrega.'}
+            </p>
+          </div>
+
+          {currentDelivery ? (
+            <span
+              className={cn(
+                'inline-flex w-fit rounded-full border px-2.5 py-1 text-xs font-semibold',
+                currentFeedback ? feedbackEstado.badgeClass : taskStatusClassName,
+              )}
+            >
+              {currentFeedback ? feedbackEstado.label : 'Guardada'}
+            </span>
+          ) : null}
+        </div>
+
+        {currentDelivery ? (
+          <div className="mt-5 space-y-5">
+            <div className="relative pl-6 before:absolute before:left-2 before:top-2 before:h-full before:w-px before:bg-border">
+              <span className="absolute left-0 top-1 flex size-4 items-center justify-center rounded-full bg-primary">
+                <span className="size-1.5 rounded-full bg-primary-foreground" />
+              </span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                <h3 className="font-semibold tracking-tight text-foreground">
+                  Entregaste
+                </h3>
+                {deliveryDate ? (
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-muted-foreground">{deliveryDate}</span>
+                  </>
+                ) : null}
+                {deliveryStatus ? (
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="font-medium text-primary">{deliveryStatus}</span>
+                  </>
+                ) : null}
+              </div>
+
+              {deliveryContent ? (
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground/80">
+                  {deliveryContent}
+                </p>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Entrega sin texto.
+                </p>
+              )}
+
+              {currentFile ? (
+                <div className="mt-3">
+                  <AttachmentLink attachment={currentFile} />
+                </div>
+              ) : null}
+
+              {currentAttachments.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {currentAttachments.map((attachment, index) => (
+                    <AttachmentLink
+                      key={attachment.storageKey ?? attachment.url ?? index}
+                      attachment={attachment}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
+            Cuando entregues, vas a ver acá tu respuesta, tus archivos y el mensaje de tu profe.
+          </div>
+        )}
+
+        {currentFeedback ? (
+          <div
+            className={cn(
+              'mt-5 border-t pt-5',
+              feedbackNeedsChanges ? 'border-amber-500/20' : 'border-border/60',
+            )}
+          >
+            <div className="relative pl-6 before:absolute before:left-2 before:top-2 before:h-full before:w-px before:bg-border">
+              <span
+                className={cn(
+                  'absolute left-0 top-1 flex size-4 items-center justify-center rounded-full',
+                  feedbackNeedsChanges ? 'bg-amber-500' : 'bg-emerald-600',
+                )}
+              >
+                <span className="size-1.5 rounded-full bg-white" />
+              </span>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 items-start gap-2.5">
+                  <span
+                    className={cn(
+                      'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl',
+                      feedbackEstado.iconClass,
+                    )}
+                  >
+                    <MessageSquareText className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                      {feedbackNeedsChanges
+                        ? 'Tu profe pidió algunos cambios'
+                        : 'Mensaje de tu profe'}
+                    </h3>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {feedbackDate ?? 'Fecha de corrección no disponible'}
+                    </p>
+                  </div>
+                </div>
+
+                {feedbackNote ? (
+                  <span className="inline-flex w-fit rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-semibold text-foreground">
+                    Nota: {feedbackNote}
+                  </span>
+                ) : null}
+              </div>
+
+              {feedbackComment ? (
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground/85">
+                  {feedbackComment}
+                </p>
+              ) : null}
+
+              {feedbackAttachments.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {feedbackAttachments.map((attachment, index) => (
+                    <AttachmentLink
+                      key={attachment.storageKey ?? attachment.url ?? index}
+                      attachment={attachment}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : currentDelivery ? (
+          <p className="mt-5 border-t border-border/60 pt-4 text-sm text-muted-foreground">
+            Tu profe todavía no dejó comentarios.
+          </p>
+        ) : null}
+
+        {currentDelivery ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-5 h-10 w-full rounded-xl border-border/70 bg-background text-foreground hover:border-primary/20 hover:bg-muted/50 hover:text-foreground focus-visible:ring-primary/30 sm:w-fit"
+            onClick={() => setShowForm((current) => !current)}
+          >
+            {showForm ? 'Cerrar edición' : feedbackNeedsChanges ? 'Volver a entregar' : 'Editar entrega'}
+            <ChevronDown
+              className={cn(
+                'size-4 transition-transform',
+                showForm ? 'rotate-180' : '',
+              )}
+            />
+          </Button>
+        ) : null}
+
+        {showForm ? (
+          <div className="mt-5 space-y-3">
+            <Textarea
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              placeholder="Escribí tu respuesta..."
+              className="min-h-32 rounded-xl bg-background/70 text-base"
+            />
+
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary">
+              {uploading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Upload className="size-4" />
+              )}
+              Subir adjunto
+              <Input
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleUpload}
+                disabled={uploading}
+              />
+            </label>
+
+            {attachments.length > 0 ? (
+              <div className="space-y-2">
+                {attachments.map((attachment, index) => (
+                  <AttachmentLink
+                    key={attachment.storageKey ?? attachment.url ?? index}
+                    attachment={attachment}
+                    removing={removingKey === (attachment.storageKey ?? String(index))}
+                    onRemove={() => handleRemove(attachment, index)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Podés agregar archivos si los necesitás.
+              </p>
+            )}
+
+            {formError ? (
+              <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-700 dark:text-rose-400">
+                {formError}
+              </p>
+            ) : null}
+
+            {success ? (
+              <p className="flex items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <CheckCircle2 className="size-4" />
+                {success}
+              </p>
+            ) : null}
+
+            <Button
+              type="button"
+              className="h-10 w-full rounded-xl sm:w-fit"
+              onClick={handleSave}
+              disabled={saving || uploading}
+            >
+              {saving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
+              {saveButtonLabel}
+            </Button>
+          </div>
+        ) : null}
+      </section>
+    )
+  }
+
   if (state.loading) {
     return (
-      <div className="grid min-h-[420px] place-items-center rounded-[32px] border border-border/60 bg-card/95">
-        <Loader2 className="size-8 animate-spin text-primary" />
+      <div className="grid min-h-[320px] place-items-center rounded-[24px] border border-border/60 bg-card/80 px-6 text-center">
+        <div>
+          <Loader2 className="mx-auto size-8 animate-spin text-primary" />
+          <p className="mt-4 text-sm font-medium text-muted-foreground">
+            Estamos cargando la publicación.
+          </p>
+        </div>
       </div>
     )
   }
@@ -520,10 +988,11 @@ export function StudentTaskDetail({
       <Card className="rounded-[30px] border border-border/60 bg-card/95">
         <CardContent className="px-6 py-14 text-center">
           <p className="text-sm font-medium text-muted-foreground">
-            {state.error ?? 'No se pudo cargar la tarea.'}
+            No pudimos cargar esta publicación.
           </p>
-          <Button asChild className="mt-5 rounded-xl">
-            <Link href={`/student/courses/${courseId}`}>Volver al curso</Link>
+          <Button asChild variant="ghost"
+  className="mt-5 rounded-xl text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground">
+            <Link href={`/student/courses/${courseId}`}>Volver al tablón</Link>
           </Button>
         </CardContent>
       </Card>
@@ -535,32 +1004,20 @@ export function StudentTaskDetail({
       <div className="mx-auto max-w-3xl space-y-5">
         <Button
           asChild
-          variant="ghost"
-          className="rounded-xl px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+         variant="ghost"
+  className="mt-5 rounded-xl text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
         >
           <Link href={`/student/courses/${courseId}`}>
             <ArrowLeft className="size-4" />
-            Volver al curso
+            Volver al tablón
           </Link>
         </Button>
 
-        <article className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.08)] sm:p-6">
-          <header className="flex items-start justify-between gap-4">
+        <article className="rounded-[24px] border border-violet-500/15 bg-card p-5 sm:p-6">
+          <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground">
-                {announcementTeacherName ? (
-                  <span className="text-xs font-semibold text-primary">
-                    {announcementTeacherName
-                      .split(' ')
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((part) => part[0])
-                      .join('')
-                      .toUpperCase()}
-                  </span>
-                ) : (
-                  <Megaphone className="size-4" />
-                )}
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300">
+                <Megaphone className="size-5" />
               </div>
 
               <div className="min-w-0">
@@ -571,24 +1028,24 @@ export function StudentTaskDetail({
                 </p>
                 {createdAt ? (
                   <time className="mt-0.5 block text-xs text-muted-foreground">
-                    {createdAt}
+                    Publicado {createdAt}
                   </time>
                 ) : null}
               </div>
             </div>
 
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border/70 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+            <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1.5 text-sm font-semibold text-violet-700 dark:text-violet-300">
               <Megaphone className="size-3" />
               Anuncio
             </span>
           </header>
 
-          <div className="mt-5 sm:ml-[52px]">
-            <h1 className="text-xl font-semibold leading-7 tracking-tight text-foreground sm:text-2xl">
+          <div className="mt-5">
+            <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
               {safeText(task.titulo) ?? 'Sin título'}
             </h1>
 
-            <div className="mt-3 text-sm leading-7 text-muted-foreground">
+            <div className="mt-4 text-base leading-7 text-foreground/85">
               {safeText(task.consigna) ?? safeText(task.descripcion) ? (
                 <p className="whitespace-pre-wrap">
                   {safeText(task.consigna) ?? safeText(task.descripcion)}
@@ -600,323 +1057,100 @@ export function StudentTaskDetail({
           </div>
         </article>
 
-        <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
-          <h2 className="text-base font-semibold tracking-tight text-foreground">
-            Recursos
-          </h2>
-
-          <div className="mt-3 space-y-2">
-            {resources.length > 0 ? (
-              resources.map((resource, index) => (
+        {resources.length > 0 ? (
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold tracking-tight text-foreground">
+              Recursos
+            </h2>
+            <div className="space-y-2">
+              {resources.map((resource, index) => (
                 <AttachmentLink
                   key={resource.storageKey ?? resource.url ?? index}
                   attachment={resource}
                 />
-              ))
-            ) : (
-              <EmptyBox text="No hay recursos adjuntos para este anuncio." />
-            )}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.08)] sm:p-6">
+    <div className="mx-auto max-w-6xl space-y-6">
         <Button
           asChild
-          variant="ghost"
-          className="mb-5 rounded-xl px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+        variant="ghost"
+  className="mt-5 rounded-xl text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
         >
-          <Link href={`/student/courses/${courseId}`}>
-            <ArrowLeft className="size-4" />
-            Volver al curso
-          </Link>
-        </Button>
+        <Link href={`/student/courses/${courseId}`}>
+          <ArrowLeft className="size-4" />
+          Volver al tablón
+        </Link>
+      </Button>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={cn(
-              'inline-flex rounded-full border px-2.5 py-1 text-xs font-medium',
-              task.vencida
-                ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
-                : 'border-emerald-500/15 bg-emerald-500/10 text-emerald-700/80 dark:text-emerald-400/80'
-            )}
-          >
-            {task.vencida ? 'Vencida' : 'En fecha'}
-          </span>
-
-          {dueDate ? (
-            <span className="inline-flex rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-              Entrega {dueDate}
-            </span>
-          ) : null}
-        </div>
-
-        <h1 className="mt-4 text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+      <header className="space-y-2">
+        <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
           {safeText(task.titulo) ?? 'Sin título'}
         </h1>
 
-        <div className="mt-5 border-t border-border/60 pt-5 text-sm leading-7 text-muted-foreground">
-          {safeText(task.consigna) ? (
-            <p className="whitespace-pre-wrap">{task.consigna}</p>
-          ) : (
-            <EmptyBox text="Esta tarea no tiene consigna cargada." />
-          )}
-        </div>
-      </section>
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="space-y-6">
-          <Card className="rounded-2xl border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.08)]">
-            <CardContent className="p-5">
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Recursos
-              </h2>
-
-              <div className="mt-4 space-y-3">
-                {resources.length > 0 ? (
-                  resources.map((resource, index) => (
-                    <AttachmentLink
-                      key={resource.storageKey ?? resource.url ?? index}
-                      attachment={resource}
-                    />
-                  ))
-                ) : (
-                  <EmptyBox text="No hay recursos adjuntos para esta tarea." />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <aside className="space-y-6">
-          {currentFeedback ? (
-            <Card className={cn('rounded-2xl', feedbackEstado.cardClass)}>
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <span
-                      className={cn(
-                        'flex size-10 shrink-0 items-center justify-center rounded-xl',
-                        feedbackEstado.iconClass
-                      )}
-                    >
-                      <MessageSquareText className="size-5" />
-                    </span>
-                    <div className="min-w-0">
-                      <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                        Feedback del profesor
-                      </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {feedbackDate ?? 'Fecha de correccion no disponible'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <span
-                    className={cn(
-                      'shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium',
-                      feedbackEstado.badgeClass
-                    )}
-                  >
-                    {feedbackEstado.label}
-                  </span>
-                </div>
-
-                {feedbackNote ? (
-                  <div className="mt-4 rounded-xl border border-border/60 bg-background/70 px-4 py-3">
-                    <p className="text-xs font-medium text-muted-foreground">
-                      Nota
-                    </p>
-                    <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-                      {feedbackNote}
-                    </p>
-                  </div>
-                ) : null}
-
-                {feedbackComment ? (
-                  <div className="mt-4 rounded-xl border border-border/60 bg-background/75 p-4">
-                    <p className="text-sm font-semibold text-foreground">
-                      Comentario
-                    </p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                      {feedbackComment}
-                    </p>
-                  </div>
-                ) : null}
-
-                {feedbackAttachments.length > 0 ? (
-                  <div className="mt-4 space-y-2">
-                    {feedbackAttachments.map((attachment, index) => (
-                      <AttachmentLink
-                        key={attachment.storageKey ?? attachment.url ?? index}
-                        attachment={attachment}
-                      />
-                    ))}
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+          {dueDate ? (
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarCheck2 className="size-3.5" />
+              Vence el {dueDate}
+            </span>
           ) : null}
+          {dueDate ? <span aria-hidden="true">·</span> : null}
+          <span
+            className={cn(
+              'font-semibold',
+              taskStatusTextClassName,
+            )}
+          >
+            {taskStatusLabel}
+          </span>
+        </div>
+      </header>
 
-          <Card className="rounded-2xl border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.08)]">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                    Mi entrega
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {currentDelivery
-                      ? 'Ya tenes una entrega registrada.'
-                      : 'Todavia no guardaste una entrega.'}
-                  </p>
-                </div>
-
-                {currentDelivery ? (
-                  <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
-                    Guardada
-                  </span>
-                ) : null}
-              </div>
-
-              {currentDelivery ? (
-                <div className="mt-5 space-y-4 rounded-[24px] border border-border/60 bg-background/75 p-4">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold tracking-tight text-foreground">
-                        Ultima entrega
-                      </p>
-                      {deliveryDate ? (
-                        <span className="rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                          {deliveryDate}
-                        </span>
-                      ) : null}
-                      {deliveryStatus ? (
-                        <span className="rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                          {deliveryStatus}
-                        </span>
-                      ) : null}
-                    </div>
-
-                    {deliveryContent ? (
-                      <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                        {deliveryContent}
-                      </p>
-                    ) : (
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        Sin contenido de texto.
-                      </p>
-                    )}
-                  </div>
-
-                  {currentFile ? <AttachmentLink attachment={currentFile} /> : null}
-
-                  {currentAttachments.length > 0 ? (
-                    <div className="space-y-2">
-                      {currentAttachments.map((attachment, index) => (
-                        <AttachmentLink
-                          key={attachment.storageKey ?? attachment.url ?? index}
-                          attachment={attachment}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {currentDelivery ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-5 h-11 w-full rounded-2xl"
-                  onClick={() => setShowForm((current) => !current)}
-                >
-                  {showForm ? 'Ocultar formulario' : 'Actualizar entrega'}
-                  <ChevronDown
-                    className={cn(
-                      'size-4 transition-transform',
-                      showForm ? 'rotate-180' : ''
-                    )}
-                  />
-                </Button>
-              ) : null}
-
-              {showForm ? (
-              <div className="mt-5 space-y-3">
-                <Textarea
-                  value={text}
-                  onChange={(event) => setText(event.target.value)}
-                  placeholder="Escribi tu respuesta..."
-                  className="min-h-36 rounded-2xl bg-background/70"
-                />
-
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-4 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary">
-                  {uploading ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Upload className="size-4" />
-                  )}
-                  Subir adjunto
-                  <Input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleUpload}
-                    disabled={uploading}
-                  />
-                </label>
-
-                {attachments.length > 0 ? (
-                  <div className="space-y-2">
-                    {attachments.map((attachment, index) => (
-                      <AttachmentLink
-                        key={attachment.storageKey ?? attachment.url ?? index}
-                        attachment={attachment}
-                        removing={removingKey === (attachment.storageKey ?? String(index))}
-                        onRemove={() => handleRemove(attachment, index)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyBox text="No agregaste adjuntos todavia." />
-                )}
-
-                {formError ? (
-                  <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-700 dark:text-rose-400">
-                    {formError}
-                  </p>
-                ) : null}
-
-                {success ? (
-                  <p className="flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                    <CheckCircle2 className="size-4" />
-                    {success}
-                  </p>
-                ) : null}
-
-                <Button
-                  type="button"
-                  className="h-11 w-full rounded-2xl"
-                  onClick={handleSave}
-                  disabled={saving || uploading}
-                >
-                  {saving ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Save className="size-4" />
-                  )}
-                  Guardar entrega
-                </Button>
-              </div>
-              ) : null}
-            </CardContent>
-          </Card>
-
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <aside className="order-1 space-y-4 lg:sticky lg:top-6 lg:order-2">
+          {renderActionPanel()}
+          {renderDeliveryPanel()}
         </aside>
+
+        <div className="order-2 space-y-8 lg:order-1">
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              Consigna
+            </h2>
+            {safeText(task.consigna) ? (
+              <p className="whitespace-pre-wrap text-base leading-7 text-foreground/85">
+                {task.consigna}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Esta tarea no tiene consigna cargada.
+              </p>
+            )}
+          </section>
+
+          {resources.length > 0 ? (
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                Materiales
+              </h2>
+              <div className="space-y-2">
+                {resources.map((resource, index) => (
+                  <AttachmentLink
+                    key={resource.storageKey ?? resource.url ?? index}
+                    attachment={resource}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </div>
       </div>
     </div>
   )

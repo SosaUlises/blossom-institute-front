@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import {
+  AlertCircle,
   BookOpen,
   CalendarCheck2,
   CheckCircle2,
   ClipboardList,
+  Clock3,
   FileText,
   Megaphone,
   Paperclip,
@@ -205,7 +207,7 @@ async function loadSection(courseId: number, section: string) {
   const result = await response.json().catch(() => null)
 
   if (!response.ok) {
-    throw new Error(result?.message || 'No se pudo cargar la seccion.')
+    throw new Error(result?.message || 'No se pudo cargar la sección.')
   }
 
   const items = asItems(result)
@@ -230,7 +232,7 @@ function displayValue(value: unknown): string | null {
   }
 
   if (typeof value === 'number' && Number.isFinite(value)) return String(value)
-  if (typeof value === 'boolean') return value ? 'Si' : 'No'
+  if (typeof value === 'boolean') return value ? 'Sí' : 'No'
 
   if (Array.isArray(value)) {
     return value.length > 0 ? `${value.length} registros` : null
@@ -297,32 +299,78 @@ function getAttendanceBadgeClass(value: unknown) {
   return badgeStyles.neutral
 }
 
-function getTaskBadgeClass(item: StudentCourseSectionItem) {
-  const status = getTaskBadgeLabel(item)
-
-  if (status === 'Rehacer') {
-    return 'border-amber-400/35 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'
-  }
-
-  if (status === 'Entregada') {
-    return 'border-emerald-500/15 bg-transparent text-emerald-700 dark:text-emerald-400'
-  }
-
-  if (status === 'Vencida') {
-    return 'border-rose-500/20 bg-rose-50/60 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
-  }
-
-  return 'border-border/60 bg-muted/25 text-muted-foreground'
+type TaskStatus = {
+  label: string
+  actionLabel: string
+  icon: React.ComponentType<{ className?: string }>
+  badgeClassName: string
+  iconClassName: string
+  accentClassName: string
 }
 
-function getTaskBadgeLabel(item: StudentCourseSectionItem) {
-  const hasDueDate = hasTaskDueDate(item)
+function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
+  if (item.feedbackPendienteAccion === true) {
+    return {
+      label: 'Necesita cambios',
+      actionLabel: 'Corregir',
+      icon: AlertCircle,
+      badgeClassName:
+        'border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300',
+      iconClassName:
+        'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+      accentClassName: 'bg-amber-400',
+    }
+  }
 
-  if (item.feedbackPendienteAccion === true) return 'Rehacer'
-  if (item.tieneEntrega === true) return 'Entregada'
-  if (item.vencida === true && !item.tieneEntrega) return 'Vencida'
-  if (hasDueDate) return 'Pendiente'
-  return 'Anuncio'
+  if (item.tieneEntrega === true) {
+    return {
+      label: 'Entregada',
+      actionLabel: 'Ver mi entrega',
+      icon: CheckCircle2,
+      badgeClassName:
+        'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+      iconClassName:
+        'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+      accentClassName: 'bg-emerald-500',
+    }
+  }
+
+  if (item.vencida === true && !item.tieneEntrega) {
+    return {
+      label: 'Se venció',
+      actionLabel: 'Ver tarea',
+      icon: AlertCircle,
+      badgeClassName:
+        'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300',
+      iconClassName:
+        'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300',
+      accentClassName: 'bg-rose-500',
+    }
+  }
+
+  if (hasTaskDueDate(item)) {
+    return {
+      label: 'Para entregar',
+      actionLabel: 'Hacer tarea',
+      icon: Clock3,
+      badgeClassName:
+        'border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+      iconClassName:
+        'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+      accentClassName: 'bg-sky-500',
+    }
+  }
+
+  return {
+    label: 'Anuncio',
+    actionLabel: 'Leer anuncio',
+    icon: Megaphone,
+    badgeClassName:
+      'border-violet-300/60 bg-violet-50/60 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300',
+    iconClassName:
+      'border-violet-300/60 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300',
+    accentClassName: 'bg-violet-300 dark:bg-violet-500',
+  }
 }
 
 function hasTaskDueDate(item: StudentCourseSectionItem) {
@@ -367,7 +415,7 @@ function getTaskDueMeta(item: StudentCourseSectionItem) {
 
   if (item.vencida === true) {
     return {
-      label: `Vencida · ${dueDate}`,
+      label: `Se venció · ${dueDate}`,
       className: 'text-rose-700 dark:text-rose-400',
     }
   }
@@ -476,65 +524,86 @@ function TaskPostCard({
 }) {
   const announcement = isAnnouncement(item)
   const teacherName = getTeacherDisplayName(item)
-  const title = getValue(item, ['titulo', 'nombre', 'tareaTitulo']) ?? 'Sin titulo'
+  const title = getValue(item, ['titulo', 'nombre', 'tareaTitulo']) ?? 'Sin título'
   const description = getValue(item, ['descripcion', 'consigna'])
   const taskId = item.tareaId ?? item.id
-  const status = getTaskBadgeLabel(item)
+  const status = getTaskStatus(item)
+  const StatusIcon = status.icon
   const dueMeta = getTaskDueMeta(item)
   const createdAt = formatCompactDate(item.createdAtUtc)
   const resourceLabel = getResourceLabel(item)
+  const ctaClassName =
+    'inline-flex h-9 w-full items-center justify-center rounded-xl border border-border/70 bg-background px-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/20 hover:bg-muted/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:w-fit'
 
   if (!announcement) {
     return (
-      <article className="rounded-xl border border-border/60 bg-muted/30 transition-colors hover:border-border hover:bg-muted/40">
-        <div className="flex flex-col gap-3.5 p-4 sm:flex-row sm:items-center sm:gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground">
-            <FileText className="size-4" />
+      <article className="group relative overflow-hidden rounded-[24px] border border-border/70 bg-card shadow-[0_14px_34px_-28px_rgba(15,23,42,0.25)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/20 hover:shadow-[0_20px_44px_-30px_rgba(15,23,42,0.32)]">
+        <div
+          className={cn(
+            'absolute inset-y-4 left-0 w-1.5 rounded-r-full',
+            status.accentClassName,
+          )}
+        />
+
+        <div className="flex flex-col gap-4 p-4 pl-5 sm:flex-row sm:items-start sm:gap-4 sm:p-5 sm:pl-6">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm">
+            <FileText className="size-5" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium leading-5 text-muted-foreground">
-              {teacherName} publicó una nueva tarea
+            <p className="text-sm font-medium leading-5 text-muted-foreground">
+              Tarea de {teacherName}
             </p>
-            <p className="truncate text-[15px] font-semibold leading-6 text-foreground">
+            <h3 className="mt-1 line-clamp-2 text-lg font-semibold leading-6 tracking-tight text-foreground">
               {title}
-            </p>
+            </h3>
+            {description ? (
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                {description}
+              </p>
+            ) : null}
 
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-              {createdAt ? <time>{createdAt}</time> : null}
-              {createdAt ? <span aria-hidden="true">·</span> : null}
-              <span className={cn('inline-flex items-center gap-1.5 font-medium', dueMeta.className)}>
-                <CalendarCheck2 className="size-3.5" />
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/75 px-2.5 py-1 font-medium',
+                  dueMeta.className,
+                )}
+              >
+                <CalendarCheck2 className="size-4" />
                 {dueMeta.label}
               </span>
               {resourceLabel ? (
-                <>
-                <span aria-hidden="true">·</span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Paperclip className="size-3.5" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/75 px-2.5 py-1 font-medium">
+                  <Paperclip className="size-4" />
                   {resourceLabel}
                 </span>
-                </>
+              ) : null}
+              {createdAt ? (
+                <time className="inline-flex items-center rounded-full px-1 text-xs">
+                  Publicada {createdAt}
+                </time>
               ) : null}
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center justify-between gap-2 sm:justify-end">
+          <div className="flex shrink-0 flex-col gap-3 sm:min-w-36 sm:items-end">
             <span
               className={cn(
-                'inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[11px] font-medium',
-                getTaskBadgeClass(item),
+                'inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold',
+                status.badgeClassName,
               )}
             >
-              {status}
+              <StatusIcon className="size-4" />
+              {status.label}
             </span>
 
             {taskId != null ? (
               <Link
                 href={`/student/courses/${courseId}/tasks/${taskId}`}
-                className="inline-flex h-8 w-fit items-center justify-center rounded-full border border-border/70 bg-background/70 px-3 text-sm font-medium text-foreground transition-colors hover:border-primary/20 hover:bg-muted/50 hover:text-primary"
+                className={ctaClassName}
               >
-                Ver detalle
+                {status.actionLabel}
               </Link>
             ) : null}
           </div>
@@ -544,21 +613,21 @@ function TaskPostCard({
   }
 
   return (
-    <article className="rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.08)] transition-colors hover:border-primary/20">
+    <article className="group rounded-[24px] border border-violet-200/70 bg-card shadow-[0_12px_30px_-30px_rgba(15,23,42,0.18)] transition-all duration-200 hover:-translate-y-[1px] hover:border-violet-300/70 hover:shadow-[0_18px_40px_-34px_rgba(15,23,42,0.24)] dark:border-violet-500/15 dark:hover:border-violet-500/25">
       <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-primary/10 bg-primary/10 text-xs font-semibold text-primary">
-              {getInitials(teacherName) || '?'}
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50/70 text-violet-700 shadow-sm dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
+              <Megaphone className="size-5" />
             </div>
 
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium leading-5 text-muted-foreground">
-                {teacherName} publicó {announcement ? 'un anuncio' : 'una tarea'}
+              <p className="text-sm font-medium leading-5 text-muted-foreground">
+                Anuncio de {teacherName}
               </p>
               {createdAt ? (
                 <time className="mt-0.5 block text-xs leading-5 text-muted-foreground">
-                  {createdAt}
+                  Publicado {createdAt}
                 </time>
               ) : null}
             </div>
@@ -566,17 +635,17 @@ function TaskPostCard({
 
           <span
             className={cn(
-              'inline-flex w-fit shrink-0 items-center rounded-full border px-2 py-0.5 text-xs font-medium',
-              getTaskBadgeClass(item),
+              'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold',
+              status.badgeClassName,
             )}
           >
-            <Megaphone className="mr-1 size-3" />
-            {status}
+            <StatusIcon className="size-4" />
+            {status.label}
           </span>
         </div>
 
         <div className="mt-4 sm:ml-12">
-          <h3 className="text-[15px] font-semibold leading-6 text-foreground">
+          <h3 className="line-clamp-2 text-lg font-semibold leading-6 tracking-tight text-foreground">
             {title}
           </h3>
           {description ? (
@@ -588,14 +657,8 @@ function TaskPostCard({
 
         <div className="mt-4 flex flex-col gap-2 border-t border-border/60 pt-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-            {!announcement ? (
-              <span className={cn('inline-flex items-center gap-1.5 font-medium', dueMeta.className)}>
-                <CalendarCheck2 className="size-4" />
-                {dueMeta.label}
-              </span>
-            ) : null}
             {resourceLabel ? (
-              <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/75 px-2.5 py-1 font-medium">
                 <Paperclip className="size-4" />
                 {resourceLabel}
               </span>
@@ -605,9 +668,12 @@ function TaskPostCard({
           {taskId != null ? (
             <Link
               href={`/student/courses/${courseId}/tasks/${taskId}`}
-                className="inline-flex h-8 w-fit items-center justify-center rounded-full border border-border/70 bg-background/70 px-3 text-sm font-medium text-foreground transition-colors hover:border-primary/20 hover:bg-muted/50 hover:text-primary"
+              className={cn(
+                ctaClassName,
+                'hover:text-violet-700 dark:hover:text-violet-300',
+              )}
             >
-              Ver detalle
+              {status.actionLabel}
             </Link>
           ) : null}
         </div>
@@ -699,7 +765,7 @@ function renderSectionCard(
   if (tab === 'grades') {
     return (
       <SectionCard
-        title={safeText(item.titulo) ?? 'Sin titulo'}
+        title={safeText(item.titulo) ?? 'Sin título'}
         badge={item.nota != null ? `Nota ${displayValue(item.nota)}` : null}
         badgeClassName={getGradeBadgeClass(item.nota)}
         description={safeText(item.descripcion)}

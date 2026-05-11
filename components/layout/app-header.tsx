@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Moon, PanelLeft, Sun } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
@@ -9,6 +10,11 @@ import { useSidebar } from '@/components/ui/sidebar'
 
 type AppHeaderProps = {
   title: string
+  subtitle?: string
+}
+
+type HeaderOverride = {
+  title?: string
   subtitle?: string
 }
 
@@ -67,8 +73,25 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
   const { toggleSidebar } = useSidebar()
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
-  const displayTitle = titleLabels[title] ?? title
-  const displaySubtitle = subtitle ?? getHeaderSubtitle(pathname)
+  const [override, setOverride] = useState<HeaderOverride | null>(null)
+  const headerTitle = override?.title ?? title
+  const displayTitle = titleLabels[headerTitle] ?? headerTitle
+  const displaySubtitle = override?.subtitle ?? subtitle ?? getHeaderSubtitle(pathname)
+
+  useEffect(() => {
+    setOverride(null)
+
+    function handleHeaderUpdate(event: Event) {
+      const detail = (event as CustomEvent<HeaderOverride>).detail
+      setOverride(detail ?? null)
+    }
+
+    window.addEventListener('app-header:update', handleHeaderUpdate)
+
+    return () => {
+      window.removeEventListener('app-header:update', handleHeaderUpdate)
+    }
+  }, [pathname])
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
