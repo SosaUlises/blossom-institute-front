@@ -791,7 +791,7 @@ function TaskPostCard({
           )}
         />
 
-        <div className="flex flex-col gap-4 p-4 pl-5 sm:flex-row sm:items-start sm:gap-4 sm:p-5 sm:pl-6">
+        <div className="grid grid-cols-[auto,minmax(0,1fr)] gap-4 p-4 pl-5 sm:flex sm:items-start sm:gap-4 sm:p-5 sm:pl-6">
           <StudentIconContainer
             icon={FileText}
             className="border-primary/15 bg-primary/10 text-primary"
@@ -801,11 +801,11 @@ function TaskPostCard({
             <p className="text-sm font-medium leading-5 text-muted-foreground">
               Tarea de {teacherName}
             </p>
-            <h3 className="mt-1 line-clamp-2 text-lg font-semibold leading-6 tracking-tight text-foreground">
+            <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-6 tracking-tight text-foreground sm:line-clamp-2">
               {title}
             </h3>
             {description ? (
-              <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
+              <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground sm:line-clamp-2">
                 {description}
               </p>
             ) : null}
@@ -832,7 +832,7 @@ function TaskPostCard({
             </StudentMetaRow>
           </div>
 
-          <div className="flex shrink-0 flex-col gap-3 sm:min-w-36 sm:items-end">
+          <div className="col-span-full flex shrink-0 flex-col gap-3 sm:col-span-auto sm:min-w-36 sm:items-end">
             <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
               {status.label}
             </StudentStatusBadge>
@@ -853,7 +853,7 @@ function TaskPostCard({
 
   return (
     <article className={cn('group', studentUi.card.feed, 'border-violet-200/70 hover:border-violet-300/70 dark:border-violet-500/15 dark:hover:border-violet-500/25')}>
-      <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-4 sm:p-5">
+      <div className="grid grid-cols-[auto,minmax(0,1fr)] gap-4 p-4 sm:flex sm:items-start sm:gap-4 sm:p-5">
         <StudentIconContainer
           icon={Megaphone}
           className="border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300"
@@ -863,7 +863,7 @@ function TaskPostCard({
           <p className="text-sm font-medium leading-5 text-muted-foreground">
             Anuncio de {teacherName}
           </p>
-          <h3 className="mt-1 line-clamp-2 text-lg font-semibold leading-6 tracking-tight text-foreground">
+          <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-6 tracking-tight text-foreground sm:line-clamp-2">
             {title}
           </h3>
           {description ? (
@@ -886,7 +886,7 @@ function TaskPostCard({
           </StudentMetaRow>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-2 sm:min-w-28 sm:items-end">
+        <div className="col-span-full flex shrink-0 flex-col gap-2 sm:col-span-auto sm:min-w-28 sm:items-end">
           <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
             {status.label}
           </StudentStatusBadge>
@@ -917,7 +917,7 @@ function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
   const description = getValue(item, ['descripcionClase']) ?? 'Clase registrada.'
 
   return (
-    <article className="relative pl-9">
+    <article className="relative pl-7 sm:pl-9">
       <span
         className={cn(
           'absolute left-0 top-5 z-10 flex size-4 items-center justify-center rounded-full ring-4 ring-card',
@@ -982,16 +982,16 @@ function AttendanceSummary({
   ]
 
   return (
-    <div className="grid gap-2 sm:grid-cols-3">
+    <div className="grid grid-cols-3 gap-2">
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className={cn(studentUi.card.item, 'flex min-h-24 flex-col justify-center px-4 py-3', stat.className)}
+          className={cn(studentUi.card.item, 'flex min-h-20 flex-col justify-center px-3 py-3 sm:min-h-24 sm:px-4', stat.className)}
         >
-          <p className="text-3xl font-semibold leading-none tracking-tight">
+          <p className="text-2xl font-semibold leading-none tracking-tight sm:text-3xl">
             {stat.value}
           </p>
-          <p className="mt-2 text-xs font-medium text-muted-foreground">{stat.label}</p>
+          <p className="mt-2 text-[11px] font-medium leading-4 text-muted-foreground sm:text-xs">{stat.label}</p>
         </div>
       ))}
     </div>
@@ -1007,7 +1007,7 @@ function AttendanceHistory({
     <section className="space-y-5">
       <AttendanceSummary items={items} />
 
-      <div className="relative space-y-3 before:absolute before:left-2 before:bottom-5 before:top-5 before:w-px before:bg-border/50">
+      <div className="relative space-y-3 before:absolute before:left-2 before:bottom-5 before:top-5 before:w-px before:bg-border/50 sm:space-y-4">
         {items.map((item, index) => (
           <AttendanceRow
             key={String(item.id ?? item.asistenciaId ?? item.claseId ?? index)}
@@ -1069,9 +1069,9 @@ function ClassmatePersonCard({
           {getInitials(name) || '?'}
         </StudentIconContainer>
 
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-[15px] font-semibold leading-5 tracking-tight text-foreground">
+            <h3 className="min-w-0 text-[15px] font-semibold leading-5 tracking-tight text-foreground">
               {name}
             </h3>
             <span className={cn(studentUi.badge.compact, 'border-border/60 bg-muted/30 text-muted-foreground')}>
@@ -1194,14 +1194,14 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
 
         <div
           className={cn(
-            'flex w-full shrink-0 items-center justify-between rounded-2xl border px-4 py-3 sm:w-36 sm:flex-col sm:items-start sm:justify-center',
+            'flex w-full shrink-0 flex-col items-start gap-2 rounded-2xl border px-4 py-3 sm:w-36 sm:justify-center',
             tone.panelClassName,
           )}
         >
           <p className="text-xs font-semibold uppercase tracking-[0.12em] opacity-80">
             Nota final
           </p>
-          <div className="flex items-baseline gap-2 sm:mt-2 sm:block">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 sm:mt-2 sm:block">
             <p className="text-3xl font-semibold leading-none tracking-tight">
               {Number.isFinite(grade) ? gradeDisplay : '-'}
             </p>
@@ -1528,7 +1528,7 @@ export function StudentCourseDetail({
                 type="button"
                 onClick={() => setTab(key)}
                 className={cn(
-                  'group -mb-px inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                  'group -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-2.5 py-2 text-sm font-medium transition-colors sm:px-3',
                   active
                     ? 'border-primary text-foreground'
                     : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
@@ -1551,7 +1551,7 @@ export function StudentCourseDetail({
         ) : (
           <div className={studentUi.card.panel}>
             {panelHeader ? (
-              <div className="border-b border-border/60 px-6 py-5">
+              <div className="border-b border-border/60 px-4 py-4 sm:px-6 sm:py-5">
                 <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
                   {panelHeader.title}
                 </h2>
@@ -1561,7 +1561,7 @@ export function StudentCourseDetail({
               </div>
             ) : null}
 
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
             <SectionList
               tab={tab}
               state={sectionState}

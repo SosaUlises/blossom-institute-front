@@ -351,7 +351,7 @@ function AttachmentLink({
   const size = formatBytes(attachment.sizeBytes)
   const AttachmentIcon = getAttachmentIcon(attachment)
   const rowClassName =
-    cn('flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/50 bg-background/60 px-3 py-2 transition-colors hover:border-primary/25 hover:bg-primary/5', studentUi.focus)
+    cn('flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/50 bg-background/60 px-3 py-2 transition-colors hover:border-primary/25 hover:bg-primary/5 sm:min-h-11', studentUi.focus)
   const content = (
     <>
       <StudentIconContainer
@@ -360,7 +360,7 @@ function AttachmentLink({
         className="size-10 rounded-lg border-transparent bg-primary/10 text-primary ring-1 ring-primary/10"
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-foreground">
+        <span className="block truncate text-sm font-semibold leading-5 text-foreground">
           {name}
         </span>
         <span className="block text-xs text-muted-foreground">
@@ -698,7 +698,7 @@ export function StudentTaskDetail({
           type="button"
           className={cn(
             'mt-4 w-full rounded-xl focus-visible:ring-primary/30',
-            feedbackApproved ? 'h-9 text-sm' : 'h-11',
+            feedbackApproved ? 'h-10 text-sm sm:h-9' : 'h-11',
             actionState.buttonClassName ||
               'border-border/70 bg-background text-foreground hover:border-primary/20 hover:bg-muted/50 hover:text-foreground',
           )}
@@ -1001,7 +1001,7 @@ export function StudentTaskDetail({
 
   if (isAnnouncement) {
     return (
-      <div className="mx-auto max-w-3xl space-y-5">
+    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-5">
         <Button
           asChild
           variant="ghost"
@@ -1021,7 +1021,7 @@ export function StudentTaskDetail({
                 className="border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300"
               />
 
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-muted-foreground">
                   {announcementTeacherName
                     ? `${announcementTeacherName} publicó un anuncio`
@@ -1080,12 +1080,12 @@ export function StudentTaskDetail({
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-        <Button
-          asChild
+    <div className="mx-auto max-w-6xl space-y-5 sm:space-y-6">
+      <Button
+        asChild
         variant="ghost"
         className={cn('mt-5', studentUi.button.ghost)}
-        >
+      >
         <Link href={`/student/courses/${courseId}`}>
           <ArrowLeft className="size-4" />
           Volver al tablón
@@ -1097,14 +1097,14 @@ export function StudentTaskDetail({
           {safeText(task.titulo) ?? 'Sin título'}
         </h1>
 
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm text-muted-foreground">
           {dueDate ? (
             <span className="inline-flex items-center gap-1.5">
               <CalendarCheck2 className="size-3.5" />
               Vence el {dueDate}
             </span>
           ) : null}
-          {dueDate ? <span aria-hidden="true">·</span> : null}
+          {dueDate ? <span className="hidden sm:inline" aria-hidden="true">·</span> : null}
           <span
             className={cn(
               'font-semibold',
@@ -1116,13 +1116,13 @@ export function StudentTaskDetail({
         </div>
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+      <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         <aside className="order-1 space-y-4 lg:sticky lg:top-6 lg:order-2">
           {renderActionPanel()}
           {renderDeliveryPanel()}
         </aside>
 
-        <div className="order-2 space-y-8 lg:order-1">
+        <div className="order-2 space-y-7 sm:space-y-8 lg:order-1">
           <section className="space-y-3">
             <h2 className="text-lg font-semibold tracking-tight text-foreground">
               Consigna

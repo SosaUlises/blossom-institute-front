@@ -19,17 +19,17 @@ export const studentUi = {
   },
   badge: {
     status:
-      'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold',
+      'inline-flex max-w-full w-fit shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-left text-sm font-semibold leading-5',
     secondary:
-      'inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/75 px-2.5 py-1 text-sm font-medium text-muted-foreground',
+      'inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-background/75 px-2.5 py-1 text-left text-sm font-medium leading-5 text-muted-foreground',
     compact:
       'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
   },
   button: {
     secondaryCta:
-      'inline-flex h-9 w-full items-center justify-center rounded-xl border border-border/70 bg-background px-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/20 hover:bg-muted/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:w-fit',
+      'inline-flex h-10 w-full items-center justify-center rounded-xl border border-border/70 bg-background px-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/20 hover:bg-muted/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:h-9 sm:w-fit',
     violetCta:
-      'inline-flex h-9 w-full items-center justify-center rounded-xl border border-violet-200/70 bg-transparent px-3 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-50 hover:text-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/25 sm:w-fit dark:border-violet-500/20 dark:text-violet-300 dark:hover:bg-violet-500/10 dark:hover:text-violet-200',
+      'inline-flex h-10 w-full items-center justify-center rounded-xl border border-violet-200/70 bg-transparent px-3 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-50 hover:text-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/25 sm:h-9 sm:w-fit dark:border-violet-500/20 dark:text-violet-300 dark:hover:bg-violet-500/10 dark:hover:text-violet-200',
     ghost:
       'rounded-xl text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:ring-primary/30',
   },
