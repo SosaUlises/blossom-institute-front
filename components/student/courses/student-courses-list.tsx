@@ -5,9 +5,13 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   BookOpen,
   CalendarRange,
+  CalendarClock,
   ChevronRight,
+  ClipboardList,
   Inbox,
+  Megaphone,
   Search,
+  UserRound,
 } from 'lucide-react'
 
 import { Card, CardContent } from '@/components/ui/card'
@@ -36,9 +40,9 @@ import { cn } from '@/lib/utils'
 const SELECT_ALL = 'all'
 
 const ESTADO_OPTIONS = [
-  { value: String(EstadoCurso.Activo), label: 'Activo' },
-  { value: String(EstadoCurso.Inactivo), label: 'Inactivo' },
-  { value: String(EstadoCurso.Archivado), label: 'Archivado' },
+  { value: String(EstadoCurso.Activo), label: 'En curso' },
+  { value: String(EstadoCurso.Inactivo), label: 'Pausado' },
+  { value: String(EstadoCurso.Archivado), label: 'Finalizado' },
 ] as const
 
 const ESTADO_CONFIG: Record<
@@ -46,19 +50,19 @@ const ESTADO_CONFIG: Record<
   { label: string; dot: string; pill: string }
 > = {
   [EstadoCurso.Activo]: {
-    label: 'Activo',
+    label: 'En curso',
     dot: 'bg-emerald-500',
     pill:
       'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
   },
   [EstadoCurso.Inactivo]: {
-    label: 'Inactivo',
+    label: 'Pausado',
     dot: 'bg-amber-500',
     pill:
       'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400',
   },
   [EstadoCurso.Archivado]: {
-    label: 'Archivado',
+    label: 'Finalizado',
     dot: 'bg-slate-400',
     pill:
       'border-slate-400/20 bg-slate-500/10 text-slate-600 dark:text-slate-400',
@@ -84,19 +88,107 @@ function getText(course: StudentCourseListItem, keys: string[]) {
   return null
 }
 
-function getUsefulMeta(course: StudentCourseListItem) {
-  return (
-    getText(course, ['profesorPrincipal', 'profesorNombre', 'teacherName']) ??
-    getText(course, ['tareasPendientes', 'tareasPendientesCount']) ??
-    getText(course, ['promedio', 'promedioGeneral']) ??
-    getText(course, ['proximaClase', 'proximaClaseFecha']) ??
-    getText(course, ['asistencia', 'porcentajeAsistencia'])
-  )
+function getNumber(course: StudentCourseListItem, keys: string[]) {
+  for (const key of keys) {
+    const value = course[key]
+    const numberValue =
+      typeof value === 'number'
+        ? value
+        : typeof value === 'string' && value.trim()
+          ? Number(value)
+          : Number.NaN
+
+    if (Number.isFinite(numberValue)) return numberValue
+  }
+
+  return null
+}
+
+function getTeacherName(course: StudentCourseListItem) {
+  const fullName = getText(course, [
+    'profesorPrincipal',
+    'profesorNombreCompleto',
+    'teacherName',
+  ])
+
+  if (fullName) return fullName
+
+  const firstName = getText(course, ['profesorNombre', 'teacherFirstName'])
+  const lastName = getText(course, ['profesorApellido', 'teacherLastName'])
+
+  return [firstName, lastName].filter(Boolean).join(' ').trim() || null
+}
+
+function getAcademicHighlights(course: StudentCourseListItem) {
+  const pendingTasks = getNumber(course, [
+    'tareasPendientes',
+    'tareasPendientesCount',
+    'pendingTasks',
+  ])
+  const nextClass = getText(course, [
+    'proximaClase',
+    'proximaClaseFecha',
+    'nextClass',
+    'nextClassDate',
+  ])
+  const latestPost = getText(course, [
+    'ultimaPublicacion',
+    'ultimaNovedad',
+    'lastPost',
+    'lastAnnouncement',
+  ])
+  const attendance = getText(course, ['asistencia', 'porcentajeAsistencia'])
+
+  const highlights: Array<{
+    icon: React.ComponentType<{ className?: string }>
+    label: string
+    tone: string
+  }> = []
+
+  if (pendingTasks != null) {
+    highlights.push({
+      icon: ClipboardList,
+      label:
+        pendingTasks > 0
+          ? `${pendingTasks} ${pendingTasks === 1 ? 'tarea para entregar' : 'tareas para entregar'}`
+          : 'Sin tareas pendientes',
+      tone:
+        pendingTasks > 0
+          ? 'border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-300'
+          : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+    })
+  }
+
+  if (nextClass) {
+    highlights.push({
+      icon: CalendarClock,
+      label: `Próxima clase: ${nextClass}`,
+      tone: 'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+    })
+  }
+
+  if (latestPost) {
+    highlights.push({
+      icon: Megaphone,
+      label: `Última novedad: ${latestPost}`,
+      tone: 'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300',
+    })
+  }
+
+  if (highlights.length === 0 && attendance) {
+    highlights.push({
+      icon: CalendarRange,
+      label: `Asistencia: ${attendance}`,
+      tone: 'border-border/60 bg-muted/25 text-muted-foreground',
+    })
+  }
+
+  return highlights.slice(0, 2)
 }
 
 function EstadoBadge({ estado }: { estado?: number }) {
   const config = ESTADO_CONFIG[estado as EstadoCurso] ?? {
-    label: 'Desconocido',
+    label: 'Sin estado',
     dot: 'bg-muted-foreground',
     pill: 'border-border/60 bg-muted/40 text-muted-foreground',
   }
@@ -104,7 +196,7 @@ function EstadoBadge({ estado }: { estado?: number }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
         config.pill,
       )}
     >
@@ -129,15 +221,37 @@ function MetaPill({
   )
 }
 
+function AcademicPill({
+  icon: Icon,
+  label,
+  tone,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  tone: string
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold leading-5',
+        tone,
+      )}
+    >
+      <Icon className="size-3.5 shrink-0" />
+      <span className="truncate">{label}</span>
+    </span>
+  )
+}
+
 function CourseCardSkeleton() {
   return (
-    <li className="rounded-[30px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.12)]">
+    <li className="rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.12)]">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="h-14 w-14 animate-pulse rounded-[20px] bg-muted/60" />
+          <div className="h-12 w-12 animate-pulse rounded-2xl bg-muted/60" />
           <div className="space-y-2">
-            <div className="h-4 w-16 animate-pulse rounded-lg bg-muted/40" />
-            <div className="h-8 w-40 animate-pulse rounded-lg bg-muted/60" />
+            <div className="h-7 w-44 animate-pulse rounded-lg bg-muted/60" />
+            <div className="h-4 w-32 animate-pulse rounded-lg bg-muted/40" />
           </div>
         </div>
         <div className="h-7 w-24 animate-pulse rounded-full bg-muted/50" />
@@ -148,7 +262,7 @@ function CourseCardSkeleton() {
         <div className="h-8 w-28 animate-pulse rounded-full bg-muted/40" />
       </div>
 
-      <div className="mt-6 h-16 animate-pulse rounded-[22px] bg-muted/40" />
+      <div className="mt-5 h-11 animate-pulse rounded-2xl bg-muted/40" />
     </li>
   )
 }
@@ -156,52 +270,76 @@ function CourseCardSkeleton() {
 function CourseCard({ course }: { course: StudentCourseListItem }) {
   const courseId = getCourseId(course)
   const courseName = getCourseName(course)
-  const usefulMeta = getUsefulMeta(course)
+  const teacherName = getTeacherName(course)
+  const highlights = getAcademicHighlights(course)
 
   return (
     <li>
       <Link
         href={`/student/courses/${courseId ?? 0}`}
-        className="group block rounded-[30px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-[2px] hover:border-primary/20 hover:shadow-[0_26px_54px_-24px_rgba(15,23,42,0.24)]"
+        className="group block rounded-[28px] border border-border/60 bg-card/95 p-4 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.12)] transition-all duration-300 ease-out hover:-translate-y-[2px] hover:border-primary/20 hover:shadow-[0_26px_54px_-24px_rgba(15,23,42,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:p-5"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-[20px] border border-primary/10 bg-primary/8 text-primary shadow-sm transition-all duration-300 group-hover:scale-[1.03] group-hover:bg-primary/10">
-              <BookOpen className="size-6" />
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-primary/8 text-primary shadow-sm transition-all duration-300 group-hover:scale-[1.03] group-hover:bg-primary/10">
+              <BookOpen className="size-5" />
             </div>
 
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary/75">
-                Curso
-              </p>
-              <h3 className="mt-2 truncate text-[2.1rem] font-semibold leading-none tracking-tight text-foreground">
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[1.7rem]">
                 {courseName}
               </h3>
+              {teacherName ? (
+                <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                  <UserRound className="size-3.5 shrink-0" />
+                  <span className="truncate">Con {teacherName}</span>
+                </p>
+              ) : (
+                <p className="mt-1 text-sm font-medium text-muted-foreground">
+                  Tu aula del curso
+                </p>
+              )}
             </div>
           </div>
 
           <EstadoBadge estado={course.estado} />
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2.5">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           {course.anio != null ? (
             <MetaPill icon={CalendarRange}>Año {course.anio}</MetaPill>
           ) : null}
 
-          {usefulMeta ? (
-            <span className="inline-flex rounded-full border border-border/60 bg-muted/[0.22] px-3 py-1.5 text-xs font-medium text-muted-foreground">
-              {usefulMeta}
-            </span>
+          {highlights.map((highlight) => (
+            <AcademicPill
+              key={highlight.label}
+              icon={highlight.icon}
+              label={highlight.label}
+              tone={highlight.tone}
+            />
+          ))}
+
+          {highlights.length === 0 ? (
+            <AcademicPill
+              icon={BookOpen}
+              label="Aula lista para entrar"
+              tone="border-border/60 bg-muted/25 text-muted-foreground"
+            />
           ) : null}
         </div>
 
-        <div className="mt-4 rounded-[20px] border border-border/60 bg-muted/[0.14] px-4 py-3 transition-all duration-200 group-hover:border-primary/20 group-hover:bg-primary/[0.06]">
+        <div className="mt-4 rounded-2xl border border-border/60 bg-muted/[0.14] px-4 py-3 transition-all duration-200 ease-out group-hover:border-primary/20 group-hover:bg-primary/[0.06]">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-foreground">
-              Entrar al curso
-            </p>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                Entrar al aula
+              </p>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                Ver tablón, clases y tareas
+              </p>
+            </div>
 
-            <div className="flex size-9 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground transition-all duration-200 group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/10 group-hover:text-primary">
+            <div className="flex size-9 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground transition-all duration-200 ease-out group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/10 group-hover:text-primary">
               <ChevronRight className="size-4" />
             </div>
           </div>
@@ -250,15 +388,15 @@ export function StudentCoursesList() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-[28px] border border-border/60 bg-card/70 p-4 shadow-[0_16px_36px_-24px_rgba(15,23,42,0.14)] backdrop-blur-sm">
-        <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_0.7fr]">
+      <div className="rounded-[24px] border border-border/50 bg-card/55 p-3 shadow-[0_12px_30px_-26px_rgba(15,23,42,0.14)] backdrop-blur-sm">
+        <div className="grid gap-2.5 sm:grid-cols-[1fr_140px] lg:grid-cols-[1fr_140px_180px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input
-              placeholder="Buscar curso..."
+              placeholder="Buscar un aula..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-12 rounded-2xl border-border/60 bg-background/80 pl-10 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15"
+              className="h-11 rounded-2xl border-border/60 bg-background/80 pl-10 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15"
             />
           </div>
 
@@ -269,16 +407,16 @@ export function StudentCoursesList() {
             min={2000}
             max={2100}
             onChange={(e) => setAnio(e.target.value)}
-            className="h-12 rounded-2xl border-border/60 bg-background/80 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15"
+            className="h-11 rounded-2xl border-border/60 bg-background/80 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15"
           />
 
           <Select value={estado} onValueChange={setEstado}>
-            <SelectTrigger className="h-12 rounded-2xl border-border/60 bg-background/80 px-4 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-border/80 focus:ring-2 focus:ring-primary/15 data-[state=open]:border-primary/30 data-[state=open]:ring-2 data-[state=open]:ring-primary/10">
-              <SelectValue placeholder="Todos los estados" />
+            <SelectTrigger className="h-11 rounded-2xl border-border/60 bg-background/80 px-4 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-border/80 focus:ring-2 focus:ring-primary/15 data-[state=open]:border-primary/30 data-[state=open]:ring-2 data-[state=open]:ring-primary/10 sm:col-span-2 lg:col-span-1">
+              <SelectValue placeholder="Todos los cursos" />
             </SelectTrigger>
 
             <SelectContent className="rounded-2xl border-border/60 bg-card/98 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
-              <SelectItem value={SELECT_ALL}>Todos los estados</SelectItem>
+              <SelectItem value={SELECT_ALL}>Todos los cursos</SelectItem>
               {ESTADO_OPTIONS.map(({ value, label }) => (
                 <SelectItem key={value} value={value}>
                   {label}
@@ -304,12 +442,12 @@ export function StudentCoursesList() {
               </EmptyMedia>
               <EmptyHeader>
                 <EmptyTitle>
-                  {hasActiveFilters ? 'Sin resultados' : 'Sin cursos asignados'}
+                  {hasActiveFilters ? 'No encontramos cursos' : 'Todavía no tenés cursos'}
                 </EmptyTitle>
                 <EmptyDescription>
                   {hasActiveFilters
-                    ? 'No se encontraron cursos con esos filtros.'
-                    : 'Todavia no tenes cursos asignados.'}
+                    ? 'Probá cambiar la búsqueda o los filtros.'
+                    : 'Cuando te sumen a un curso, va a aparecer acá.'}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>

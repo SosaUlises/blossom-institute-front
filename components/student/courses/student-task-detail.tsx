@@ -248,7 +248,7 @@ function getFeedbackEstado(feedback?: StudentCurrentFeedback | null) {
   }
 
   return {
-    label: 'Feedback',
+    label: 'Mensaje',
     intent: 'neutral' as const,
     title: 'Mensaje de tu profe',
     iconClass: 'bg-primary/10 text-primary',
@@ -268,7 +268,7 @@ async function fetchTask(courseId: number, taskId: number) {
   const result = await response.json().catch(() => null)
 
   if (!response.ok) {
-    throw new Error(result?.message || 'No se pudo cargar la tarea.')
+    throw new Error(result?.message || 'No pudimos cargar esta tarea.')
   }
 
   return unwrap<StudentTask>(result)
@@ -287,7 +287,7 @@ async function uploadAttachment(file: File) {
   const result = await response.json().catch(() => null)
 
   if (!response.ok) {
-    throw new Error(result?.message || 'No se pudo subir el archivo.')
+    throw new Error(result?.message || 'No pudimos subir el archivo.')
   }
 
   return unwrap<StudentAttachment>(result)
@@ -305,7 +305,7 @@ async function deleteAttachment(storageKey: string) {
   const result = await response.json().catch(() => null)
 
   if (!response.ok) {
-    throw new Error(result?.message || 'No se pudo quitar el archivo.')
+    throw new Error(result?.message || 'No pudimos quitar el archivo.')
   }
 }
 
@@ -332,7 +332,7 @@ async function saveDelivery(
   const result = await response.json().catch(() => null)
 
   if (!response.ok) {
-    throw new Error(result?.message || 'No se pudo guardar la entrega.')
+    throw new Error(result?.message || 'No pudimos guardar tu entrega.')
   }
 
   return result
@@ -351,7 +351,7 @@ function AttachmentLink({
   const size = formatBytes(attachment.sizeBytes)
   const AttachmentIcon = getAttachmentIcon(attachment)
   const rowClassName =
-    cn('flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/50 bg-background/60 px-3 py-2 transition-colors hover:border-primary/25 hover:bg-primary/5 sm:min-h-11', studentUi.focus)
+    cn('flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/50 bg-background/60 px-3 py-2 transition-colors duration-200 ease-out hover:border-primary/25 hover:bg-primary/5 sm:min-h-11', studentUi.focus)
   const content = (
     <>
       <StudentIconContainer
@@ -403,7 +403,7 @@ function AttachmentLink({
         size="icon-sm"
         onClick={onRemove}
         disabled={removing}
-        className="shrink-0 text-muted-foreground hover:text-destructive"
+        className="shrink-0 text-muted-foreground transition-colors duration-200 ease-out hover:bg-destructive/10 hover:text-destructive"
       >
         {removing ? (
           <Loader2 className="size-4 animate-spin" />
@@ -459,7 +459,7 @@ export function StudentTaskDetail({
 
         setState({
           loading: false,
-          error: error instanceof Error ? error.message : 'No se pudo cargar.',
+          error: error instanceof Error ? error.message : 'No pudimos abrir esta tarea.',
           task: null,
         })
       })
@@ -520,13 +520,13 @@ export function StudentTaskDetail({
         : 'text-sky-700 dark:text-sky-300'
   const saveButtonLabel = currentDelivery
     ? feedbackNeedsChanges
-      ? 'Volver a entregar'
+      ? 'Enviar corrección'
       : 'Guardar cambios'
     : 'Entregar tarea'
   const actionState = feedbackNeedsChanges
     ? {
         title: 'Tu profe pidió cambios',
-        description: 'Revisá el mensaje y corregí tu entrega.',
+        description: 'Leé el mensaje de tu profe y mandá una nueva versión.',
         cta: 'Corregir entrega',
         icon: AlertCircle,
         className:
@@ -537,7 +537,7 @@ export function StudentTaskDetail({
     : feedbackApproved
       ? {
           title: 'Tu profe aprobó tu entrega',
-          description: 'Tu trabajo ya está revisado.',
+          description: 'Tu trabajo ya fue revisado. Podés volver a verlo cuando quieras.',
           cta: 'Ver entrega',
           icon: CheckCircle2,
           className:
@@ -549,7 +549,7 @@ export function StudentTaskDetail({
       : currentDelivery
         ? {
             title: 'Tu tarea está entregada',
-            description: 'Podés revisar o editar lo que enviaste.',
+            description: 'Podés revisar lo que mandaste o hacer un cambio.',
             cta: 'Editar entrega',
             icon: CheckCircle2,
             className:
@@ -561,7 +561,7 @@ export function StudentTaskDetail({
         : task?.vencida
           ? {
               title: 'La fecha ya pasó',
-              description: 'Leé la consigna y consultá con tu profe si hace falta.',
+              description: 'Podés leer la consigna y hablar con tu profe si necesitás ayuda.',
               cta: null,
               icon: AlertCircle,
               className:
@@ -571,7 +571,7 @@ export function StudentTaskDetail({
             }
           : {
               title: 'Tenés que entregar esta tarea',
-              description: 'Leé la consigna, usá los materiales y enviá tu trabajo.',
+              description: 'Leé la consigna, mirá los materiales y mandá tu trabajo.',
               cta: 'Entregar tarea',
               icon: Clock3,
               className:
@@ -613,7 +613,7 @@ export function StudentTaskDetail({
       setAttachments((current) => [...current, ...uploaded])
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : 'No se pudo subir el archivo.'
+        error instanceof Error ? error.message : 'No pudimos subir el archivo.'
       )
     } finally {
       setUploading(false)
@@ -636,7 +636,7 @@ export function StudentTaskDetail({
       )
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : 'No se pudo quitar el archivo.'
+        error instanceof Error ? error.message : 'No pudimos quitar el archivo.'
       )
     } finally {
       setRemovingKey(null)
@@ -650,7 +650,7 @@ export function StudentTaskDetail({
     setSuccess(null)
 
     if (!trimmedText && attachments.length === 0) {
-      setFormError('Agrega texto o al menos un adjunto para guardar la entrega.')
+      setFormError('Escribí una respuesta o agregá un archivo para poder entregar.')
       return
     }
 
@@ -658,12 +658,12 @@ export function StudentTaskDetail({
 
     try {
       await saveDelivery(courseId, taskId, trimmedText, attachments)
-      setSuccess('Entrega guardada correctamente.')
+      setSuccess('Listo, tu entrega quedó guardada.')
       router.refresh()
       router.push(`/student/courses/${courseId}`)
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : 'No se pudo guardar la entrega.'
+        error instanceof Error ? error.message : 'No pudimos guardar tu entrega.'
       )
     } finally {
       setSaving(false)
@@ -700,7 +700,7 @@ export function StudentTaskDetail({
             'mt-4 w-full rounded-xl focus-visible:ring-primary/30',
             feedbackApproved ? 'h-10 text-sm sm:h-9' : 'h-11',
             actionState.buttonClassName ||
-              'border-border/70 bg-background text-foreground hover:border-primary/20 hover:bg-muted/50 hover:text-foreground',
+              'border-border/70 bg-background text-foreground transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-muted/50 hover:text-foreground active:scale-[0.99]',
           )}
           variant={actionState.buttonClassName ? 'default' : 'outline'}
           onClick={() => {
@@ -738,8 +738,8 @@ export function StudentTaskDetail({
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {currentDelivery
-                ? 'Este es el estado de tu tarea.'
-                : 'Todavía no cargaste una entrega.'}
+                ? 'Acá ves lo que mandaste y el mensaje de tu profe.'
+                : 'Todavía no entregaste esta tarea.'}
             </p>
           </div>
 
@@ -750,7 +750,7 @@ export function StudentTaskDetail({
                 currentFeedback ? feedbackEstado.badgeClass : taskStatusClassName,
               )}
             >
-              {currentFeedback ? feedbackEstado.label : 'Guardada'}
+              {currentFeedback ? feedbackEstado.label : 'Entregada'}
             </StudentStatusBadge>
           ) : null}
         </div>
@@ -785,7 +785,7 @@ export function StudentTaskDetail({
                 </p>
               ) : (
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Entrega sin texto.
+                  Entregaste archivos, sin texto escrito.
                 </p>
               )}
 
@@ -809,7 +809,7 @@ export function StudentTaskDetail({
           </div>
         ) : (
           <div className="mt-5 rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
-            Cuando entregues, vas a ver acá tu respuesta, tus archivos y el mensaje de tu profe.
+            Cuando entregues, acá vas a ver tu respuesta, tus archivos y el mensaje de tu profe.
           </div>
         )}
 
@@ -844,7 +844,7 @@ export function StudentTaskDetail({
                         : 'Mensaje de tu profe'}
                     </h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {feedbackDate ?? 'Fecha de corrección no disponible'}
+                      {feedbackDate ?? 'Tu profe todavía no puso fecha'}
                     </p>
                   </div>
                 </div>
@@ -876,7 +876,7 @@ export function StudentTaskDetail({
           </div>
         ) : currentDelivery ? (
           <p className="mt-5 border-t border-border/60 pt-4 text-sm text-muted-foreground">
-            Tu profe todavía no dejó comentarios.
+            Tu profe todavía no dejó un mensaje.
           </p>
         ) : null}
 
@@ -887,10 +887,10 @@ export function StudentTaskDetail({
             className={cn('mt-5 h-10 w-full sm:w-fit', studentUi.button.secondaryCta)}
             onClick={() => setShowForm((current) => !current)}
           >
-            {showForm ? 'Cerrar edición' : feedbackNeedsChanges ? 'Volver a entregar' : 'Editar entrega'}
+            {showForm ? 'Cerrar edición' : feedbackNeedsChanges ? 'Enviar corrección' : 'Editar entrega'}
             <ChevronDown
               className={cn(
-                'size-4 transition-transform',
+                'size-4 transition-transform duration-200 ease-out',
                 showForm ? 'rotate-180' : '',
               )}
             />
@@ -898,7 +898,7 @@ export function StudentTaskDetail({
         ) : null}
 
         {showForm ? (
-          <div className="mt-5 space-y-3">
+          <div className="mt-5 space-y-3 animate-in fade-in-0 slide-in-from-top-1 duration-200">
             <Textarea
               value={text}
               onChange={(event) => setText(event.target.value)}
@@ -906,13 +906,13 @@ export function StudentTaskDetail({
               className="min-h-32 rounded-xl bg-background/70 text-base"
             />
 
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors duration-200 ease-out hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20">
               {uploading ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <Upload className="size-4" />
               )}
-              Subir adjunto
+              Agregar archivo
               <Input
                 type="file"
                 multiple
@@ -935,7 +935,7 @@ export function StudentTaskDetail({
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Podés agregar archivos si los necesitás.
+                Podés agregar archivos si te ayudan con la tarea.
               </p>
             )}
 
@@ -977,7 +977,7 @@ export function StudentTaskDetail({
         <div>
           <Loader2 className="mx-auto size-8 animate-spin text-primary" />
           <p className="mt-4 text-sm font-medium text-muted-foreground">
-            Estamos cargando la publicación.
+            Estamos abriendo esta publicación.
           </p>
         </div>
       </div>
@@ -989,7 +989,7 @@ export function StudentTaskDetail({
       <Card className={studentUi.card.panel}>
         <CardContent className="px-6 py-14 text-center">
           <p className="text-sm font-medium text-muted-foreground">
-            No pudimos cargar esta publicación.
+            No pudimos abrir esta publicación.
           </p>
           <Button asChild variant="ghost" className={cn('mt-5', studentUi.button.ghost)}>
             <Link href={`/student/courses/${courseId}`}>Volver al tablón</Link>
@@ -1024,7 +1024,7 @@ export function StudentTaskDetail({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-muted-foreground">
                   {announcementTeacherName
-                    ? `${announcementTeacherName} publicó un anuncio`
+                    ? `${announcementTeacherName} compartió un anuncio`
                     : 'Anuncio del curso'}
                 </p>
                 {createdAt ? (
@@ -1054,7 +1054,7 @@ export function StudentTaskDetail({
                   {safeText(task.consigna) ?? safeText(task.descripcion)}
                 </p>
               ) : (
-                <p>Sin contenido cargado.</p>
+                <p>Este anuncio todavía no tiene texto.</p>
               )}
             </div>
           </div>
@@ -1133,7 +1133,7 @@ export function StudentTaskDetail({
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Esta tarea no tiene consigna cargada.
+                Esta tarea todavía no tiene consigna.
               </p>
             )}
           </section>

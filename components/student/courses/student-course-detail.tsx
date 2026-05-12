@@ -60,25 +60,25 @@ const tabStyles: Record<
     label: 'Tablón',
     icon: ClipboardList,
     title: 'Tablón',
-    description: 'Publicaciones y actividades del curso.',
+    description: 'Novedades y tareas del curso.',
   },
   grades: {
     label: 'Calificaciones',
     icon: CheckCircle2,
     title: 'Calificaciones',
-    description: 'Notas registradas para este curso.',
+    description: 'Tus notas del curso.',
   },
   attendance: {
     label: 'Clases',
     icon: CalendarCheck2,
     title: 'Clases',
-    description: 'Clases y asistencia registradas para este curso.',
+    description: 'Tu camino en clase.',
   },
   people: {
     label: 'Personas',
     icon: Users,
     title: 'Personas',
-    description: 'Equipo docente y personas vinculadas al curso.',
+    description: 'Tus profes y compañeros.',
   },
 }
 
@@ -92,15 +92,15 @@ const sectionPaths: Partial<Record<Tab, string>> = {
 const panelHeaders: Partial<Record<Tab, { title: string; description: string }>> = {
   grades: {
     title: 'Calificaciones',
-    description: 'Notas registradas para este curso.',
+    description: 'Acá podés ver cómo vas en quizzes, tests, comportamiento y participación.',
   },
   attendance: {
     title: 'Historial de clases',
-    description: 'Estas son las clases registradas y tu asistencia.',
+    description: 'Acá ves tus clases y asistencias.',
   },
   people: {
     title: 'Personas del curso',
-    description: 'Acá ves quiénes comparten este curso con vos.',
+    description: 'Acá ves quiénes aprenden con vos y quiénes te acompañan.',
   },
 }
 
@@ -230,7 +230,7 @@ async function loadSection(courseId: number, section: string) {
   const result = await response.json().catch(() => null)
 
   if (!response.ok) {
-    throw new Error(result?.message || 'No se pudo cargar la sección.')
+    throw new Error(result?.message || 'No pudimos cargar esta parte del curso.')
   }
 
   const items = asItems(result)
@@ -258,7 +258,7 @@ function displayValue(value: unknown): string | null {
   if (typeof value === 'boolean') return value ? 'Sí' : 'No'
 
   if (Array.isArray(value)) {
-    return value.length > 0 ? `${value.length} registros` : null
+    return value.length > 0 ? `${value.length} elementos` : null
   }
 
   if (value && typeof value === 'object') {
@@ -331,7 +331,7 @@ function getGradeBadgeClass(value: unknown) {
 function getGradeFeedbackLabel(value: unknown) {
   const grade = Number(value)
 
-  if (!Number.isFinite(grade)) return 'Sin nota'
+  if (!Number.isFinite(grade)) return 'Sin nota todavía'
   if (grade >= 90) return 'Excelente'
   if (grade >= 80) return 'Muy bien'
   if (grade >= 65) return 'Bien'
@@ -506,7 +506,7 @@ function getAttendanceStatus(value: unknown): AttendanceStatus {
 
   return {
     key: 'unknown',
-    label: 'Sin asistencia cargada',
+    label: 'Sin asistencia todavía',
     icon: CalendarCheck2,
     badgeClassName:
       'border-border/70 bg-muted/35 text-muted-foreground',
@@ -542,7 +542,7 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
   if (item.tieneEntrega === true) {
     return {
       label: 'Entregada',
-      actionLabel: 'Ver mi entrega',
+      actionLabel: 'Ver entrega',
       icon: CheckCircle2,
       badgeClassName:
         'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
@@ -554,8 +554,8 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
 
   if (item.vencida === true && !item.tieneEntrega) {
     return {
-      label: 'Se venció',
-      actionLabel: 'Ver tarea',
+      label: 'Ya venció',
+      actionLabel: 'Ver consigna',
       icon: AlertCircle,
       badgeClassName:
         'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300',
@@ -625,14 +625,14 @@ function getTaskDueMeta(item: StudentCourseSectionItem) {
 
   if (item.tieneEntrega === true) {
     return {
-      label: `Vencía el ${dueDate}`,
+      label: `Vencía ${dueDate}`,
       className: 'text-emerald-700/75 dark:text-emerald-400/75',
     }
   }
 
   if (item.vencida === true) {
     return {
-      label: `Se venció · ${dueDate}`,
+      label: `Venció · ${dueDate}`,
       className: 'text-rose-700 dark:text-rose-400',
     }
   }
@@ -733,7 +733,7 @@ function SectionCard({
   action?: React.ReactNode
 }) {
   return (
-    <article className="rounded-[24px] border border-border/60 bg-background/75 p-4 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_40px_-24px_rgba(15,23,42,0.18)]">
+    <article className="rounded-[24px] border border-border/60 bg-background/75 p-4 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 ease-out hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_40px_-24px_rgba(15,23,42,0.18)]">
       <div className="flex items-start justify-between gap-4">
         <p className="min-w-0 truncate text-[15px] font-semibold tracking-tight text-foreground">
           {title}
@@ -799,7 +799,7 @@ function TaskPostCard({
 
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium leading-5 text-muted-foreground">
-              Tarea de {teacherName}
+            Tarea de {teacherName}
             </p>
             <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-6 tracking-tight text-foreground sm:line-clamp-2">
               {title}
@@ -914,7 +914,7 @@ function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
     formatDate(item.fechaClase) ??
     formatDate(item.claseFecha) ??
     'Fecha sin cargar.'
-  const description = getValue(item, ['descripcionClase']) ?? 'Clase registrada.'
+  const description = getValue(item, ['descripcionClase']) ?? 'Clase del curso.'
 
   return (
     <article className="relative pl-7 sm:pl-9">
@@ -965,7 +965,7 @@ function AttendanceSummary({
 
   const stats = [
     {
-      label: 'Clases registradas',
+      label: 'Clases',
       value: items.length,
       className: 'border-border/55 bg-background/75 text-foreground',
     },
@@ -1020,10 +1020,10 @@ function AttendanceHistory({
 }
 
 function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
-  const name = getFullName(item) ?? 'Sin nombre'
+  const name = getFullName(item) ?? 'Nombre no disponible'
 
   return (
-    <article className="rounded-[24px] border border-violet-200/60 bg-violet-50/35 p-4 transition-colors hover:border-violet-300/70 hover:bg-violet-50/55 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
+    <article className="rounded-[24px] border border-violet-200/60 bg-violet-50/35 p-4 transition-colors duration-200 ease-out hover:border-violet-300/70 hover:bg-violet-50/55 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
       <div className="flex items-center gap-3">
         <StudentIconContainer className="border-violet-200 bg-background/80 text-sm font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
           {getInitials(name) || '?'}
@@ -1038,7 +1038,7 @@ function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
               Profe
             </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Acompaña este curso</p>
+          <p className="mt-1 text-xs text-muted-foreground">Te acompaña en este curso</p>
         </div>
       </div>
     </article>
@@ -1052,13 +1052,13 @@ function ClassmatePersonCard({
   item: StudentCourseSectionItem
   currentStudentId?: number
 }) {
-  const name = getFullName(item) ?? 'Sin nombre'
+  const name = getFullName(item) ?? 'Nombre no disponible'
   const current = isCurrentStudent(item, currentStudentId)
 
   return (
     <article
       className={cn(
-        'rounded-[24px] border p-4 transition-colors hover:border-primary/15 hover:bg-card',
+        'rounded-[24px] border p-4 transition-colors duration-200 ease-out hover:border-primary/15 hover:bg-card',
         current
           ? 'border-primary/25 bg-primary/8'
           : 'border-border/60 bg-background/75',
@@ -1079,7 +1079,7 @@ function ClassmatePersonCard({
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {current ? 'Este sos vos' : 'Comparte este curso con vos'}
+            {current ? 'Este sos vos' : 'Aprende con vos'}
           </p>
         </div>
       </div>
@@ -1105,7 +1105,7 @@ function PeopleCommunity({
   const { teachers, classmates } = getPeopleGroups(items)
 
   if (teachers.length === 0 && classmates.length === 0) {
-    return <PeopleEmptyState text="Todavía no hay personas cargadas para este curso." />
+    return <PeopleEmptyState text="Todavía no se sumó nadie a este curso." />
   }
 
   return (
@@ -1124,7 +1124,7 @@ function PeopleCommunity({
             ))}
           </div>
         ) : (
-          <PeopleEmptyState text="Todavía no hay profes cargados." />
+          <PeopleEmptyState text="Todavía no hay profes en este curso." />
         )}
       </section>
 
@@ -1143,7 +1143,7 @@ function PeopleCommunity({
             ))}
           </div>
         ) : (
-          <PeopleEmptyState text="Todavía no hay compañeros cargados." />
+          <PeopleEmptyState text="Todavía no hay compañeros en este curso." />
         )}
       </section>
     </section>
@@ -1153,7 +1153,7 @@ function PeopleCommunity({
 function GradeCard({ item }: { item: StudentCourseSectionItem }) {
   const [skillsOpen, setSkillsOpen] = useState(false)
   const grade = Number(item.nota)
-  const gradeDisplay = displayValue(item.nota) ?? 'Sin nota'
+  const gradeDisplay = displayValue(item.nota) ?? 'Sin nota todavía'
   const tone = getGradeTone(item.nota)
   const feedbackLabel = getQualitativeGradeLabel(item.tipo, item.nota)
   const description = safeText(item.descripcion)
@@ -1217,20 +1217,20 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
             aria-expanded={skillsOpen}
             aria-controls={skillPanelId}
             onClick={() => setSkillsOpen((current) => !current)}
-            className={cn('flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted/40', studentUi.focus)}
+            className={cn('group flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm font-semibold text-foreground transition-colors duration-200 ease-out hover:bg-muted/40', studentUi.focus)}
           >
             <span>
-              {skillsOpen ? 'Ocultar detalle por skills' : 'Ver detalle por skills'}
+              {skillsOpen ? 'Ocultar detalle por skills' : 'Ver cómo te fue por skill'}
             </span>
             <ChevronDown
               className={cn(
-                'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                'size-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-hover:text-foreground',
                 skillsOpen && 'rotate-180',
               )}
             />
           </button>
           {skillsOpen ? (
-            <div id={skillPanelId} className="mt-3 space-y-3">
+            <div id={skillPanelId} className="mt-3 space-y-3 animate-in fade-in-0 slide-in-from-top-1 duration-200">
             {details.map((detail, index) => {
               const percent = getSkillPercent(detail)
               const clampedPercent = percent == null ? 0 : Math.min(100, Math.max(0, percent))
@@ -1248,7 +1248,7 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
                   </div>
                   <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                     <div
-                      className={cn('h-full rounded-full', tone.progressClassName)}
+                      className={cn('h-full rounded-full transition-[width] duration-500 ease-out', tone.progressClassName)}
                       style={{ width: `${clampedPercent}%` }}
                     />
                   </div>
@@ -1286,7 +1286,7 @@ function renderSectionCard(
 
     return (
       <SectionCard
-        title={fecha ?? 'Sin fecha'}
+        title={fecha ?? 'Fecha sin cargar'}
         badge={estado}
         badgeClassName={getAttendanceBadgeClass(estado)}
         description={getValue(item, ['descripcionClase'])}
@@ -1299,7 +1299,7 @@ function renderSectionCard(
 
   return (
     <SectionCard
-      title={getValue(item, ['titulo', 'nombre']) ?? 'Registro'}
+      title={getValue(item, ['titulo', 'nombre']) ?? 'Elemento del curso'}
       meta={[getValue(item, ['descripcion'])]}
     />
   )
@@ -1361,7 +1361,7 @@ function AttendanceEmptyState() {
     <div className={cn(studentUi.card.empty, 'px-5 py-10 text-center')}>
       <StudentIconContainer icon={CalendarCheck2} className="mx-auto border-transparent bg-primary/10 text-primary" />
       <p className="mt-3 text-sm font-medium text-muted-foreground">
-        Todavía no hay clases cargadas para este curso.
+        Todavía no hay clases para mostrar en este curso.
       </p>
     </div>
   )
@@ -1373,7 +1373,7 @@ function TaskFeedSkeleton() {
       {Array.from({ length: 3 }).map((_, index) => (
         <div
           key={index}
-          className="h-36 animate-pulse rounded-2xl border border-border/60 bg-muted/25"
+          className="h-36 animate-pulse rounded-[24px] border border-border/60 bg-muted/25"
         />
       ))}
     </div>
@@ -1425,18 +1425,18 @@ function SectionList({
   if (visibleItems.length === 0) {
     if (tab === 'attendance') return <AttendanceEmptyState />
     if (tab === 'tasks') {
-      return <EmptyPanel text="Todavía no hay publicaciones en el tablón." />
+      return <EmptyPanel text="Todavía no hay novedades ni tareas en el tablón." />
     }
 
     if (tab === 'grades') {
-      return <EmptyPanel text="Todavía no hay calificaciones de quizzes, tests o participación." />
+      return <EmptyPanel text="Todavía no hay notas de quizzes, tests o participación." />
     }
 
     if (tab === 'people') {
-      return <PeopleEmptyState text="Todavía no hay personas cargadas para este curso." />
+      return <PeopleEmptyState text="Todavía no se sumó nadie a este curso." />
     }
 
-    return <EmptyPanel text="No hay registros para mostrar." />
+    return <EmptyPanel text="Todavía no hay nada para mostrar acá." />
   }
 
   if (tab === 'attendance') {
@@ -1499,7 +1499,7 @@ export function StudentCourseDetail({
             loading: false,
             loaded: true,
             items: [],
-            error: error instanceof Error ? error.message : 'No se pudo cargar.',
+            error: error instanceof Error ? error.message : 'No pudimos cargar esta parte.',
           },
         }))
       })
@@ -1528,13 +1528,13 @@ export function StudentCourseDetail({
                 type="button"
                 onClick={() => setTab(key)}
                 className={cn(
-                  'group -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-2.5 py-2 text-sm font-medium transition-colors sm:px-3',
+                  'group -mb-px inline-flex min-h-10 items-center gap-2 rounded-t-xl border-b-2 px-2.5 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:px-3',
                   active
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
+                    ? 'border-primary bg-primary/5 text-foreground'
+                    : 'border-transparent text-muted-foreground hover:border-border hover:bg-muted/35 hover:text-foreground',
                 )}
               >
-                <Icon className="size-4" />
+                <Icon className="size-4 transition-transform duration-200 ease-out group-hover:-translate-y-0.5" />
                 <span>{tabConfig.label}</span>
               </button>
             )
