@@ -82,6 +82,21 @@ const sectionPaths: Partial<Record<Tab, string>> = {
   people: 'people',
 }
 
+const panelHeaders: Partial<Record<Tab, { title: string; description: string }>> = {
+  grades: {
+    title: 'Calificaciones',
+    description: 'Notas registradas para este curso.',
+  },
+  attendance: {
+    title: 'Historial de clases',
+    description: 'Estas son las clases registradas y tu asistencia.',
+  },
+  people: {
+    title: 'Personas del curso',
+    description: 'Acá ves quiénes comparten este curso con vos.',
+  },
+}
+
 const badgeStyles = {
   neutral: 'border-border/60 bg-muted/35 text-muted-foreground',
   emerald:
@@ -840,49 +855,30 @@ function TaskPostCard({
 
   return (
     <article className="group rounded-[24px] border border-violet-200/70 bg-card shadow-[0_12px_30px_-30px_rgba(15,23,42,0.18)] transition-all duration-200 hover:-translate-y-[1px] hover:border-violet-300/70 hover:shadow-[0_18px_40px_-34px_rgba(15,23,42,0.24)] dark:border-violet-500/15 dark:hover:border-violet-500/25">
-      <div className="p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50/70 text-violet-700 shadow-sm dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
-              <Megaphone className="size-5" />
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-sm font-medium leading-5 text-muted-foreground">
-                Anuncio de {teacherName}
-              </p>
-              {createdAt ? (
-                <time className="mt-0.5 block text-xs leading-5 text-muted-foreground">
-                  Publicado {createdAt}
-                </time>
-              ) : null}
-            </div>
-          </div>
-
-          <span
-            className={cn(
-              'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold',
-              status.badgeClassName,
-            )}
-          >
-            <StatusIcon className="size-4" />
-            {status.label}
-          </span>
+      <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-4 sm:p-5">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50/70 text-violet-700 shadow-sm dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
+          <Megaphone className="size-5" />
         </div>
 
-        <div className="mt-4 sm:ml-12">
-          <h3 className="line-clamp-2 text-lg font-semibold leading-6 tracking-tight text-foreground">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium leading-5 text-muted-foreground">
+            Anuncio de {teacherName}
+          </p>
+          <h3 className="mt-1 line-clamp-2 text-lg font-semibold leading-6 tracking-tight text-foreground">
             {title}
           </h3>
           {description ? (
-            <p className="mt-1 line-clamp-3 text-sm leading-6 text-muted-foreground">
+            <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
               {description}
             </p>
           ) : null}
-        </div>
 
-        <div className="mt-4 flex flex-col gap-2 border-t border-border/60 pt-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {createdAt ? (
+              <time className="inline-flex items-center rounded-full px-1 text-xs">
+                Publicado {createdAt}
+              </time>
+            ) : null}
             {resourceLabel ? (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/75 px-2.5 py-1 font-medium">
                 <Paperclip className="size-4" />
@@ -890,14 +886,23 @@ function TaskPostCard({
               </span>
             ) : null}
           </div>
+        </div>
+
+        <div className="flex shrink-0 flex-col gap-2 sm:min-w-28 sm:items-end">
+          <span
+            className={cn(
+              'inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold',
+              status.badgeClassName,
+            )}
+          >
+            <StatusIcon className="size-4" />
+            {status.label}
+          </span>
 
           {taskId != null ? (
             <Link
               href={`/student/courses/${courseId}/tasks/${taskId}`}
-              className={cn(
-                ctaClassName,
-                'hover:text-violet-700 dark:hover:text-violet-300',
-              )}
+              className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-violet-200/70 bg-transparent px-3 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-50 hover:text-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/25 sm:w-fit dark:border-violet-500/20 dark:text-violet-300 dark:hover:bg-violet-500/10 dark:hover:text-violet-200"
             >
               {status.actionLabel}
             </Link>
@@ -920,33 +925,33 @@ function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
   const description = getValue(item, ['descripcionClase']) ?? 'Clase registrada.'
 
   return (
-    <article className="relative pl-8">
+    <article className="relative pl-9">
       <span
         className={cn(
-          'absolute left-0 top-2.5 z-10 flex size-3.5 items-center justify-center rounded-full ring-4 ring-card',
+          'absolute left-0 top-5 z-10 flex size-4 items-center justify-center rounded-full ring-4 ring-card',
           status.dotClassName,
         )}
       >
-        <span className="size-1 rounded-full bg-white" />
+        <StatusIcon className="size-2.5 text-white" />
       </span>
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-4 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <time className="block text-xs font-medium text-muted-foreground">
-            {fecha}
-          </time>
-          <p className="mt-1 text-[15px] font-semibold leading-6 text-foreground">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-background/75 px-4 py-4 transition-colors hover:bg-muted/30 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-semibold leading-6 text-foreground">
             {description}
           </p>
+          <time className="mt-2 block text-xs font-medium text-muted-foreground">
+            {fecha}
+          </time>
         </div>
 
         <span
           className={cn(
-            'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+            'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold',
             status.badgeClassName,
           )}
         >
-          <StatusIcon className="size-3.5" />
+          <StatusIcon className="size-4" />
           {status.label}
         </span>
       </div>
@@ -976,17 +981,17 @@ function AttendanceSummary({
     {
       label: 'Clases registradas',
       value: items.length,
-      className: 'border-border/60 bg-muted/20 text-foreground',
+      className: 'border-border/55 bg-background/75 text-foreground',
     },
     {
       label: 'Presentes',
       value: summary.present,
-      className: 'border-emerald-200/70 bg-emerald-50/40 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/5 dark:text-emerald-300',
+      className: 'border-emerald-200/50 bg-emerald-50/25 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/5 dark:text-emerald-300',
     },
     {
       label: 'Ausentes',
       value: summary.absent,
-      className: 'border-rose-200/70 bg-rose-50/40 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/5 dark:text-rose-300',
+      className: 'border-rose-200/50 bg-rose-50/25 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/5 dark:text-rose-300',
     },
   ]
 
@@ -995,12 +1000,12 @@ function AttendanceSummary({
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className={cn('rounded-2xl border px-4 py-3', stat.className)}
+          className={cn('flex min-h-24 flex-col justify-center rounded-2xl border px-4 py-3 transition-colors hover:bg-muted/30', stat.className)}
         >
-          <p className="text-xl font-semibold leading-none tracking-tight">
+          <p className="text-3xl font-semibold leading-none tracking-tight">
             {stat.value}
           </p>
-          <p className="mt-1 text-xs font-medium">{stat.label}</p>
+          <p className="mt-2 text-xs font-medium text-muted-foreground">{stat.label}</p>
         </div>
       ))}
     </div>
@@ -1014,18 +1019,9 @@ function AttendanceHistory({
 }) {
   return (
     <section className="space-y-5">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">
-          Historial de clases
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Estas son las clases registradas y tu asistencia.
-        </p>
-      </div>
-
       <AttendanceSummary items={items} />
 
-      <div className="relative space-y-3 before:absolute before:left-[7px] before:bottom-4 before:top-4 before:w-px before:bg-border/70">
+      <div className="relative space-y-3 before:absolute before:left-2 before:bottom-5 before:top-5 before:w-px before:bg-border/50">
         {items.map((item, index) => (
           <AttendanceRow
             key={String(item.id ?? item.asistenciaId ?? item.claseId ?? index)}
@@ -1128,15 +1124,6 @@ function PeopleCommunity({
 
   return (
     <section className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">
-          Personas del curso
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Acá ves quiénes comparten este curso con vos.
-        </p>
-      </div>
-
       <section className="space-y-3" aria-labelledby="course-teachers-title">
         <h3 id="course-teachers-title" className="text-sm font-semibold text-foreground">
           Tus profes
@@ -1506,7 +1493,7 @@ export function StudentCourseDetail({
 }) {
   const [tab, setTab] = useState<Tab>('tasks')
   const [sections, setSections] = useState<Record<string, SectionState>>({})
-  const currentTab = tabStyles[tab]
+  const panelHeader = panelHeaders[tab]
   const sectionPath = sectionPaths[tab]
   const sectionState = sections[tab] ?? initialSectionState
 
@@ -1583,18 +1570,18 @@ export function StudentCourseDetail({
           />
         ) : (
           <div className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-            {tab !== 'attendance' && tab !== 'people' ? (
+            {panelHeader ? (
               <div className="border-b border-border/60 px-6 py-5">
                 <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-                  {currentTab.title}
+                  {panelHeader.title}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {currentTab.description}
+                  {panelHeader.description}
                 </p>
               </div>
             ) : null}
 
-            <div className={cn(tab === 'attendance' ? 'p-4' : 'p-6')}>
+            <div className="p-6">
             <SectionList
               tab={tab}
               state={sectionState}
