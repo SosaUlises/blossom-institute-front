@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { StudentCourseDetail } from '@/components/student/courses/student-course-detail'
+import { getSession } from '@/lib/auth/session'
 import { getStudentCourseDetailServer } from '@/lib/student/courses/server-api'
 import {
   EstadoCurso,
@@ -63,13 +64,19 @@ export default async function StudentCourseDetailPage({ params }: PageProps) {
     notFound()
   }
 
+  const session = await getSession()
+  const currentStudentId = Number(session?.user.id)
+
   return (
     <>
       <AppHeader title={getCourseName(course)} subtitle={getHeaderSubtitle(course)} />
 
       <main className="flex-1 overflow-auto px-5 py-5 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <StudentCourseDetail courseId={courseId} />
+          <StudentCourseDetail
+            courseId={courseId}
+            currentStudentId={Number.isFinite(currentStudentId) ? currentStudentId : undefined}
+          />
         </div>
       </main>
     </>

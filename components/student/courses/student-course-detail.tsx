@@ -621,9 +621,15 @@ function getTaskDueMeta(item: StudentCourseSectionItem) {
   }
 }
 
-function getPersonBadgeClass(role?: string | null) {
-  if (role === 'Profesor') return badgeStyles.violet
-  return badgeStyles.neutral
+function getPersonRole(item: StudentCourseSectionItem): 'teacher' | 'classmate' {
+  const source = getValue(item, ['__source'])?.toLowerCase()
+  const role = getValue(item, ['rol'])?.toLowerCase()
+
+  if (source === 'profesores' || source === 'teachers' || role === 'profesor') {
+    return 'teacher'
+  }
+
+  return 'classmate'
 }
 
 function getInitials(name: string) {
@@ -643,6 +649,31 @@ function getFullName(item: StudentCourseSectionItem) {
   const firstName = getValue(item, ['nombre'])
   const lastName = getValue(item, ['apellido'])
   return [firstName, lastName].filter(Boolean).join(' ').trim() || null
+}
+
+function getPeopleGroups(items: StudentCourseSectionItem[]) {
+  return items.reduce<{
+    teachers: StudentCourseSectionItem[]
+    classmates: StudentCourseSectionItem[]
+  }>(
+    (groups, item) => {
+      if (getPersonRole(item) === 'teacher') {
+        groups.teachers.push(item)
+      } else {
+        groups.classmates.push(item)
+      }
+
+      return groups
+    },
+    { teachers: [], classmates: [] },
+  )
+}
+
+function isCurrentStudent(item: StudentCourseSectionItem, currentStudentId?: number) {
+  if (!currentStudentId) return false
+
+  const id = Number(item.alumnoId ?? item.id)
+  return Number.isFinite(id) && id === currentStudentId
 }
 
 function MetaPills({ values }: { values: Array<string | null | undefined> }) {
@@ -1006,35 +1037,143 @@ function AttendanceHistory({
   )
 }
 
-function PersonCard({ name, role }: { name: string; role: string }) {
-  return (
-    <article className="rounded-[24px] border border-border/60 bg-background/75 p-4 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_40px_-24px_rgba(15,23,42,0.18)]">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-primary/8 text-sm font-semibold text-primary shadow-sm">
-            {getInitials(name) || '?'}
-          </div>
+function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
+  const name = getFullName(item) ?? 'Sin nombre'
 
-          <div className="min-w-0">
-            <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
-              {name}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Integrante del curso
-            </p>
-          </div>
+  return (
+    <article className="rounded-[22px] border border-violet-200/60 bg-violet-50/35 p-4 transition-colors hover:border-violet-300/70 hover:bg-violet-50/55 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
+      <div className="flex items-center gap-3">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-background/80 text-sm font-semibold text-violet-700 shadow-sm dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
+          {getInitials(name) || '?'}
         </div>
 
-        <span
-          className={cn(
-            'shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]',
-            getPersonBadgeClass(role),
-          )}
-        >
-          {role}
-        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="min-w-0 text-[15px] font-semibold leading-5 tracking-tight text-foreground">
+              {name}
+            </h3>
+            <span className="rounded-full border border-violet-200 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
+              Profe
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">Acompaña este curso</p>
+        </div>
       </div>
     </article>
+  )
+}
+
+function ClassmatePersonCard({
+  item,
+  currentStudentId,
+}: {
+  item: StudentCourseSectionItem
+  currentStudentId?: number
+}) {
+  const name = getFullName(item) ?? 'Sin nombre'
+  const current = isCurrentStudent(item, currentStudentId)
+
+  return (
+    <article
+      className={cn(
+        'rounded-[20px] border p-4 transition-colors hover:border-primary/15 hover:bg-card',
+        current
+          ? 'border-primary/25 bg-primary/8'
+          : 'border-border/60 bg-background/75',
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-primary/8 text-sm font-semibold text-primary">
+          {getInitials(name) || '?'}
+        </div>
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-[15px] font-semibold leading-5 tracking-tight text-foreground">
+              {name}
+            </h3>
+            <span className="rounded-full border border-border/60 bg-muted/30 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+              {current ? 'Vos' : 'Compañero'}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {current ? 'Este sos vos' : 'Comparte este curso con vos'}
+          </p>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function PeopleEmptyState({ text }: { text: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 px-5 py-8 text-center">
+      <p className="text-sm font-medium text-muted-foreground">{text}</p>
+    </div>
+  )
+}
+
+function PeopleCommunity({
+  items,
+  currentStudentId,
+}: {
+  items: StudentCourseSectionItem[]
+  currentStudentId?: number
+}) {
+  const { teachers, classmates } = getPeopleGroups(items)
+
+  if (teachers.length === 0 && classmates.length === 0) {
+    return <PeopleEmptyState text="Todavía no hay personas cargadas para este curso." />
+  }
+
+  return (
+    <section className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          Personas del curso
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Acá ves quiénes comparten este curso con vos.
+        </p>
+      </div>
+
+      <section className="space-y-3" aria-labelledby="course-teachers-title">
+        <h3 id="course-teachers-title" className="text-sm font-semibold text-foreground">
+          Tus profes
+        </h3>
+        {teachers.length > 0 ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            {teachers.map((item, index) => (
+              <TeacherPersonCard
+                key={String(item.id ?? item.profesorId ?? index)}
+                item={item}
+              />
+            ))}
+          </div>
+        ) : (
+          <PeopleEmptyState text="Todavía no hay profes cargados." />
+        )}
+      </section>
+
+      <section className="space-y-3" aria-labelledby="course-classmates-title">
+        <h3 id="course-classmates-title" className="text-sm font-semibold text-foreground">
+          Compañeros
+        </h3>
+        {classmates.length > 0 ? (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {classmates.map((item, index) => (
+              <ClassmatePersonCard
+                key={String(item.id ?? item.alumnoId ?? index)}
+                item={item}
+                currentStudentId={currentStudentId}
+              />
+            ))}
+          </div>
+        ) : (
+          <PeopleEmptyState text="Todavía no hay compañeros cargados." />
+        )}
+      </section>
+    </section>
   )
 }
 
@@ -1185,21 +1324,6 @@ function renderSectionCard(
     )
   }
 
-  if (tab === 'people') {
-    const source = getValue(item, ['__source'])
-    const role =
-      getValue(item, ['rol']) ??
-      (source === 'profesores' || source === 'teachers'
-        ? 'Profesor'
-        : source === 'companeros' || source === 'alumnos' || source === 'students'
-          ? 'Compañero'
-          : undefined)
-
-    return (
-      <PersonCard name={getFullName(item) ?? 'Sin nombre'} role={role ?? 'Compañero'} />
-    )
-  }
-
   return (
     <SectionCard
       title={getValue(item, ['titulo', 'nombre']) ?? 'Registro'}
@@ -1313,10 +1437,12 @@ function SectionList({
   tab,
   state,
   courseId,
+  currentStudentId,
 }: {
   tab: Tab
   state: SectionState
   courseId: number
+  currentStudentId?: number
 }) {
   if (state.loading && tab === 'tasks') return <TaskFeedSkeleton />
   if (state.loading) return <SectionSkeleton />
@@ -1339,6 +1465,10 @@ function SectionList({
       return <EmptyPanel text="Todavía no hay calificaciones de quizzes, tests o participación." />
     }
 
+    if (tab === 'people') {
+      return <PeopleEmptyState text="Todavía no hay personas cargadas para este curso." />
+    }
+
     return <EmptyPanel text="No hay registros para mostrar." />
   }
 
@@ -1348,6 +1478,10 @@ function SectionList({
 
   if (tab === 'tasks') {
     return <TaskFeed items={visibleItems} courseId={courseId} />
+  }
+
+  if (tab === 'people') {
+    return <PeopleCommunity items={visibleItems} currentStudentId={currentStudentId} />
   }
 
   return (
@@ -1365,8 +1499,10 @@ function SectionList({
 
 export function StudentCourseDetail({
   courseId,
+  currentStudentId,
 }: {
   courseId: number
+  currentStudentId?: number
 }) {
   const [tab, setTab] = useState<Tab>('tasks')
   const [sections, setSections] = useState<Record<string, SectionState>>({})
@@ -1439,10 +1575,15 @@ export function StudentCourseDetail({
         </nav>
 
         {tab === 'tasks' ? (
-          <SectionList tab={tab} state={sectionState} courseId={courseId} />
+          <SectionList
+            tab={tab}
+            state={sectionState}
+            courseId={courseId}
+            currentStudentId={currentStudentId}
+          />
         ) : (
           <div className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-            {tab !== 'attendance' ? (
+            {tab !== 'attendance' && tab !== 'people' ? (
               <div className="border-b border-border/60 px-6 py-5">
                 <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
                   {currentTab.title}
@@ -1454,7 +1595,12 @@ export function StudentCourseDetail({
             ) : null}
 
             <div className={cn(tab === 'attendance' ? 'p-4' : 'p-6')}>
-            <SectionList tab={tab} state={sectionState} courseId={courseId} />
+            <SectionList
+              tab={tab}
+              state={sectionState}
+              courseId={courseId}
+              currentStudentId={currentStudentId}
+            />
             </div>
           </div>
         )}
