@@ -6,6 +6,7 @@ import {
   BookOpen,
   CalendarCheck2,
   CheckCircle2,
+  ChevronDown,
   ClipboardList,
   Clock3,
   FileText,
@@ -260,12 +261,27 @@ function getGradeTypeLabel(value: unknown) {
     case 3:
       return 'Test'
     case 4:
-      return 'Participation'
+      return 'Participación'
     case 5:
-      return 'Behaviour'
+      return 'Comportamiento'
     default:
       return displayValue(value) ?? 'Nota'
   }
+}
+
+function isVisibleGradeType(value: unknown) {
+  const type = Number(value)
+  return type === 2 || type === 3 || type === 4 || type === 5
+}
+
+function isSkillGradeType(value: unknown) {
+  const type = Number(value)
+  return type === 2 || type === 3
+}
+
+function isQualitativeGradeType(value: unknown) {
+  const type = Number(value)
+  return type === 4 || type === 5
 }
 
 function getEstadoLabel(value: unknown) {
@@ -288,6 +304,136 @@ function getGradeBadgeClass(value: unknown) {
   if (grade >= 80) return badgeStyles.emerald
   if (grade >= 65) return badgeStyles.amber
   return badgeStyles.rose
+}
+
+function getGradeFeedbackLabel(value: unknown) {
+  const grade = Number(value)
+
+  if (!Number.isFinite(grade)) return 'Sin nota'
+  if (grade >= 90) return 'Excelente'
+  if (grade >= 80) return 'Muy bien'
+  if (grade >= 65) return 'Bien'
+  return 'A revisar'
+}
+
+function getQualitativeGradeLabel(type: unknown, value: unknown) {
+  if (!isQualitativeGradeType(type)) return getGradeFeedbackLabel(value)
+
+  const grade = Number(value)
+
+  if (grade === 100) return 'E · Excelente'
+  if (grade === 90) return 'VG · Muy bien'
+  if (grade === 80) return 'G · Bien'
+  if (grade === 65) return 'R · A seguir practicando'
+
+  return getGradeFeedbackLabel(value)
+}
+
+function getGradeTone(value: unknown) {
+  const grade = Number(value)
+
+  if (!Number.isFinite(grade)) {
+    return {
+      panelClassName: 'border-border/70 bg-muted/25 text-muted-foreground',
+      badgeClassName: badgeStyles.neutral,
+      progressClassName: 'bg-muted-foreground/45',
+    }
+  }
+
+  if (grade >= 90) {
+    return {
+      panelClassName:
+        'border-violet-200 bg-violet-50/70 text-violet-800 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300',
+      badgeClassName:
+        'border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300',
+      progressClassName: 'bg-violet-500',
+    }
+  }
+
+  if (grade >= 80) {
+    return {
+      panelClassName:
+        'border-emerald-200 bg-emerald-50/70 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
+      badgeClassName:
+        'border-emerald-200 bg-emerald-50/70 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
+      progressClassName: 'bg-emerald-500',
+    }
+  }
+
+  if (grade >= 65) {
+    return {
+      panelClassName:
+        'border-amber-200 bg-amber-50/70 text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300',
+      badgeClassName:
+        'border-amber-200 bg-amber-50/70 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300',
+      progressClassName: 'bg-amber-500',
+    }
+  }
+
+  return {
+    panelClassName:
+      'border-rose-200 bg-rose-50/70 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300',
+    badgeClassName:
+      'border-rose-200 bg-rose-50/70 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300',
+    progressClassName: 'bg-rose-500',
+  }
+}
+
+function getSkillLabel(value: unknown) {
+  const skill = Number(value)
+
+  switch (skill) {
+    case 1:
+      return 'Reading'
+    case 2:
+      return 'Use of English'
+    case 3:
+      return 'Listening'
+    case 4:
+      return 'Writing'
+    case 5:
+      return 'Speaking'
+    default:
+      return displayValue(value) ?? 'Skill'
+  }
+}
+
+function getSkillOrder(value: unknown) {
+  const skill = Number(value)
+  return Number.isFinite(skill) ? skill : 99
+}
+
+function getGradeDetails(item: StudentCourseSectionItem) {
+  const details = item.detalles ?? item.Detalles
+  return Array.isArray(details)
+    ? [...(details as Record<string, unknown>[])].sort(
+        (a, b) => getSkillOrder(a.skill ?? a.Skill) - getSkillOrder(b.skill ?? b.Skill),
+      )
+    : []
+}
+
+function hasGradeSkillDetails(item: StudentCourseSectionItem) {
+  const value = item.tieneDetalleSkills ?? item.TieneDetalleSkills
+  return value === true || String(value).toLowerCase() === 'true'
+}
+
+function getSkillPercent(detail: Record<string, unknown>) {
+  const existing = Number(detail.porcentaje ?? detail.Porcentaje)
+  if (Number.isFinite(existing)) return existing
+
+  const score = Number(detail.puntajeObtenido ?? detail.PuntajeObtenido)
+  const max = Number(detail.puntajeMaximo ?? detail.PuntajeMaximo)
+
+  if (!Number.isFinite(score) || !Number.isFinite(max) || max <= 0) return null
+
+  return Math.round((score * 10000) / max) / 100
+}
+
+function getSkillScoreLabel(detail: Record<string, unknown>) {
+  const score = displayValue(detail.puntajeObtenido ?? detail.PuntajeObtenido)
+  const max = displayValue(detail.puntajeMaximo ?? detail.PuntajeMaximo)
+
+  return score && max ? `${score} / ${max}` : null
 }
 
 function getAttendanceBadgeClass(value: unknown) {
@@ -892,6 +1038,119 @@ function PersonCard({ name, role }: { name: string; role: string }) {
   )
 }
 
+function GradeCard({ item }: { item: StudentCourseSectionItem }) {
+  const [skillsOpen, setSkillsOpen] = useState(false)
+  const grade = Number(item.nota)
+  const gradeDisplay = displayValue(item.nota) ?? 'Sin nota'
+  const tone = getGradeTone(item.nota)
+  const feedbackLabel = getQualitativeGradeLabel(item.tipo, item.nota)
+  const description = safeText(item.descripcion)
+  const details = getGradeDetails(item)
+  const date = formatDate(item.fecha)
+  const showSkills =
+    isSkillGradeType(item.tipo) &&
+    hasGradeSkillDetails(item) &&
+    details.length > 0
+  const skillPanelId = `grade-skills-${String(item.id ?? item.calificacionId ?? item.titulo ?? 'item')}`
+
+  return (
+    <article className="rounded-[24px] border border-border/60 bg-background/75 p-4 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.16)] transition-colors hover:border-primary/20 hover:bg-card sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+            <span
+              className={cn(
+                'inline-flex items-center rounded-full border px-2.5 py-1 font-semibold',
+                tone.badgeClassName,
+              )}
+            >
+              {getGradeTypeLabel(item.tipo)}
+            </span>
+            {date ? <time>{date}</time> : null}
+          </div>
+
+          <h3 className="mt-3 text-lg font-semibold leading-6 tracking-tight text-foreground">
+            {safeText(item.titulo) ?? 'Sin título'}
+          </h3>
+
+          {description ? (
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
+        </div>
+
+        <div
+          className={cn(
+            'flex w-full shrink-0 items-center justify-between rounded-2xl border px-4 py-3 sm:w-36 sm:flex-col sm:items-start sm:justify-center',
+            tone.panelClassName,
+          )}
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] opacity-80">
+            Nota final
+          </p>
+          <div className="flex items-baseline gap-2 sm:mt-2 sm:block">
+            <p className="text-3xl font-semibold leading-none tracking-tight">
+              {Number.isFinite(grade) ? gradeDisplay : '-'}
+            </p>
+            <p className="text-sm font-semibold sm:mt-1">{feedbackLabel}</p>
+          </div>
+        </div>
+      </div>
+
+      {showSkills ? (
+        <div className="mt-5 border-t border-border/60 pt-4">
+          <button
+            type="button"
+            aria-expanded={skillsOpen}
+            aria-controls={skillPanelId}
+            onClick={() => setSkillsOpen((current) => !current)}
+            className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          >
+            <span>
+              {skillsOpen ? 'Ocultar detalle por skills' : 'Ver detalle por skills'}
+            </span>
+            <ChevronDown
+              className={cn(
+                'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                skillsOpen && 'rotate-180',
+              )}
+            />
+          </button>
+          {skillsOpen ? (
+            <div id={skillPanelId} className="mt-3 space-y-3">
+            {details.map((detail, index) => {
+              const percent = getSkillPercent(detail)
+              const clampedPercent = percent == null ? 0 : Math.min(100, Math.max(0, percent))
+              const scoreLabel = getSkillScoreLabel(detail)
+
+              return (
+                <div key={`${String(detail.skill ?? detail.Skill)}-${index}`} className="space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
+                    <span className="font-medium text-foreground">
+                      {getSkillLabel(detail.skill ?? detail.Skill)}
+                    </span>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {[scoreLabel]}
+                    </span>
+                  </div>
+                  <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={cn('h-full rounded-full', tone.progressClassName)}
+                      style={{ width: `${clampedPercent}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </article>
+  )
+}
+
 function renderSectionCard(
   item: StudentCourseSectionItem,
   tab: Tab,
@@ -902,19 +1161,8 @@ function renderSectionCard(
   }
 
   if (tab === 'grades') {
-    return (
-      <SectionCard
-        title={safeText(item.titulo) ?? 'Sin título'}
-        badge={item.nota != null ? `Nota ${displayValue(item.nota)}` : null}
-        badgeClassName={getGradeBadgeClass(item.nota)}
-        description={safeText(item.descripcion)}
-        meta={[
-          safeText(item.cursoNombre),
-          getGradeTypeLabel(item.tipo),
-          formatDate(item.fecha),
-        ]}
-      />
-    )
+    return <GradeCard item={item} />
+
   }
 
   if (tab === 'attendance') {
@@ -1077,26 +1325,34 @@ function SectionList({
     return <EmptyPanel text={state.error} />
   }
 
-  if (state.items.length === 0) {
+  const visibleItems = tab === 'grades'
+    ? state.items.filter((item) => isVisibleGradeType(item.tipo))
+    : state.items
+
+  if (visibleItems.length === 0) {
     if (tab === 'attendance') return <AttendanceEmptyState />
     if (tab === 'tasks') {
       return <EmptyPanel text="Todavía no hay publicaciones en el tablón." />
+    }
+
+    if (tab === 'grades') {
+      return <EmptyPanel text="Todavía no hay calificaciones de quizzes, tests o participación." />
     }
 
     return <EmptyPanel text="No hay registros para mostrar." />
   }
 
   if (tab === 'attendance') {
-    return <AttendanceHistory items={state.items} />
+    return <AttendanceHistory items={visibleItems} />
   }
 
   if (tab === 'tasks') {
-    return <TaskFeed items={state.items} courseId={courseId} />
+    return <TaskFeed items={visibleItems} courseId={courseId} />
   }
 
   return (
     <div className="grid gap-3 lg:grid-cols-2">
-      {state.items.map((item, index) => (
+      {visibleItems.map((item, index) => (
         <div
           key={String(item.id ?? item.tareaId ?? item.calificacionId ?? index)}
         >
