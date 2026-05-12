@@ -17,6 +17,13 @@ import {
 import Link from 'next/link'
 
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  StudentIconContainer,
+  StudentMetaRow,
+  StudentSecondaryBadge,
+  StudentStatusBadge,
+  studentUi,
+} from '@/components/student/courses/student-course-ui'
 import type { StudentCourseSectionItem } from '@/lib/student/courses/types'
 import { cn } from '@/lib/utils'
 
@@ -773,12 +780,10 @@ function TaskPostCard({
   const dueMeta = getTaskDueMeta(item)
   const createdAt = formatCompactDate(item.createdAtUtc)
   const resourceLabel = getResourceLabel(item)
-  const ctaClassName =
-    'inline-flex h-9 w-full items-center justify-center rounded-xl border border-border/70 bg-background px-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/20 hover:bg-muted/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:w-fit'
 
   if (!announcement) {
     return (
-      <article className="group relative overflow-hidden rounded-[24px] border border-border/70 bg-card shadow-[0_14px_34px_-28px_rgba(15,23,42,0.25)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/20 hover:shadow-[0_20px_44px_-30px_rgba(15,23,42,0.32)]">
+      <article className={cn('group relative overflow-hidden', studentUi.card.feed)}>
         <div
           className={cn(
             'absolute inset-y-4 left-0 w-1.5 rounded-r-full',
@@ -787,9 +792,10 @@ function TaskPostCard({
         />
 
         <div className="flex flex-col gap-4 p-4 pl-5 sm:flex-row sm:items-start sm:gap-4 sm:p-5 sm:pl-6">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm">
-            <FileText className="size-5" />
-          </div>
+          <StudentIconContainer
+            icon={FileText}
+            className="border-primary/15 bg-primary/10 text-primary"
+          />
 
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium leading-5 text-muted-foreground">
@@ -804,45 +810,37 @@ function TaskPostCard({
               </p>
             ) : null}
 
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <span
+            <StudentMetaRow>
+              <StudentSecondaryBadge
+                icon={CalendarCheck2}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/75 px-2.5 py-1 font-medium',
                   dueMeta.className,
                 )}
               >
-                <CalendarCheck2 className="size-4" />
                 {dueMeta.label}
-              </span>
+              </StudentSecondaryBadge>
               {resourceLabel ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/75 px-2.5 py-1 font-medium">
-                  <Paperclip className="size-4" />
+                <StudentSecondaryBadge icon={Paperclip}>
                   {resourceLabel}
-                </span>
+                </StudentSecondaryBadge>
               ) : null}
               {createdAt ? (
-                <time className="inline-flex items-center rounded-full px-1 text-xs">
+                <time className={studentUi.meta.time}>
                   Publicada {createdAt}
                 </time>
               ) : null}
-            </div>
+            </StudentMetaRow>
           </div>
 
           <div className="flex shrink-0 flex-col gap-3 sm:min-w-36 sm:items-end">
-            <span
-              className={cn(
-                'inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold',
-                status.badgeClassName,
-              )}
-            >
-              <StatusIcon className="size-4" />
+            <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
               {status.label}
-            </span>
+            </StudentStatusBadge>
 
             {taskId != null ? (
               <Link
                 href={`/student/courses/${courseId}/tasks/${taskId}`}
-                className={ctaClassName}
+                className={studentUi.button.secondaryCta}
               >
                 {status.actionLabel}
               </Link>
@@ -854,11 +852,12 @@ function TaskPostCard({
   }
 
   return (
-    <article className="group rounded-[24px] border border-violet-200/70 bg-card shadow-[0_12px_30px_-30px_rgba(15,23,42,0.18)] transition-all duration-200 hover:-translate-y-[1px] hover:border-violet-300/70 hover:shadow-[0_18px_40px_-34px_rgba(15,23,42,0.24)] dark:border-violet-500/15 dark:hover:border-violet-500/25">
+    <article className={cn('group', studentUi.card.feed, 'border-violet-200/70 hover:border-violet-300/70 dark:border-violet-500/15 dark:hover:border-violet-500/25')}>
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-4 sm:p-5">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50/70 text-violet-700 shadow-sm dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
-          <Megaphone className="size-5" />
-        </div>
+        <StudentIconContainer
+          icon={Megaphone}
+          className="border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300"
+        />
 
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium leading-5 text-muted-foreground">
@@ -873,36 +872,29 @@ function TaskPostCard({
             </p>
           ) : null}
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <StudentMetaRow>
             {createdAt ? (
-              <time className="inline-flex items-center rounded-full px-1 text-xs">
+              <time className={studentUi.meta.time}>
                 Publicado {createdAt}
               </time>
             ) : null}
             {resourceLabel ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/75 px-2.5 py-1 font-medium">
-                <Paperclip className="size-4" />
+              <StudentSecondaryBadge icon={Paperclip}>
                 {resourceLabel}
-              </span>
+              </StudentSecondaryBadge>
             ) : null}
-          </div>
+          </StudentMetaRow>
         </div>
 
         <div className="flex shrink-0 flex-col gap-2 sm:min-w-28 sm:items-end">
-          <span
-            className={cn(
-              'inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold',
-              status.badgeClassName,
-            )}
-          >
-            <StatusIcon className="size-4" />
+          <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
             {status.label}
-          </span>
+          </StudentStatusBadge>
 
           {taskId != null ? (
             <Link
               href={`/student/courses/${courseId}/tasks/${taskId}`}
-              className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-violet-200/70 bg-transparent px-3 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-50 hover:text-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/25 sm:w-fit dark:border-violet-500/20 dark:text-violet-300 dark:hover:bg-violet-500/10 dark:hover:text-violet-200"
+              className={studentUi.button.violetCta}
             >
               {status.actionLabel}
             </Link>
@@ -935,7 +927,7 @@ function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
         <StatusIcon className="size-2.5 text-white" />
       </span>
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-background/75 px-4 py-4 transition-colors hover:bg-muted/30 sm:flex-row sm:items-start sm:justify-between">
+      <div className={cn(studentUi.card.item, 'flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between')}>
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-semibold leading-6 text-foreground">
             {description}
@@ -945,15 +937,9 @@ function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
           </time>
         </div>
 
-        <span
-          className={cn(
-            'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold',
-            status.badgeClassName,
-          )}
-        >
-          <StatusIcon className="size-4" />
+        <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
           {status.label}
-        </span>
+        </StudentStatusBadge>
       </div>
     </article>
   )
@@ -1000,7 +986,7 @@ function AttendanceSummary({
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className={cn('flex min-h-24 flex-col justify-center rounded-2xl border px-4 py-3 transition-colors hover:bg-muted/30', stat.className)}
+          className={cn(studentUi.card.item, 'flex min-h-24 flex-col justify-center px-4 py-3', stat.className)}
         >
           <p className="text-3xl font-semibold leading-none tracking-tight">
             {stat.value}
@@ -1037,18 +1023,18 @@ function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
   const name = getFullName(item) ?? 'Sin nombre'
 
   return (
-    <article className="rounded-[22px] border border-violet-200/60 bg-violet-50/35 p-4 transition-colors hover:border-violet-300/70 hover:bg-violet-50/55 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
+    <article className="rounded-[24px] border border-violet-200/60 bg-violet-50/35 p-4 transition-colors hover:border-violet-300/70 hover:bg-violet-50/55 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
       <div className="flex items-center gap-3">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-background/80 text-sm font-semibold text-violet-700 shadow-sm dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
+        <StudentIconContainer className="border-violet-200 bg-background/80 text-sm font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
           {getInitials(name) || '?'}
-        </div>
+        </StudentIconContainer>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="min-w-0 text-[15px] font-semibold leading-5 tracking-tight text-foreground">
               {name}
             </h3>
-            <span className="rounded-full border border-violet-200 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
+            <span className={cn(studentUi.badge.compact, 'border-violet-200 bg-background/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300')}>
               Profe
             </span>
           </div>
@@ -1072,23 +1058,23 @@ function ClassmatePersonCard({
   return (
     <article
       className={cn(
-        'rounded-[20px] border p-4 transition-colors hover:border-primary/15 hover:bg-card',
+        'rounded-[24px] border p-4 transition-colors hover:border-primary/15 hover:bg-card',
         current
           ? 'border-primary/25 bg-primary/8'
           : 'border-border/60 bg-background/75',
       )}
     >
       <div className="flex items-center gap-3">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-primary/8 text-sm font-semibold text-primary">
+        <StudentIconContainer size="md" className="border-primary/10 bg-primary/8 text-sm font-semibold text-primary">
           {getInitials(name) || '?'}
-        </div>
+        </StudentIconContainer>
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-[15px] font-semibold leading-5 tracking-tight text-foreground">
               {name}
             </h3>
-            <span className="rounded-full border border-border/60 bg-muted/30 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            <span className={cn(studentUi.badge.compact, 'border-border/60 bg-muted/30 text-muted-foreground')}>
               {current ? 'Vos' : 'Compañero'}
             </span>
           </div>
@@ -1103,7 +1089,7 @@ function ClassmatePersonCard({
 
 function PeopleEmptyState({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 px-5 py-8 text-center">
+    <div className={cn(studentUi.card.empty, 'px-5 py-8 text-center')}>
       <p className="text-sm font-medium text-muted-foreground">{text}</p>
     </div>
   )
@@ -1180,13 +1166,13 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
   const skillPanelId = `grade-skills-${String(item.id ?? item.calificacionId ?? item.titulo ?? 'item')}`
 
   return (
-    <article className="rounded-[24px] border border-border/60 bg-background/75 p-4 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.16)] transition-colors hover:border-primary/20 hover:bg-card sm:p-5">
+    <article className={studentUi.card.grade}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
             <span
               className={cn(
-                'inline-flex items-center rounded-full border px-2.5 py-1 font-semibold',
+                studentUi.badge.compact,
                 tone.badgeClassName,
               )}
             >
@@ -1231,7 +1217,7 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
             aria-expanded={skillsOpen}
             aria-controls={skillPanelId}
             onClick={() => setSkillsOpen((current) => !current)}
-            className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            className={cn('flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted/40', studentUi.focus)}
           >
             <span>
               {skillsOpen ? 'Ocultar detalle por skills' : 'Ver detalle por skills'}
@@ -1329,11 +1315,9 @@ function InfoStat({
   value: string | number
 }) {
   return (
-    <div className="rounded-[22px] border border-border/60 bg-card/85 px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.20)]">
+    <div className="rounded-[24px] border border-border/60 bg-card/85 px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.20)]">
       <div className="flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-          <Icon className="size-5" />
-        </div>
+        <StudentIconContainer icon={Icon} size="md" className="border-transparent bg-primary/10 text-primary" />
 
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -1365,9 +1349,7 @@ function EmptyPanel({ text }: { text: string }) {
   return (
     <Card className="rounded-[28px] border border-dashed border-border/70 bg-muted/20 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.14)]">
       <CardContent className="px-6 py-14 text-center">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
-          <BookOpen className="size-6" />
-        </div>
+        <StudentIconContainer icon={BookOpen} className="mx-auto size-14 rounded-3xl border-transparent bg-primary/10 text-primary" />
         <p className="mt-4 text-sm font-medium text-muted-foreground">{text}</p>
       </CardContent>
     </Card>
@@ -1376,10 +1358,8 @@ function EmptyPanel({ text }: { text: string }) {
 
 function AttendanceEmptyState() {
   return (
-    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 px-5 py-10 text-center">
-      <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-        <CalendarCheck2 className="size-5" />
-      </div>
+    <div className={cn(studentUi.card.empty, 'px-5 py-10 text-center')}>
+      <StudentIconContainer icon={CalendarCheck2} className="mx-auto border-transparent bg-primary/10 text-primary" />
       <p className="mt-3 text-sm font-medium text-muted-foreground">
         Todavía no hay clases cargadas para este curso.
       </p>
@@ -1569,7 +1549,7 @@ export function StudentCourseDetail({
             currentStudentId={currentStudentId}
           />
         ) : (
-          <div className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+          <div className={studentUi.card.panel}>
             {panelHeader ? (
               <div className="border-b border-border/60 px-6 py-5">
                 <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">

@@ -28,6 +28,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  StudentIconContainer,
+  StudentStatusBadge,
+  studentUi,
+} from '@/components/student/courses/student-course-ui'
 import { cn } from '@/lib/utils'
 
 type ApiEnvelope<T> = {
@@ -346,12 +351,14 @@ function AttachmentLink({
   const size = formatBytes(attachment.sizeBytes)
   const AttachmentIcon = getAttachmentIcon(attachment)
   const rowClassName =
-    'flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/50 bg-background/60 px-3 py-2 transition-all hover:border-primary/25 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
+    cn('flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/50 bg-background/60 px-3 py-2 transition-colors hover:border-primary/25 hover:bg-primary/5', studentUi.focus)
   const content = (
     <>
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/10">
-        <AttachmentIcon className="size-4.5" />
-      </span>
+      <StudentIconContainer
+        icon={AttachmentIcon}
+        size="sm"
+        className="size-10 rounded-lg border-transparent bg-primary/10 text-primary ring-1 ring-primary/10"
+      />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold text-foreground">
           {name}
@@ -667,19 +674,16 @@ export function StudentTaskDetail({
     return (
       <section
         className={cn(
-          'rounded-[22px] border p-5 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.22)]',
+          'rounded-[24px] border p-5 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.22)]',
           actionState.className,
         )}
       >
         <div className="flex items-start gap-3">
-          <span
-            className={cn(
-              'flex size-11 shrink-0 items-center justify-center rounded-2xl',
-              actionState.iconClassName,
-            )}
-          >
-            <ActionIcon className="size-5" />
-          </span>
+          <StudentIconContainer
+            icon={ActionIcon}
+            size="md"
+            className={actionState.iconClassName}
+          />
           <div className="min-w-0">
             <h2 className="text-lg font-semibold leading-6 tracking-tight">
               {actionState.title}
@@ -719,7 +723,7 @@ export function StudentTaskDetail({
       <section
         id="tu-trabajo"
         className={cn(
-          'rounded-[22px] border bg-card p-5',
+          'rounded-[24px] border bg-card p-5',
           feedbackNeedsChanges
             ? 'border-amber-500/25'
             : currentFeedback?.estado
@@ -740,14 +744,14 @@ export function StudentTaskDetail({
           </div>
 
           {currentDelivery ? (
-            <span
+            <StudentStatusBadge
               className={cn(
-                'inline-flex w-fit rounded-full border px-2.5 py-1 text-xs font-semibold',
+                studentUi.badge.compact,
                 currentFeedback ? feedbackEstado.badgeClass : taskStatusClassName,
               )}
             >
               {currentFeedback ? feedbackEstado.label : 'Guardada'}
-            </span>
+            </StudentStatusBadge>
           ) : null}
         </div>
 
@@ -828,14 +832,11 @@ export function StudentTaskDetail({
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex min-w-0 items-start gap-2.5">
-                  <span
-                    className={cn(
-                      'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl',
-                      feedbackEstado.iconClass,
-                    )}
-                  >
-                    <MessageSquareText className="size-4" />
-                  </span>
+                  <StudentIconContainer
+                    icon={MessageSquareText}
+                    size="sm"
+                    className={cn('mt-0.5', feedbackEstado.iconClass)}
+                  />
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold tracking-tight text-foreground">
                       {feedbackNeedsChanges
@@ -849,7 +850,7 @@ export function StudentTaskDetail({
                 </div>
 
                 {feedbackNote ? (
-                  <span className="inline-flex w-fit rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-semibold text-foreground">
+                  <span className={cn(studentUi.badge.compact, 'border-border/60 bg-background/70 text-foreground')}>
                     Nota: {feedbackNote}
                   </span>
                 ) : null}
@@ -883,7 +884,7 @@ export function StudentTaskDetail({
           <Button
             type="button"
             variant="outline"
-            className="mt-5 h-10 w-full rounded-xl border-border/70 bg-background text-foreground hover:border-primary/20 hover:bg-muted/50 hover:text-foreground focus-visible:ring-primary/30 sm:w-fit"
+            className={cn('mt-5 h-10 w-full sm:w-fit', studentUi.button.secondaryCta)}
             onClick={() => setShowForm((current) => !current)}
           >
             {showForm ? 'Cerrar edición' : feedbackNeedsChanges ? 'Volver a entregar' : 'Editar entrega'}
@@ -972,7 +973,7 @@ export function StudentTaskDetail({
 
   if (state.loading) {
     return (
-      <div className="grid min-h-[320px] place-items-center rounded-[24px] border border-border/60 bg-card/80 px-6 text-center">
+      <div className={cn('grid min-h-[320px] place-items-center px-6 text-center', studentUi.card.grade)}>
         <div>
           <Loader2 className="mx-auto size-8 animate-spin text-primary" />
           <p className="mt-4 text-sm font-medium text-muted-foreground">
@@ -985,13 +986,12 @@ export function StudentTaskDetail({
 
   if (state.error || !task) {
     return (
-      <Card className="rounded-[30px] border border-border/60 bg-card/95">
+      <Card className={studentUi.card.panel}>
         <CardContent className="px-6 py-14 text-center">
           <p className="text-sm font-medium text-muted-foreground">
             No pudimos cargar esta publicación.
           </p>
-          <Button asChild variant="ghost"
-  className="mt-5 rounded-xl text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground">
+          <Button asChild variant="ghost" className={cn('mt-5', studentUi.button.ghost)}>
             <Link href={`/student/courses/${courseId}`}>Volver al tablón</Link>
           </Button>
         </CardContent>
@@ -1004,8 +1004,8 @@ export function StudentTaskDetail({
       <div className="mx-auto max-w-3xl space-y-5">
         <Button
           asChild
-         variant="ghost"
-  className="mt-5 rounded-xl text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+          variant="ghost"
+          className={cn('mt-5', studentUi.button.ghost)}
         >
           <Link href={`/student/courses/${courseId}`}>
             <ArrowLeft className="size-4" />
@@ -1013,12 +1013,13 @@ export function StudentTaskDetail({
           </Link>
         </Button>
 
-        <article className="rounded-[24px] border border-violet-500/15 bg-card p-5 sm:p-6">
+        <article className={cn(studentUi.card.grade, 'border-violet-500/15 bg-card sm:p-6')}>
           <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300">
-                <Megaphone className="size-5" />
-              </div>
+              <StudentIconContainer
+                icon={Megaphone}
+                className="border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300"
+              />
 
               <div className="min-w-0">
                 <p className="text-sm font-medium text-muted-foreground">
@@ -1034,10 +1035,12 @@ export function StudentTaskDetail({
               </div>
             </div>
 
-            <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1.5 text-sm font-semibold text-violet-700 dark:text-violet-300">
-              <Megaphone className="size-3" />
+            <StudentStatusBadge
+              icon={Megaphone}
+              className="border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300"
+            >
               Anuncio
-            </span>
+            </StudentStatusBadge>
           </header>
 
           <div className="mt-5">
@@ -1081,7 +1084,7 @@ export function StudentTaskDetail({
         <Button
           asChild
         variant="ghost"
-  className="mt-5 rounded-xl text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+        className={cn('mt-5', studentUi.button.ghost)}
         >
         <Link href={`/student/courses/${courseId}`}>
           <ArrowLeft className="size-4" />
