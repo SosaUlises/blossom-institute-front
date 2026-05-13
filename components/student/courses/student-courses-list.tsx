@@ -214,7 +214,7 @@ function MetaPill({
   children: React.ReactNode
 }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/[0.22] px-3 py-1.5 text-xs font-medium text-muted-foreground">
+    <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/[0.18] px-2.5 py-1 text-xs font-medium text-muted-foreground">
       <Icon className="size-3.5 shrink-0" />
       {children}
     </span>
@@ -245,10 +245,10 @@ function AcademicPill({
 
 function CourseCardSkeleton() {
   return (
-    <li className="rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.12)]">
+    <li className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="h-12 w-12 animate-pulse rounded-2xl bg-muted/60" />
+          <div className="h-11 w-11 animate-pulse rounded-lg bg-muted/60" />
           <div className="space-y-2">
             <div className="h-7 w-44 animate-pulse rounded-lg bg-muted/60" />
             <div className="h-4 w-32 animate-pulse rounded-lg bg-muted/40" />
@@ -262,7 +262,7 @@ function CourseCardSkeleton() {
         <div className="h-8 w-28 animate-pulse rounded-full bg-muted/40" />
       </div>
 
-      <div className="mt-5 h-11 animate-pulse rounded-2xl bg-muted/40" />
+      <div className="mt-5 h-10 animate-pulse rounded-lg bg-muted/40" />
     </li>
   )
 }
@@ -277,16 +277,16 @@ function CourseCard({ course }: { course: StudentCourseListItem }) {
     <li>
       <Link
         href={`/student/courses/${courseId ?? 0}`}
-        className="group block rounded-[28px] border border-border/60 bg-card/95 p-4 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.12)] transition-all duration-300 ease-out hover:-translate-y-[2px] hover:border-primary/20 hover:shadow-[0_26px_54px_-24px_rgba(15,23,42,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:p-5"
+        className="group block rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 dark:bg-card/90 sm:p-5"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-primary/8 text-primary shadow-sm transition-all duration-300 group-hover:scale-[1.03] group-hover:bg-primary/10">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/8 text-primary shadow-[0_1px_1px_rgba(15,23,42,0.04)] transition-colors duration-200 group-hover:bg-primary/10">
               <BookOpen className="size-5" />
             </div>
 
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[1.7rem]">
+              <h3 className="truncate text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-2xl">
                 {courseName}
               </h3>
               {teacherName ? (
@@ -328,18 +328,18 @@ function CourseCard({ course }: { course: StudentCourseListItem }) {
           ) : null}
         </div>
 
-        <div className="mt-4 rounded-2xl border border-border/60 bg-muted/[0.14] px-4 py-3 transition-all duration-200 ease-out group-hover:border-primary/20 group-hover:bg-primary/[0.06]">
+        <div className="mt-4 rounded-lg border border-border/60 bg-muted/[0.12] px-4 py-3 transition-colors duration-200 ease-out group-hover:border-primary/20 group-hover:bg-primary/[0.05] dark:bg-background/30">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground">
-                Entrar al aula
+                Seguir aprendiendo
               </p>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 Ver tablón, clases y tareas
               </p>
             </div>
 
-            <div className="flex size-9 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground transition-all duration-200 ease-out group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/10 group-hover:text-primary">
+            <div className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background/80 text-muted-foreground transition-all duration-200 ease-out group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/10 group-hover:text-primary dark:bg-background/35">
               <ChevronRight className="size-4" />
             </div>
           </div>
@@ -388,7 +388,7 @@ export function StudentCoursesList() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-[24px] border border-border/50 bg-card/55 p-3 shadow-[0_12px_30px_-26px_rgba(15,23,42,0.14)] backdrop-blur-sm">
+      <div className="rounded-xl border border-border/70 bg-card/80 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] backdrop-blur-sm dark:bg-card/70">
         <div className="grid gap-2.5 sm:grid-cols-[1fr_140px] lg:grid-cols-[1fr_140px_180px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
@@ -396,7 +396,7 @@ export function StudentCoursesList() {
               placeholder="Buscar un aula..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-11 rounded-2xl border-border/60 bg-background/80 pl-10 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15"
+              className="h-10 rounded-xl border-border/60 bg-background/75 pl-10 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
             />
           </div>
 
@@ -407,15 +407,15 @@ export function StudentCoursesList() {
             min={2000}
             max={2100}
             onChange={(e) => setAnio(e.target.value)}
-            className="h-11 rounded-2xl border-border/60 bg-background/80 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15"
+            className="h-10 rounded-xl border-border/60 bg-background/75 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
           />
 
           <Select value={estado} onValueChange={setEstado}>
-            <SelectTrigger className="h-11 rounded-2xl border-border/60 bg-background/80 px-4 text-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-border/80 focus:ring-2 focus:ring-primary/15 data-[state=open]:border-primary/30 data-[state=open]:ring-2 data-[state=open]:ring-primary/10 sm:col-span-2 lg:col-span-1">
+            <SelectTrigger className="h-10 rounded-xl border-border/60 bg-background/75 px-4 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus:ring-2 focus:ring-primary/15 data-[state=open]:border-primary/30 data-[state=open]:ring-2 data-[state=open]:ring-primary/10 dark:bg-background/35 sm:col-span-2 lg:col-span-1">
               <SelectValue placeholder="Todos los cursos" />
             </SelectTrigger>
 
-            <SelectContent className="rounded-2xl border-border/60 bg-card/98 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+            <SelectContent className="rounded-xl border-border/70 bg-card/98 shadow-[0_18px_40px_-26px_rgba(15,23,42,0.18)]">
               <SelectItem value={SELECT_ALL}>Todos los cursos</SelectItem>
               {ESTADO_OPTIONS.map(({ value, label }) => (
                 <SelectItem key={value} value={value}>
@@ -434,7 +434,7 @@ export function StudentCoursesList() {
           ))}
         </ul>
       ) : items.length === 0 ? (
-        <Card className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+        <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
           <CardContent className="px-6 py-14">
             <Empty className="border-0 p-0">
               <EmptyMedia variant="icon">
@@ -446,8 +446,8 @@ export function StudentCoursesList() {
                 </EmptyTitle>
                 <EmptyDescription>
                   {hasActiveFilters
-                    ? 'Probá cambiar la búsqueda o los filtros.'
-                    : 'Cuando te sumen a un curso, va a aparecer acá.'}
+                    ? 'Probá cambiar la búsqueda o los filtros para encontrar tu aula.'
+                    : 'Cuando te sumen a un curso, tu aula de aprendizaje va a aparecer acá.'}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>

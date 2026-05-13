@@ -211,7 +211,7 @@ function MetricCard({
   return (
     <div
       className={cn(
-        'group rounded-[26px] border p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_22px_40px_-24px_rgba(15,23,42,0.20)]',
+        'group rounded-2xl border p-4 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 sm:p-5',
         styles.card,
       )}
     >
@@ -231,11 +231,20 @@ function MetricCard({
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             {subtitle}
           </p>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground/85">
+            {tone === 'emerald'
+              ? 'Vas por buen camino.'
+              : tone === 'amber'
+                ? 'Un pequeño repaso puede ayudarte.'
+                : tone === 'rose'
+                  ? 'Pedí ayuda y priorizá este punto.'
+                  : 'Seguimos tu recorrido de aprendizaje.'}
+          </p>
         </div>
 
         <div
           className={cn(
-            'flex size-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-[1.03]',
+            'flex size-11 shrink-0 items-center justify-center rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.04)] transition-transform duration-200 group-hover:scale-[1.02]',
             styles.icon,
           )}
         >
@@ -263,7 +272,7 @@ function FeedbackItem({ feedback }: { feedback: StudentDashboardFeedback }) {
     cursoId && tareaId ? `/student/courses/${cursoId}/tasks/${tareaId}` : null
 
   const content = (
-    <article className="group rounded-[24px] border border-border/60 bg-background/70 px-4 py-4 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/15 hover:bg-card hover:shadow-[0_18px_36px_-24px_rgba(15,23,42,0.18)]">
+    <article className="group rounded-xl border border-border/60 bg-background/60 px-4 py-3.5 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 hover:bg-card dark:bg-background/35 dark:hover:bg-card/90">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 space-y-1">
           <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
@@ -309,11 +318,14 @@ function FeedbackItem({ feedback }: { feedback: StudentDashboardFeedback }) {
 
 function EmptyState({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-[24px] border border-dashed border-border/70 bg-muted/20 px-5 py-8 text-center">
-      <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+    <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-5 py-8 text-center dark:bg-muted/10">
+      <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
         <CheckCircle2 className="size-5" />
       </div>
-      <p className="text-sm font-medium text-muted-foreground">{children}</p>
+      <p className="text-sm font-semibold text-foreground">{children}</p>
+      <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-muted-foreground">
+        Cuando haya algo nuevo para aprender o revisar, va a aparecer acá.
+      </p>
     </div>
   )
 }
@@ -322,7 +334,7 @@ function TaskItem({ task }: { task: StudentDashboardTask }) {
   const tone = task.vencida ? 'rose' : 'emerald'
 
   return (
-    <li className="group rounded-[24px] border border-border/60 bg-background/70 px-4 py-4 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/15 hover:bg-card hover:shadow-[0_18px_36px_-24px_rgba(15,23,42,0.18)]">
+    <li className="group rounded-xl border border-border/60 bg-background/60 px-4 py-3.5 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 hover:bg-card dark:bg-background/35 dark:hover:bg-card/90">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
           <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
@@ -353,7 +365,7 @@ function GradeItem({ grade }: { grade: StudentDashboardGrade }) {
   const tone = getAverageTone(grade.nota)
 
   return (
-    <li className="group rounded-[24px] border border-border/60 bg-background/70 px-4 py-4 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/15 hover:bg-card hover:shadow-[0_18px_36px_-24px_rgba(15,23,42,0.18)]">
+    <li className="group rounded-xl border border-border/60 bg-background/60 px-4 py-3.5 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 hover:bg-card dark:bg-background/35 dark:hover:bg-card/90">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 space-y-1">
           <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
@@ -390,9 +402,9 @@ function CourseSummaryItem({ item }: { item: StudentCourseSummary }) {
     (typeof item.porcentajeAsistencia === 'number' &&
       item.porcentajeAsistencia < 70)
   const status = needsAttention
-    ? 'Requiere atencion'
+    ? 'Necesita apoyo'
     : pendingTasks > 0
-      ? 'Tenes pendientes por resolver'
+      ? 'Próximo paso pendiente'
       : 'Buen progreso'
   const statusTone: SemanticTone = needsAttention
     ? 'rose'
@@ -401,7 +413,7 @@ function CourseSummaryItem({ item }: { item: StudentCourseSummary }) {
       : 'emerald'
 
   return (
-    <li className="rounded-[26px] border border-border/60 bg-background/70 p-5 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/15 hover:bg-card hover:shadow-[0_20px_42px_-24px_rgba(15,23,42,0.18)]">
+    <li className="rounded-2xl border border-border/60 bg-background/60 p-4 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 hover:bg-card dark:bg-background/35 dark:hover:bg-card/90 sm:p-5">
       <div className="flex flex-col gap-4">
         <div className="min-w-0">
           <p className="truncate text-[1rem] font-semibold tracking-tight text-foreground">
@@ -440,7 +452,7 @@ function CourseSummaryItem({ item }: { item: StudentCourseSummary }) {
               toneStyles[tasksTone].badge,
             )}
           >
-            Tareas {pendingTasks}
+            Práctica {pendingTasks}
           </span>
         </div>
       </div>
@@ -496,10 +508,10 @@ function StudentDashboardContent({
   const hasHeroPending = tareasPendientesCount > 0 || feedbacksPendientes > 0
 
   return (
-    <main className="flex-1 overflow-auto px-6 py-8 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_24%)]" />
+    <main className="flex-1 overflow-auto px-5 py-6 lg:px-8 lg:py-7">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <section className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 px-5 py-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] backdrop-blur-xl dark:bg-card/85 sm:px-6 sm:py-7">
+          <div className="absolute inset-x-0 top-0 h-px bg-foreground/10" />
 
           <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
@@ -515,8 +527,8 @@ function StudentDashboardContent({
 
               <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
                 {hasHeroPending
-                  ? 'Tenés pendientes por resolver. Revisá tus tareas y feedbacks.'
-                  : 'Todo al día. Podés concentrarte en tu estudio.'}
+                  ? 'Tenés un próximo paso para seguir avanzando. Revisá tus tareas y feedbacks.'
+                  : 'Todo al día. Buen momento para repasar o avanzar en tus cursos.'}
               </p>
 
               <p className="mt-1 text-[12px] capitalize text-muted-foreground/70">
@@ -526,7 +538,7 @@ function StudentDashboardContent({
 
             <div
               className={cn(
-                'group inline-flex items-center gap-3 rounded-2xl border px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]',
+                'group inline-flex items-center gap-3 rounded-xl border px-4 py-3 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors',
                 hasHeroPending
                   ? 'border-amber-500/25 bg-amber-500/10 hover:bg-amber-500/15'
                   : 'border-border/60 bg-background/80 hover:border-primary/20',
@@ -534,7 +546,7 @@ function StudentDashboardContent({
             >
               <div
                 className={cn(
-                  'flex size-11 items-center justify-center rounded-2xl',
+                  'flex size-10 items-center justify-center rounded-xl',
                   hasHeroPending
                     ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
                     : 'bg-primary/10 text-primary',
@@ -548,34 +560,34 @@ function StudentDashboardContent({
                   Hoy
                 </p>
                 <p className="text-sm font-semibold text-foreground">
-                  {hasHeroPending ? 'Tenés pendientes' : 'Todo al día'}
+                  {hasHeroPending ? 'Próximo paso listo' : 'Buen ritmo'}
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <MetricCard
             title="Cursos"
             value={formatInt(dashboard?.cantidadCursos)}
             icon={BookOpen}
             tone="blue"
-            subtitle="Cursos activos o asignados"
+            subtitle="Aulas donde estás aprendiendo"
           />
           <MetricCard
             title="Tareas"
             value={tareasPendientesCount}
             icon={ClipboardList}
             tone={getCountTone(tareasPendientesCount)}
-            subtitle="Pendientes de entrega"
+            subtitle="Prácticas para seguir avanzando"
           />
           <MetricCard
             title="Entregas"
             value={formatInt(dashboard?.entregasRealizadasCount)}
             icon={FileCheck2}
             tone="emerald"
-            subtitle="Entregas realizadas"
+            subtitle="Trabajos que ya completaste"
           />
           <MetricCard
             title="Feedbacks"
@@ -589,19 +601,19 @@ function StudentDashboardContent({
             value={formatNumber(dashboard?.promedioGeneral)}
             icon={CheckCircle2}
             tone={getAverageTone(dashboard?.promedioGeneral)}
-            subtitle="Rendimiento general"
+            subtitle="Señal de cómo viene tu aprendizaje"
           />
           <MetricCard
             title="Asistencia"
             value={formatNumber(dashboard?.porcentajeAsistenciaGeneral, '%')}
             icon={CalendarDays}
             tone={getAttendanceTone(dashboard?.porcentajeAsistenciaGeneral)}
-            subtitle="Asistencia general"
+            subtitle="Clases que acompañan tu práctica"
           />
         </section>
 
-        <section className="grid gap-5 xl:grid-cols-3">
-          <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+        <section className="grid gap-4 xl:grid-cols-3">
+          <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
                 <ClipboardList className="size-5 text-primary" />
@@ -621,7 +633,7 @@ function StudentDashboardContent({
             </CardContent>
           </Card>
 
-          <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+          <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
                 <MessageSquareWarning className="size-5 text-primary" />
@@ -630,7 +642,7 @@ function StudentDashboardContent({
             </CardHeader>
             <CardContent>
               {feedbacksRecientes.length === 0 ? (
-                <EmptyState>No tenes feedback pendiente por revisar.</EmptyState>
+                <EmptyState>No tenés feedback pendiente por revisar.</EmptyState>
               ) : (
                 <ul className="space-y-2">
                   {feedbacksRecientes.slice(0, 3).map((feedback, index) => (
@@ -644,7 +656,7 @@ function StudentDashboardContent({
             </CardContent>
           </Card>
 
-          <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+          <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
                 <CheckCircle2 className="size-5 text-primary" />

@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes'
 
 import { Button } from '@/components/ui/button'
 import { useSidebar } from '@/components/ui/sidebar'
+import { cn } from '@/lib/utils'
 
 type AppHeaderProps = {
   title: string
@@ -77,6 +78,7 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
   const headerTitle = override?.title ?? title
   const displayTitle = titleLabels[headerTitle] ?? headerTitle
   const displaySubtitle = override?.subtitle ?? subtitle ?? getHeaderSubtitle(pathname)
+  const isStudent = pathname.startsWith('/student')
 
   useEffect(() => {
     setOverride(null)
@@ -94,14 +96,29 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
   }, [pathname])
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+    <header
+      className={cn(
+        'sticky top-0 z-30 border-b backdrop-blur supports-[backdrop-filter]:bg-background/80',
+        isStudent
+          ? 'border-border/70 bg-background/90'
+          : 'border-border/60 bg-background/95',
+      )}
+    >
+      <div
+        className={cn(
+          'flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8',
+          isStudent ? 'py-2.5' : 'py-3',
+        )}
+      >
         <div className="flex min-w-0 items-center gap-3">
           <Button
             variant="outline"
             size="icon"
             onClick={toggleSidebar}
-            className="size-11 shrink-0 rounded-2xl border-border/70 bg-background/85 shadow-sm hover:bg-muted hover:text-foreground"
+            className={cn(
+              'size-11 shrink-0 rounded-2xl border-border/70 bg-background/85 shadow-sm hover:bg-muted hover:text-foreground',
+              isStudent && 'rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.03)] dark:bg-background/35',
+            )}
           >
             <PanelLeft className="size-4.5" />
           </Button>
@@ -120,7 +137,10 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
           <Button
             variant="outline"
             size="icon"
-            className="size-11 rounded-2xl border-border/70 bg-background/85 shadow-sm transition-colors hover:bg-muted hover:text-foreground"
+            className={cn(
+              'size-11 rounded-2xl border-border/70 bg-background/85 shadow-sm transition-colors hover:bg-muted hover:text-foreground',
+              isStudent && 'rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.03)] dark:bg-background/35',
+            )}
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
             <Sun className="size-4.5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

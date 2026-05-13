@@ -19,6 +19,7 @@ import {
   Loader2,
   Megaphone,
   MessageSquareText,
+  Paperclip,
   Save,
   Trash2,
   Upload,
@@ -240,7 +241,7 @@ function getFeedbackEstado(feedback?: StudentCurrentFeedback | null) {
     return {
       label: 'Necesita cambios',
       intent: 'redo' as const,
-      title: 'Tu profe pidió algunos cambios',
+      title: 'Tu profe dejó una mejora',
       iconClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
       badgeClass:
         'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-300',
@@ -351,7 +352,7 @@ function AttachmentLink({
   const size = formatBytes(attachment.sizeBytes)
   const AttachmentIcon = getAttachmentIcon(attachment)
   const rowClassName =
-    cn('flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/50 bg-background/60 px-3 py-2 transition-colors duration-200 ease-out hover:border-primary/25 hover:bg-primary/5 sm:min-h-11', studentUi.focus)
+    cn('flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/60 px-3 py-2 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 ease-out hover:border-primary/25 hover:bg-primary/5 dark:bg-background/35 sm:min-h-11', studentUi.focus)
   const content = (
     <>
       <StudentIconContainer
@@ -525,9 +526,9 @@ export function StudentTaskDetail({
     : 'Entregar tarea'
   const actionState = feedbackNeedsChanges
     ? {
-        title: 'Tu profe pidió cambios',
-        description: 'Leé el mensaje de tu profe y mandá una nueva versión.',
-        cta: 'Corregir entrega',
+        title: 'Tenés una mejora para hacer',
+        description: 'Leé el mensaje de tu profe, ajustá tu trabajo y mandá una nueva versión.',
+        cta: 'Mejorar entrega',
         icon: AlertCircle,
         className:
           'border-amber-500/30 bg-amber-500/[0.08] text-amber-900 dark:text-amber-100',
@@ -536,9 +537,9 @@ export function StudentTaskDetail({
       }
     : feedbackApproved
       ? {
-          title: 'Tu profe aprobó tu entrega',
-          description: 'Tu trabajo ya fue revisado. Podés volver a verlo cuando quieras.',
-          cta: 'Ver entrega',
+          title: 'Trabajo aprobado',
+          description: 'Buen avance. Tu entrega ya fue revisada y podés volver a verla cuando quieras.',
+          cta: 'Revisar entrega',
           icon: CheckCircle2,
           className:
             'border-emerald-200 bg-card text-foreground dark:border-emerald-500/20 dark:bg-card dark:text-foreground',
@@ -548,8 +549,8 @@ export function StudentTaskDetail({
         }
       : currentDelivery
         ? {
-            title: 'Tu tarea está entregada',
-            description: 'Podés revisar lo que mandaste o hacer un cambio.',
+            title: 'Entrega guardada',
+            description: 'Ya completaste este paso. Podés revisar lo que mandaste o hacer un cambio.',
             cta: 'Editar entrega',
             icon: CheckCircle2,
             className:
@@ -561,7 +562,7 @@ export function StudentTaskDetail({
         : task?.vencida
           ? {
               title: 'La fecha ya pasó',
-              description: 'Podés leer la consigna y hablar con tu profe si necesitás ayuda.',
+              description: 'Repasá la consigna y hablá con tu profe si necesitás ayuda para ponerte al día.',
               cta: null,
               icon: AlertCircle,
               className:
@@ -570,9 +571,9 @@ export function StudentTaskDetail({
               buttonClassName: '',
             }
           : {
-              title: 'Tenés que entregar esta tarea',
-              description: 'Leé la consigna, mirá los materiales y mandá tu trabajo.',
-              cta: 'Entregar tarea',
+              title: 'Próximo paso: entregar',
+              description: 'Leé la consigna, mirá los materiales y mandá tu trabajo cuando esté listo.',
+              cta: 'Empezar entrega',
               icon: Clock3,
               className:
                 'border-sky-500/25 bg-sky-500/[0.06] text-sky-900 dark:text-sky-100',
@@ -674,7 +675,7 @@ export function StudentTaskDetail({
     return (
       <section
         className={cn(
-          'rounded-[24px] border p-5 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.22)]',
+          'rounded-xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
           actionState.className,
         )}
       >
@@ -693,27 +694,40 @@ export function StudentTaskDetail({
             </p>
           </div>
         </div>
+        <p className="mt-4 rounded-lg border border-border/50 bg-background/45 px-3 py-2 text-xs leading-5 text-muted-foreground dark:bg-background/25">
+          {feedbackNeedsChanges
+            ? 'Una corrección es parte del aprendizaje: no significa empezar de cero.'
+            : feedbackApproved
+              ? 'Podés usar esta entrega como referencia para próximas actividades.'
+              : currentDelivery
+                ? 'Tu avance quedó registrado.'
+                : task?.vencida
+                  ? 'Si te atrasaste, el primer paso es pedir orientación.'
+                  : 'Dividí la tarea en pasos chicos: leer, preparar y enviar.'}
+        </p>
 
-        <Button
-          type="button"
-          className={cn(
-            'mt-4 w-full rounded-xl focus-visible:ring-primary/30',
-            feedbackApproved ? 'h-10 text-sm sm:h-9' : 'h-11',
-            actionState.buttonClassName ||
-              'border-border/70 bg-background text-foreground transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-muted/50 hover:text-foreground active:scale-[0.99]',
-          )}
-          variant={actionState.buttonClassName ? 'default' : 'outline'}
-          onClick={() => {
-            if (feedbackApproved || (task?.vencida && !currentDelivery)) {
-              setShowForm(false)
-              return
-            }
+        {actionState.cta ? (
+          <Button
+            type="button"
+            className={cn(
+              'mt-4 w-full rounded-lg focus-visible:ring-primary/25',
+              feedbackApproved ? 'h-10 text-sm sm:h-9' : 'h-11',
+              actionState.buttonClassName ||
+                'border-border/70 bg-background/75 text-foreground transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-muted/40 hover:text-foreground active:scale-[0.99] dark:bg-background/35',
+            )}
+            variant={actionState.buttonClassName ? 'default' : 'outline'}
+            onClick={() => {
+              if (feedbackApproved || (task?.vencida && !currentDelivery)) {
+                setShowForm(false)
+                return
+              }
 
-            setShowForm(true)
-          }}
-        >
-          {actionState.cta}
-        </Button>
+              setShowForm(true)
+            }}
+          >
+            {actionState.cta}
+          </Button>
+        ) : null}
       </section>
     )
   }
@@ -723,7 +737,7 @@ export function StudentTaskDetail({
       <section
         id="tu-trabajo"
         className={cn(
-          'rounded-[24px] border bg-card p-5',
+          'rounded-xl border bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90',
           feedbackNeedsChanges
             ? 'border-amber-500/25'
             : currentFeedback?.estado
@@ -808,7 +822,7 @@ export function StudentTaskDetail({
             </div>
           </div>
         ) : (
-          <div className="mt-5 rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
+          <div className="mt-5 rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-4 text-sm text-muted-foreground dark:bg-muted/10">
             Cuando entregues, acá vas a ver tu respuesta, tus archivos y el mensaje de tu profe.
           </div>
         )}
@@ -903,10 +917,10 @@ export function StudentTaskDetail({
               value={text}
               onChange={(event) => setText(event.target.value)}
               placeholder="Escribí tu respuesta..."
-              className="min-h-32 rounded-xl bg-background/70 text-base"
+              className="min-h-32 rounded-xl border-border/70 bg-background/70 text-base focus-visible:ring-primary/20 dark:bg-background/35"
             />
 
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors duration-200 ease-out hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors duration-200 ease-out hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20 dark:bg-muted/10">
               {uploading ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
@@ -954,7 +968,7 @@ export function StudentTaskDetail({
 
             <Button
               type="button"
-              className="h-10 w-full rounded-xl sm:w-fit"
+              className="h-10 w-full rounded-lg sm:w-fit"
               onClick={handleSave}
               disabled={saving || uploading}
             >
@@ -1116,33 +1130,39 @@ export function StudentTaskDetail({
         </div>
       </header>
 
-      <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+      <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         <aside className="order-1 space-y-4 lg:sticky lg:top-6 lg:order-2">
           {renderActionPanel()}
           {renderDeliveryPanel()}
         </aside>
 
-        <div className="order-2 space-y-7 sm:space-y-8 lg:order-1">
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">
-              Consigna
-            </h2>
+        <div className="order-2 space-y-5 sm:space-y-6 lg:order-1">
+          <section className={studentUi.card.document}>
+            <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
+              <FileText className="size-4 text-muted-foreground" />
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                Consigna
+              </h2>
+            </div>
             {safeText(task.consigna) ? (
-              <p className="whitespace-pre-wrap text-base leading-7 text-foreground/85">
+              <p className="whitespace-pre-wrap text-base leading-8 text-foreground/85">
                 {task.consigna}
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className={studentUi.card.callout}>
                 Esta tarea todavía no tiene consigna.
               </p>
             )}
           </section>
 
           {resources.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Materiales
-              </h2>
+            <section className={studentUi.card.document}>
+              <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
+                <Paperclip className="size-4 text-muted-foreground" />
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                  Materiales
+                </h2>
+              </div>
               <div className="space-y-2">
                 {resources.map((resource, index) => (
                   <AttachmentLink

@@ -71,7 +71,7 @@ export default async function StudentCourseDetailPage({ params }: PageProps) {
     <>
       <AppHeader title={getCourseName(course)} subtitle={getHeaderSubtitle(course)} />
 
-      <main className="flex-1 overflow-auto px-5 py-5 lg:px-8">
+      <main className="flex-1 overflow-auto px-5 py-6 lg:px-8 lg:py-7">
         <div className="mx-auto max-w-7xl">
           <StudentCourseDetail
             courseId={courseId}

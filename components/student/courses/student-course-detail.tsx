@@ -506,7 +506,7 @@ function getAttendanceStatus(value: unknown): AttendanceStatus {
 
   return {
     key: 'unknown',
-    label: 'Sin asistencia todavía',
+    label: 'Sin registro todavía',
     icon: CalendarCheck2,
     badgeClassName:
       'border-border/70 bg-muted/35 text-muted-foreground',
@@ -529,7 +529,7 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
   if (item.feedbackPendienteAccion === true) {
     return {
       label: 'Necesita cambios',
-      actionLabel: 'Corregir',
+      actionLabel: 'Mejorar entrega',
       icon: AlertCircle,
       badgeClassName:
         'border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300',
@@ -542,7 +542,7 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
   if (item.tieneEntrega === true) {
     return {
       label: 'Entregada',
-      actionLabel: 'Ver entrega',
+      actionLabel: 'Revisar entrega',
       icon: CheckCircle2,
       badgeClassName:
         'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
@@ -554,8 +554,8 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
 
   if (item.vencida === true && !item.tieneEntrega) {
     return {
-      label: 'Ya venció',
-      actionLabel: 'Ver consigna',
+      label: 'Fecha pasada',
+      actionLabel: 'Repasar consigna',
       icon: AlertCircle,
       badgeClassName:
         'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300',
@@ -568,7 +568,7 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
   if (hasTaskDueDate(item)) {
     return {
       label: 'Para entregar',
-      actionLabel: 'Hacer tarea',
+      actionLabel: 'Empezar tarea',
       icon: Clock3,
       badgeClassName:
         'border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300',
@@ -708,7 +708,7 @@ function MetaPills({ values }: { values: Array<string | null | undefined> }) {
       {visible.map((value) => (
         <span
           key={value}
-          className="rounded-full border border-border/50 bg-muted/40 px-2.5 py-1 text-xs font-medium tracking-tight text-muted-foreground"
+          className="rounded-full border border-border/50 bg-muted/25 px-2.5 py-1 text-xs font-medium tracking-tight text-muted-foreground"
         >
           {value}
         </span>
@@ -733,7 +733,7 @@ function SectionCard({
   action?: React.ReactNode
 }) {
   return (
-    <article className="rounded-[24px] border border-border/60 bg-background/75 p-4 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 ease-out hover:-translate-y-[1px] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_40px_-24px_rgba(15,23,42,0.18)]">
+    <article className="rounded-lg border border-border/60 bg-background/60 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-card dark:bg-background/35 dark:hover:bg-card/90">
       <div className="flex items-start justify-between gap-4">
         <p className="min-w-0 truncate text-[15px] font-semibold tracking-tight text-foreground">
           {title}
@@ -801,7 +801,7 @@ function TaskPostCard({
             <p className="text-sm font-medium leading-5 text-muted-foreground">
             Tarea de {teacherName}
             </p>
-            <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-6 tracking-tight text-foreground sm:line-clamp-2">
+            <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-7 tracking-tight text-foreground sm:line-clamp-2">
               {title}
             </h3>
             {description ? (
@@ -832,7 +832,7 @@ function TaskPostCard({
             </StudentMetaRow>
           </div>
 
-          <div className="col-span-full flex shrink-0 flex-col gap-3 sm:col-span-auto sm:min-w-36 sm:items-end">
+        <div className="col-span-full flex shrink-0 flex-col gap-2 sm:col-span-auto sm:min-w-32 sm:items-end">
             <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
               {status.label}
             </StudentStatusBadge>
@@ -863,7 +863,7 @@ function TaskPostCard({
           <p className="text-sm font-medium leading-5 text-muted-foreground">
             Anuncio de {teacherName}
           </p>
-          <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-6 tracking-tight text-foreground sm:line-clamp-2">
+          <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-7 tracking-tight text-foreground sm:line-clamp-2">
             {title}
           </h3>
           {description ? (
@@ -935,6 +935,13 @@ function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
           <time className="mt-2 block text-xs font-medium text-muted-foreground">
             {fecha}
           </time>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            {status.key === 'present'
+              ? 'Cada clase suma para tu progreso.'
+              : status.key === 'absent'
+                ? 'Podés pedir ayuda para ponerte al día.'
+                : 'Cuando se tome asistencia, vas a ver el registro acá.'}
+          </p>
         </div>
 
         <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
@@ -970,12 +977,12 @@ function AttendanceSummary({
       className: 'border-border/55 bg-background/75 text-foreground',
     },
     {
-      label: 'Presentes',
+      label: 'Prácticas',
       value: summary.present,
       className: 'border-emerald-200/50 bg-emerald-50/25 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/5 dark:text-emerald-300',
     },
     {
-      label: 'Ausentes',
+      label: 'Por recuperar',
       value: summary.absent,
       className: 'border-rose-200/50 bg-rose-50/25 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/5 dark:text-rose-300',
     },
@@ -1023,7 +1030,7 @@ function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
   const name = getFullName(item) ?? 'Nombre no disponible'
 
   return (
-    <article className="rounded-[24px] border border-violet-200/60 bg-violet-50/35 p-4 transition-colors duration-200 ease-out hover:border-violet-300/70 hover:bg-violet-50/55 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
+    <article className="rounded-xl border border-violet-200/60 bg-violet-50/30 p-4 transition-colors duration-200 ease-out hover:border-violet-300/70 hover:bg-violet-50/45 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
       <div className="flex items-center gap-3">
         <StudentIconContainer className="border-violet-200 bg-background/80 text-sm font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
           {getInitials(name) || '?'}
@@ -1058,10 +1065,10 @@ function ClassmatePersonCard({
   return (
     <article
       className={cn(
-        'rounded-[24px] border p-4 transition-colors duration-200 ease-out hover:border-primary/15 hover:bg-card',
+        'rounded-xl border p-4 transition-colors duration-200 ease-out hover:border-primary/15 hover:bg-card',
         current
           ? 'border-primary/25 bg-primary/8'
-          : 'border-border/60 bg-background/75',
+          : 'border-border/60 bg-background/60 dark:bg-background/35',
       )}
     >
       <div className="flex items-center gap-3">
@@ -1090,7 +1097,10 @@ function ClassmatePersonCard({
 function PeopleEmptyState({ text }: { text: string }) {
   return (
     <div className={cn(studentUi.card.empty, 'px-5 py-8 text-center')}>
-      <p className="text-sm font-medium text-muted-foreground">{text}</p>
+      <p className="text-sm font-semibold text-foreground">{text}</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+        Cuando el curso tenga movimiento, vas a verlo organizado acá.
+      </p>
     </div>
   )
 }
@@ -1105,7 +1115,7 @@ function PeopleCommunity({
   const { teachers, classmates } = getPeopleGroups(items)
 
   if (teachers.length === 0 && classmates.length === 0) {
-    return <PeopleEmptyState text="Todavía no se sumó nadie a este curso." />
+    return <PeopleEmptyState text="Todavía no hay personas para mostrar." />
   }
 
   return (
@@ -1124,7 +1134,7 @@ function PeopleCommunity({
             ))}
           </div>
         ) : (
-          <PeopleEmptyState text="Todavía no hay profes en este curso." />
+          <PeopleEmptyState text="Todavía no hay profes asignados." />
         )}
       </section>
 
@@ -1143,7 +1153,7 @@ function PeopleCommunity({
             ))}
           </div>
         ) : (
-          <PeopleEmptyState text="Todavía no hay compañeros en este curso." />
+          <PeopleEmptyState text="Todavía no hay compañeros en la lista." />
         )}
       </section>
     </section>
@@ -1190,6 +1200,11 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
               {description}
             </p>
           ) : null}
+          <p className="mt-3 text-xs leading-5 text-muted-foreground">
+            {Number.isFinite(grade)
+              ? 'Usá esta nota para entender qué seguir practicando.'
+              : 'Cuando tu profe cargue la nota, va a aparecer acá.'}
+          </p>
         </div>
 
         <div
@@ -1315,7 +1330,7 @@ function InfoStat({
   value: string | number
 }) {
   return (
-    <div className="rounded-[24px] border border-border/60 bg-card/85 px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.20)]">
+    <div className="rounded-xl border border-border/70 bg-card/90 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/85">
       <div className="flex items-center gap-3">
         <StudentIconContainer icon={Icon} size="md" className="border-transparent bg-primary/10 text-primary" />
 
@@ -1338,7 +1353,7 @@ function SectionSkeleton() {
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="h-28 animate-pulse rounded-[24px] border border-border/60 bg-muted/30"
+          className="h-28 animate-pulse rounded-xl border border-border/60 bg-muted/25"
         />
       ))}
     </div>
@@ -1347,10 +1362,13 @@ function SectionSkeleton() {
 
 function EmptyPanel({ text }: { text: string }) {
   return (
-    <Card className="rounded-[28px] border border-dashed border-border/70 bg-muted/20 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.14)]">
+    <Card className="rounded-xl border border-dashed border-border/70 bg-muted/15 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-muted/10">
       <CardContent className="px-6 py-14 text-center">
-        <StudentIconContainer icon={BookOpen} className="mx-auto size-14 rounded-3xl border-transparent bg-primary/10 text-primary" />
-        <p className="mt-4 text-sm font-medium text-muted-foreground">{text}</p>
+        <StudentIconContainer icon={BookOpen} className="mx-auto size-11 rounded-lg border-transparent bg-primary/10 text-primary" />
+        <p className="mt-4 text-sm font-semibold text-foreground">{text}</p>
+        <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-muted-foreground">
+          Cuando tu profe publique algo nuevo, lo vas a encontrar en esta sección.
+        </p>
       </CardContent>
     </Card>
   )
@@ -1363,17 +1381,20 @@ function AttendanceEmptyState() {
       <p className="mt-3 text-sm font-medium text-muted-foreground">
         Todavía no hay clases para mostrar en este curso.
       </p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+        Cuando empiece el registro de clases, vas a poder seguir tu recorrido.
+      </p>
     </div>
   )
 }
 
 function TaskFeedSkeleton() {
   return (
-    <div className="mx-auto max-w-[900px] space-y-4">
+    <div className="mx-auto max-w-[900px] space-y-3">
       {Array.from({ length: 3 }).map((_, index) => (
         <div
           key={index}
-          className="h-36 animate-pulse rounded-[24px] border border-border/60 bg-muted/25"
+          className="h-36 animate-pulse rounded-xl border border-border/60 bg-muted/25"
         />
       ))}
     </div>
@@ -1388,7 +1409,7 @@ function TaskFeed({
   courseId: number
 }) {
   return (
-    <div className="mx-auto max-w-[900px] space-y-4">
+    <div className="mx-auto max-w-[900px] space-y-3">
       {items.map((item, index) => (
         <TaskPostCard
           key={String(item.id ?? item.tareaId ?? index)}
@@ -1425,18 +1446,18 @@ function SectionList({
   if (visibleItems.length === 0) {
     if (tab === 'attendance') return <AttendanceEmptyState />
     if (tab === 'tasks') {
-      return <EmptyPanel text="Todavía no hay novedades ni tareas en el tablón." />
+      return <EmptyPanel text="Todavía no hay actividades en el tablón." />
     }
 
     if (tab === 'grades') {
-      return <EmptyPanel text="Todavía no hay notas de quizzes, tests o participación." />
+      return <EmptyPanel text="Todavía no hay calificaciones para aprender de ellas." />
     }
 
     if (tab === 'people') {
-      return <PeopleEmptyState text="Todavía no se sumó nadie a este curso." />
+      return <PeopleEmptyState text="Todavía no hay personas para mostrar." />
     }
 
-    return <EmptyPanel text="Todavía no hay nada para mostrar acá." />
+    return <EmptyPanel text="Todavía no hay contenido en esta sección." />
   }
 
   if (tab === 'attendance') {
@@ -1515,7 +1536,7 @@ export function StudentCourseDetail({
       <div className="space-y-4">
         <nav
           aria-label="Secciones del curso"
-          className="flex flex-wrap gap-1 border-b border-border/60"
+          className="flex max-w-full flex-wrap gap-4 border-b border-border/70"
         >
           {tabs.map((key) => {
             const tabConfig = tabStyles[key]
@@ -1528,13 +1549,13 @@ export function StudentCourseDetail({
                 type="button"
                 onClick={() => setTab(key)}
                 className={cn(
-                  'group -mb-px inline-flex min-h-10 items-center gap-2 rounded-t-xl border-b-2 px-2.5 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:px-3',
+                  'group -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-0.5 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:px-1',
                   active
-                    ? 'border-primary bg-primary/5 text-foreground'
-                    : 'border-transparent text-muted-foreground hover:border-border hover:bg-muted/35 hover:text-foreground',
+                    ? 'border-foreground text-foreground'
+                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
                 )}
               >
-                <Icon className="size-4 transition-transform duration-200 ease-out group-hover:-translate-y-0.5" />
+                <Icon className="size-4 transition-colors duration-200 ease-out" />
                 <span>{tabConfig.label}</span>
               </button>
             )
