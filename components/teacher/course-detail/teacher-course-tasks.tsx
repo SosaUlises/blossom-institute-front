@@ -62,8 +62,8 @@ function TaskMetaItem({
 }) {
   const containerClass =
     tone === 'highlight'
-      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 shadow-sm'
-      : 'rounded-2xl border border-border/60 bg-background/80 px-4 py-3 shadow-sm'
+      ? 'rounded-md border border-primary/15 bg-primary/[0.04] px-2.5 py-1.5'
+      : 'rounded-md border border-border/60 bg-background/60 px-2.5 py-1.5'
 
   const iconWrapClass =
     tone === 'highlight'
@@ -77,7 +77,7 @@ function TaskMetaItem({
     <div className={containerClass}>
       <div className="flex items-center gap-2">
         <div
-          className={`flex size-8 items-center justify-center rounded-xl ${iconWrapClass}`}
+          className={`flex size-6 items-center justify-center rounded-md ${iconWrapClass}`}
         >
           <Icon className="size-4" />
         </div>
@@ -88,15 +88,15 @@ function TaskMetaItem({
         </span>
       </div>
 
-      <p className={`mt-2 text-sm font-semibold ${valueClass}`}>{value}</p>
+      <p className={`mt-1.5 text-xs font-semibold ${valueClass}`}>{value}</p>
     </div>
   )
 }
 
 function TaskCardSkeleton() {
   return (
-    <article className="rounded-2xl border border-border/70 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-6">
-      <div className="space-y-5">
+    <article className="rounded-xl border border-border/70 bg-card/95 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-4">
+      <div className="space-y-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-2">
             <div className="h-7 w-20 animate-pulse rounded-full bg-muted/40" />
@@ -111,8 +111,8 @@ function TaskCardSkeleton() {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="h-20 animate-pulse rounded-2xl bg-muted/30" />
-          <div className="h-20 animate-pulse rounded-2xl bg-muted/30" />
+          <div className="h-12 animate-pulse rounded-lg bg-muted/30" />
+          <div className="h-12 animate-pulse rounded-lg bg-muted/30" />
         </div>
       </div>
     </article>
@@ -203,11 +203,11 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   }, [pageNumber, totalPages, total])
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
  
-      <div className="rounded-2xl border border-border/70 bg-card/90 p-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="grid gap-3 md:grid-cols-2">
+      <div className="rounded-xl border border-border/70 bg-card/85 p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+        <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:justify-between">
+          <div className="grid gap-2.5 md:grid-cols-2">
             <div className="relative min-w-[260px]">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -217,7 +217,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
                   setSearch(e.target.value)
                   setPageNumber(1)
                 }}
-                className="h-11 rounded-2xl border-border/70 bg-background/80 pl-10 shadow-sm"
+                className="h-10 rounded-xl border-border/60 bg-background/75 pl-10 text-sm shadow-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
               />
             </div>
 
@@ -228,10 +228,10 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
                 setPageNumber(1)
               }}
             >
-              <SelectTrigger className="h-11 rounded-2xl border-border/70 bg-background/80 shadow-sm">
+              <SelectTrigger className="h-10 rounded-xl border-border/60 bg-background/75 text-sm shadow-none transition-colors duration-200 focus:ring-2 focus:ring-primary/15 dark:bg-background/35">
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/60">
+              <SelectContent className="rounded-xl border-border/60">
                 <SelectItem value={SELECT_ALL}>Todos los estados</SelectItem>
                 <SelectItem value={String(EstadoTarea.Borrador)}>Borrador</SelectItem>
                 <SelectItem value={String(EstadoTarea.Publicada)}>Publicada</SelectItem>
@@ -242,7 +242,8 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
            <Button
             onClick={() => router.push(`/teacher/courses/${courseId}/tasks/create`)}
-            className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)] active:translate-y-0"
+            variant="outline"
+            className="h-10 rounded-lg border-primary/15 bg-primary/[0.04] px-3 text-primary shadow-none transition-colors duration-200 hover:border-primary/25 hover:bg-primary/[0.07] hover:text-primary"
           >
             <Plus className="mr-2 size-4" />
             Crear publicación
@@ -251,19 +252,19 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
       </div>
 
       {error && (
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+        <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="space-y-4">
+        <div className="space-y-2.5">
           {Array.from({ length: 3 }).map((_, i) => (
             <TaskCardSkeleton key={i} />
           ))}
         </div>
       ) : data.length === 0 ? (
-        <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+        <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <CardContent className="px-6 py-14">
             <Empty className="border-0 p-0">
               <EmptyMedia variant="icon">
@@ -290,30 +291,28 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
             return (
               <article
                 key={task.id}
-                className="relative rounded-2xl border border-border/70 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-6"
+                className="rounded-xl border border-border/70 bg-card/95 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 hover:border-primary/20 hover:bg-card dark:bg-card/90 sm:p-4"
               >
-                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/[0.025]" />
-
-                <div className="relative space-y-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <div
-                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
                           task.esAnuncio
                             ? 'border-amber-500/15 bg-amber-500/10 text-amber-700 dark:text-amber-400'
                             : 'border-primary/15 bg-primary/5 text-primary'
                         }`}
                       >
                         {task.esAnuncio ? (
-                          <Megaphone className="size-3.5" />
+                          <Megaphone className="size-3" />
                         ) : (
-                          <ClipboardList className="size-3.5" />
+                          <ClipboardList className="size-3" />
                         )}
                         {task.esAnuncio ? 'Anuncio' : 'Tarea'}
                       </div>
 
                       <span
-                        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${estadoConfig.className}`}
+                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${estadoConfig.className}`}
                       >
                         {estadoConfig.label}
                       </span>
@@ -345,20 +344,20 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
                     </div>
                   </div>
 
-                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_430px] xl:items-start">
-                    <div className="min-w-0 space-y-2">
-                      <h3 className="text-xl font-semibold tracking-tight text-foreground">
+                  <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+                    <div className="min-w-0 space-y-1">
+                      <h3 className="text-lg font-semibold tracking-tight text-foreground">
                         {task.titulo}
                       </h3>
 
-                      <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                      <p className="max-w-2xl text-sm leading-5 text-muted-foreground">
                         {task.esAnuncio
                           ? 'Publicación informativa para el curso. No admite entregas ni feedback.'
                           : 'Gestioná entregas, edición y estado de la actividad.'}
                       </p>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-2 sm:grid-cols-2">
                       <TaskMetaItem
                         icon={task.esAnuncio ? Megaphone : CalendarClock}
                         label={task.esAnuncio ? 'Tipo' : 'Entrega'}
@@ -386,13 +385,13 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <p className="text-sm text-muted-foreground">{pageLabel}</p>
 
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+            className="rounded-lg border-border/70 bg-background/70 transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40"
             disabled={pageNumber === 1}
             onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
           >
@@ -401,7 +400,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
           <Button
             variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+            className="rounded-lg border-border/70 bg-background/70 transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40"
             disabled={pageNumber * pageSize >= total}
             onClick={() => setPageNumber((prev) => prev + 1)}
           >

@@ -2,12 +2,11 @@ import Link from 'next/link'
 import {
   BookOpen,
   CalendarRange,
-  Clock3,
-  GraduationCap,
-  Plus,
-  Users,
   CheckSquare,
   ClipboardList,
+  Clock3,
+  Plus,
+  Users,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -22,181 +21,90 @@ type Props = {
   course: TeacherCourseDetail
 }
 
-function InfoStatCard({
-  icon: Icon,
-  label,
-  value,
-  accent,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string | number
-  accent: 'sky' | 'violet'
-}) {
-  const accentStyles = {
-    sky: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-    violet: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-  }
+function getNextSchedule(course: TeacherCourseDetail) {
+  if (course.horarios.length === 0) return null
 
-  return (
-    <div className="rounded-xl border border-border/60 bg-card/85 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-      <div className="flex items-center gap-3">
-        <div
-          className={`flex size-10 items-center justify-center rounded-lg ${accentStyles[accent]}`}
-        >
-          <Icon className="size-5" />
-        </div>
+  const today = new Date().getDay()
 
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            {label}
-          </p>
-          <p className="mt-1 text-xl font-semibold leading-none tracking-tight text-foreground">
-            {value}
-          </p>
-        </div>
-      </div>
-    </div>
-  )
+  return [...course.horarios].sort((a, b) => {
+    const diffA = (a.dia - today + 7) % 7
+    const diffB = (b.dia - today + 7) % 7
+
+    if (diffA !== diffB) return diffA - diffB
+    return a.horaInicio.localeCompare(b.horaInicio)
+  })[0]
 }
 
 export function TeacherCourseHero({ course }: Props) {
+  const nextSchedule = getNextSchedule(course)
+
   return (
-    <section className="rounded-2xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
-      <div className="p-4 sm:p-5">
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_360px]">
-          <div className="rounded-xl border border-border/60 bg-background/55 p-5 dark:bg-background/30 sm:p-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex size-11 items-center justify-center rounded-lg border border-primary/10 bg-primary/10 text-primary">
-                <BookOpen className="size-5" />
-              </div>
+    <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-w-0 items-start gap-2.5">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/[0.06] text-primary">
+          <BookOpen className="size-4" />
+        </div>
 
-              <span className={getEstadoCursoBadgeClass(course.estado)}>
-                {getEstadoCursoLabel(course.estado)}
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-2xl">
+            {course.nombre}
+          </h1>
+
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground dark:bg-background/30">
+              <Users className="size-3" />
+              {course.cantidadAlumnos} alumnos
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground dark:bg-background/30">
+              <CalendarRange className="size-3" />
+              Anio {course.anio}
+            </span>
+            {nextSchedule ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground dark:bg-background/30">
+                <Clock3 className="size-3" />
+                {getDayLabel(nextSchedule.dia)} {nextSchedule.horaInicio}
               </span>
-
-              <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
-                <CalendarRange className="size-3.5" />
-                Año {course.anio}
-              </div>
-            </div>
-
-            <div className="mt-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary/80">
-                Espacio del curso
-              </p>
-
-              <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
-                {course.nombre}
-              </h1>
-
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-[15px]">
-                {course.descripcion?.trim()
-                  ? course.descripcion
-                  : 'Gestioná alumnos, asistencia, tareas y calificaciones desde un único espacio de trabajo.'}
-              </p>
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Button
-                asChild
-                className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-colors duration-200 hover:bg-primary/90"
-              >
-                <Link
-                  href={`/teacher/courses/${course.id}/tasks/create`}
-                  className="flex items-center justify-center"
-                >
-                  <Plus className="mr-2 size-4" />
-                  Crear tarea
-                </Link>
-              </Button>
-
-              <Button
-                asChild
-                variant="outline"
-                className="h-10 rounded-lg border-border/70 bg-background/70 px-4 text-sm font-semibold text-foreground transition-colors duration-200 hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
-              >
-                <Link
-                  href={`/teacher/courses/${course.id}/classes/take`}
-                  className="flex items-center justify-center"
-                >
-                  <CheckSquare className="mr-2 size-4" />
-                  Tomar asistencia
-                </Link>
-              </Button>
-
-              <Button
-                asChild
-                variant="outline"
-                className="h-10 rounded-lg border-border/70 bg-background/70 px-4 text-sm font-semibold text-foreground transition-colors duration-200 hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
-              >
-                <Link
-                  href={`/teacher/courses/${course.id}/grade-templates`}
-                  className="flex items-center justify-center"
-                >
-                  <ClipboardList className="mr-2 size-4" />
-                  Cargar calificaciones
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-border/60 bg-background/45 p-4 dark:bg-background/25">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <InfoStatCard
-                icon={Users}
-                label="Alumnos"
-                value={course.cantidadAlumnos}
-                accent="sky"
-              />
-
-              <InfoStatCard
-                icon={GraduationCap}
-                label="Profesores"
-                value={course.cantidadProfesores}
-                accent="violet"
-              />
-            </div>
-
-            <div className="mt-4 rounded-xl border border-border/60 bg-background/55 p-4 dark:bg-background/30">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Disponibilidad semanal
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Horarios configurados para este curso.
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="space-y-2.5">
-                {course.horarios.length > 0 ? (
-                  course.horarios.map((schedule, index) => (
-                    <div
-                      key={`${schedule.dia}-${schedule.horaInicio}-${schedule.horaFin}-${index}`}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/90 px-4 py-3 transition-colors duration-200 hover:border-primary/15 hover:bg-primary/[0.04]"
-                    >
-                      <span className="text-sm font-semibold text-foreground">
-                        {getDayLabel(schedule.dia)}
-                      </span>
-
-                      <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-                        <Clock3 className="size-3.5" />
-                        {schedule.horaInicio} – {schedule.horaFin}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border/70 bg-card/70 px-4 py-5 text-sm text-muted-foreground">
-                    Este curso no tiene horarios configurados todavía.
-                  </div>
-                )}
-              </div>
-            </div>
+            ) : null}
+            <span className={getEstadoCursoBadgeClass(course.estado)}>
+              {getEstadoCursoLabel(course.estado)}
+            </span>
           </div>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 sm:justify-end">
+        <Button
+          asChild
+          variant="outline"
+          className="h-8 rounded-md border-primary/15 bg-primary/[0.04] px-2.5 text-xs font-semibold text-primary shadow-none transition-colors duration-200 hover:border-primary/25 hover:bg-primary/[0.07] hover:text-primary"
+        >
+          <Link href={`/teacher/courses/${course.id}/tasks/create`}>
+            <Plus className="mr-1.5 size-3.5" />
+            Publicar tarea
+          </Link>
+        </Button>
+
+        <Button
+          asChild
+          variant="outline"
+          className="h-8 rounded-md border-border/65 bg-background/60 px-2.5 text-xs font-semibold text-foreground shadow-none transition-colors duration-200 hover:border-primary/25 hover:bg-primary/5 hover:text-primary dark:bg-background/30"
+        >
+          <Link href={`/teacher/courses/${course.id}/classes/take`}>
+            <CheckSquare className="mr-1.5 size-3.5" />
+            Asistencia
+          </Link>
+        </Button>
+
+        <Button
+          asChild
+          variant="outline"
+          className="h-8 rounded-md border-border/65 bg-background/60 px-2.5 text-xs font-semibold text-foreground shadow-none transition-colors duration-200 hover:border-primary/25 hover:bg-primary/5 hover:text-primary dark:bg-background/30"
+        >
+          <Link href={`/teacher/courses/${course.id}/grade-templates`}>
+            <ClipboardList className="mr-1.5 size-3.5" />
+            Calificaciones
+          </Link>
+        </Button>
       </div>
     </section>
   )

@@ -31,12 +31,10 @@ function StudentCard({
   const fullName = `${student.nombre} ${student.apellido}`
 
   return (
-    <article className="group relative rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 ease-out hover:border-border/80 hover:bg-card hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/[0.025]" />
-
-      <div className="relative flex h-full flex-col">
+    <article className="group rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-card dark:bg-card/90">
+      <div className="flex h-full flex-col">
         <div className="flex items-start gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 shadow-sm dark:text-sky-400">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-sky-500/15 bg-sky-500/10 text-sky-600 dark:text-sky-400">
             <Users className="size-5" />
           </div>
 
@@ -64,7 +62,7 @@ function StudentCard({
           </div>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-4">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-3">
           <span className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
             Ver calificaciones
           </span>
@@ -72,7 +70,7 @@ function StudentCard({
           <Button
             asChild
             size="sm"
-            className="rounded-xl bg-primary px-3.5 text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]"
+            className="rounded-lg bg-primary px-3 text-primary-foreground shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 hover:bg-primary/90"
           >
             <Link
               href={`/teacher/courses/${courseId}/students/${student.alumnoId}/grades`}
@@ -89,10 +87,10 @@ function StudentCard({
 
 function StudentCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-      <div className="space-y-5">
+    <div className="rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+      <div className="space-y-4">
         <div className="flex items-start gap-3">
-          <div className="h-11 w-11 animate-pulse rounded-2xl bg-muted/40" />
+          <div className="h-10 w-10 animate-pulse rounded-lg bg-muted/40" />
           <div className="min-w-0 flex-1 space-y-2">
             <div className="h-5 w-2/3 animate-pulse rounded-xl bg-muted/40" />
             <div className="h-4 w-4/5 animate-pulse rounded-lg bg-muted/35" />
@@ -154,7 +152,7 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+      <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
         {error}
       </div>
     )
@@ -162,7 +160,7 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
+      <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-5 py-10 text-center text-sm text-muted-foreground">
         <Users className="mx-auto mb-3 size-5" />
         No hay alumnos en este curso.
       </div>

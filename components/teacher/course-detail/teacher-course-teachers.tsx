@@ -22,12 +22,10 @@ function TeacherCard({ teacher }: { teacher: Teacher }) {
   const fullName = `${teacher.nombre} ${teacher.apellido}`
 
   return (
-    <article className="group relative rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 ease-out hover:border-border/80 hover:bg-card hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/[0.025]" />
-
-      <div className="relative flex h-full flex-col">
+    <article className="group rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-card dark:bg-card/90">
+      <div className="flex h-full flex-col">
         <div className="flex items-start gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 shadow-sm dark:text-violet-400">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-violet-500/15 bg-violet-500/10 text-violet-600 dark:text-violet-400">
             <GraduationCap className="size-5" />
           </div>
 
@@ -62,10 +60,10 @@ function TeacherCard({ teacher }: { teacher: Teacher }) {
 
 function TeacherCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-      <div className="space-y-5">
+    <div className="rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+      <div className="space-y-4">
         <div className="flex items-start gap-3">
-          <div className="h-11 w-11 animate-pulse rounded-2xl bg-muted/40" />
+          <div className="h-10 w-10 animate-pulse rounded-lg bg-muted/40" />
           <div className="min-w-0 flex-1 space-y-2">
             <div className="h-5 w-2/3 animate-pulse rounded-xl bg-muted/40" />
             <div className="h-4 w-4/5 animate-pulse rounded-lg bg-muted/35" />
@@ -124,7 +122,7 @@ export function TeacherCourseTeachers({ courseId }: { courseId: number }) {
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+      <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
         {error}
       </div>
     )
@@ -132,7 +130,7 @@ export function TeacherCourseTeachers({ courseId }: { courseId: number }) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
+      <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-5 py-10 text-center text-sm text-muted-foreground">
         <GraduationCap className="mx-auto mb-3 size-5" />
         Sin profesores asignados.
       </div>
