@@ -92,22 +92,44 @@ function MetaPill({
   children: React.ReactNode
 }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/[0.22] px-3 py-1.5 text-xs font-medium text-muted-foreground">
+    <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/[0.18] px-2.5 py-1 text-xs font-medium text-muted-foreground">
       <Icon className="size-3.5 shrink-0" />
       {children}
     </span>
   )
 }
 
+function CourseSignalPill({
+  icon: Icon,
+  label,
+  tone,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  tone: string
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold leading-5',
+        tone,
+      )}
+    >
+      <Icon className="size-3.5 shrink-0" />
+      <span className="truncate">{label}</span>
+    </span>
+  )
+}
+
 function CourseCardSkeleton() {
   return (
-    <li className="rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+    <li className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="h-10 w-10 animate-pulse rounded-lg bg-muted/60" />
+          <div className="h-11 w-11 animate-pulse rounded-lg bg-muted/60" />
           <div className="space-y-2">
-            <div className="h-4 w-16 animate-pulse rounded-lg bg-muted/40" />
-            <div className="h-8 w-40 animate-pulse rounded-lg bg-muted/60" />
+            <div className="h-7 w-44 animate-pulse rounded-lg bg-muted/60" />
+            <div className="h-4 w-32 animate-pulse rounded-lg bg-muted/40" />
           </div>
         </div>
 
@@ -125,11 +147,13 @@ function CourseCardSkeleton() {
 }
 
 function CourseCard({ course }: { course: TeacherCourseListItem }) {
+  const hasSchedules = course.cantidadHorarios > 0
+
   return (
     <li>
       <Link
         href={`/teacher/courses/${course.id}`}
-        className="group block rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 hover:border-primary/20 hover:bg-card dark:bg-card/90 sm:p-5"
+        className="group block rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 dark:bg-card/90 sm:p-5"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
@@ -137,36 +161,36 @@ function CourseCard({ course }: { course: TeacherCourseListItem }) {
               <BookOpen className="size-5" />
             </div>
 
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary/75">
-                Curso
-              </p>
-
-              <h3 className="mt-1 truncate text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-2xl">
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-2xl">
                 {course.nombre}
               </h3>
+              <p className="mt-1 text-sm font-medium text-muted-foreground">
+                Aula docente
+              </p>
             </div>
           </div>
 
           <EstadoBadge estado={course.estado} />
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2.5">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <MetaPill icon={CalendarRange}>Año {course.anio}</MetaPill>
 
-          {course.cantidadHorarios > 0 && (
-            <MetaPill icon={Clock}>
-              {course.cantidadHorarios}{' '}
-              {course.cantidadHorarios === 1 ? 'horario' : 'horarios'}
-            </MetaPill>
-          )}
         </div>
 
-        <div className="mt-4 rounded-lg border border-border/60 bg-muted/[0.12] px-4 py-3 transition-colors duration-200 group-hover:border-primary/20 group-hover:bg-primary/[0.05] dark:bg-background/30">
+        <div className="mt-4 rounded-lg border border-border/60 bg-muted/[0.12] px-4 py-3 transition-colors duration-200 ease-out group-hover:border-primary/20 group-hover:bg-primary/[0.05] dark:bg-background/30">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-foreground">Abrir curso</p>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                Abrir espacio de trabajo
+              </p>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                Gestionar clases, tareas y alumnos
+              </p>
+            </div>
 
-            <div className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background/80 text-muted-foreground transition-all duration-200 group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/10 group-hover:text-primary dark:bg-background/35">
+            <div className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background/80 text-muted-foreground transition-all duration-200 ease-out group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/10 group-hover:text-primary dark:bg-background/35">
               <ChevronRight className="size-4" />
             </div>
           </div>
@@ -281,11 +305,24 @@ export function TeacherCoursesTable() {
           </CardContent>
         </Card>
       ) : (
-        <ul className="grid gap-5 xl:grid-cols-2">
-          {items.map((course) => (
-            <CourseCard key={course.id} course={course} />
-          ))}
-        </ul>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <p className="text-sm text-muted-foreground">
+              {items.length} {items.length === 1 ? 'curso' : 'cursos'} para revisar
+            </p>
+            {hasActiveFilters ? (
+              <span className="rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-xs font-semibold text-primary">
+                Filtros activos
+              </span>
+            ) : null}
+          </div>
+
+          <ul className="grid gap-5 xl:grid-cols-2">
+            {items.map((course) => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   )
