@@ -1,19 +1,20 @@
+import type { ComponentType, ReactNode } from 'react'
 import {
   ArrowRight,
   BookOpen,
-  CalendarDays,
   CheckCircle2,
-  ClipboardList,
+  Clock3,
   FileCheck2,
-  GraduationCap,
-  Mail,
-  MessageSquareWarning,
-  UserRound,
+  Megaphone,
+  MessageSquareText,
 } from 'lucide-react'
 import Link from 'next/link'
 
 import { AppHeader } from '@/components/layout/app-header'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  StudentIconContainer,
+  studentUi,
+} from '@/components/student/courses/student-course-ui'
 import { getSession } from '@/lib/auth/session'
 import { getStudentDashboard } from '@/lib/student/dashboard/server-api'
 import type {
@@ -25,49 +26,61 @@ import type {
 } from '@/lib/student/dashboard/types'
 import { cn } from '@/lib/utils'
 
-type SemanticTone = 'neutral' | 'emerald' | 'amber' | 'rose' | 'blue'
+type SemanticTone = 'neutral' | 'emerald' | 'amber' | 'rose' | 'blue' | 'violet'
 
-const toneStyles: Record<
-  SemanticTone,
-  {
-    card: string
-    icon: string
-    label: string
-    badge: string
-  }
-> = {
+type Movement = {
+  key: string
+  title: string
+  description: string
+  course: string
+  when: string
+  sortTime: number
+  href: string | null
+  label: string
+  tone: SemanticTone
+  icon: ComponentType<{ className?: string }>
+  priority?: boolean
+  score?: string
+}
+
+const toneStyles: Record<SemanticTone, { badge: string; icon: string; chip: string }> = {
   neutral: {
-    card: 'border-border/60 bg-card/95',
-    icon: 'bg-muted/60 text-muted-foreground',
-    label: 'text-muted-foreground',
-    badge: 'border-border/60 bg-muted/35 text-muted-foreground',
+    badge: 'border-border/60 bg-muted/30 text-muted-foreground',
+    icon: 'bg-muted/45 text-muted-foreground',
+    chip: 'border-border/55 bg-background/45 text-foreground dark:bg-background/25',
   },
   emerald: {
-    card: 'border-emerald-500/15 bg-emerald-500/[0.055] hover:bg-emerald-500/[0.075]',
-    icon: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-    label: 'text-emerald-700/80 dark:text-emerald-400/90',
     badge:
       'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    icon: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    chip:
+      'border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300',
   },
   amber: {
-    card: 'border-amber-500/15 bg-amber-500/[0.06] hover:bg-amber-500/[0.08]',
-    icon: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-    label: 'text-amber-700/80 dark:text-amber-400/90',
     badge:
       'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400',
+    icon: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+    chip:
+      'border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-300',
   },
   rose: {
-    card: 'border-rose-500/15 bg-rose-500/[0.055] hover:bg-rose-500/[0.075]',
-    icon: 'bg-rose-500/10 text-rose-700 dark:text-rose-400',
-    label: 'text-rose-700/80 dark:text-rose-400/90',
     badge:
       'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400',
+    icon: 'bg-rose-500/10 text-rose-700 dark:text-rose-400',
+    chip:
+      'border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-300',
   },
   blue: {
-    card: 'border-primary/15 bg-primary/[0.05] hover:bg-primary/[0.07]',
-    icon: 'bg-primary/10 text-primary',
-    label: 'text-primary/80',
     badge: 'border-primary/15 bg-primary/10 text-primary',
+    icon: 'bg-primary/10 text-primary',
+    chip: 'border-primary/15 bg-primary/10 text-primary',
+  },
+  violet: {
+    badge:
+      'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300',
+    icon: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+    chip:
+      'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300',
   },
 }
 
@@ -98,12 +111,88 @@ function formatDate(value: string | null | undefined) {
   }).format(date)
 }
 
+function getTimeValue(value: string | null | undefined) {
+  if (!value) return 0
+  const time = new Date(value).getTime()
+  return Number.isNaN(time) ? 0 : time
+}
+
 function formatTodayLabel() {
-  return new Intl.DateTimeFormat('es-AR', {
+  const value = new Intl.DateTimeFormat('es-AR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
   }).format(new Date())
+
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function getTextField(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function getNumberField(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function getRecord(value: unknown) {
+  return value && typeof value === 'object'
+    ? (value as Record<string, unknown>)
+    : null
+}
+
+function getRecordText(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = getTextField(record[key])
+    if (value) return value
+  }
+
+  return null
+}
+
+function getRecordNumber(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+    const numberValue =
+      typeof value === 'number'
+        ? value
+        : typeof value === 'string' && value.trim()
+          ? Number(value)
+          : Number.NaN
+
+    if (Number.isFinite(numberValue)) return numberValue
+  }
+
+  return null
+}
+
+function getRecordArray(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+    if (Array.isArray(value)) return value
+  }
+
+  return []
+}
+
+function getAverageTone(value: number | null | undefined): SemanticTone {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 'neutral'
+  if (value < 65) return 'rose'
+  if (value < 80) return 'amber'
+  return 'emerald'
+}
+
+function getAttendanceTone(value: number | null | undefined): SemanticTone {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 'neutral'
+  if (value < 70) return 'rose'
+  if (value < 85) return 'amber'
+  return 'emerald'
+}
+
+function getCountTone(value: number): SemanticTone {
+  if (value === 0) return 'emerald'
+  if (value <= 2) return 'amber'
+  return 'rose'
 }
 
 function getGradeTypeLabel(value: unknown) {
@@ -125,338 +214,554 @@ function getGradeTypeLabel(value: unknown) {
   }
 }
 
-function getCountTone(value: number) {
-  if (value === 0) return 'emerald'
-  if (value <= 2) return 'amber'
-  return 'rose'
-}
-
-function getFeedbackMetricTone({
-  pending,
-  recentApproved,
-  recentTotal,
-}: {
-  pending: number
-  recentApproved: number
-  recentTotal: number
-}): SemanticTone {
-  if (pending > 0) return pending > 2 ? 'rose' : 'amber'
-  if (recentApproved > 0) return 'emerald'
-  if (recentTotal > 0) return 'blue'
-  return 'neutral'
-}
-
-function getAverageTone(value: number | null | undefined) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return 'neutral'
-  if (value < 65) return 'rose'
-  if (value < 80) return 'amber'
-  return 'emerald'
-}
-
-function getAttendanceTone(value: number | null | undefined) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return 'neutral'
-  if (value < 70) return 'rose'
-  if (value < 85) return 'amber'
-  return 'emerald'
-}
-
 function getFeedbackEstado(feedback: StudentDashboardFeedback) {
   const rawEstado = feedback.estado ?? feedback.Estado
   const estado =
     typeof rawEstado === 'string' ? rawEstado.trim().toLowerCase() : rawEstado
 
   if (estado === 1 || estado === '1' || estado === 'aprobado') {
-    return {
-      label: 'Aprobado',
-      tone: 'emerald' as const,
-    }
+    return { label: 'Aprobado', tone: 'emerald' as const }
   }
 
   if (estado === 2 || estado === '2' || estado === 'rehacer') {
-    return {
-      label: 'Requiere revision',
-      tone: 'rose' as const,
-    }
+    return { label: 'Necesita cambios', tone: 'amber' as const }
   }
 
-  return {
-    label: 'Feedback',
-    tone: 'blue' as const,
-  }
+  return { label: 'Feedback', tone: 'blue' as const }
 }
 
-function getTextField(value: unknown) {
-  return typeof value === 'string' && value.trim() ? value.trim() : null
+function getTaskHref(task: StudentDashboardTask) {
+  return task.cursoId && task.tareaId
+    ? `/student/courses/${task.cursoId}/tasks/${task.tareaId}`
+    : null
 }
 
-function getNumberField(value: unknown) {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
+function getFeedbackHref(feedback: StudentDashboardFeedback) {
+  const cursoId = getNumberField(feedback.cursoId ?? feedback.CursoId)
+  const tareaId = getNumberField(feedback.tareaId ?? feedback.TareaId)
+
+  return cursoId && tareaId
+    ? `/student/courses/${cursoId}/tasks/${tareaId}`
+    : null
 }
 
-function MetricCard({
+function getCourseHref(course: StudentCourseSummary | null | undefined) {
+  return course?.cursoId ? `/student/courses/${course.cursoId}` : '/student/courses'
+}
+
+function getTaskDueTime(task: StudentDashboardTask) {
+  if (!task.fechaEntregaUtc) return Number.POSITIVE_INFINITY
+  const dueTime = new Date(task.fechaEntregaUtc).getTime()
+  return Number.isNaN(dueTime) ? Number.POSITIVE_INFINITY : dueTime
+}
+
+function isTaskDueSoon(task: StudentDashboardTask) {
+  const dueTime = getTaskDueTime(task)
+  if (!Number.isFinite(dueTime)) return false
+
+  const now = Date.now()
+  const threeDays = 1000 * 60 * 60 * 24 * 3
+
+  return dueTime >= now && dueTime - now <= threeDays
+}
+
+function SectionHeader({
   title,
-  value,
-  subtitle,
-  icon: Icon,
-  tone,
+  description,
+  action,
 }: {
   title: string
-  value: string | number
-  subtitle: string
-  icon: React.ComponentType<{ className?: string }>
-  tone: SemanticTone
+  description?: string
+  action?: ReactNode
 }) {
-  const styles = toneStyles[tone]
-
   return (
-    <div
-      className={cn(
-        'group rounded-2xl border p-4 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 sm:p-5',
-        styles.card,
-      )}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p
-            className={cn(
-              'text-[11px] font-semibold uppercase tracking-[0.16em]',
-              styles.label,
-            )}
-          >
-            {title}
+    <div className="flex items-end justify-between gap-4">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          {title}
+        </h2>
+        {description ? (
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            {description}
           </p>
-          <p className="mt-3 text-[2rem] font-semibold leading-none tracking-tight text-foreground">
-            {value}
-          </p>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            {subtitle}
-          </p>
-          <p className="mt-2 text-xs leading-5 text-muted-foreground/85">
-            {tone === 'emerald'
-              ? 'Vas por buen camino.'
-              : tone === 'amber'
-                ? 'Un pequeño repaso puede ayudarte.'
-                : tone === 'rose'
-                  ? 'Pedí ayuda y priorizá este punto.'
-                  : 'Seguimos tu recorrido de aprendizaje.'}
-          </p>
-        </div>
-
-        <div
-          className={cn(
-            'flex size-11 shrink-0 items-center justify-center rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.04)] transition-transform duration-200 group-hover:scale-[1.02]',
-            styles.icon,
-          )}
-        >
-          <Icon className="size-5" />
-        </div>
+        ) : null}
       </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   )
 }
 
-function FeedbackItem({ feedback }: { feedback: StudentDashboardFeedback }) {
-  const estado = getFeedbackEstado(feedback)
-  const cursoId = getNumberField(feedback.cursoId ?? feedback.CursoId)
-  const tareaId = getNumberField(feedback.tareaId ?? feedback.TareaId)
-  const cursoNombre =
-    getTextField(feedback.cursoNombre ?? feedback.CursoNombre) ?? 'Curso'
-  const tituloTarea =
-    getTextField(feedback.tituloTarea ?? feedback.TituloTarea) ?? 'Tarea'
-  const comentario = getTextField(feedback.comentario ?? feedback.Comentario)
-  const nota = feedback.nota ?? feedback.Nota
-  const fecha = formatDate(
-    getTextField(feedback.fechaCorreccionUtc ?? feedback.FechaCorreccionUtc),
+function QuietEmptyState({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) {
+  return (
+    <div className="rounded-xl border border-dashed border-border/60 bg-muted/10 px-4 py-3 text-sm leading-6 text-muted-foreground dark:bg-muted/5">
+      <span className="font-medium text-foreground">{title}</span>{' '}
+      {description}
+    </div>
   )
-  const href =
-    cursoId && tareaId ? `/student/courses/${cursoId}/tasks/${tareaId}` : null
+}
 
-  const content = (
-    <article className="group rounded-xl border border-border/60 bg-background/60 px-4 py-3.5 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 hover:bg-card dark:bg-background/35 dark:hover:bg-card/90">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 space-y-1">
-          <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
-            {tituloTarea}
+function CompactDashboardHero({
+  studentName,
+  hasAction,
+  primaryCourse,
+}: {
+  studentName: string
+  hasAction: boolean
+  primaryCourse: StudentCourseSummary | undefined
+}) {
+  const href = getCourseHref(primaryCourse)
+
+  return (
+    <section className="relative overflow-hidden rounded-2xl border border-border/65 bg-card/85 shadow-[0_12px_36px_-28px_rgba(15,23,42,0.28)] dark:bg-card/65">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_92%_20%,rgba(16,185,129,0.12),transparent_28%)]" />
+      <div className="absolute inset-y-0 left-0 z-0 w-[78%] bg-gradient-to-r from-background via-background/96 to-transparent dark:from-background dark:via-background/92" />
+      <img
+        src="/hero-chicos.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-8 right-0 z-0 hidden h-[108%] w-auto max-w-[40%] select-none object-contain md:block md:-bottom-9 md:right-4 md:h-[112%] md:max-w-[39%] lg:-bottom-8 lg:right-6 lg:h-[96%] lg:max-w-[36%]"
+      />
+
+      <div className="relative z-10 flex min-h-[168px] flex-col justify-between gap-5 p-5 sm:min-h-[176px] sm:p-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-xs font-medium capitalize text-muted-foreground">
+            {formatTodayLabel()}
           </p>
-          <p className="truncate text-xs font-medium text-primary/80">
-            {cursoNombre}
-          </p>
-          <p className="line-clamp-2 text-xs leading-5 text-muted-foreground">
-            {comentario ?? 'Sin comentario cargado.'}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {fecha}
-            {nota != null ? ` · Nota ${nota}` : ''}
+          <span
+            className={cn(
+              studentUi.badge.compact,
+              hasAction ? toneStyles.amber.badge : toneStyles.emerald.badge,
+            )}
+          >
+            {hasAction ? 'Hay próximos pasos' : 'Buen ritmo'}
+          </span>
+        </div>
+
+        <div className="max-w-2xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Hola, {studentName}
+          </h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+            {hasAction ? 'Tenés algo para revisar hoy.' : 'Sin pendientes importantes.'}{' '}
+            Podés entrar a tu aula para repasar o seguir avanzando.
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <span
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href={href}
             className={cn(
-              'inline-flex w-fit rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
-              toneStyles[estado.tone].badge,
+              studentUi.button.secondaryCta,
+              'h-10 rounded-full gap-1 border-border/70 bg-background/85 px-4 backdrop-blur-md transition-all hover:border-primary/25 hover:bg-background hover:text-primary sm:w-auto',
             )}
           >
-            {estado.label}
-          </span>
-          {href ? (
-            <ArrowRight className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
-          ) : null}
+            Ingresar a tu aula
+            <ArrowRight className="size-4" />
+          </Link>
+
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function LearningRhythmInline({
+  entregasRecientesCount,
+  tareasPendientesCount,
+  promedioGeneral,
+  porcentajeAsistenciaGeneral,
+}: {
+  entregasRecientesCount: number
+  tareasPendientesCount: number
+  promedioGeneral: number | null | undefined
+  porcentajeAsistenciaGeneral: number | null | undefined
+}) {
+  const items = [
+    {
+      label: 'Promedio',
+      value: formatNumber(promedioGeneral),
+      tone: getAverageTone(promedioGeneral),
+    },
+    {
+      label: 'Asistencia',
+      value: formatNumber(porcentajeAsistenciaGeneral, '%'),
+      tone: getAttendanceTone(porcentajeAsistenciaGeneral),
+    },
+    {
+      label: 'Entregas',
+      value: String(entregasRecientesCount),
+      tone: entregasRecientesCount > 0 ? ('blue' as const) : ('neutral' as const),
+    },
+    {
+      label: 'Tareas',
+      value: String(tareasPendientesCount),
+      tone: getCountTone(tareasPendientesCount),
+    },
+  ]
+
+  return (
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-2">
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className={cn(
+            'rounded-xl border px-4 py-3 transition-colors duration-200 ease-out hover:bg-card',
+            toneStyles[item.tone].chip,
+          )}
+        >
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <span className={cn('size-2 rounded-full', toneStyles[item.tone].icon)} />
+            {item.label}
+          </div>
+          <p className="mt-1.5 text-lg font-semibold leading-none">
+            {item.value}
+          </p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ClassroomRhythmCard({
+  course,
+  entregasRecientesCount,
+  tareasPendientesCount,
+  promedioGeneral,
+  porcentajeAsistenciaGeneral,
+}: {
+  course: StudentCourseSummary | undefined
+  entregasRecientesCount: number
+  tareasPendientesCount: number
+  promedioGeneral: number | null | undefined
+  porcentajeAsistenciaGeneral: number | null | undefined
+}) {
+  const pendingTasks = formatInt(course?.tareasPendientes)
+
+  if (!course) {
+    return (
+      <QuietEmptyState
+        title="Todavía no hay aulas para mostrar."
+        description="Cuando te sumen a un curso, va a aparecer acá."
+      />
+    )
+  }
+
+  return (
+    <section className="rounded-2xl border border-border/65 bg-card/75 p-4 transition-colors hover:border-primary/20 dark:bg-card/55">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center">
+        <Link href={getCourseHref(course)} className="group block min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground">
+                Tu aula de este año
+              </p>
+              <h2 className="mt-1 truncate text-xl font-semibold tracking-tight text-foreground">
+                {course.cursoNombre || 'Curso'}
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                {pendingTasks > 0
+                  ? 'Entrá y seguí con la práctica pendiente.'
+                  : 'Aula lista para repasar o avanzar.'}
+              </p>
+            </div>
+            <StudentIconContainer
+              icon={BookOpen}
+              size="sm"
+              className="border-transparent bg-primary/10 text-primary"
+            />
+          </div>
+
+          <div className="mt-3">
+            <span className="inline-flex h-9 items-center gap-1 rounded-full border border-primary/15 bg-primary/10 px-3 text-sm font-semibold text-primary transition-colors group-hover:border-primary/25 group-hover:bg-primary/15">
+              Abrir aula
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </div>
+        </Link>
+
+        <LearningRhythmInline
+          entregasRecientesCount={entregasRecientesCount}
+          tareasPendientesCount={tareasPendientesCount}
+          promedioGeneral={promedioGeneral}
+          porcentajeAsistenciaGeneral={porcentajeAsistenciaGeneral}
+        />
+      </div>
+    </section>
+  )
+}
+
+function MovementItem({
+  movement,
+  featured = false,
+}: {
+  movement: Movement
+  featured?: boolean
+}) {
+  const Icon = movement.icon
+  const isPriority =
+    featured || (movement.priority ?? (movement.tone === 'amber' || movement.tone === 'rose'))
+
+  const content = (
+    <article
+      className={cn(
+        'group rounded-xl px-2 py-3 transition-colors hover:bg-muted/20',
+        isPriority && 'bg-primary/[0.045] px-3 py-4 dark:bg-primary/5',
+      )}
+    >
+      <div className="flex gap-3">
+        <span
+          className={cn(
+            'mt-1 flex size-8 shrink-0 items-center justify-center rounded-full',
+            toneStyles[movement.tone].icon,
+          )}
+        >
+          <Icon className="size-4" />
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p
+              className={cn(
+                'min-w-0 truncate font-semibold text-foreground',
+                isPriority ? 'text-base' : 'text-sm',
+              )}
+            >
+              {movement.title}
+            </p>
+            {isPriority ? (
+              <span className={cn(studentUi.badge.compact, toneStyles[movement.tone].badge)}>
+                {movement.label}
+              </span>
+            ) : null}
+            {movement.score ? (
+              <span className={cn(studentUi.badge.compact, toneStyles[movement.tone].badge)}>
+                Nota {movement.score}
+              </span>
+            ) : null}
+          </div>
+
+          <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
+            {movement.description}
+          </p>
+
+          <p className="mt-1 text-xs text-muted-foreground/80">
+            {movement.course} · {movement.when}
+          </p>
         </div>
       </div>
     </article>
   )
 
-  return href ? (
-    <li>
-      <Link href={href}>{content}</Link>
-    </li>
-  ) : (
-    <li>{content}</li>
-  )
+  return movement.href ? <Link href={movement.href}>{content}</Link> : content
 }
 
-function EmptyState({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-5 py-8 text-center dark:bg-muted/10">
-      <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        <CheckCircle2 className="size-5" />
-      </div>
-      <p className="text-sm font-semibold text-foreground">{children}</p>
-      <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-muted-foreground">
-        Cuando haya algo nuevo para aprender o revisar, va a aparecer acá.
-      </p>
-    </div>
-  )
+function buildMovements({
+  dashboard,
+  tasks,
+  feedbacks,
+  grades,
+  deliveries,
+}: {
+  dashboard: StudentDashboardResponse | null
+  tasks: StudentDashboardTask[]
+  feedbacks: StudentDashboardFeedback[]
+  grades: StudentDashboardGrade[]
+  deliveries: unknown[]
+}) {
+  const dashboardRecord = getRecord(dashboard)
+  const announcements = dashboardRecord
+    ? getRecordArray(dashboardRecord, [
+        'anunciosRecientes',
+        'novedadesRecientes',
+        'ultimosAnuncios',
+        'anuncios',
+      ])
+    : []
+
+  const feedbackMovements: Movement[] = feedbacks.slice(0, 3).map((feedback, index) => {
+    const estado = getFeedbackEstado(feedback)
+    const date = getTextField(feedback.fechaCorreccionUtc ?? feedback.FechaCorreccionUtc)
+
+    return {
+      key: `feedback-${feedback.feedbackId ?? feedback.FeedbackId ?? index}`,
+      title:
+        getTextField(feedback.tituloTarea ?? feedback.TituloTarea) ??
+        'Tu profe dejó feedback',
+      description:
+        getTextField(feedback.comentario ?? feedback.Comentario) ??
+        'Hay una devolución para revisar.',
+      course:
+        getTextField(feedback.cursoNombre ?? feedback.CursoNombre) ?? 'Curso',
+      when: formatDate(date),
+      sortTime: getTimeValue(date),
+      href: getFeedbackHref(feedback),
+      label: estado.label,
+      tone: estado.tone,
+      icon: MessageSquareText,
+      priority: estado.tone === 'amber',
+    }
+  })
+
+  const gradeMovements: Movement[] = grades.slice(0, 3).map((grade, index) => {
+    const tone = getAverageTone(grade.nota)
+
+    return {
+      key: `grade-${grade.calificacionId ?? index}`,
+      title: grade.titulo || 'Nueva calificación',
+      description: getGradeTypeLabel(grade.tipo),
+      course: grade.cursoNombre || 'Curso',
+      when: formatDate(grade.fecha),
+      sortTime: getTimeValue(grade.fecha),
+      href: null,
+      label: 'Nota',
+      tone: tone === 'neutral' ? 'blue' : tone,
+      icon: CheckCircle2,
+      score: formatNumber(grade.nota),
+    }
+  })
+
+  const deliveryMovements: Movement[] = deliveries
+    .slice(0, 3)
+    .map((delivery, index): Movement | null => {
+      const record = getRecord(delivery)
+      if (!record) return null
+
+      const courseId = getRecordNumber(record, ['cursoId', 'CursoId'])
+      const taskId = getRecordNumber(record, ['tareaId', 'TareaId'])
+      const date = getRecordText(record, [
+        'fechaEntregaUtc',
+        'FechaEntregaUtc',
+        'fechaEntregadaUtc',
+        'FechaEntregadaUtc',
+      ])
+
+      return {
+        key: `delivery-${getRecordText(record, ['entregaId', 'EntregaId']) ?? index}`,
+        title:
+          getRecordText(record, [
+            'tituloTarea',
+            'TituloTarea',
+            'tareaTitulo',
+            'titulo',
+          ]) ?? 'Entrega realizada',
+        description: 'Tu trabajo quedó enviado.',
+        course:
+          getRecordText(record, ['cursoNombre', 'CursoNombre', 'courseName']) ??
+          'Curso',
+        when: formatDate(date),
+        sortTime: getTimeValue(date),
+        href:
+          courseId && taskId
+            ? `/student/courses/${courseId}/tasks/${taskId}`
+            : null,
+        label: 'Entrega',
+        tone: 'blue',
+        icon: FileCheck2,
+      }
+    })
+    .filter((movement): movement is Movement => Boolean(movement))
+
+  const announcementMovements: Movement[] = announcements
+    .slice(0, 3)
+    .map((announcement, index): Movement | null => {
+      const record = getRecord(announcement)
+      if (!record) return null
+
+      const courseId = getRecordNumber(record, ['cursoId', 'CursoId'])
+      const taskId = getRecordNumber(record, ['tareaId', 'TareaId', 'id'])
+      const date = getRecordText(record, [
+        'createdAtUtc',
+        'fechaUtc',
+        'FechaUtc',
+        'fecha',
+      ])
+
+      return {
+        key: `announcement-${taskId ?? index}`,
+        title:
+          getRecordText(record, ['titulo', 'Titulo', 'nombre', 'asunto']) ??
+          'Nuevo anuncio',
+        description:
+          getRecordText(record, [
+            'descripcion',
+            'Descripcion',
+            'mensaje',
+            'contenido',
+          ]) ?? 'Hay una novedad en el curso.',
+        course:
+          getRecordText(record, ['cursoNombre', 'CursoNombre', 'courseName']) ??
+          'Curso',
+        when: formatDate(date),
+        sortTime: getTimeValue(date),
+        href:
+          courseId && taskId
+            ? `/student/courses/${courseId}/tasks/${taskId}`
+            : courseId
+              ? `/student/courses/${courseId}`
+              : null,
+        label: 'Anuncio',
+        tone: 'violet',
+        icon: Megaphone,
+      }
+    })
+    .filter((movement): movement is Movement => Boolean(movement))
+
+  const taskMovements: Movement[] = tasks.slice(0, 3).map((task, index) => ({
+    key: `task-${task.tareaId ?? index}`,
+    title: task.titulo || 'Próxima tarea',
+    description: task.vencida
+      ? 'La fecha ya pasó; podés repasar la consigna.'
+      : 'Próxima práctica para completar.',
+    course: task.cursoNombre || 'Curso',
+    when: `Entrega ${formatDate(task.fechaEntregaUtc)}`,
+    sortTime: getTimeValue(task.fechaEntregaUtc),
+    href: getTaskHref(task),
+    label: task.vencida ? 'Fecha pasada' : 'Próxima tarea',
+    tone: task.vencida ? 'rose' : 'amber',
+    icon: Clock3,
+    priority: task.vencida || isTaskDueSoon(task),
+  }))
+
+  return [
+    ...announcementMovements,
+    ...feedbackMovements,
+    ...gradeMovements,
+    ...deliveryMovements,
+    ...taskMovements,
+  ]
+    .sort((a, b) => b.sortTime - a.sortTime)
+    .slice(0, 6)
 }
 
-function TaskItem({ task }: { task: StudentDashboardTask }) {
-  const tone = task.vencida ? 'rose' : 'emerald'
-
+function LearningFeed({ movements }: { movements: Movement[] }) {
   return (
-    <li className="group rounded-xl border border-border/60 bg-background/60 px-4 py-3.5 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 hover:bg-card dark:bg-background/35 dark:hover:bg-card/90">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1">
-          <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
-            {task.titulo || 'Tarea pendiente'}
-          </p>
-          <p className="truncate text-xs font-medium text-primary/80">
-            {task.cursoNombre || 'Curso'}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            Entrega {formatDate(task.fechaEntregaUtc)}
-          </p>
+    <section className="space-y-4 rounded-2xl border border-border/65 bg-card/70 p-4 dark:bg-card/55">
+      <SectionHeader
+        title="Lo que está pasando en tu aprendizaje"
+        description="Movimientos recientes de tus aulas."
+      />
+
+      {movements.length > 0 ? (
+        <div className="divide-y divide-border/60 border-y border-border/70 bg-background/35 dark:bg-background/20">
+          {movements.map((movement, index) => (
+            <MovementItem key={movement.key} movement={movement} featured={index === 0} />
+          ))}
         </div>
-
-        <span
-          className={cn(
-            'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
-            toneStyles[tone].badge,
-          )}
-        >
-          {task.vencida ? 'Vencida' : 'En fecha'}
-        </span>
-      </div>
-    </li>
-  )
-}
-
-function GradeItem({ grade }: { grade: StudentDashboardGrade }) {
-  const tone = getAverageTone(grade.nota)
-
-  return (
-    <li className="group rounded-xl border border-border/60 bg-background/60 px-4 py-3.5 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 hover:bg-card dark:bg-background/35 dark:hover:bg-card/90">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 space-y-1">
-          <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
-            {grade.titulo || 'Calificacion'}
-          </p>
-          <p className="truncate text-xs font-medium text-primary/80">
-            {grade.cursoNombre || 'Curso'}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {getGradeTypeLabel(grade.tipo)} · {formatDate(grade.fecha)}
-          </p>
+      ) : (
+        <div>
+          <QuietEmptyState
+            title="Sin movimientos recientes."
+            description="Cuando haya anuncios, notas, entregas o feedback, van a aparecer acá."
+          />
         </div>
-
-        <div
-          className={cn(
-            'rounded-2xl border px-3 py-2 text-sm font-semibold',
-            toneStyles[tone].badge,
-          )}
-        >
-          {formatNumber(grade.nota)}
-        </div>
-      </div>
-    </li>
-  )
-}
-
-function CourseSummaryItem({ item }: { item: StudentCourseSummary }) {
-  const averageTone = getAverageTone(item.promedio)
-  const attendanceTone = getAttendanceTone(item.porcentajeAsistencia)
-  const pendingTasks = formatInt(item.tareasPendientes)
-  const tasksTone = getCountTone(pendingTasks)
-  const needsAttention =
-    (typeof item.promedio === 'number' && item.promedio < 65) ||
-    (typeof item.porcentajeAsistencia === 'number' &&
-      item.porcentajeAsistencia < 70)
-  const status = needsAttention
-    ? 'Necesita apoyo'
-    : pendingTasks > 0
-      ? 'Próximo paso pendiente'
-      : 'Buen progreso'
-  const statusTone: SemanticTone = needsAttention
-    ? 'rose'
-    : pendingTasks > 0
-      ? tasksTone
-      : 'emerald'
-
-  return (
-    <li className="rounded-2xl border border-border/60 bg-background/60 p-4 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 hover:bg-card dark:bg-background/35 dark:hover:bg-card/90 sm:p-5">
-      <div className="flex flex-col gap-4">
-        <div className="min-w-0">
-          <p className="truncate text-[1rem] font-semibold tracking-tight text-foreground">
-            {item.cursoNombre || 'Curso'}
-          </p>
-          <p
-            className={cn(
-              'mt-2 inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
-              toneStyles[statusTone].badge,
-            )}
-          >
-            {status}
-          </p>
-        </div>
-
-        <div className="grid gap-2 sm:grid-cols-3">
-          <span
-            className={cn(
-              'rounded-2xl border px-3 py-2 text-xs font-semibold',
-              toneStyles[averageTone].badge,
-            )}
-          >
-            Promedio {formatNumber(item.promedio)}
-          </span>
-          <span
-            className={cn(
-              'rounded-2xl border px-3 py-2 text-xs font-semibold',
-              toneStyles[attendanceTone].badge,
-            )}
-          >
-            Asistencia {formatNumber(item.porcentajeAsistencia, '%')}
-          </span>
-          <span
-            className={cn(
-              'rounded-2xl border px-3 py-2 text-xs font-semibold',
-              toneStyles[tasksTone].badge,
-            )}
-          >
-            Práctica {pendingTasks}
-          </span>
-        </div>
-      </div>
-    </li>
+      )}
+    </section>
   )
 }
 
@@ -467,218 +772,57 @@ function StudentDashboardContent({
   dashboard: StudentDashboardResponse | null
   firstName: string
 }) {
-  const fullName = [dashboard?.nombre]
-    .filter(Boolean)
-    .join(' ')
-    .trim()
-  const studentName = fullName || firstName || 'Alumno'
+  const studentName =
+    [dashboard?.nombre].filter(Boolean).join(' ').trim() || firstName || 'Alumno'
+
   const tareasPendientes = asArray(dashboard?.tareasPendientes)
   const feedbacksRecientes = asArray(
     dashboard?.feedbacksRecientes ?? dashboard?.FeedbacksRecientes,
   )
   const ultimasCalificaciones = asArray(dashboard?.ultimasCalificaciones)
+  const ultimasEntregas = asArray(dashboard?.ultimasEntregas)
   const resumenPorCurso = asArray(dashboard?.resumenPorCurso)
+  const primaryCourse = resumenPorCurso[0]
+
+  const latestMovements = buildMovements({
+    dashboard,
+    tasks: tareasPendientes,
+    feedbacks: feedbacksRecientes,
+    grades: ultimasCalificaciones,
+    deliveries: ultimasEntregas,
+  })
 
   const tareasPendientesCount =
     dashboard?.tareasPendientesCount ?? tareasPendientes.length
-  const feedbacksRehacerCount =
-    dashboard?.feedbacksRehacerCount ?? dashboard?.FeedbacksRehacerCount ?? 0
-  const feedbacksPendientesAccionCount =
-    dashboard?.feedbacksPendientesAccionCount ??
-    dashboard?.FeedbacksPendientesAccionCount ??
-    0
+
   const feedbacksPendientes =
-    feedbacksPendientesAccionCount + feedbacksRehacerCount
-  const recentApprovedFeedbacks = feedbacksRecientes.filter(
-    (feedback) => getFeedbackEstado(feedback).tone === 'emerald',
-  ).length
-  const feedbackMetricValue =
-    feedbacksPendientes > 0 ? feedbacksPendientes : feedbacksRecientes.length
-  const feedbackMetricSubtitle =
-    feedbacksPendientes > 0
-      ? 'Pendientes o para rehacer'
-      : feedbacksRecientes.length > 0
-        ? 'Feedbacks recientes'
-        : 'Sin novedades recientes'
-  const feedbackMetricTone = getFeedbackMetricTone({
-    pending: feedbacksPendientes,
-    recentApproved: recentApprovedFeedbacks,
-    recentTotal: feedbacksRecientes.length,
-  })
-  const hasHeroPending = tareasPendientesCount > 0 || feedbacksPendientes > 0
+    (dashboard?.feedbacksPendientesAccionCount ??
+      dashboard?.FeedbacksPendientesAccionCount ??
+      0) +
+    (dashboard?.feedbacksRehacerCount ?? dashboard?.FeedbacksRehacerCount ?? 0)
+
+  const hasAction = tareasPendientesCount > 0 || feedbacksPendientes > 0
 
   return (
-    <main className="flex-1 overflow-auto px-5 py-6 lg:px-8 lg:py-7">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <section className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 px-5 py-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] backdrop-blur-xl dark:bg-card/85 sm:px-6 sm:py-7">
-          <div className="absolute inset-x-0 top-0 h-px bg-foreground/10" />
+    <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
+      <div className="mx-auto max-w-4xl space-y-5">
+        <CompactDashboardHero
+          studentName={studentName}
+          hasAction={hasAction}
+          primaryCourse={primaryCourse}
+        />
 
-          <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-5 h-[3px] w-12 rounded-full bg-primary" />
-
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
-                Panel alumno
-              </p>
-
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-[2.35rem]">
-                Hola, {studentName}
-              </h2>
-
-              <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
-                {hasHeroPending
-                  ? 'Tenés un próximo paso para seguir avanzando. Revisá tus tareas y feedbacks.'
-                  : 'Todo al día. Buen momento para repasar o avanzar en tus cursos.'}
-              </p>
-
-              <p className="mt-1 text-[12px] capitalize text-muted-foreground/70">
-                {formatTodayLabel()}
-              </p>
-            </div>
-
-            <div
-              className={cn(
-                'group inline-flex items-center gap-3 rounded-xl border px-4 py-3 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors',
-                hasHeroPending
-                  ? 'border-amber-500/25 bg-amber-500/10 hover:bg-amber-500/15'
-                  : 'border-border/60 bg-background/80 hover:border-primary/20',
-              )}
-            >
-              <div
-                className={cn(
-                  'flex size-10 items-center justify-center rounded-xl',
-                  hasHeroPending
-                    ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-                    : 'bg-primary/10 text-primary',
-                )}
-              >
-                <GraduationCap className="size-5" />
-              </div>
-
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Hoy
-                </p>
-                <p className="text-sm font-semibold text-foreground">
-                  {hasHeroPending ? 'Próximo paso listo' : 'Buen ritmo'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <MetricCard
-            title="Cursos"
-            value={formatInt(dashboard?.cantidadCursos)}
-            icon={BookOpen}
-            tone="blue"
-            subtitle="Aulas donde estás aprendiendo"
+        <div className="space-y-5">
+          <ClassroomRhythmCard
+            course={primaryCourse}
+            entregasRecientesCount={ultimasEntregas.length}
+            tareasPendientesCount={tareasPendientesCount}
+            promedioGeneral={dashboard?.promedioGeneral}
+            porcentajeAsistenciaGeneral={dashboard?.porcentajeAsistenciaGeneral}
           />
-          <MetricCard
-            title="Tareas"
-            value={tareasPendientesCount}
-            icon={ClipboardList}
-            tone={getCountTone(tareasPendientesCount)}
-            subtitle="Prácticas para seguir avanzando"
-          />
-          <MetricCard
-            title="Entregas"
-            value={formatInt(dashboard?.entregasRealizadasCount)}
-            icon={FileCheck2}
-            tone="emerald"
-            subtitle="Trabajos que ya completaste"
-          />
-          <MetricCard
-            title="Feedbacks"
-            value={feedbackMetricValue}
-            icon={MessageSquareWarning}
-            tone={feedbackMetricTone}
-            subtitle={feedbackMetricSubtitle}
-          />
-          <MetricCard
-            title="Promedio"
-            value={formatNumber(dashboard?.promedioGeneral)}
-            icon={CheckCircle2}
-            tone={getAverageTone(dashboard?.promedioGeneral)}
-            subtitle="Señal de cómo viene tu aprendizaje"
-          />
-          <MetricCard
-            title="Asistencia"
-            value={formatNumber(dashboard?.porcentajeAsistenciaGeneral, '%')}
-            icon={CalendarDays}
-            tone={getAttendanceTone(dashboard?.porcentajeAsistenciaGeneral)}
-            subtitle="Clases que acompañan tu práctica"
-          />
-        </section>
 
-        <section className="grid gap-4 xl:grid-cols-3">
-          <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-                <ClipboardList className="size-5 text-primary" />
-                Tareas pendientes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {tareasPendientes.length === 0 ? (
-                <EmptyState>No hay tareas pendientes.</EmptyState>
-              ) : (
-                <ul className="space-y-2">
-                  {tareasPendientes.slice(0, 3).map((task, index) => (
-                    <TaskItem key={task.tareaId ?? index} task={task} />
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-                <MessageSquareWarning className="size-5 text-primary" />
-                Feedback reciente
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {feedbacksRecientes.length === 0 ? (
-                <EmptyState>No tenés feedback pendiente por revisar.</EmptyState>
-              ) : (
-                <ul className="space-y-2">
-                  {feedbacksRecientes.slice(0, 3).map((feedback, index) => (
-                    <FeedbackItem
-                      key={feedback.feedbackId ?? feedback.FeedbackId ?? index}
-                      feedback={feedback}
-                    />
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-                <CheckCircle2 className="size-5 text-primary" />
-                Ultimas calificaciones
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {ultimasCalificaciones.length === 0 ? (
-                <EmptyState>No hay calificaciones recientes para mostrar.</EmptyState>
-              ) : (
-                <ul className="space-y-2">
-                  {ultimasCalificaciones.slice(0, 3).map((grade, index) => (
-                    <GradeItem
-                      key={grade.calificacionId ?? index}
-                      grade={grade}
-                    />
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </section>
+          <LearningFeed movements={latestMovements} />
+        </div>
       </div>
     </main>
   )
@@ -696,7 +840,7 @@ export default async function StudentDashboardPage() {
 
   return (
     <>
-      <AppHeader title="Student Dashboard" />
+      <AppHeader title="Inicio" subtitle="Blossom Institute · Alumno" />
       <StudentDashboardContent
         dashboard={dashboard}
         firstName={session?.user.nombre || 'Alumno'}
