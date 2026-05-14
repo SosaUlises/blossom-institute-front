@@ -83,10 +83,9 @@ function FeaturedClass({ item }: { item: ProfesorDashboardProximaClaseItem }) {
   return (
     <div
       className={cn(
-        'rounded-3xl border px-5 py-5 shadow-sm transition-all duration-200 ease-out',
-        'hover:shadow-md hover:-translate-y-[1px]',
+        'rounded-xl border px-4 py-4 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 ease-out',
         isHoy
-          ? 'border-primary/20 bg-gradient-to-br from-primary/[0.10] via-primary/[0.04] to-transparent hover:from-primary/[0.14]'
+          ? 'border-primary/20 bg-primary/[0.08] hover:bg-primary/[0.10]'
           : 'border-border/60 bg-muted/[0.35] hover:bg-muted/[0.5]',
       )}
     >
@@ -109,7 +108,7 @@ function FeaturedClass({ item }: { item: ProfesorDashboardProximaClaseItem }) {
       </div>
 
       <div className="mt-4">
-        <p className="text-[2.4rem] font-bold leading-none tracking-tight text-foreground">
+        <p className="text-3xl font-semibold leading-none tracking-tight text-foreground">
           {item.horaInicio.slice(0, 5)}
         </p>
 
@@ -164,7 +163,7 @@ export function TeacherUpcomingClassesCard({
   const [featured, ...rest] = futuras
 
   return (
-    <Card className="rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+    <Card className="rounded-2xl border border-border/60 bg-card/95 text-card-foreground shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold tracking-tight">
           Agenda

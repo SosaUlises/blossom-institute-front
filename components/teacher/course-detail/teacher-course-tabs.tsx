@@ -25,8 +25,6 @@ const tabStyles: Record<
   {
     label: string
     icon: React.ComponentType<{ className?: string }>
-    activeClass: string
-    idleIconClass: string
     panelTitle: string
     panelDescription: string
   }
@@ -34,9 +32,6 @@ const tabStyles: Record<
   classes: {
     label: 'Clases',
     icon: CalendarDays,
-    activeClass:
-      'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400 shadow-sm',
-    idleIconClass: 'text-amber-600/80 dark:text-amber-400/80',
     panelTitle: 'Clases y asistencia',
     panelDescription:
       'Registro de clases, asistencia y seguimiento académico.',
@@ -44,9 +39,6 @@ const tabStyles: Record<
   tasks: {
     label: 'Tareas',
     icon: ClipboardList,
-    activeClass:
-      'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shadow-sm',
-    idleIconClass: 'text-emerald-600/80 dark:text-emerald-400/80',
     panelTitle: 'Tareas y entregas',
     panelDescription:
       'Actividades del curso, entregas de alumnos y feedback.',
@@ -54,9 +46,6 @@ const tabStyles: Record<
   students: {
     label: 'Alumnos',
     icon: Users,
-    activeClass:
-      'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-400 shadow-sm',
-    idleIconClass: 'text-sky-600/80 dark:text-sky-400/80',
     panelTitle: 'Alumnos del curso',
     panelDescription:
       'Listado y gestión de estudiantes asignados al curso.',
@@ -64,9 +53,6 @@ const tabStyles: Record<
   teachers: {
     label: 'Profesores',
     icon: GraduationCap,
-    activeClass:
-      'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400 shadow-sm',
-    idleIconClass: 'text-violet-600/80 dark:text-violet-400/80',
     panelTitle: 'Profesores del curso',
     panelDescription:
       'Equipo docente asignado y vinculado al curso.',
@@ -80,9 +66,11 @@ export function TeacherCourseTabs({ course }: Props) {
   const currentTab = tabStyles[tab]
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-[26px] border border-border/60 bg-card/90 p-2 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.16)] backdrop-blur-sm">
-        <div className="flex flex-wrap gap-2">
+    <div className="space-y-4">
+      <nav
+        aria-label="Secciones del curso"
+        className="flex max-w-full flex-wrap gap-4 border-b border-border/70"
+      >
           {(Object.keys(tabStyles) as Tab[]).map((key) => {
             const tabConfig = tabStyles[key]
             const Icon = tabConfig.icon
@@ -93,35 +81,21 @@ export function TeacherCourseTabs({ course }: Props) {
                 key={key}
                 type="button"
                 onClick={() => setTab(key)}
-                className={`group inline-flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-all ${
+                className={`group -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-0.5 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:px-1 ${
                   active
-                    ? tabConfig.activeClass
-                    : 'border-transparent bg-transparent text-muted-foreground hover:border-border/60 hover:bg-background/80 hover:text-foreground'
+                    ? 'border-foreground text-foreground'
+                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
                 }`}
               >
-                <span
-                  className={`flex size-8 items-center justify-center rounded-xl border ${
-                    active
-                      ? 'border-current/15 bg-white/40 dark:bg-white/5'
-                      : 'border-border/60 bg-background/70'
-                  }`}
-                >
-                  <Icon
-                    className={`size-4 ${
-                      active ? 'text-current' : tabConfig.idleIconClass
-                    }`}
-                  />
-                </span>
-
+                <Icon className="size-4 transition-colors duration-200 ease-out" />
                 <span>{tabConfig.label}</span>
               </button>
             )
           })}
-        </div>
-      </div>
+      </nav>
 
-      <div className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-        <div className="border-b border-border/60 px-6 py-5">
+      <div className="rounded-2xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
+        <div className="border-b border-border/60 px-4 py-4 sm:px-6 sm:py-5">
           <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
             {currentTab.panelTitle}
           </h2>
@@ -130,7 +104,7 @@ export function TeacherCourseTabs({ course }: Props) {
           </p>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {tab === 'students' && <TeacherCourseStudents courseId={course.id} />}
           {tab === 'teachers' && <TeacherCourseTeachers courseId={course.id} />}
           {tab === 'classes' && <TeacherCourseClasses courseId={course.id} />}

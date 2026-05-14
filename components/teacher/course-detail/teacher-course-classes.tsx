@@ -148,7 +148,7 @@ function ClassCard({
   courseId: number
 }) {
   return (
-    <article className="group rounded-[30px] border border-border/60 bg-card/95 px-7 py-7 shadow-[0_18px_44px_-26px_rgba(15,23,42,0.16)] transition-all duration-200 ease-out hover:-translate-y-[2px] hover:border-border/80 hover:bg-card hover:shadow-[0_28px_60px_-28px_rgba(15,23,42,0.25)]">
+    <article className="group rounded-2xl border border-border/60 bg-card/95 px-7 py-7 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 ease-out hover:border-border/80 hover:bg-card hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0 flex-1 space-y-5">
           <div className="flex flex-wrap items-center gap-2.5">
@@ -201,7 +201,7 @@ function ClassCard({
         <div className="flex shrink-0 items-center xl:pt-1">
           <Button
             asChild
-            className="h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/90 hover:shadow-lg"
+            className="h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg"
           >
             <Link href={`/teacher/courses/${courseId}/classes/${encodeURIComponent(item.fecha)}`}>
               Ver detalle
@@ -216,7 +216,7 @@ function ClassCard({
 
 function ClassCardSkeleton() {
   return (
-    <div className="rounded-[30px] border border-border/60 bg-card/95 px-7 py-7 shadow-[0_18px_44px_-26px_rgba(15,23,42,0.16)]">
+    <div className="rounded-2xl border border-border/60 bg-card/95 px-7 py-7 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="h-7 w-32 animate-pulse rounded-full bg-muted/40" />
@@ -328,7 +328,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
 
   if (error) {
     return (
-      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
         {error}
       </div>
     )
@@ -336,7 +336,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
 
   return (
     <div className="space-y-5">
-     <section className="rounded-[28px] border border-border/60 bg-card/95 p-4 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] md:p-5">
+     <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-5">
   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
     <div className="w-full lg:max-w-md">
       <div className="relative">
@@ -352,7 +352,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
 
     <Button
       asChild
-      className="h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+      className="h-11 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
     >
       <Link href={`/teacher/courses/${courseId}/classes/take`}>
         <CheckSquare className="mr-2 size-4" />
@@ -363,7 +363,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
 </section>
 
       {filteredData.length === 0 ? (
-        <div className="rounded-[26px] border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
           {search.trim()
             ? 'No se encontraron clases con ese criterio de búsqueda.'
             : 'No hay clases registradas.'}
@@ -380,7 +380,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
             ))}
           </div>
 
-          <div className="flex flex-col gap-3 rounded-[24px] border border-border/60 bg-card/95 px-5 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.14)] sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/95 px-5 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
               Página {page} de {totalPages} · {filteredData.length} clase{filteredData.length === 1 ? '' : 's'}
             </p>
@@ -388,7 +388,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
                 disabled={page === 1}
                 onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               >
@@ -397,7 +397,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
 
               <Button
                 variant="outline"
-                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
                 disabled={page >= totalPages}
                 onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               >

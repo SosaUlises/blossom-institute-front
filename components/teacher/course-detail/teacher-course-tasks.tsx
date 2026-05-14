@@ -95,7 +95,7 @@ function TaskMetaItem({
 
 function TaskCardSkeleton() {
   return (
-    <article className="rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] md:p-6">
+    <article className="rounded-2xl border border-border/70 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-6">
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-2">
@@ -205,7 +205,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   return (
     <div className="space-y-5">
  
-      <div className="rounded-[24px] border border-border/70 bg-card/90 p-4">
+      <div className="rounded-2xl border border-border/70 bg-card/90 p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="grid gap-3 md:grid-cols-2">
             <div className="relative min-w-[260px]">
@@ -242,7 +242,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
            <Button
             onClick={() => router.push(`/teacher/courses/${courseId}/tasks/create`)}
-            className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_26px_-12px_rgba(36,59,123,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_16px_34px_-14px_rgba(36,59,123,0.55)] active:translate-y-0"
+            className="h-10 rounded-2xl bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)] active:translate-y-0"
           >
             <Plus className="mr-2 size-4" />
             Crear publicación
@@ -251,7 +251,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
       </div>
 
       {error && (
-        <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
           {error}
         </div>
       )}
@@ -263,7 +263,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
           ))}
         </div>
       ) : data.length === 0 ? (
-        <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+        <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <CardContent className="px-6 py-14">
             <Empty className="border-0 p-0">
               <EmptyMedia variant="icon">
@@ -290,9 +290,9 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
             return (
               <article
                 key={task.id}
-                className="relative rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(30,42,68,0.22)] md:p-6"
+                className="relative rounded-2xl border border-border/70 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-6"
               >
-                <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.06),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
+                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/[0.025]" />
 
                 <div className="relative space-y-5">
                   <div className="flex items-start justify-between gap-4">
@@ -392,7 +392,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
             disabled={pageNumber === 1}
             onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
           >
@@ -401,7 +401,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
           <Button
             variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
             disabled={pageNumber * pageSize >= total}
             onClick={() => setPageNumber((prev) => prev + 1)}
           >

@@ -14,7 +14,7 @@ export default async function TeacherTaskCreatePage({ params }: PageProps) {
     <>
       <AppHeader title="Create Task" />
 
-      <main className="px-6 py-8">
+      <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-7xl">
           <TeacherTaskCreateView courseId={Number(id)} />
         </div>

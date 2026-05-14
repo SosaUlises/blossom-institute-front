@@ -75,7 +75,7 @@ export function AccountProfileForm({
   }
 
   return (
-    <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+    <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <CardHeader className="pb-4">
         <div className="flex items-start gap-3">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -102,7 +102,7 @@ export function AccountProfileForm({
                 value={formData.nombre}
                 onChange={(e) => handleChange('nombre', e.target.value)}
                 placeholder="Nombre"
-                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
               />
             </div>
 
@@ -112,7 +112,7 @@ export function AccountProfileForm({
                 value={formData.apellido}
                 onChange={(e) => handleChange('apellido', e.target.value)}
                 placeholder="Apellido"
-                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
               />
             </div>
           </div>
@@ -125,7 +125,7 @@ export function AccountProfileForm({
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="email@ejemplo.com"
-                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
               />
             </div>
 
@@ -135,7 +135,7 @@ export function AccountProfileForm({
                 value={formData.telefono ?? ''}
                 onChange={(e) => handleChange('telefono', e.target.value)}
                 placeholder="341..."
-                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
               />
             </div>
           </div>
@@ -148,13 +148,13 @@ export function AccountProfileForm({
                 value={formData.dni || ''}
                 onChange={(e) => handleChange('dni', e.target.value)}
                 placeholder="DNI"
-                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Roles</label>
-              <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-2xl border border-border/60 bg-background/70 px-3 py-2 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+              <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-2xl border border-border/60 bg-background/70 px-3 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
                 {account.roles.map((role) => (
                   <span
                     key={role}
@@ -184,7 +184,7 @@ export function AccountProfileForm({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+              className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
             >
               {isSubmitting ? (
                 <>

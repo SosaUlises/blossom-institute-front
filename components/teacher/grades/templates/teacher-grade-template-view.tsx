@@ -60,8 +60,8 @@ function HeroMetaCard({
 }) {
   const containerClass =
     tone === 'highlight'
-      ? 'rounded-[24px] border border-primary/15 bg-primary/5 px-5 py-5 shadow-[0_12px_26px_-18px_rgba(37,99,235,0.22)]'
-      : 'rounded-[24px] border border-border/60 bg-background/75 px-5 py-5 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.12)]'
+      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
+      : 'rounded-2xl border border-border/60 bg-background/75 px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
 
   const iconWrapClass =
     tone === 'highlight'
@@ -156,7 +156,7 @@ function StatMiniCard({
   value: string
 }) {
   return (
-    <div className="rounded-[20px] border border-border/60 bg-background/70 px-4 py-4 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.12)]">
+    <div className="rounded-2xl border border-border/60 bg-background/70 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <div className="flex items-center gap-2">
         <div className="flex size-8 items-center justify-center rounded-xl bg-background text-muted-foreground">
           <Icon className="size-4" />
@@ -201,7 +201,7 @@ function TemplateDetailsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-[2px]">
-      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-[30px] border border-border/60 bg-card shadow-[0_30px_80px_-30px_rgba(15,23,42,0.45)]">
+      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_30px_80px_-30px_rgba(15,23,42,0.45)]">
         <div className="flex items-center justify-between border-b border-border/60 px-6 py-5">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -224,16 +224,16 @@ function TemplateDetailsModal({
 
         <div className="max-h-[calc(90vh-88px)] overflow-y-auto px-6 py-6">
           {loading ? (
-            <div className="rounded-[24px] border border-dashed border-border/70 bg-background/40 px-6 py-16 text-center text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-dashed border-border/70 bg-background/40 px-6 py-16 text-center text-sm text-muted-foreground">
               Cargando detalle de plantilla...
             </div>
           ) : !template ? (
-            <div className="rounded-[24px] border border-red-500/20 bg-red-500/10 px-4 py-4 text-sm text-red-600 dark:text-red-400">
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-4 text-sm text-red-600 dark:text-red-400">
               No se pudo obtener el detalle de la plantilla.
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="rounded-[26px] border border-border/60 bg-background/60 p-5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.12)]">
+              <div className="rounded-2xl border border-border/60 bg-background/60 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
                     {getTipoCalificacionLabel(template.tipo)}
@@ -278,7 +278,7 @@ function TemplateDetailsModal({
                 />
               </div>
 
-              <section className="rounded-[26px] border border-border/60 bg-card/90 p-5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.12)]">
+              <section className="rounded-2xl border border-border/60 bg-card/90 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
                 <div className="mb-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Resumen
@@ -316,7 +316,7 @@ function TemplateDetailsModal({
                 </div>
               </section>
 
-              <section className="rounded-[26px] border border-border/60 bg-card/90 p-5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.12)]">
+              <section className="rounded-2xl border border-border/60 bg-card/90 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
                 <div className="mb-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Skills
@@ -331,7 +331,7 @@ function TemplateDetailsModal({
                     {template.detalles.map((detail) => (
                       <div
                         key={detail.id ?? `${detail.skill}-${detail.puntajeMaximo}`}
-                        className="flex items-center justify-between gap-4 rounded-[20px] border border-border/60 bg-background/70 px-4 py-4"
+                        className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/70 px-4 py-4"
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -358,7 +358,7 @@ function TemplateDetailsModal({
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-[20px] border border-dashed border-border/70 bg-background/40 px-4 py-10 text-center text-sm text-muted-foreground">
+                  <div className="rounded-2xl border border-dashed border-border/70 bg-background/40 px-4 py-10 text-center text-sm text-muted-foreground">
                     Esta plantilla no tiene skills configuradas.
                   </div>
                 )}
@@ -455,14 +455,14 @@ export function TeacherGradeTemplateView({
       <AppHeader title="Plantillas de calificación" />
 
       <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-        <section className="relative overflow-hidden rounded-[32px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_34%),radial-gradient(circle_at_top_right,rgba(99,102,241,0.06),transparent_28%)]" />
+        <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
 
           <div className="relative space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Button
                 variant="outline"
-                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
                 onClick={() => router.push(`/teacher/courses/${courseId}`)}
               >
                 <ArrowLeft className="mr-2 size-4" />
@@ -470,7 +470,7 @@ export function TeacherGradeTemplateView({
               </Button>
 
               <Button
-                className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg"
+                className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg"
                 onClick={() =>
                   router.push(`/teacher/courses/${courseId}/grade-templates/create`)
                 }
@@ -516,7 +516,7 @@ export function TeacherGradeTemplateView({
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] md:p-7">
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-7">
           <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -536,7 +536,7 @@ export function TeacherGradeTemplateView({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar plantilla..."
-                className="h-11 rounded-2xl border-border/70 bg-background/85 pl-11 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)]"
+                className="h-11 rounded-2xl border-border/70 bg-background/85 pl-11 shadow-[0_1px_2px_rgba(15,23,42,0.035)]"
               />
             </div>
           </div>
@@ -548,13 +548,13 @@ export function TeacherGradeTemplateView({
           )}
 
           {loading ? (
-            <div className="rounded-[28px] border border-dashed border-border/70 bg-background/40 px-6 py-16 text-center text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-dashed border-border/70 bg-background/40 px-6 py-16 text-center text-sm text-muted-foreground">
               Cargando plantillas...
             </div>
           ) : visibleTemplates.length === 0 ? (
-            <div className="rounded-[28px] border border-dashed border-border/70 bg-background/40 px-6 py-16">
+            <div className="rounded-2xl border border-dashed border-border/70 bg-background/40 px-6 py-16">
               <div className="mx-auto flex max-w-md flex-col items-center text-center">
-                <div className="flex size-14 items-center justify-center rounded-[22px] bg-primary/8 text-primary">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/8 text-primary">
                   <ClipboardList className="size-6" />
                 </div>
 
@@ -568,7 +568,7 @@ export function TeacherGradeTemplateView({
                 </p>
 
                 <Button
-                  className="mt-6 rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg"
+                  className="mt-6 rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg"
                   onClick={() =>
                     router.push(`/teacher/courses/${courseId}/grade-templates/create`)
                   }
@@ -587,7 +587,7 @@ export function TeacherGradeTemplateView({
                return (
   <article
     key={template.id}
-    className="group relative flex h-full flex-col overflow-hidden rounded-[30px] border border-border/60 bg-card/95 p-6 shadow-[0_16px_38px_-22px_rgba(15,23,42,0.16)] transition-all duration-300 hover:-translate-y-[3px] hover:border-primary/20 hover:shadow-[0_28px_48px_-24px_rgba(15,23,42,0.22)]"
+    className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-300 hover:border-primary/20 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]"
   >
     <div
       className={`pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-r ${tipoVisual.accent} opacity-90`}
@@ -624,7 +624,7 @@ export function TeacherGradeTemplateView({
         </div>
 
         <div
-          className={`hidden shrink-0 rounded-[24px] border px-4 py-4 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.16)] md:block ${tipoVisual.softCard}`}
+          className={`hidden shrink-0 rounded-2xl border px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:block ${tipoVisual.softCard}`}
         >
           <div
             className={`flex size-12 items-center justify-center rounded-2xl ${tipoVisual.iconTone}`}
@@ -656,11 +656,11 @@ export function TeacherGradeTemplateView({
         />
       </div>
 
-      <div className="mt-5 rounded-[24px] border border-border/50 bg-background/55 p-3 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.12)]">
+      <div className="mt-5 rounded-2xl border border-border/50 bg-background/55 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="flex flex-col gap-2 lg:grid lg:grid-cols-2">
           <Button
             variant="outline"
-            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
             onClick={() => handleViewDetails(template.id)}
           >
             <Eye className="mr-2 size-4" />
@@ -669,7 +669,7 @@ export function TeacherGradeTemplateView({
 
           <Button
             variant="outline"
-            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
             onClick={() =>
               router.push(
                 `/teacher/courses/${courseId}/grade-templates/${template.id}/apply`
@@ -682,7 +682,7 @@ export function TeacherGradeTemplateView({
 
           <Button
             variant="outline"
-            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
             onClick={() =>
               router.push(
                 `/teacher/courses/${courseId}/grade-templates/${template.id}/edit`
@@ -696,7 +696,7 @@ export function TeacherGradeTemplateView({
           <Button
             variant="outline"
             disabled={archivingId === template.id}
-            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:-translate-y-[1px] hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
+            className="h-11 justify-center rounded-2xl border-border/70 bg-background/80 transition-all duration-200 hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
             onClick={() => handleArchive(template.id)}
           >
             <Archive className="mr-2 size-4" />

@@ -22,8 +22,8 @@ function TeacherCard({ teacher }: { teacher: Teacher }) {
   const fullName = `${teacher.nombre} ${teacher.apellido}`
 
   return (
-    <article className="group relative rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 ease-out hover:-translate-y-[2px] hover:border-border/80 hover:bg-card hover:shadow-[0_22px_48px_-24px_rgba(15,23,42,0.20)]">
-      <div className="pointer-events-none absolute inset-0 rounded-[26px] bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
+    <article className="group relative rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 ease-out hover:border-border/80 hover:bg-card hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/[0.025]" />
 
       <div className="relative flex h-full flex-col">
         <div className="flex items-start gap-3">
@@ -62,7 +62,7 @@ function TeacherCard({ teacher }: { teacher: Teacher }) {
 
 function TeacherCardSkeleton() {
   return (
-    <div className="rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)]">
+    <div className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <div className="space-y-5">
         <div className="flex items-start gap-3">
           <div className="h-11 w-11 animate-pulse rounded-2xl bg-muted/40" />
@@ -124,7 +124,7 @@ export function TeacherCourseTeachers({ courseId }: { courseId: number }) {
 
   if (error) {
     return (
-      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
         {error}
       </div>
     )
@@ -132,7 +132,7 @@ export function TeacherCourseTeachers({ courseId }: { courseId: number }) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-[26px] border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
         <GraduationCap className="mx-auto mb-3 size-5" />
         Sin profesores asignados.
       </div>

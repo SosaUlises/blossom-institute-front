@@ -39,7 +39,7 @@ type Props = {
 function EditViewSkeleton() {
   return (
     <div className="space-y-6">
-      <section className="rounded-[30px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
         <div className="space-y-5">
           <div className="h-10 w-48 animate-pulse rounded-2xl bg-muted/35" />
 
@@ -50,9 +50,9 @@ function EditViewSkeleton() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
           </div>
         </div>
       </section>
@@ -73,8 +73,8 @@ function HeroMetaCard({
 }) {
   const containerClass =
     tone === 'highlight'
-      ? 'rounded-[24px] border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
-      : 'rounded-[24px] border border-border/60 bg-background/75 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
+      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
+      : 'rounded-2xl border border-border/60 bg-background/75 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
 
   const iconWrapClass =
     tone === 'highlight'
@@ -159,7 +159,7 @@ export function TeacherGradeEditView({
 
   if (error || !initialValues) {
     return (
-      <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+      <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <CardContent className="px-6 py-14">
           <Empty className="border-0 p-0">
             <EmptyMedia variant="icon">
@@ -179,14 +179,14 @@ export function TeacherGradeEditView({
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[30px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_34%),radial-gradient(circle_at_top_right,rgba(99,102,241,0.06),transparent_28%)]" />
+      <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
 
         <div className="relative space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
               onClick={() =>
                 router.push(`/teacher/courses/${courseId}/students/${alumnoId}/grades`)
               }

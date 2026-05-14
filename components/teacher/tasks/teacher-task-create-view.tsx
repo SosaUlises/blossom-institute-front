@@ -232,13 +232,13 @@ export function TeacherTaskCreateView({ courseId }: Props) {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.06),transparent_28%)]" />
+      <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
+        <div className="absolute inset-0 bg-primary/[0.025]" />
 
         <div className="relative space-y-5">
           <Button
             variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
             onClick={() => router.push(`/teacher/courses/${courseId}`)}
           >
             <ArrowLeft className="mr-2 size-4" />
@@ -263,7 +263,7 @@ export function TeacherTaskCreateView({ courseId }: Props) {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="mb-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Datos principales
@@ -281,12 +281,12 @@ export function TeacherTaskCreateView({ courseId }: Props) {
     <input
       value={titulo}
       onChange={(e) => setTitulo(e.target.value)}
-      className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+      className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
       placeholder="Título de la tarea - anuncio"
     />
   </div>
 
-  <div className="rounded-[24px] border border-border/60 bg-background/70 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+  <div className="rounded-2xl border border-border/60 bg-background/70 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div>
@@ -302,7 +302,7 @@ export function TeacherTaskCreateView({ courseId }: Props) {
       </div>
 
       <Select value={estado} onValueChange={setEstado}>
-        <SelectTrigger className="h-11 rounded-2xl border-border/70 bg-background/90 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)]">
+        <SelectTrigger className="h-11 rounded-2xl border-border/70 bg-background/90 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <SelectValue placeholder="Seleccionar estado" />
         </SelectTrigger>
         <SelectContent className="rounded-2xl border-border/60">
@@ -325,7 +325,7 @@ export function TeacherTaskCreateView({ courseId }: Props) {
         type="datetime-local"
         value={fechaEntregaUtc}
         onChange={(e) => setFechaEntregaUtc(e.target.value)}
-        className="h-11 w-full rounded-2xl border border-border/70 bg-background/80 pl-10 pr-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+        className="h-11 w-full rounded-2xl border border-border/70 bg-background/80 pl-10 pr-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
       />
     </div>
 
@@ -342,14 +342,14 @@ export function TeacherTaskCreateView({ courseId }: Props) {
       value={consigna}
       onChange={(e) => setConsigna(e.target.value)}
       rows={5}
-      className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+      className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
       placeholder="Describí la consigna de la tarea o la descripción del anuncio..."
     />
   </div>
 </div>
       </section>
 
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -362,7 +362,7 @@ export function TeacherTaskCreateView({ courseId }: Props) {
 
           <Button
             variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
             onClick={handleAddResource}
           >
             <Plus className="mr-2 size-4" />
@@ -374,7 +374,7 @@ export function TeacherTaskCreateView({ courseId }: Props) {
           {recursos.map((resource) => (
             <div
               key={resource.id}
-              className="rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]"
+              className="rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]"
             >
               <div className="mb-4 flex items-center justify-between gap-3">
                 <ResourceTypeBadge tipo={resource.tipo} />
@@ -397,7 +397,7 @@ export function TeacherTaskCreateView({ courseId }: Props) {
                       handleChangeResource(resource.id, 'tipo', value)
                     }
                   >
-                    <SelectTrigger className="h-11 rounded-2xl border-border/70 bg-background/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)]">
+                    <SelectTrigger className="h-11 rounded-2xl border-border/70 bg-background/85 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
                       <SelectValue placeholder="Seleccionar tipo" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl border-border/60">
@@ -420,7 +420,7 @@ export function TeacherTaskCreateView({ courseId }: Props) {
                         onChange={(e) =>
                           handleChangeResource(resource.id, 'url', e.target.value)
                         }
-                        className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                        className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
                         placeholder="https://..."
                       />
                     </div>
@@ -453,7 +453,7 @@ export function TeacherTaskCreateView({ courseId }: Props) {
                     onChange={(e) =>
                       handleChangeResource(resource.id, 'nombre', e.target.value)
                     }
-                    className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                    className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
                     placeholder="Nombre visible del recurso"
                   />
                 </div>
@@ -478,7 +478,7 @@ export function TeacherTaskCreateView({ courseId }: Props) {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+            className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
           >
             <Save className="mr-2 size-4" />
             {saving ? 'Guardando...' : 'Crear tarea'}

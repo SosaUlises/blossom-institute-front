@@ -32,8 +32,8 @@ function HeroMetaCard({
 }) {
   const containerClass =
     tone === 'highlight'
-      ? 'rounded-[24px] border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
-      : 'rounded-[24px] border border-border/60 bg-background/75 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
+      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
+      : 'rounded-2xl border border-border/60 bg-background/75 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
 
   const iconWrapClass =
     tone === 'highlight'
@@ -72,14 +72,14 @@ export function TeacherGradeCreateView({ courseId, alumnoId }: Props) {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[30px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_34%),radial-gradient(circle_at_top_right,rgba(99,102,241,0.06),transparent_28%)]" />
+      <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
 
         <div className="relative space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
               onClick={() =>
                 router.push(`/teacher/courses/${courseId}/students/${alumnoId}/grades`)
               }

@@ -31,8 +31,8 @@ function StudentCard({
   const fullName = `${student.nombre} ${student.apellido}`
 
   return (
-    <article className="group relative rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)] transition-all duration-200 ease-out hover:-translate-y-[2px] hover:border-border/80 hover:bg-card hover:shadow-[0_22px_48px_-24px_rgba(15,23,42,0.20)]">
-      <div className="pointer-events-none absolute inset-0 rounded-[26px] bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
+    <article className="group relative rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 ease-out hover:border-border/80 hover:bg-card hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/[0.025]" />
 
       <div className="relative flex h-full flex-col">
         <div className="flex items-start gap-3">
@@ -72,7 +72,7 @@ function StudentCard({
           <Button
             asChild
             size="sm"
-            className="rounded-xl bg-primary px-3.5 text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:translate-y-[-1px] hover:shadow-[0_14px_30px_-12px_rgba(245,158,11,0.85)]"
+            className="rounded-xl bg-primary px-3.5 text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]"
           >
             <Link
               href={`/teacher/courses/${courseId}/students/${student.alumnoId}/grades`}
@@ -89,7 +89,7 @@ function StudentCard({
 
 function StudentCardSkeleton() {
   return (
-    <div className="rounded-[26px] border border-border/60 bg-card/95 p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.14)]">
+    <div className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <div className="space-y-5">
         <div className="flex items-start gap-3">
           <div className="h-11 w-11 animate-pulse rounded-2xl bg-muted/40" />
@@ -154,7 +154,7 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
 
   if (error) {
     return (
-      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
         {error}
       </div>
     )
@@ -162,7 +162,7 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-[26px] border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
         <Users className="mx-auto mb-3 size-5" />
         No hay alumnos en este curso.
       </div>

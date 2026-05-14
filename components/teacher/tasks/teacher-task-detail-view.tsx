@@ -64,8 +64,8 @@ function DetailMetaCard({
 }) {
   const containerClass =
     tone === 'highlight'
-      ? 'rounded-[24px] border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
-      : 'rounded-[24px] border border-border/60 bg-background/75 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
+      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
+      : 'rounded-2xl border border-border/60 bg-background/75 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
 
   const iconWrapClass =
     tone === 'highlight'
@@ -108,8 +108,8 @@ function SubmissionCard({
   const feedbackEstado = getEstadoCorreccionConfig(submission.feedbackVigente?.estado)
 
   return (
-    <article className="relative rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(30,42,68,0.22)] md:p-6">
-      <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.05),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.04),transparent_22%)]" />
+    <article className="relative rounded-2xl border border-border/70 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-6">
+      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/[0.025]" />
 
       <div className="relative space-y-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -179,7 +179,7 @@ function SubmissionCard({
 function TaskDetailSkeleton() {
   return (
     <div className="space-y-6">
-      <section className="rounded-[30px] border border-border/70 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(30,42,68,0.24)] md:p-8">
+      <section className="rounded-2xl border border-border/70 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
         <div className="space-y-5">
           <div className="flex items-center justify-between gap-4">
             <div className="h-10 w-40 animate-pulse rounded-2xl bg-muted/35" />
@@ -197,20 +197,20 @@ function TaskDetailSkeleton() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
           </div>
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-border/70 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.18)]">
+      <section className="rounded-2xl border border-border/70 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="space-y-4">
           <div className="h-4 w-24 animate-pulse rounded bg-muted/30" />
           <div className="h-7 w-48 animate-pulse rounded-lg bg-muted/35" />
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
           </div>
         </div>
       </section>
@@ -315,7 +315,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
 
   if (error) {
     return (
-      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
         {error}
       </div>
     )
@@ -323,7 +323,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
 
   if (!task) {
     return (
-      <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+      <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <CardContent className="px-6 py-14">
           <Empty className="border-0 p-0">
             <EmptyMedia variant="icon">
@@ -343,14 +343,14 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[30px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_34%),radial-gradient(circle_at_top_right,rgba(99,102,241,0.06),transparent_28%)]" />
+      <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
 
         <div className="relative space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
               onClick={() => router.push(`/teacher/courses/${courseId}`)}
             >
               <ArrowLeft className="mr-2 size-4" />
@@ -435,7 +435,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
       </section>
 
       {task.recursos.length > 0 && (
-        <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <div className="mb-5 space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Recursos
@@ -452,9 +452,9 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                 href={resource.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex items-center gap-4 rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
+                className="group flex items-center gap-4 rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md"
               >
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-[1.02]">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-200">
                   {resource.tipo === 1 ? (
                     <LinkIcon className="size-4.5" />
                   ) : (
@@ -479,7 +479,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
       )}
 
       {!task.esAnuncio && (
-        <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -490,7 +490,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
               </h2>
             </div>
 
-            <div className="rounded-[24px] border border-border/60 bg-background/75 p-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+            <div className="rounded-2xl border border-border/60 bg-background/75 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
               <div className="relative min-w-[280px]">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -500,14 +500,14 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                     setSearch(e.target.value)
                     setPageNumber(1)
                   }}
-                  className="h-11 rounded-2xl border border-border/70 bg-background/85 pl-10 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] focus:ring-4 focus:ring-primary/15"
+                  className="h-11 rounded-2xl border border-border/70 bg-background/85 pl-10 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] focus:ring-4 focus:ring-primary/15"
                 />
               </div>
             </div>
           </div>
 
           {submissions.length === 0 ? (
-            <Card className="rounded-[28px] border border-border/60 bg-background/50 shadow-none">
+            <Card className="rounded-2xl border border-border/60 bg-background/50 shadow-none">
               <CardContent className="px-6 py-14">
                 <Empty className="border-0 p-0">
                   <EmptyMedia variant="icon">
@@ -546,7 +546,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
                 disabled={pageNumber === 1}
                 onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
               >
@@ -555,7 +555,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
 
               <Button
                 variant="outline"
-                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
                 disabled={pageNumber >= totalPages || total === 0}
                 onClick={() => setPageNumber((prev) => prev + 1)}
               >

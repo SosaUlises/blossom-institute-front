@@ -43,8 +43,8 @@ function FeedbackStatusCard({
 }) {
   const activeClasses =
     tone === 'success'
-      ? 'border-emerald-500/25 bg-emerald-500/[0.10] shadow-[0_16px_30px_-22px_rgba(16,185,129,0.45)]'
-      : 'border-amber-500/25 bg-amber-500/[0.10] shadow-[0_16px_30px_-22px_rgba(245,158,11,0.40)]'
+      ? 'border-emerald-500/25 bg-emerald-500/[0.10] shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
+      : 'border-amber-500/25 bg-amber-500/[0.10] shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
 
   const iconClasses =
     tone === 'success'
@@ -60,10 +60,10 @@ function FeedbackStatusCard({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-[24px] border p-4 text-left transition-all duration-200 ${
+      className={`rounded-xl border p-4 text-left transition-colors duration-200 ${
         selected
-          ? `${activeClasses} -translate-y-[1px]`
-          : 'border-border/60 bg-background/75 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] hover:-translate-y-[1px] hover:bg-background hover:shadow-md'
+          ? activeClasses
+          : 'border-border/60 bg-background/75 shadow-[0_1px_2px_rgba(15,23,42,0.035)] hover:bg-background'
       }`}
     >
       <div className="flex items-start gap-3">
@@ -101,12 +101,12 @@ function FormMetaCard({
 }) {
   const containerClass =
     tone === 'highlight'
-      ? 'rounded-[24px] border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
+      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
       : tone === 'success'
-        ? 'rounded-[24px] border border-emerald-500/20 bg-emerald-500/[0.08] px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
+        ? 'rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.08] px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
         : tone === 'warning'
-          ? 'rounded-[24px] border border-amber-500/20 bg-amber-500/[0.08] px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
-          : 'rounded-[24px] border border-border/60 bg-background/75 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
+          ? 'rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
+          : 'rounded-2xl border border-border/60 bg-background/75 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
 
   const labelClass =
     tone === 'highlight'
@@ -127,7 +127,7 @@ function FormMetaCard({
           : 'text-foreground'
 
   return (
-    <div className={`${containerClass} transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md`}>
+    <div className={`${containerClass} transition-all duration-200 hover:shadow-md`}>
       <p className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${labelClass}`}>
         {label}
       </p>
@@ -226,7 +226,7 @@ export function TeacherFeedbackForm({
   }
 
   return (
-    <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+    <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <div className="mb-6 space-y-1">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Feedback
@@ -237,7 +237,7 @@ export function TeacherFeedbackForm({
       </div>
 
       <div className="space-y-6">
-        <div className="rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+        <div className="rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <div className="mb-4">
             <p className="text-sm font-semibold text-foreground">
               Elegí el resultado de la corrección
@@ -271,7 +271,7 @@ export function TeacherFeedbackForm({
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-4">
             <div
-              className={`rounded-[24px] border p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md ${
+              className={`rounded-2xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-md ${
                 isAprobado
                   ? 'border-emerald-500/20 bg-emerald-500/[0.05]'
                   : 'border-amber-500/20 bg-amber-500/[0.05]'
@@ -296,7 +296,7 @@ export function TeacherFeedbackForm({
                 value={nota}
                 onChange={(e) => setNota(e.target.value)}
                 disabled={!isAprobado}
-                className={`h-11 w-full rounded-2xl border px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15 ${
+                className={`h-11 w-full rounded-2xl border px-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15 ${
                   isAprobado
                     ? 'border-border/70 bg-background/85'
                     : 'cursor-not-allowed border-border/60 bg-muted/40 text-muted-foreground'
@@ -312,7 +312,7 @@ export function TeacherFeedbackForm({
             </div>
 
             <div
-              className={`rounded-[24px] border p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md ${
+              className={`rounded-2xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-md ${
                 isAprobado
                   ? 'border-emerald-500/20 bg-emerald-500/[0.05]'
                   : 'border-amber-500/20 bg-amber-500/[0.05]'
@@ -335,7 +335,7 @@ export function TeacherFeedbackForm({
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
                 rows={5}
-                className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
                 placeholder={
                   isAprobado
                     ? 'Escribí una devolución final para el alumno...'
@@ -351,7 +351,7 @@ export function TeacherFeedbackForm({
             </div>
 
             <div
-              className={`rounded-[24px] border p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md ${
+              className={`rounded-2xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-md ${
                 isAprobado
                   ? 'border-emerald-500/20 bg-emerald-500/[0.05]'
                   : 'border-amber-500/20 bg-amber-500/[0.05]'
@@ -387,7 +387,7 @@ export function TeacherFeedbackForm({
 
           <aside className="space-y-4">
             <div
-              className={`rounded-[24px] border p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] ${
+              className={`rounded-2xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ${
                 isAprobado
                   ? 'border-emerald-500/20 bg-emerald-500/[0.08]'
                   : 'border-amber-500/20 bg-amber-500/[0.08]'
@@ -423,7 +423,7 @@ export function TeacherFeedbackForm({
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md">
+            <div className="rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md">
               <p className="text-sm font-semibold text-foreground">
                 Recomendación
               </p>
@@ -452,7 +452,7 @@ export function TeacherFeedbackForm({
           <Button
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+            className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
           >
             <Save className="mr-2 size-4" />
             {saving ? 'Guardando...' : 'Guardar feedback'}

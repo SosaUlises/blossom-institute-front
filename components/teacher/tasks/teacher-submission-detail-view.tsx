@@ -58,12 +58,12 @@ function DetailMetaCard({
 }) {
   const containerClass =
     tone === 'highlight'
-      ? 'rounded-[24px] border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/[0.07] hover:shadow-md'
+      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-primary/[0.07] hover:shadow-md'
       : tone === 'success'
-        ? 'rounded-[24px] border border-emerald-500/20 bg-emerald-500/[0.10] px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-emerald-500/[0.14] hover:shadow-md'
+        ? 'rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.10] px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-emerald-500/[0.14] hover:shadow-md'
         : tone === 'warning'
-          ? 'rounded-[24px] border border-amber-500/20 bg-amber-500/[0.10] px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-amber-500/[0.14] hover:shadow-md'
-          : 'rounded-[24px] border border-border/60 bg-background/75 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md'
+          ? 'rounded-2xl border border-amber-500/20 bg-amber-500/[0.10] px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-amber-500/[0.14] hover:shadow-md'
+          : 'rounded-2xl border border-border/60 bg-background/75 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md'
 
   const iconWrapClass =
     tone === 'highlight'
@@ -144,7 +144,7 @@ function AttachmentGrid({
             href={attachment.url}
             target="_blank"
             rel="noreferrer"
-            className={`group flex min-w-0 items-start gap-4 rounded-[24px] border p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md ${
+            className={`group flex min-w-0 items-start gap-4 rounded-2xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-md ${
               muted
                 ? 'border-border/50 bg-muted/30 hover:bg-muted/40'
                 : 'border-border/60 bg-background/75 hover:bg-background'
@@ -214,7 +214,7 @@ function FeedbackHistoryItem({
     config.label?.toLowerCase().includes('aprob') ? 'success' : 'warning'
 
   return (
-    <article className="rounded-[26px] border border-border/50 bg-muted/30 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.08)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-muted/40 hover:shadow-md">
+    <article className="rounded-2xl border border-border/50 bg-muted/30 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-muted/40 hover:shadow-md">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <span
@@ -257,7 +257,7 @@ function FeedbackHistoryItem({
           />
         </div>
 
-        <div className="rounded-[24px] border border-border/50 bg-background/70 p-4">
+        <div className="rounded-2xl border border-border/50 bg-background/70 p-4">
           <div className="mb-3 flex items-center gap-2 text-muted-foreground">
             <MessageSquare className="size-4" />
             <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
@@ -279,7 +279,7 @@ function FeedbackHistoryItem({
 function SubmissionDetailSkeleton() {
   return (
     <div className="space-y-6">
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
         <div className="space-y-5">
           <div className="flex items-center justify-between gap-4">
             <div className="h-10 w-40 animate-pulse rounded-2xl bg-muted/35" />
@@ -295,23 +295,23 @@ function SubmissionDetailSkeleton() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-[24px] bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
+            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
           </div>
         </div>
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-        <section className="rounded-[28px] border border-border/60 bg-card/95 p-6">
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-6">
           <div className="space-y-4">
             <div className="h-4 w-24 animate-pulse rounded bg-muted/30" />
             <div className="h-7 w-48 animate-pulse rounded-lg bg-muted/35" />
-            <div className="h-40 animate-pulse rounded-[24px] bg-muted/30" />
+            <div className="h-40 animate-pulse rounded-2xl bg-muted/30" />
           </div>
         </section>
 
-        <section className="rounded-[28px] border border-border/60 bg-card/95 p-6">
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-6">
           <div className="space-y-4">
             <div className="h-4 w-24 animate-pulse rounded bg-muted/30" />
             <div className="h-7 w-48 animate-pulse rounded-lg bg-muted/35" />
@@ -375,7 +375,7 @@ export function TeacherSubmissionDetailView({
 
   if (error) {
     return (
-      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
         {error}
       </div>
     )
@@ -383,7 +383,7 @@ export function TeacherSubmissionDetailView({
 
   if (!detail) {
     return (
-      <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+      <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <CardContent className="px-6 py-14">
           <Empty className="border-0 p-0">
             <EmptyMedia variant="icon">
@@ -415,14 +415,14 @@ export function TeacherSubmissionDetailView({
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.06),transparent_28%)]" />
+      <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
 
         <div className="relative space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
               onClick={() => router.push(`/teacher/courses/${courseId}/tasks/${taskId}`)}
             >
               <ArrowLeft className="mr-2 size-4" />
@@ -477,7 +477,7 @@ export function TeacherSubmissionDetailView({
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-        <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <div className="mb-5 space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Entrega
@@ -488,7 +488,7 @@ export function TeacherSubmissionDetailView({
           </div>
 
           <div className="space-y-5">
-            <div className="rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md">
+            <div className="rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md">
               <div className="mb-3 flex items-center gap-2 text-muted-foreground">
                 <FileText className="size-4" />
                 <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
@@ -514,7 +514,7 @@ export function TeacherSubmissionDetailView({
           </div>
         </section>
 
-        <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <div className="space-y-5">
             <div className="space-y-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -525,7 +525,7 @@ export function TeacherSubmissionDetailView({
               </h2>
             </div>
 
-            <div className="rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:bg-background hover:shadow-md">
+            <div className="rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md">
               <div className="flex items-start gap-3">
                 <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <PlusCircle className="size-4.5" />
@@ -545,7 +545,7 @@ export function TeacherSubmissionDetailView({
             <Button
               type="button"
               onClick={() => setShowCreateFeedback((prev) => !prev)}
-              className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+              className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
             >
               <PlusCircle className="mr-2 size-4" />
               {showCreateFeedback ? 'Ocultar formulario' : 'Crear feedback'}
@@ -567,7 +567,7 @@ export function TeacherSubmissionDetailView({
       )}
 
       {vigenteFeedback && (
-        <section className="rounded-[28px] border border-primary/15 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+        <section className="rounded-2xl border border-primary/15 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <div className="mb-5 space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary/80">
               Feedback vigente
@@ -577,11 +577,11 @@ export function TeacherSubmissionDetailView({
             </h2>
           </div>
 
-          <article className="rounded-[24px] border border-primary/15 bg-primary/5 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
+          <article className="rounded-2xl border border-primary/15 bg-primary/5 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
                 {vigenteFeedback.nota != null && (
-                <div className="rounded-[22px] border border-emerald-500/20 bg-emerald-500/[0.08] px-4 py-4 shadow-[0_10px_20px_-18px_rgba(16,185,129,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-emerald-500/[0.12] hover:shadow-md">
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.08] px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-emerald-500/[0.12] hover:shadow-md">
                   
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700/80 dark:text-emerald-400/90">
                     Calificación
@@ -631,7 +631,7 @@ export function TeacherSubmissionDetailView({
                 />
               </div>
 
-              <div className="rounded-[24px] border border-primary/15 bg-card/70 p-4">
+              <div className="rounded-2xl border border-primary/15 bg-card/70 p-4">
                 <div className="mb-3 flex items-center gap-2 text-primary/80">
                   <MessageSquare className="size-4" />
                   <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
@@ -652,7 +652,7 @@ export function TeacherSubmissionDetailView({
         </section>
       )}
 
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="mb-5 space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Historial
@@ -663,7 +663,7 @@ export function TeacherSubmissionDetailView({
         </div>
 
         {!feedbacks || feedbacks.items.length === 0 ? (
-          <Card className="rounded-[28px] border border-border/60 bg-background/50 shadow-none">
+          <Card className="rounded-2xl border border-border/60 bg-background/50 shadow-none">
             <CardContent className="px-6 py-14">
               <Empty className="border-0 p-0">
                 <EmptyMedia variant="icon">
@@ -679,7 +679,7 @@ export function TeacherSubmissionDetailView({
             </CardContent>
           </Card>
         ) : previousFeedbacks.length === 0 ? (
-          <div className="rounded-[24px] border border-dashed border-border/70 bg-muted/20 px-6 py-10 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-6 py-10 text-center text-sm text-muted-foreground">
             No hay feedbacks anteriores para mostrar.
           </div>
         ) : (

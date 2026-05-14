@@ -71,8 +71,8 @@ function HeroMetaCard({
 }) {
   const containerClass =
     tone === 'highlight'
-      ? 'rounded-[24px] border border-primary/15 bg-primary/5 px-5 py-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
-      : 'rounded-[24px] border border-border/60 bg-background/75 px-5 py-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]'
+      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
+      : 'rounded-2xl border border-border/60 bg-background/75 px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
 
   const iconWrapClass =
     tone === 'highlight'
@@ -352,14 +352,14 @@ export function TeacherGradeTemplateApplyView({
       <AppHeader title="Aplicar plantilla de calificación" />
 
       <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-        <section className="relative overflow-hidden rounded-[30px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_34%),radial-gradient(circle_at_top_right,rgba(99,102,241,0.06),transparent_28%)]" />
+        <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
 
           <div className="relative space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Button
                 variant="outline"
-                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
                 onClick={() => router.push(`/teacher/courses/${courseId}/grade-templates`)}
               >
                 <ArrowLeft className="mr-2 size-4" />
@@ -407,20 +407,20 @@ export function TeacherGradeTemplateApplyView({
           </div>
         </section>
 
-        <section className="rounded-[30px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] md:p-7">
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-7">
           {loading ? (
-            <div className="rounded-[28px] border border-dashed border-border/70 bg-background/40 px-6 py-16 text-center text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-dashed border-border/70 bg-background/40 px-6 py-16 text-center text-sm text-muted-foreground">
               Cargando datos...
             </div>
           ) : !template ? (
-            <div className="rounded-[28px] border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
               No se pudo cargar la plantilla.
             </div>
           ) : (
             <div className="space-y-6">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_320px]">
-        <div className="relative overflow-hidden rounded-[28px] border border-border/60 bg-background/70 p-5 shadow-[0_14px_32px_-20px_rgba(15,23,42,0.14)]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.07),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_28%)]" />
+        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-background/70 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+          <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
 
           <div className="relative">
             <div className="flex items-start justify-between gap-4">
@@ -452,7 +452,7 @@ export function TeacherGradeTemplateApplyView({
               </div>
 
               <div className="hidden md:block">
-                <div className={`rounded-[22px] border px-4 py-4 shadow-sm ${tipoVisual.badgeClass}`}>
+                <div className={`rounded-2xl border px-4 py-4 shadow-sm ${tipoVisual.badgeClass}`}>
                   <div
                     className={`flex size-11 items-center justify-center rounded-2xl ${tipoVisual.badgeClass}`}
                   >
@@ -468,7 +468,7 @@ export function TeacherGradeTemplateApplyView({
                   {template.detalles.map((detail) => (
                     <div
                       key={detail.id ?? detail.skill}
-                      className="group inline-flex min-w-[170px] items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/85 px-3.5 py-2.5 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/20 hover:bg-primary/[0.04]"
+                      className="group inline-flex min-w-[170px] items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/85 px-3.5 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:border-primary/20 hover:bg-primary/[0.04]"
                     >
                       <div className="min-w-0">
                         <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -499,13 +499,13 @@ export function TeacherGradeTemplateApplyView({
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-border/60 bg-background/70 p-5 shadow-[0_14px_32px_-20px_rgba(15,23,42,0.14)]">
+        <div className="rounded-2xl border border-border/60 bg-background/70 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Configuración
           </p>
 
           <div className="mt-4 space-y-4">
-            <div className="rounded-[22px] border border-border/60 bg-card/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.12)]">
+            <div className="rounded-2xl border border-border/60 bg-card/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
               <label className="text-sm font-medium text-foreground">Fecha</label>
 
               <div className="relative mt-3">
@@ -514,12 +514,12 @@ export function TeacherGradeTemplateApplyView({
                   type="date"
                   value={fecha}
                   onChange={(e) => setFecha(e.target.value)}
-                  className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                  className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
                 />
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_12px_24px_-18px_rgba(36,59,123,0.18)]">
+            <div className="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <CheckCircle2 className="size-4.5" />
@@ -559,13 +559,13 @@ export function TeacherGradeTemplateApplyView({
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Buscar alumno..."
-                      className="h-11 rounded-2xl border-border/70 bg-background/85 pl-11 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)]"
+                      className="h-11 rounded-2xl border-border/70 bg-background/85 pl-11 shadow-[0_1px_2px_rgba(15,23,42,0.035)]"
                     />
                   </div>
 
                   <Button
                     variant="outline"
-                    className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                    className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
                     onClick={handleToggleAllVisible}
                   >
                     <Plus className="mr-2 size-4" />
@@ -590,7 +590,7 @@ export function TeacherGradeTemplateApplyView({
               )}
 
               {filteredStudents.length === 0 ? (
-                <div className="rounded-[28px] border border-dashed border-border/70 bg-background/40 px-6 py-16 text-center text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-border/70 bg-background/40 px-6 py-16 text-center text-sm text-muted-foreground">
                   No hay alumnos para mostrar con el filtro actual.
                 </div>
               ) : (
@@ -598,10 +598,10 @@ export function TeacherGradeTemplateApplyView({
                   {filteredStudents.map((student) => (
                     <article
   key={student.alumnoId}
-  className={`group relative overflow-hidden rounded-[28px] border p-5 shadow-[0_14px_32px_-20px_rgba(15,23,42,0.16)] transition-all duration-200 ${
+  className={`group relative overflow-hidden rounded-2xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 ${
     student.selected
-      ? 'border-primary/20 bg-primary/[0.05] shadow-[0_20px_38px_-24px_rgba(36,59,123,0.22)]'
-      : 'border-border/60 bg-card/95 hover:-translate-y-[1px] hover:shadow-[0_20px_38px_-24px_rgba(15,23,42,0.18)]'
+      ? 'border-primary/20 bg-primary/[0.05] shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
+      : 'border-border/60 bg-card/95 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
   }`}
 >
   {student.selected && (
@@ -657,7 +657,7 @@ export function TeacherGradeTemplateApplyView({
     </div>
 
     {templateUsesSkills && student.selected && (
-      <div className="mt-5 rounded-[24px] border border-border/60 bg-background/55 p-4 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.14)]">
+      <div className="mt-5 rounded-2xl border border-border/60 bg-background/55 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -677,7 +677,7 @@ export function TeacherGradeTemplateApplyView({
           {student.detalles.map((detail) => (
             <div
               key={`${student.alumnoId}-${detail.skill}`}
-              className="group/detail rounded-[24px] border border-border/60 bg-card/90 p-4 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/15 hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.18)]"
+              className="group/detail rounded-2xl border border-border/60 bg-card/90 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:border-primary/15 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -719,7 +719,7 @@ export function TeacherGradeTemplateApplyView({
                         e.target.value
                       )
                     }
-                    className="h-11 w-full rounded-2xl border border-border/70 bg-background/90 pl-10 pr-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                    className="h-11 w-full rounded-2xl border border-border/70 bg-background/90 pl-10 pr-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
                     placeholder={`0 - ${detail.puntajeMaximo}`}
                   />
                 </div>
@@ -744,7 +744,7 @@ export function TeacherGradeTemplateApplyView({
                 <Button
                   onClick={handleSubmit}
                   disabled={saving || loading}
-                  className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+                  className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
                 >
                   {saving ? (
                     <>

@@ -62,7 +62,7 @@ function getGradeTone(nota: number) {
   if (nota >= 80) {
     return {
       container:
-        'rounded-[24px] border border-emerald-500/20 bg-emerald-500/[0.10] px-5 py-5 shadow-[0_12px_24px_-18px_rgba(16,185,129,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-emerald-500/[0.14] hover:shadow-md',
+        'rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.10] px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-emerald-500/[0.14] hover:shadow-md',
       label:
         'text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700/80 dark:text-emerald-400/90',
       value:
@@ -76,7 +76,7 @@ function getGradeTone(nota: number) {
   if (nota >= 60) {
     return {
       container:
-        'rounded-[24px] border border-amber-500/20 bg-amber-500/[0.10] px-5 py-5 shadow-[0_12px_24px_-18px_rgba(245,158,11,0.30)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-amber-500/[0.14] hover:shadow-md',
+        'rounded-2xl border border-amber-500/20 bg-amber-500/[0.10] px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-amber-500/[0.14] hover:shadow-md',
       label:
         'text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700/80 dark:text-amber-400/90',
       value:
@@ -89,7 +89,7 @@ function getGradeTone(nota: number) {
 
   return {
     container:
-      'rounded-[24px] border border-rose-500/20 bg-rose-500/[0.10] px-5 py-5 shadow-[0_12px_24px_-18px_rgba(244,63,94,0.30)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-rose-500/[0.14] hover:shadow-md',
+      'rounded-2xl border border-rose-500/20 bg-rose-500/[0.10] px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-rose-500/[0.14] hover:shadow-md',
     label:
       'text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-700/80 dark:text-rose-400/90',
     value:
@@ -214,7 +214,7 @@ function GradeSkillsDetail({
   if (!detalles.length) return null
 
   return (
-    <div className="overflow-hidden rounded-[26px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/[0.18] shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)]">
+    <div className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/[0.18] shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -267,7 +267,7 @@ function GradeSkillsDetail({
                 return (
                   <div
                     key={`${detalle.skill}-${index}`}
-                    className="rounded-[22px] border border-border/60 bg-card/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-card hover:shadow-md"
+                    className="rounded-2xl border border-border/60 bg-card/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-card hover:shadow-md"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -305,7 +305,7 @@ function GradeSkillsDetail({
 
 function GradeCardSkeleton() {
   return (
-    <article className="rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] md:p-6">
+    <article className="rounded-2xl border border-border/70 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-6">
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-2">
@@ -321,8 +321,8 @@ function GradeCardSkeleton() {
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="h-20 w-44 animate-pulse rounded-[20px] bg-muted/30" />
-          <div className="h-28 animate-pulse rounded-[24px] bg-muted/30" />
+          <div className="h-20 w-44 animate-pulse rounded-2xl bg-muted/30" />
+          <div className="h-28 animate-pulse rounded-2xl bg-muted/30" />
         </div>
       </div>
     </article>
@@ -380,8 +380,8 @@ function GradeCard({
   }, [courseId, alumnoId, grade.id, grade.tipo])
 
   return (
-    <article className="relative rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(30,42,68,0.22)] md:p-6">
-      <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.06),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
+    <article className="relative rounded-2xl border border-border/70 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-6">
+      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/[0.025]" />
 
       <div className="relative space-y-5">
         <div className="flex items-start justify-between gap-4">
@@ -433,7 +433,7 @@ function GradeCard({
               </p>
             </div>
 
-            <div className="inline-flex items-center gap-3 rounded-[20px] border border-border/60 bg-background/75 px-4 py-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md">
+            <div className="inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-background/75 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md">
               <div className="flex size-10 items-center justify-center rounded-2xl bg-background text-muted-foreground">
                 <CalendarDays className="size-4.5" />
               </div>
@@ -455,7 +455,7 @@ function GradeCard({
         {isSkillBasedGrade(grade.tipo) && (
           <>
             {detailLoading ? (
-              <div className="rounded-[24px] border border-border/60 bg-background/70 p-4">
+              <div className="rounded-2xl border border-border/60 bg-background/70 p-4">
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                   {Array.from({ length: 4 }).map((_, index) => (
                     <div
@@ -566,7 +566,7 @@ export function TeacherStudentGrades({
 
   if (error) {
     return (
-      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
         {error}
       </div>
     )
@@ -574,7 +574,7 @@ export function TeacherStudentGrades({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-4">
             <div className="space-y-1">
@@ -593,7 +593,7 @@ export function TeacherStudentGrades({
               </p>
             </div>
 
-            <div className="inline-flex items-center gap-3 rounded-[22px] border border-border/60 bg-background/75 px-4 py-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md">
+            <div className="inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-background/75 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md">
               <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <Users className="size-4.5" />
               </div>
@@ -618,7 +618,7 @@ export function TeacherStudentGrades({
                 `/teacher/courses/${courseId}/students/${alumnoId}/grades/create`,
               )
             }
-            className="h-11 rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_26px_-12px_rgba(36,59,123,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_16px_34px_-14px_rgba(36,59,123,0.55)] active:translate-y-0"
+            className="h-11 rounded-2xl bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)] active:translate-y-0"
           >
             <Plus className="mr-2 size-4" />
             Crear calificación
@@ -627,7 +627,7 @@ export function TeacherStudentGrades({
       </section>
 
       {data.length === 0 ? (
-        <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+        <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
           <CardContent className="px-6 py-14">
             <Empty className="border-0 p-0">
               <EmptyMedia variant="icon">
@@ -662,7 +662,7 @@ export function TeacherStudentGrades({
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
             disabled={pageNumber === 1}
             onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
           >
@@ -671,7 +671,7 @@ export function TeacherStudentGrades({
 
           <Button
             variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
             disabled={pageNumber >= totalPages || total === 0}
             onClick={() => setPageNumber((prev) => prev + 1)}
           >

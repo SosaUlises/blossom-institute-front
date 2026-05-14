@@ -72,7 +72,7 @@ function getTipoVisual(tipo: number) {
 function getCalculatedTone(nota: number) {
   if (nota >= 80) {
     return {
-      card: 'border-emerald-500/20 bg-emerald-500/[0.08] shadow-[0_18px_34px_-22px_rgba(16,185,129,0.24)]',
+      card: 'border-emerald-500/20 bg-emerald-500/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
       label: 'text-emerald-700/80 dark:text-emerald-400/90',
       value: 'text-emerald-700 dark:text-emerald-400',
       suffix: 'text-emerald-700/70 dark:text-emerald-400/70',
@@ -84,7 +84,7 @@ function getCalculatedTone(nota: number) {
 
   if (nota >= 60) {
     return {
-      card: 'border-amber-500/20 bg-amber-500/[0.08] shadow-[0_18px_34px_-22px_rgba(245,158,11,0.22)]',
+      card: 'border-amber-500/20 bg-amber-500/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
       label: 'text-amber-700/80 dark:text-amber-400/90',
       value: 'text-amber-700 dark:text-amber-400',
       suffix: 'text-amber-700/70 dark:text-amber-400/70',
@@ -95,7 +95,7 @@ function getCalculatedTone(nota: number) {
   }
 
   return {
-    card: 'border-rose-500/20 bg-rose-500/[0.08] shadow-[0_18px_34px_-22px_rgba(244,63,94,0.22)]',
+    card: 'border-rose-500/20 bg-rose-500/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
     label: 'text-rose-700/80 dark:text-rose-400/90',
     value: 'text-rose-700 dark:text-rose-400',
     suffix: 'text-rose-700/70 dark:text-rose-400/70',
@@ -239,11 +239,11 @@ export function TeacherGradeTemplateForm({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <div className="group rounded-[24px] border border-primary/15 bg-primary/5 p-5 shadow-[0_12px_28px_-20px_rgba(36,59,123,0.24)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/[0.07] hover:shadow-[0_18px_34px_-22px_rgba(36,59,123,0.30)]">
+          <div className="group rounded-2xl border border-primary/15 bg-primary/5 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-primary/[0.07] hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
             <div className="flex items-start gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-[1.02]">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-200">
                 <TipoIcon className="size-4.5" />
               </div>
 
@@ -261,9 +261,9 @@ export function TeacherGradeTemplateForm({
             </div>
           </div>
 
-          <div className="group rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.12)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.16)]">
+          <div className="group rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
             <div className="flex items-start gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground transition-transform duration-200 group-hover:scale-[1.02]">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground transition-transform duration-200">
                 <ClipboardList className="size-4.5" />
               </div>
 
@@ -283,9 +283,9 @@ export function TeacherGradeTemplateForm({
             </div>
           </div>
 
-          <div className="group rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.12)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.16)]">
+          <div className="group rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
             <div className="flex items-start gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground transition-transform duration-200 group-hover:scale-[1.02]">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground transition-transform duration-200">
                 <Trophy className="size-4.5" />
               </div>
 
@@ -312,7 +312,7 @@ export function TeacherGradeTemplateForm({
             <select
               value={tipo}
               onChange={(e) => setTipo(e.target.value)}
-              className="flex h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+              className="flex h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
             >
               <option value="">Seleccionar tipo</option>
               {gradeTemplateTipoOptions.map((option) => (
@@ -328,7 +328,7 @@ export function TeacherGradeTemplateForm({
             <input
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
-              className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+              className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
               placeholder="Ej. Quiz Unit 5, Test Midterm..."
             />
           </div>
@@ -339,7 +339,7 @@ export function TeacherGradeTemplateForm({
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               rows={4}
-              className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+              className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
               placeholder="Detalle opcional para identificar cuándo conviene usar esta plantilla..."
             />
           </div>
@@ -348,7 +348,7 @@ export function TeacherGradeTemplateForm({
 
       {useSkills && (
         <section
-          className={`rounded-[28px] border p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] ${tipoVisual.accent}`}
+          className={`rounded-2xl border p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ${tipoVisual.accent}`}
         >
           <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-1">
@@ -365,7 +365,7 @@ export function TeacherGradeTemplateForm({
 
             <Button
               variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
               onClick={handleAddDetail}
             >
               <Plus className="mr-2 size-4" />
@@ -377,7 +377,7 @@ export function TeacherGradeTemplateForm({
             {detalles.map((detail, index) => (
               <div
                 key={detail.id}
-                className="rounded-[24px] border border-border/60 bg-card/80 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-card hover:shadow-md"
+                className="rounded-2xl border border-border/60 bg-card/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-card hover:shadow-md"
               >
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
@@ -399,7 +399,7 @@ export function TeacherGradeTemplateForm({
 
                   <Button
                     variant="outline"
-                    className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
+                    className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
                     onClick={() => handleRemoveDetail(detail.id)}
                   >
                     <Trash2 className="size-4" />
@@ -414,7 +414,7 @@ export function TeacherGradeTemplateForm({
                       onChange={(e) =>
                         handleChangeDetail(detail.id, 'skill', e.target.value)
                       }
-                      className="flex h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                      className="flex h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
                     >
                       <option value="">Seleccionar skill</option>
                       {gradeTemplateSkillOptions
@@ -442,7 +442,7 @@ export function TeacherGradeTemplateForm({
                       onChange={(e) =>
                         handleChangeDetail(detail.id, 'puntajeMaximo', e.target.value)
                       }
-                      className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                      className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
                       placeholder="Ej. 100"
                     />
                   </div>
@@ -452,7 +452,7 @@ export function TeacherGradeTemplateForm({
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.25fr]">
-            <div className="group rounded-[24px] border border-border/60 bg-card/80 p-5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-card hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.18)]">
+            <div className="group rounded-2xl border border-border/60 bg-card/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-card hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
               <div className="flex items-start gap-3">
                 <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground shadow-sm">
                   <ClipboardList className="size-4.5" />
@@ -480,7 +480,7 @@ export function TeacherGradeTemplateForm({
             </div>
 
             <div
-              className={`group rounded-[26px] border p-5 transition-all duration-200 hover:-translate-y-[1px] ${calculatedTone.card}`}
+              className={`group rounded-2xl border p-5 transition-all duration-200 ${calculatedTone.card}`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -492,7 +492,7 @@ export function TeacherGradeTemplateForm({
 
                   <div className="mt-3 flex items-end gap-3">
                     <p
-                      className={`text-[2.25rem] font-semibold leading-none tracking-tight ${calculatedTone.value}`}
+                      className={`text-2xl font-semibold leading-none tracking-tight ${calculatedTone.value}`}
                     >
                       {calculatedGrade.toFixed(2)}
                     </p>
@@ -509,7 +509,7 @@ export function TeacherGradeTemplateForm({
                 </div>
 
                 <div
-                  className={`flex size-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-[1.03] ${calculatedTone.icon}`}
+                  className={`flex size-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 ${calculatedTone.icon}`}
                 >
                   <Trophy className="size-5" />
                 </div>
@@ -546,7 +546,7 @@ export function TeacherGradeTemplateForm({
         <Button
           onClick={handleSubmit}
           disabled={saving}
-          className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+          className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
         >
           <Save className="mr-2 size-4" />
           {saving

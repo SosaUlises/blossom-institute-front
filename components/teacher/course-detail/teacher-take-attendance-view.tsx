@@ -68,8 +68,7 @@ function AttendanceOptionButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-2xl border px-4 py-2.5 text-sm font-medium transition-all duration-200',
-        'hover:-translate-y-[1px]',
+        'rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors duration-200',
         toneClass,
       )}
     >
@@ -92,7 +91,7 @@ function StatCard({
   return (
     <div
       className={cn(
-        'rounded-[24px] border p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]',
+        'rounded-2xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
         tone === 'success' &&
           'border-emerald-500/20 bg-emerald-500/[0.06]',
         tone === 'danger' &&
@@ -223,7 +222,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
 
   if (loading) {
     return (
-      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
         Cargando alumnos...
       </div>
     )
@@ -231,14 +230,14 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.06),transparent_28%)]" />
+      <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
+        <div className="absolute inset-0 bg-primary/[0.025]" />
 
         <div className="relative space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
               onClick={() => router.push(`/teacher/courses/${courseId}`)}
             >
               <ArrowLeft className="mr-2 size-4" />
@@ -269,7 +268,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
                 type="date"
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
-                className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
               />
             </div>
 
@@ -280,7 +279,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
               <input
                 value={descripcionClase}
                 onChange={(e) => setDescripcionClase(e.target.value)}
-                className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
                 placeholder="Temas vistos, observaciones, contenido trabajado..."
               />
             </div>
@@ -308,7 +307,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -324,7 +323,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
               type="button"
               variant="outline"
               onClick={handleMarkAllPresent}
-              className="rounded-2xl border-emerald-500/20 bg-emerald-500/8 text-emerald-700 transition-all duration-200 hover:-translate-y-[1px] hover:bg-emerald-500/12 hover:text-emerald-700 dark:text-emerald-400"
+              className="rounded-2xl border-emerald-500/20 bg-emerald-500/8 text-emerald-700 transition-all duration-200 hover:bg-emerald-500/12 hover:text-emerald-700 dark:text-emerald-400"
             >
               <CheckCircle2 className="mr-2 size-4" />
               Marcar todos presentes
@@ -333,7 +332,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+              className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
             >
               <Save className="mr-2 size-4" />
               {saving ? 'Guardando...' : 'Guardar asistencia'}
@@ -372,7 +371,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
             return (
               <div
                 key={student.alumnoId}
-                className="rounded-[26px] border border-border/60 bg-background/75 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
+                className="rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0 space-y-2">

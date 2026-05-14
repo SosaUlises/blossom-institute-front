@@ -1,16 +1,16 @@
 import { AppHeader } from '@/components/layout/app-header'
-import { BookOpen, Sparkles } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { TeacherCoursesTable } from '@/components/teacher/courses/teacher-courses-table'
 
 function HeroInfoCard() {
   return (
-    <div className="group inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
-      <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+    <div className="inline-flex items-center gap-3 rounded-xl border border-border/60 bg-background/75 px-4 py-3 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors hover:border-primary/20 hover:bg-background">
+      <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
         <BookOpen className="size-5" />
       </div>
 
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           Módulo
         </p>
         <p className="text-sm font-semibold text-foreground">
@@ -26,24 +26,20 @@ export default function TeacherCoursesPage() {
     <>
       <AppHeader title="Mis cursos" />
 
-      <main className="flex-1 overflow-auto px-6 py-8 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_24%)]" />
-
-            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+      <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
+        <div className="mx-auto max-w-7xl space-y-5">
+          <section className="rounded-2xl border border-border/65 bg-card/90 px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/80 sm:px-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
-                <div className="mb-5 h-[3px] w-12 rounded-full bg-primary" />
-
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary/80">
                   Panel docente
                 </p>
 
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-[2.35rem]">
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                   Mis cursos
                 </h2>
 
-                <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-[15px]">
                   Accedé al detalle de cada curso, sus clases, tareas y entregas desde un único espacio de trabajo.
                 </p>
               </div>

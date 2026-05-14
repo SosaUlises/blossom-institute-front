@@ -35,7 +35,7 @@ function PasswordField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="h-11 rounded-2xl border-border/70 bg-card/85 pr-12 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+          className="h-11 rounded-2xl border-border/70 bg-card/85 pr-12 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
           autoComplete="off"
         />
 
@@ -91,7 +91,7 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+    <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <CardHeader className="pb-5">
         <div className="flex items-start gap-4">
           <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -160,7 +160,7 @@ export function ChangePasswordForm() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-2xl px-6 shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              className="h-11 rounded-2xl px-6 shadow-md shadow-primary/20 transition-all hover:shadow-lg"
             >
               {isSubmitting ? (
                 <>
