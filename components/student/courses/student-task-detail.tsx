@@ -1,12 +1,20 @@
 ﻿'use client'
 
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type ComponentType,
+  type ReactNode,
+} from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   AlertCircle,
   ArrowLeft,
   Archive,
+  BookOpen,
   CheckCircle2,
   ChevronDown,
   Clock3,
@@ -139,6 +147,33 @@ function displayValue(value: unknown) {
   if (typeof value === 'string' && value.trim()) return value.trim()
   if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   return null
+}
+
+function getNumericValue(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value !== 'string' || !value.trim()) return null
+
+  const normalized = value.trim().replace(',', '.')
+  const parsed = Number.parseFloat(normalized)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function getGradeBadgeClass(value: unknown) {
+  const grade = getNumericValue(value)
+
+  if (grade == null) {
+    return 'border-border/60 bg-background/70 text-foreground dark:bg-background/35'
+  }
+
+  if (grade < 65) {
+    return 'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+  }
+
+  if (grade < 80) {
+    return 'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-300'
+  }
+
+  return 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300'
 }
 
 function formatBytes(value: unknown) {
@@ -416,6 +451,28 @@ function AttachmentLink({
   )
 }
 
+function TaskHeroMetaChip({
+  icon: Icon,
+  children,
+  className,
+}: {
+  icon: ComponentType<{ className?: string }>
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium leading-5 text-muted-foreground dark:bg-background/35',
+        className,
+      )}
+    >
+      <Icon className="size-3.5" />
+      {children}
+    </span>
+  )
+}
+
 export function StudentTaskDetail({
   courseId,
   taskId,
@@ -510,15 +567,6 @@ export function StudentTaskDetail({
       : task?.vencida
         ? 'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300'
         : 'border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300'
-  const taskStatusTextClassName = feedbackNeedsChanges
-    ? 'text-amber-700 dark:text-amber-300'
-    : feedbackApproved
-      ? 'text-emerald-800 dark:text-emerald-300'
-    : currentDelivery
-      ? 'text-emerald-800 dark:text-emerald-300'
-      : task?.vencida
-        ? 'text-rose-700 dark:text-rose-300'
-        : 'text-sky-700 dark:text-sky-300'
   const saveButtonLabel = currentDelivery
     ? feedbackNeedsChanges
       ? 'Enviar corrección'
@@ -530,8 +578,6 @@ export function StudentTaskDetail({
         description: 'Leé el mensaje de tu profe, ajustá tu trabajo y mandá una nueva versión.',
         cta: 'Mejorar entrega',
         icon: AlertCircle,
-        className:
-          'border-amber-500/30 bg-amber-500/[0.08] text-amber-900 dark:text-amber-100',
         iconClassName: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
         buttonClassName: 'bg-amber-600 text-white hover:bg-amber-700',
       }
@@ -541,8 +587,6 @@ export function StudentTaskDetail({
           description: 'Buen avance. Tu entrega ya fue revisada y podés volver a verla cuando quieras.',
           cta: 'Revisar entrega',
           icon: CheckCircle2,
-          className:
-            'border-emerald-200 bg-card text-foreground dark:border-emerald-500/20 dark:bg-card dark:text-foreground',
           iconClassName:
             'border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
           buttonClassName: '',
@@ -553,8 +597,6 @@ export function StudentTaskDetail({
             description: 'Ya completaste este paso. Podés revisar lo que mandaste o hacer un cambio.',
             cta: 'Editar entrega',
             icon: CheckCircle2,
-            className:
-              'border-emerald-300 bg-card text-foreground dark:border-emerald-500/25',
             iconClassName:
               'border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
             buttonClassName: '',
@@ -565,8 +607,6 @@ export function StudentTaskDetail({
               description: 'Repasá la consigna y hablá con tu profe si necesitás ayuda para ponerte al día.',
               cta: null,
               icon: AlertCircle,
-              className:
-                'border-rose-500/25 bg-rose-500/[0.06] text-rose-900 dark:text-rose-100',
               iconClassName: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
               buttonClassName: '',
             }
@@ -575,12 +615,12 @@ export function StudentTaskDetail({
               description: 'Leé la consigna, mirá los materiales y mandá tu trabajo cuando esté listo.',
               cta: 'Empezar entrega',
               icon: Clock3,
-              className:
-                'border-sky-500/25 bg-sky-500/[0.06] text-sky-900 dark:text-sky-100',
               iconClassName: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
               buttonClassName: '',
-            }
+          }
   const ActionIcon = actionState.icon
+  const courseName = safeText(task?.cursoNombre) ?? 'Curso'
+  const heroCtaLabel = actionState.cta ?? 'Leer consigna'
 
   useEffect(() => {
     if (!task) return
@@ -671,65 +711,23 @@ export function StudentTaskDetail({
     }
   }
 
-  function renderActionPanel() {
-    return (
-      <section
-        className={cn(
-          'rounded-xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
-          actionState.className,
-        )}
-      >
-        <div className="flex items-start gap-3">
-          <StudentIconContainer
-            icon={ActionIcon}
-            size="md"
-            className={actionState.iconClassName}
-          />
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold leading-6 tracking-tight">
-              {actionState.title}
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              {actionState.description}
-            </p>
-          </div>
-        </div>
-        <p className="mt-4 rounded-lg border border-border/50 bg-background/45 px-3 py-2 text-xs leading-5 text-muted-foreground dark:bg-background/25">
-          {feedbackNeedsChanges
-            ? 'Una corrección es parte del aprendizaje: no significa empezar de cero.'
-            : feedbackApproved
-              ? 'Podés usar esta entrega como referencia para próximas actividades.'
-              : currentDelivery
-                ? 'Tu avance quedó registrado.'
-                : task?.vencida
-                  ? 'Si te atrasaste, el primer paso es pedir orientación.'
-                  : 'Dividí la tarea en pasos chicos: leer, preparar y enviar.'}
-        </p>
+  function handleHeroAction() {
+    if (actionState.cta) {
+      if (feedbackApproved || (task?.vencida && !currentDelivery)) {
+        setShowForm(false)
+      } else {
+        setShowForm(true)
+      }
+    }
 
-        {actionState.cta ? (
-          <Button
-            type="button"
-            className={cn(
-              'mt-4 w-full rounded-lg focus-visible:ring-primary/25',
-              feedbackApproved ? 'h-10 text-sm sm:h-9' : 'h-11',
-              actionState.buttonClassName ||
-                'border-border/70 bg-background/75 text-foreground transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-muted/40 hover:text-foreground active:scale-[0.99] dark:bg-background/35',
-            )}
-            variant={actionState.buttonClassName ? 'default' : 'outline'}
-            onClick={() => {
-              if (feedbackApproved || (task?.vencida && !currentDelivery)) {
-                setShowForm(false)
-                return
-              }
+    const targetId = actionState.cta ? 'tu-trabajo' : 'consigna'
 
-              setShowForm(true)
-            }}
-          >
-            {actionState.cta}
-          </Button>
-        ) : null}
-      </section>
-    )
+    window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    })
   }
 
   function renderDeliveryPanel() {
@@ -864,8 +862,18 @@ export function StudentTaskDetail({
                 </div>
 
                 {feedbackNote ? (
-                  <span className={cn(studentUi.badge.compact, 'border-border/60 bg-background/70 text-foreground')}>
-                    Nota: {feedbackNote}
+                  <span
+                    className={cn(
+                      'inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 shadow-[0_1px_1px_rgba(15,23,42,0.04)]',
+                      getGradeBadgeClass(currentFeedback?.nota),
+                    )}
+                  >
+                    <span className="text-[11px] font-semibold uppercase tracking-wide opacity-75">
+                      Nota
+                    </span>
+                    <span className="text-lg font-semibold leading-none">
+                      {feedbackNote}
+                    </span>
                   </span>
                 ) : null}
               </div>
@@ -1106,38 +1114,90 @@ export function StudentTaskDetail({
         </Link>
       </Button>
 
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
-          {safeText(task.titulo) ?? 'Sin título'}
-        </h1>
+      <header className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-5 shadow-[0_12px_36px_-30px_rgba(15,23,42,0.35)] dark:bg-card/90 sm:p-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_92%_8%,rgba(14,165,233,0.11),transparent_30%)] dark:bg-[radial-gradient(circle_at_92%_8%,rgba(56,189,248,0.10),transparent_32%)]" />
+        <div className="relative space-y-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <TaskHeroMetaChip icon={BookOpen}>
+                  {courseName}
+                </TaskHeroMetaChip>
+                <TaskHeroMetaChip icon={FileText}>
+                  Tarea
+                </TaskHeroMetaChip>
+                {dueDate ? (
+                  <TaskHeroMetaChip icon={CalendarCheck2}>
+                    Vence {dueDate}
+                  </TaskHeroMetaChip>
+                ) : null}
+              </div>
 
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm text-muted-foreground">
-          {dueDate ? (
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarCheck2 className="size-3.5" />
-              Vence el {dueDate}
-            </span>
-          ) : null}
-          {dueDate ? <span className="hidden sm:inline" aria-hidden="true">·</span> : null}
-          <span
-            className={cn(
-              'font-semibold',
-              taskStatusTextClassName,
-            )}
-          >
-            {taskStatusLabel}
-          </span>
+              <div>
+                <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
+                  {safeText(task.titulo) ?? 'Sin título'}
+                </h1>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                  {actionState.description}
+                </p>
+              </div>
+            </div>
+
+            <StudentStatusBadge
+              icon={ActionIcon}
+              className={cn(
+                'rounded-xl px-3 py-1.5 text-sm shadow-[0_1px_1px_rgba(15,23,42,0.04)]',
+                taskStatusClassName,
+              )}
+            >
+              {taskStatusLabel}
+            </StudentStatusBadge>
+          </div>
+
+          <div className="flex flex-col gap-4 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <StudentIconContainer
+                icon={ActionIcon}
+                size="md"
+                className={actionState.iconClassName}
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold tracking-tight text-foreground">
+                  {actionState.title}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {feedbackNeedsChanges
+                    ? 'Una corrección es parte del aprendizaje: ajustá lo necesario y volvé a enviarla.'
+                    : feedbackApproved
+                      ? 'Podés revisar el mensaje de tu profe o usar este trabajo como referencia.'
+                      : currentDelivery
+                        ? 'Tu avance quedó guardado y podés editarlo si necesitás mejorar algo.'
+                        : task?.vencida
+                          ? 'Leé la consigna y hablá con tu profe si necesitás ponerte al día.'
+                          : 'Leé la consigna, revisá los materiales y prepará tu entrega.'}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              className={cn(
+                'h-10 w-full shrink-0 rounded-lg sm:w-fit',
+                actionState.buttonClassName ||
+                  'border-border/70 bg-background/75 text-foreground transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-muted/40 hover:text-primary active:scale-[0.99] dark:bg-background/35',
+              )}
+              variant={actionState.buttonClassName ? 'default' : 'outline'}
+              onClick={handleHeroAction}
+            >
+              {heroCtaLabel}
+            </Button>
+          </div>
         </div>
       </header>
 
       <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-        <aside className="order-1 space-y-4 lg:sticky lg:top-6 lg:order-2">
-          {renderActionPanel()}
-          {renderDeliveryPanel()}
-        </aside>
-
-        <div className="order-2 space-y-5 sm:space-y-6 lg:order-1">
-          <section className={studentUi.card.document}>
+        <div className="space-y-5 sm:space-y-6">
+          <section id="consigna" className={studentUi.card.document}>
             <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
               <FileText className="size-4 text-muted-foreground" />
               <h2 className="text-lg font-semibold tracking-tight text-foreground">
@@ -1174,6 +1234,10 @@ export function StudentTaskDetail({
             </section>
           ) : null}
         </div>
+
+        <aside className="space-y-4 lg:sticky lg:top-6">
+          {renderDeliveryPanel()}
+        </aside>
       </div>
     </div>
   )

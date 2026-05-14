@@ -43,6 +43,8 @@ type Movement = {
   score?: string
 }
 
+const MAX_LEARNING_FEED_ITEMS = 6
+
 const toneStyles: Record<SemanticTone, { badge: string; icon: string; chip: string }> = {
   neutral: {
     badge: 'border-border/60 bg-muted/30 text-muted-foreground',
@@ -736,7 +738,7 @@ function buildMovements({
     ...taskMovements,
   ]
     .sort((a, b) => b.sortTime - a.sortTime)
-    .slice(0, 6)
+    .slice(0, MAX_LEARNING_FEED_ITEMS)
 }
 
 function LearningFeed({ movements }: { movements: Movement[] }) {
