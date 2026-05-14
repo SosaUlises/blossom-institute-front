@@ -41,9 +41,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
     if (!Number.isFinite(termNumber) || termNumber <= 0) {
       return new NextResponse('Term inválido.', { status: 400 })
     }
-    const tipo = request.nextUrl.searchParams.get('tipo') ?? ''
-    const tipoValue = tipo.trim() ? Number(tipo) : null
-    if (tipo.trim() && (!Number.isFinite(tipoValue) || tipoValue <= 0)) {
+    const tipo = request.nextUrl.searchParams.get('tipo')?.trim() ?? ''
+    const tipoValue = tipo ? Number(tipo) : null
+    if (tipo && (tipoValue === null || !Number.isFinite(tipoValue) || tipoValue <= 0)) {
       return new NextResponse('Tipo inválido.', { status: 400 })
     }
 
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       `${BASE}/api/v1/reportes/cursos/${cursoIdNumber}/alumnos/${alumnoIdNumber}/years/${yearNumber}/terms/${termNumber}/marks-detail/export/pdf`
     )
 
-    if (tipo.trim()) {
+    if (tipo && tipoValue !== null) {
       url.searchParams.set('tipo', String(tipoValue))
     }
 
