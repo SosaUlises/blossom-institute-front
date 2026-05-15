@@ -95,14 +95,16 @@ export function TeacherCourseTabs({ course }: Props) {
       </nav>
 
       <section className="space-y-2.5">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight text-foreground">
-            {currentTab.panelTitle}
-          </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {currentTab.panelDescription}
-          </p>
-        </div>
+        {tab !== 'classes' ? (
+          <div>
+            <h2 className="text-base font-semibold tracking-tight text-foreground">
+              {currentTab.panelTitle}
+            </h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {currentTab.panelDescription}
+            </p>
+          </div>
+        ) : null}
 
         <div>
           {tab === 'students' && <TeacherCourseStudents courseId={course.id} />}
