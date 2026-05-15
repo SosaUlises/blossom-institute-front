@@ -10,11 +10,9 @@ import {
   Paperclip,
   Star,
   MessageSquare,
-  PlusCircle,
   ChevronRight,
   Inbox,
   History,
-  User,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -31,7 +29,9 @@ import {
   getTeacherSubmissionDetail,
   getTeacherSubmissionFeedbacks,
 } from '@/lib/teacher/tasks/feedback-api'
+import { getTeacherTaskDetail } from '@/lib/teacher/tasks/task-api'
 import type {
+  TeacherTaskDetail,
   TeacherSubmissionDetail,
   TeacherSubmissionFeedbacksResponse,
 } from '@/lib/teacher/tasks/types'
@@ -137,47 +137,62 @@ function AttachmentGrid({
         </span>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="space-y-2">
         {attachments.map((attachment) => (
           <a
             key={attachment.id}
             href={attachment.url}
             target="_blank"
             rel="noreferrer"
-            className={`group flex min-w-0 items-start gap-4 rounded-2xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:shadow-md ${
+            className={`group flex min-h-12 min-w-0 items-center gap-3 rounded-xl border px-3 py-2 transition-colors duration-200 ${
               muted
-                ? 'border-border/50 bg-muted/30 hover:bg-muted/40'
-                : 'border-border/60 bg-background/75 hover:bg-background'
+                ? 'border-border/50 bg-muted/20 hover:bg-muted/30'
+                : 'border-border/60 bg-background/60 hover:border-primary/25 hover:bg-primary/5 dark:bg-background/35'
             }`}
           >
             <div
-              className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${
+              className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
                 muted
                   ? 'bg-background/80 text-muted-foreground'
                   : 'bg-primary/10 text-primary'
               }`}
             >
               {attachment.tipo === 1 ? (
-                <LinkIcon className="size-4.5" />
+                <LinkIcon className="size-4" />
               ) : (
-                <Paperclip className="size-4.5" />
+                <Paperclip className="size-4" />
               )}
             </div>
 
             <div className="min-w-0 flex-1 overflow-hidden">
-              <p className="break-words text-sm font-semibold leading-6 text-foreground">
+              <p className="truncate text-sm font-semibold leading-5 text-foreground">
                 {attachment.nombre || 'Adjunto'}
               </p>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {attachment.tipo === 1 ? 'Link externo' : 'Archivo adjunto'}
               </p>
             </div>
 
-            <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
           </a>
         ))}
       </div>
     </div>
+  )
+}
+
+function InlineMetaChip({
+  icon: Icon,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  children: React.ReactNode
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/65 px-2.5 py-1 text-xs font-medium text-muted-foreground dark:bg-background/35">
+      <Icon className="size-3.5" />
+      {children}
+    </span>
   )
 }
 
@@ -332,22 +347,26 @@ export function TeacherSubmissionDetailView({
 
   const [detail, setDetail] = useState<TeacherSubmissionDetail | null>(null)
   const [feedbacks, setFeedbacks] = useState<TeacherSubmissionFeedbacksResponse | null>(null)
+  const [task, setTask] = useState<TeacherTaskDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showCreateFeedback, setShowCreateFeedback] = useState(false)
 
-  const loadAll = async () => {
+  const loadAll = async (showLoading = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       setError(null)
 
-      const [detailResult, feedbackResult] = await Promise.all([
+      const [detailResult, feedbackResult, taskResult] = await Promise.all([
         getTeacherSubmissionDetail(courseId, taskId, alumnoId),
         getTeacherSubmissionFeedbacks(courseId, taskId, alumnoId),
+        getTeacherTaskDetail(courseId, taskId),
       ])
 
       setDetail(detailResult)
       setFeedbacks(feedbackResult)
+      setTask(taskResult)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ocurrió un error.')
     } finally {
@@ -407,250 +426,145 @@ export function TeacherSubmissionDetailView({
     ? getEstadoCorreccionConfig(vigenteFeedback.estado)
     : null
 
-  const feedbackTone =
-    feedbackEstado.label?.toLowerCase().includes('aprob') ? 'success' : 'warning'
-
-  const vigenteTone =
-    vigenteFeedbackConfig?.label?.toLowerCase().includes('aprob') ? 'success' : 'warning'
-
   return (
-    <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
-        <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
+    <div className="space-y-5">
+      <header className="space-y-4 border-b border-border/60 pb-4">
+        <Button
+          variant="ghost"
+          className="h-9 w-fit justify-start rounded-lg px-2 text-muted-foreground hover:text-foreground"
+          onClick={() => router.push(`/teacher/courses/${courseId}/tasks/${taskId}`)}
+        >
+          <ArrowLeft className="mr-2 size-4" />
+          Volver a la tarea
+        </Button>
 
-        <div className="relative space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Button
-              variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
-              onClick={() => router.push(`/teacher/courses/${courseId}/tasks/${taskId}`)}
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${entregaEstado.className}`}
             >
-              <ArrowLeft className="mr-2 size-4" />
-              Volver a la tarea
-            </Button>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${entregaEstado.className}`}
-              >
-                {entregaEstado.label}
-              </span>
-            </div>
+              {entregaEstado.label}
+            </span>
+            <span
+              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${feedbackEstado.className}`}
+            >
+              {feedbackEstado.label}
+            </span>
           </div>
 
-          <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Detalle de la entrega
-            </p>
-
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               {detail.alumnoNombre} {detail.alumnoApellido}
             </h1>
-
-            <p className="max-w-3xl text-sm leading-7 text-muted-foreground md:text-[15px]">
-              Revisá la entrega, sus adjuntos, el feedback vigente y el historial completo de correcciones para decidir la próxima acción docente.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <DetailMetaCard
-              icon={Star}
-              label="Estado de corrección"
-              value={feedbackEstado.label}
-              tone={feedbackTone}
-            />
-
-            <DetailMetaCard
-              icon={CalendarClock}
-              label="Fecha de entrega"
-              value={detail.fechaEntregaUtc ? formatDateTime(detail.fechaEntregaUtc) : '-'}
-            />
-
-            <DetailMetaCard
-              icon={Paperclip}
-              label="Adjuntos"
-              value={`${detail.adjuntos.length} adjunto${detail.adjuntos.length === 1 ? '' : 's'}`}
-              tone={detail.adjuntos.length > 0 ? 'highlight' : 'default'}
-            />
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <InlineMetaChip icon={FileText}>
+                {task?.titulo ?? 'Tarea'}
+              </InlineMetaChip>
+              <InlineMetaChip icon={CalendarClock}>
+                Entregada {formatDateTime(detail.fechaEntregaUtc)}
+              </InlineMetaChip>
+              <InlineMetaChip icon={Paperclip}>
+                {detail.adjuntos.length === 1
+                  ? '1 adjunto'
+                  : `${detail.adjuntos.length} adjuntos`}
+              </InlineMetaChip>
+            </div>
           </div>
         </div>
-      </section>
+      </header>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-        <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-          <div className="mb-5 space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Entrega
-            </p>
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">
-              Contenido entregado
-            </h2>
-          </div>
-
-          <div className="space-y-5">
-            <div className="rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md">
-              <div className="mb-3 flex items-center gap-2 text-muted-foreground">
-                <FileText className="size-4" />
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
-                  Texto de la entrega
-                </span>
-              </div>
-
-              {detail.texto?.trim() ? (
-                <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">
-                  {detail.texto}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  El alumno no dejó texto en la entrega.
-                </p>
-              )}
-            </div>
-
-            <AttachmentGrid
-              title="Adjuntos de la entrega"
-              attachments={detail.adjuntos}
-            />
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-          <div className="space-y-5">
-            <div className="space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Acción docente
-              </p>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+        <div className="min-w-0 space-y-5">
+          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+            <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
+              <FileText className="size-4 text-muted-foreground" />
               <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Corregir entrega
+                Respuesta del alumno
               </h2>
             </div>
 
-            <div className="rounded-2xl border border-border/60 bg-background/75 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md">
-              <div className="flex items-start gap-3">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <PlusCircle className="size-4.5" />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">
-                    Registrar nueva corrección
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Creá un feedback para actualizar el estado, dejar observaciones y adjuntar archivos corregidos si hace falta.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              onClick={() => setShowCreateFeedback((prev) => !prev)}
-              className="h-11 rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
-            >
-              <PlusCircle className="mr-2 size-4" />
-              {showCreateFeedback ? 'Ocultar formulario' : 'Crear feedback'}
-            </Button>
-          </div>
-        </section>
-      </div>
-
-      {showCreateFeedback && (
-        <TeacherFeedbackForm
-          courseId={courseId}
-          taskId={taskId}
-          alumnoId={alumnoId}
-          onCreated={async () => {
-            await loadAll()
-            setShowCreateFeedback(false)
-          }}
-        />
-      )}
-
-      {vigenteFeedback && (
-        <section className="rounded-2xl border border-primary/15 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-          <div className="mb-5 space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary/80">
-              Feedback vigente
-            </p>
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">
-              Corrección actual
-            </h2>
-          </div>
-
-          <article className="rounded-2xl border border-primary/15 bg-primary/5 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                {vigenteFeedback.nota != null && (
-                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.08] px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-emerald-500/[0.12] hover:shadow-md">
-                  
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700/80 dark:text-emerald-400/90">
-                    Calificación
-                  </p>
-
-
-                    <p className="text-2xl font-semibold tracking-tight text-emerald-700 dark:text-emerald-400 text-center">
-                      {vigenteFeedback.nota}
-                    </p>
-
-                </div>
-              )}
-                <span
-                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${vigenteFeedbackConfig?.className ?? ''}`}
-                >
-                  {vigenteFeedbackConfig?.label}
-                </span>
-
-                <span className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  Vigente
-                </span>
-
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                <DetailMetaCard
-                  icon={CalendarClock}
-                  label="Corrección"
-                  value={formatDateTime(vigenteFeedback.fechaCorreccionUtc)}
-                  tone="highlight"
-                />
-                <DetailMetaCard
-                  icon={Star}
-                  label="Estado"
-                  value={vigenteFeedbackConfig?.label ?? '-'}
-                  tone={vigenteTone}
-                />
-                <DetailMetaCard
-                  icon={Paperclip}
-                  label="Adjuntos"
-                  value={
-                    vigenteFeedback.adjuntos?.length
-                      ? `${vigenteFeedback.adjuntos.length} adjunto${vigenteFeedback.adjuntos.length === 1 ? '' : 's'}`
-                      : 'Sin adjuntos'
-                  }
-                  tone={vigenteFeedback.adjuntos?.length ? 'highlight' : 'default'}
-                />
-              </div>
-
-              <div className="rounded-2xl border border-primary/15 bg-card/70 p-4">
-                <div className="mb-3 flex items-center gap-2 text-primary/80">
-                  <MessageSquare className="size-4" />
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
-                    Comentario
-                  </span>
-                </div>
-
-                <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">
-                  {vigenteFeedback.comentario?.trim()
-                    ? vigenteFeedback.comentario
-                    : 'Sin comentario.'}
+            <div className="space-y-5">
+              {detail.texto?.trim() ? (
+                <p className="whitespace-pre-wrap text-base leading-8 text-foreground/85">
+                  {detail.texto}
                 </p>
+              ) : (
+                <p className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-3 text-sm leading-6 text-muted-foreground dark:bg-muted/10">
+                  El alumno no dejó texto en la entrega.
+                </p>
+              )}
+
+              <AttachmentGrid
+                title="Adjuntos de la entrega"
+                attachments={detail.adjuntos}
+              />
+            </div>
+          </section>
+
+          {vigenteFeedback && (
+            <section className="rounded-2xl border border-primary/15 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-border/60 pb-3">
+                <div>
+                  <p className="text-xs font-medium text-primary">Feedback vigente</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
+                    Última devolución
+                  </h2>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${vigenteFeedbackConfig?.className ?? ''}`}
+                  >
+                    {vigenteFeedbackConfig?.label}
+                  </span>
+                  {vigenteFeedback.nota != null ? (
+                    <span className="inline-flex rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                      Nota {vigenteFeedback.nota}
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
-              <FeedbackAttachmentList attachments={vigenteFeedback.adjuntos} />
-            </div>
-          </article>
-        </section>
-      )}
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <InlineMetaChip icon={CalendarClock}>
+                    {formatDateTime(vigenteFeedback.fechaCorreccionUtc)}
+                  </InlineMetaChip>
+                  <InlineMetaChip icon={Paperclip}>
+                    {vigenteFeedback.adjuntos?.length
+                      ? `${vigenteFeedback.adjuntos.length} adjunto${vigenteFeedback.adjuntos.length === 1 ? '' : 's'}`
+                      : 'Sin adjuntos'}
+                  </InlineMetaChip>
+                </div>
+
+                <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
+                  <div className="mb-2 flex items-center gap-2 text-primary/80">
+                    <MessageSquare className="size-4" />
+                    <span className="text-xs font-medium">Comentario</span>
+                  </div>
+
+                  <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">
+                    {vigenteFeedback.comentario?.trim()
+                      ? vigenteFeedback.comentario
+                      : 'Sin comentario.'}
+                  </p>
+                </div>
+
+                <FeedbackAttachmentList attachments={vigenteFeedback.adjuntos} />
+              </div>
+            </section>
+          )}
+        </div>
+
+        <aside className="space-y-4 xl:sticky xl:top-6">
+          <TeacherFeedbackForm
+            courseId={courseId}
+            taskId={taskId}
+            alumnoId={alumnoId}
+            onCreated={() => loadAll(false)}
+          />
+        </aside>
+      </div>
 
       <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="mb-5 space-y-1">

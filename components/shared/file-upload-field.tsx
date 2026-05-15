@@ -29,9 +29,11 @@ type Props = {
   onRemove?: () => void
   onRemoveAt?: (index: number) => void
   label?: string
+  helperText?: string
   maxSizeMb?: number
   multiple?: boolean
   deleteOnRemove?: boolean
+  compact?: boolean
 }
 
 const ACCEPTED_EXTENSIONS = [
@@ -121,9 +123,11 @@ export function FileUploadField({
   onRemove,
   onRemoveAt,
   label = 'Adjuntar archivo',
+  helperText,
   maxSizeMb = 20,
   multiple = false,
   deleteOnRemove = true,
+  compact = false,
 }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -245,11 +249,17 @@ export function FileUploadField({
     return (
       <div
         key={`${file.storageKey ?? file.url}-${index}`}
-        className="rounded-xl border border-border/60 bg-background/70 p-3 transition-colors duration-200 hover:border-border hover:bg-muted/20"
+        className={`rounded-xl border border-border/60 bg-background/70 transition-colors duration-200 hover:border-border hover:bg-muted/20 ${
+          compact ? 'p-2.5' : 'p-3'
+        }`}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div
+              className={`flex shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ${
+                compact ? 'size-8' : 'size-9'
+              }`}
+            >
               <FileIcon className="size-4.5" />
             </div>
 
@@ -301,7 +311,7 @@ export function FileUploadField({
   const hasManyValues = multiple && values.length > 0
 
   return (
-    <div className="space-y-3">
+    <div className={compact ? 'space-y-2.5' : 'space-y-3'}>
       <input
         ref={inputRef}
         type="file"
@@ -311,25 +321,43 @@ export function FileUploadField({
         onChange={(e) => void handleChange(e.target.files)}
       />
 
-      <div className="rounded-xl border border-dashed border-border/70 bg-background/60 p-3 transition-colors duration-200 hover:border-primary/25 hover:bg-primary/5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
+      <div
+        className={`rounded-xl border border-dashed border-border/70 bg-background/60 transition-colors duration-200 hover:border-primary/25 hover:bg-primary/5 ${
+          compact ? 'p-2.5' : 'p-3'
+        }`}
+      >
+        <div
+          className={
+            compact
+              ? 'flex flex-col gap-2'
+              : 'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'
+          }
+        >
+          <div className={compact ? 'space-y-0.5' : 'space-y-1'}>
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Paperclip className="size-4 text-primary" />
               {label}
             </div>
 
+            {compact && helperText ? (
+              <p className="text-xs leading-5 text-muted-foreground">
+                {helperText}
+              </p>
+            ) : (
             <p className="text-xs leading-5 text-muted-foreground">
               Permitidos: PDF, Word, Excel, PowerPoint, audio, imagen, video y ZIP/RAR.
               Máximo {maxSizeMb} MB.
               {multiple ? ' Podés seleccionar varios archivos.' : ''}
             </p>
+            )}
           </div>
 
           <Button
             type="button"
             variant="outline"
-            className="h-9 rounded-lg border-border/70 bg-background/70 px-3 transition-colors duration-200 hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
+            className={`rounded-lg border-border/70 bg-background/70 transition-colors duration-200 hover:border-primary/25 hover:bg-primary/5 hover:text-primary ${
+              compact ? 'h-8 w-fit px-2.5 text-xs' : 'h-9 px-3'
+            }`}
             onClick={handlePick}
             disabled={uploading}
           >
@@ -351,7 +379,7 @@ export function FileUploadField({
       {hasSingleValue && value ? renderFileRow(value, 0, true) : null}
 
       {hasManyValues ? (
-        <div className="space-y-3">
+        <div className={compact ? 'space-y-2' : 'space-y-3'}>
           {values.map((file, index) => renderFileRow(file, index, true))}
         </div>
       ) : null}
