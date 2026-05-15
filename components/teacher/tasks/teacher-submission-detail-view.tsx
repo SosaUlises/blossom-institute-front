@@ -48,6 +48,9 @@ function AttachmentGrid({
   title,
   attachments,
   muted = false,
+  emptyLabel,
+  showTitle = true,
+  subtleEmpty = false,
 }: {
   title: string
   attachments: Array<{
@@ -57,24 +60,38 @@ function AttachmentGrid({
     nombre?: string | null
   }>
   muted?: boolean
+  emptyLabel?: string
+  showTitle?: boolean
+  subtleEmpty?: boolean
 }) {
-  if (attachments.length === 0) return null
-
   return (
     <div className="space-y-3">
-      <div
-        className={`flex items-center gap-2 ${
-          muted ? 'text-muted-foreground/80' : 'text-muted-foreground'
-        }`}
-      >
-        <Paperclip className="size-4" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
-          {title}
-        </span>
-      </div>
+      {showTitle ? (
+        <div
+          className={`flex items-center gap-2 ${
+            muted ? 'text-muted-foreground/80' : 'text-muted-foreground'
+          }`}
+        >
+          <Paperclip className="size-4" />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
+            {title}
+          </span>
+        </div>
+      ) : null}
 
-      <div className="space-y-2">
-        {attachments.map((attachment) => (
+      {attachments.length === 0 ? (
+        <p
+          className={
+            subtleEmpty
+              ? 'text-sm text-muted-foreground'
+              : 'rounded-xl border border-dashed border-border/70 bg-muted/15 px-3 py-2.5 text-sm text-muted-foreground dark:bg-muted/10'
+          }
+        >
+          {emptyLabel ?? 'Sin adjuntos.'}
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {attachments.map((attachment) => (
           <a
             key={attachment.id}
             href={attachment.url}
@@ -111,8 +128,9 @@ function AttachmentGrid({
 
             <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
           </a>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -148,7 +166,7 @@ function FeedbackAttachmentList({
 
   return (
     <AttachmentGrid
-      title="Adjuntos del feedback"
+      title="Adjuntos de la devolución"
       attachments={attachments}
       muted={muted}
     />
@@ -170,7 +188,7 @@ function FeedbackCommentPreview({ comment }: { comment?: string | null }) {
       {isLong ? (
         <button
           type="button"
-          className="text-xs font-medium text-primary hover:text-primary/80"
+          className="text-xs font-medium text-primary transition-colors hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
           onClick={() => setExpanded((prev) => !prev)}
         >
           {expanded ? 'Ver menos' : 'Ver comentario completo'}
@@ -204,14 +222,14 @@ function FeedbackTimelineItem({
       <div
         className={`space-y-3 rounded-2xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ${
           current
-            ? 'border-primary/20 bg-primary/[0.045]'
-            : 'border-border/55 bg-background/55'
+            ? 'border-primary/20 bg-primary/[0.045] dark:bg-primary/[0.08]'
+            : 'border-border/55 bg-background/55 dark:bg-background/35'
         }`}
       >
         <div className="flex flex-wrap items-center gap-2">
           {current ? (
             <span className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-              Vigente
+              Última devolución
             </span>
           ) : null}
           <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${config.className}`}>
@@ -428,7 +446,16 @@ export function TeacherSubmissionDetailView({
       </header>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
-        <div className="min-w-0 space-y-5">
+        <aside className="order-1 space-y-4 xl:order-2 xl:sticky xl:top-6">
+          <TeacherFeedbackForm
+            courseId={courseId}
+            taskId={taskId}
+            alumnoId={alumnoId}
+            onCreated={() => loadAll(false)}
+          />
+        </aside>
+
+        <div className="order-2 min-w-0 space-y-5 xl:order-1">
           <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
             <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
               <FileText className="size-4 text-muted-foreground" />
@@ -438,20 +465,33 @@ export function TeacherSubmissionDetailView({
             </div>
 
             <div className="space-y-5">
-              {detail.texto?.trim() ? (
-                <p className="whitespace-pre-wrap text-base leading-8 text-foreground/85">
-                  {detail.texto}
-                </p>
-              ) : (
-                <p className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-3 text-sm leading-6 text-muted-foreground dark:bg-muted/10">
-                  El alumno no dejó texto en la entrega.
-                </p>
-              )}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Texto enviado</p>
+                <div className="rounded-xl border border-border/60 bg-background/65 p-4 dark:bg-background/35 sm:p-5">
+                  {detail.texto?.trim() ? (
+                    <p className="max-w-3xl whitespace-pre-wrap text-[15px] leading-7 text-foreground/90">
+                      {detail.texto}
+                    </p>
+                  ) : (
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      El alumno no escribió una respuesta.
+                    </p>
+                  )}
+                </div>
+              </div>
 
-              <AttachmentGrid
-                title="Adjuntos de la entrega"
-                attachments={detail.adjuntos}
-              />
+              <div className="space-y-2 border-t border-border/60 pt-4">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Archivos adjuntos
+                </p>
+                <AttachmentGrid
+                  title="Archivos adjuntos"
+                  attachments={detail.adjuntos}
+                  emptyLabel="No adjuntó archivos."
+                  showTitle={false}
+                  subtleEmpty
+                />
+              </div>
             </div>
           </section>
 
@@ -460,19 +500,19 @@ export function TeacherSubmissionDetailView({
               <History className="size-4 text-muted-foreground" />
               <div>
                 <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                  Historial de feedbacks
+                  Historial de devoluciones
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   {feedbacks?.items.length
                     ? `${feedbacks.items.length} devolución${feedbacks.items.length === 1 ? '' : 'es'}`
-                    : 'Sin devoluciones todavía'}
+                    : 'Sin feedback enviado'}
                 </p>
               </div>
             </div>
 
             {!feedbacks || feedbacks.items.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-6 text-sm text-muted-foreground dark:bg-muted/10">
-                Todavía no hay feedbacks cargados para esta entrega.
+                Todavía no enviaste una devolución para esta entrega.
               </div>
             ) : (
               <div className="relative space-y-3 before:absolute before:bottom-5 before:left-[7px] before:top-5 before:w-px before:bg-border/70">
@@ -487,14 +527,6 @@ export function TeacherSubmissionDetailView({
           </section>
         </div>
 
-        <aside className="space-y-4 xl:sticky xl:top-6">
-          <TeacherFeedbackForm
-            courseId={courseId}
-            taskId={taskId}
-            alumnoId={alumnoId}
-            onCreated={() => loadAll(false)}
-          />
-        </aside>
       </div>
 
     </div>

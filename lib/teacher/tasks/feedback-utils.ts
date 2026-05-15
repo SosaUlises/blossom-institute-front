@@ -16,9 +16,9 @@ export function getEstadoCorreccionConfig(estado?: number | null) {
       }
     default:
       return {
-        label: 'Sin feedback',
+        label: 'Sin corregir',
         className:
-          'border-border/60 bg-muted/40 text-muted-foreground',
+          'border-border/60 bg-background/70 text-foreground dark:bg-background/35',
       }
   }
 }

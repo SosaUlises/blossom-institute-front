@@ -41,7 +41,7 @@ function StatusOption({
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-10 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors ${
+      className={`flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-2.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 sm:px-3 sm:text-sm ${
         active
           ? activeClass
           : 'border-border/60 bg-background/70 text-muted-foreground hover:bg-muted/30 hover:text-foreground'
@@ -136,7 +136,7 @@ export function TeacherFeedbackForm({
   }
 
   return (
-    <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+    <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-5">
       <div className="space-y-4">
         <div>
           <p className="text-xs font-medium text-muted-foreground">Corrección</p>
@@ -150,7 +150,7 @@ export function TeacherFeedbackForm({
           <div className="grid grid-cols-2 gap-2">
             <StatusOption
               active={isAprobado}
-              title="Aprobar"
+              title="Aprobar entrega"
               icon={CheckCircle2}
               tone="success"
               onClick={() => setEstado(String(EstadoCorreccion.Aprobado))}

@@ -203,13 +203,13 @@ function SubmissionRow({
   return (
     <article className="min-w-0 rounded-xl border border-border/60 bg-background/60 px-3 py-3 transition-colors duration-200 hover:border-primary/20 hover:bg-card dark:bg-background/35 sm:px-4">
       <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.45fr)_minmax(0,0.65fr)_108px] xl:items-center">
-        <div className="min-w-0">
+        <div className="order-1 min-w-0 xl:order-none">
           <h3 className="truncate text-sm font-semibold text-foreground">
             {submission.alumnoNombre} {submission.alumnoApellido}
           </h3>
         </div>
 
-        <div className="min-w-0 space-y-1 xl:space-y-0">
+        <div className="order-3 min-w-0 space-y-1 xl:order-none xl:space-y-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground xl:hidden">
             Entrega
           </p>
@@ -220,14 +220,14 @@ function SubmissionRow({
           </span>
         </div>
 
-        <div className="min-w-0 space-y-1 text-sm text-muted-foreground xl:space-y-0">
+        <div className="order-4 min-w-0 space-y-1 text-sm text-muted-foreground xl:order-none xl:space-y-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] xl:hidden">
             Fecha
           </p>
           <p className="truncate">{formatDateTime(submission.fechaEntregaUtc)}</p>
         </div>
 
-        <div className="min-w-0 space-y-1 xl:space-y-0">
+        <div className="order-5 min-w-0 space-y-1 xl:order-none xl:space-y-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground xl:hidden">
             Corrección
           </p>
@@ -238,14 +238,14 @@ function SubmissionRow({
           </span>
         </div>
 
-        <div className="min-w-0 space-y-1 text-sm font-semibold text-foreground xl:space-y-0">
+        <div className="order-6 min-w-0 space-y-1 text-sm font-semibold text-foreground xl:order-none xl:space-y-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground xl:hidden">
             Nota
           </p>
           <p>{submission.feedbackVigente?.nota ?? '—'}</p>
         </div>
 
-        <div className="min-w-0 space-y-1 text-sm text-muted-foreground xl:space-y-0">
+        <div className="order-7 min-w-0 space-y-1 text-sm text-muted-foreground xl:order-none xl:space-y-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] xl:hidden">
             Adjuntos
           </p>
@@ -258,7 +258,7 @@ function SubmissionRow({
         <Button
           variant={hasFeedback ? 'outline' : 'default'}
           className={cn(
-            'h-9 w-full rounded-lg px-3 text-sm shadow-none xl:w-fit',
+            'order-2 h-9 w-full rounded-lg px-3 text-sm shadow-none xl:order-none xl:w-fit',
             hasFeedback
               ? 'border-border/70 bg-background/70 hover:border-primary/25 hover:bg-primary/5 hover:text-primary'
               : '',
@@ -777,7 +777,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
 
           {filteredSubmissions.length === 0 ? (
             <Card className="rounded-2xl border border-border/60 bg-background/50 shadow-none">
-              <CardContent className="px-6 py-14">
+              <CardContent className="px-5 py-8">
                 <Empty className="border-0 p-0">
                   <EmptyMedia variant="icon">
                     <MessageSquareText />
@@ -785,12 +785,12 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                   <EmptyHeader>
                     <EmptyTitle>
                       {submissions.length === 0
-                        ? 'No hay entregas'
+                        ? 'Sin entregas todavía'
                         : 'Sin resultados'}
                     </EmptyTitle>
                     <EmptyDescription>
                       {submissions.length === 0
-                        ? 'Todavía no se registraron entregas para esta tarea.'
+                        ? 'Cuando los alumnos entreguen, las vas a ver acá.'
                         : 'No hay entregas que coincidan con la búsqueda o el filtro.'}
                     </EmptyDescription>
                   </EmptyHeader>
