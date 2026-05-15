@@ -10,9 +10,9 @@ export function getEstadoCorreccionConfig(estado?: number | null) {
       }
     case EstadoCorreccion.Rehacer:
       return {
-        label: 'Rehacer',
+        label: 'Pedir cambios',
         className:
-          'border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400',
+          'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400',
       }
     default:
       return {

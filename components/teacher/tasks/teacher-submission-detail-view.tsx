@@ -8,7 +8,6 @@ import {
   FileText,
   Link as LinkIcon,
   Paperclip,
-  Star,
   MessageSquare,
   ChevronRight,
   Inbox,
@@ -43,69 +42,6 @@ type Props = {
   courseId: number
   taskId: number
   alumnoId: number
-}
-
-function DetailMetaCard({
-  icon: Icon,
-  label,
-  value,
-  tone = 'default',
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  tone?: 'default' | 'highlight' | 'success' | 'warning'
-}) {
-  const containerClass =
-    tone === 'highlight'
-      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-primary/[0.07] hover:shadow-md'
-      : tone === 'success'
-        ? 'rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.10] px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-emerald-500/[0.14] hover:shadow-md'
-        : tone === 'warning'
-          ? 'rounded-2xl border border-amber-500/20 bg-amber-500/[0.10] px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-amber-500/[0.14] hover:shadow-md'
-          : 'rounded-2xl border border-border/60 bg-background/75 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-background hover:shadow-md'
-
-  const iconWrapClass =
-    tone === 'highlight'
-      ? 'bg-primary/10 text-primary'
-      : tone === 'success'
-        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-        : tone === 'warning'
-          ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-          : 'bg-background text-muted-foreground'
-
-  const labelClass =
-    tone === 'highlight'
-      ? 'text-primary/80'
-      : tone === 'success'
-        ? 'text-emerald-700/80 dark:text-emerald-400/90'
-        : tone === 'warning'
-          ? 'text-amber-700/80 dark:text-amber-400/90'
-          : 'text-muted-foreground'
-
-  const valueClass =
-    tone === 'highlight'
-      ? 'text-primary'
-      : tone === 'success'
-        ? 'text-emerald-700 dark:text-emerald-400'
-        : tone === 'warning'
-          ? 'text-amber-700 dark:text-amber-400'
-          : 'text-foreground'
-
-  return (
-    <div className={containerClass}>
-      <div className="flex items-center gap-2">
-        <div className={`flex size-9 items-center justify-center rounded-2xl ${iconWrapClass}`}>
-          <Icon className="size-4" />
-        </div>
-        <span className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${labelClass}`}>
-          {label}
-        </span>
-      </div>
-
-      <p className={`mt-3 text-sm font-semibold leading-6 ${valueClass}`}>{value}</p>
-    </div>
-  )
 }
 
 function AttachmentGrid({
@@ -219,73 +155,95 @@ function FeedbackAttachmentList({
   )
 }
 
-function FeedbackHistoryItem({
-  item,
-}: {
-  item: NonNullable<TeacherSubmissionFeedbacksResponse['items']>[number]
-}) {
-  const config = getEstadoCorreccionConfig(item.estado)
-  const itemTone =
-    config.label?.toLowerCase().includes('aprob') ? 'success' : 'warning'
+function FeedbackCommentPreview({ comment }: { comment?: string | null }) {
+  const [expanded, setExpanded] = useState(false)
+  const trimmedComment = comment?.trim() ?? ''
+  const isLong = trimmedComment.length > 180
+  const visibleComment =
+    !expanded && isLong ? `${trimmedComment.slice(0, 180).trim()}...` : trimmedComment
 
   return (
-    <article className="rounded-2xl border border-border/50 bg-muted/30 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:bg-muted/40 hover:shadow-md">
-      <div className="space-y-4">
+    <div className="space-y-2">
+      <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
+        {visibleComment || 'Sin comentario.'}
+      </p>
+      {isLong ? (
+        <button
+          type="button"
+          className="text-xs font-medium text-primary hover:text-primary/80"
+          onClick={() => setExpanded((prev) => !prev)}
+        >
+          {expanded ? 'Ver menos' : 'Ver comentario completo'}
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
+function FeedbackTimelineItem({
+  item,
+  current = false,
+}: {
+  item: NonNullable<TeacherSubmissionFeedbacksResponse['items']>[number]
+  current?: boolean
+}) {
+  const config = getEstadoCorreccionConfig(item.estado)
+
+  return (
+    <article className="relative pl-6">
+      <span
+        className={`absolute left-0 top-5 flex size-4 items-center justify-center rounded-full border ${
+          current
+            ? 'border-primary/30 bg-primary/15'
+            : 'border-border bg-background'
+        }`}
+      >
+        <span className={`size-1.5 rounded-full ${current ? 'bg-primary' : 'bg-muted-foreground/60'}`} />
+      </span>
+
+      <div
+        className={`space-y-3 rounded-2xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ${
+          current
+            ? 'border-primary/20 bg-primary/[0.045]'
+            : 'border-border/55 bg-background/55'
+        }`}
+      >
         <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${config.className}`}
-          >
+          {current ? (
+            <span className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+              Vigente
+            </span>
+          ) : null}
+          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${config.className}`}>
             {config.label}
           </span>
-
-          {item.nota != null && (
-            <span className="inline-flex rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground">
-              Nota: {item.nota}
+          {item.nota != null ? (
+            <span className="inline-flex rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              Nota {item.nota}
             </span>
-          )}
-
-          <span className="inline-flex rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground">
-            Historial
-          </span>
+          ) : null}
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <DetailMetaCard
-            icon={CalendarClock}
-            label="Corrección"
-            value={formatDateTime(item.fechaCorreccionUtc)}
-          />
-          <DetailMetaCard
-            icon={Star}
-            label="Estado"
-            value={config.label}
-            tone={itemTone}
-          />
-          <DetailMetaCard
-            icon={Paperclip}
-            label="Adjuntos"
-            value={
-              item.adjuntos?.length
-                ? `${item.adjuntos.length} adjunto${item.adjuntos.length === 1 ? '' : 's'}`
-                : 'Sin adjuntos'
-            }
-          />
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <InlineMetaChip icon={CalendarClock}>
+            {formatDateTime(item.fechaCorreccionUtc)}
+          </InlineMetaChip>
+          <InlineMetaChip icon={Paperclip}>
+            {item.adjuntos?.length
+              ? `${item.adjuntos.length} adjunto${item.adjuntos.length === 1 ? '' : 's'}`
+              : 'Sin adjuntos'}
+          </InlineMetaChip>
         </div>
 
-        <div className="rounded-2xl border border-border/50 bg-background/70 p-4">
-          <div className="mb-3 flex items-center gap-2 text-muted-foreground">
+        <div className="rounded-xl border border-border/50 bg-background/70 p-3">
+          <div className="mb-2 flex items-center gap-2 text-muted-foreground">
             <MessageSquare className="size-4" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
-              Comentario
-            </span>
+            <span className="text-xs font-medium">Comentario</span>
           </div>
-
-          <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">
-            {item.comentario?.trim() ? item.comentario : 'Sin comentario.'}
-          </p>
+          <FeedbackCommentPreview comment={item.comentario} />
         </div>
 
-        <FeedbackAttachmentList attachments={item.adjuntos} muted />
+        <FeedbackAttachmentList attachments={item.adjuntos} muted={!current} />
       </div>
     </article>
   )
@@ -422,10 +380,6 @@ export function TeacherSubmissionDetailView({
 
   const entregaEstado = getEstadoEntregaConfig(detail.estadoEntrega)
   const feedbackEstado = getEstadoCorreccionConfig(detail.feedbackVigente?.estado)
-  const vigenteFeedbackConfig = vigenteFeedback
-    ? getEstadoCorreccionConfig(vigenteFeedback.estado)
-    : null
-
   return (
     <div className="space-y-5">
       <header className="space-y-4 border-b border-border/60 pb-4">
@@ -501,59 +455,36 @@ export function TeacherSubmissionDetailView({
             </div>
           </section>
 
-          {vigenteFeedback && (
-            <section className="rounded-2xl border border-primary/15 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
-              <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-border/60 pb-3">
-                <div>
-                  <p className="text-xs font-medium text-primary">Feedback vigente</p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-                    Última devolución
-                  </h2>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${vigenteFeedbackConfig?.className ?? ''}`}
-                  >
-                    {vigenteFeedbackConfig?.label}
-                  </span>
-                  {vigenteFeedback.nota != null ? (
-                    <span className="inline-flex rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                      Nota {vigenteFeedback.nota}
-                    </span>
-                  ) : null}
-                </div>
+          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+            <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
+              <History className="size-4 text-muted-foreground" />
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                  Historial de feedbacks
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {feedbacks?.items.length
+                    ? `${feedbacks.items.length} devolución${feedbacks.items.length === 1 ? '' : 'es'}`
+                    : 'Sin devoluciones todavía'}
+                </p>
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  <InlineMetaChip icon={CalendarClock}>
-                    {formatDateTime(vigenteFeedback.fechaCorreccionUtc)}
-                  </InlineMetaChip>
-                  <InlineMetaChip icon={Paperclip}>
-                    {vigenteFeedback.adjuntos?.length
-                      ? `${vigenteFeedback.adjuntos.length} adjunto${vigenteFeedback.adjuntos.length === 1 ? '' : 's'}`
-                      : 'Sin adjuntos'}
-                  </InlineMetaChip>
-                </div>
-
-                <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-primary/80">
-                    <MessageSquare className="size-4" />
-                    <span className="text-xs font-medium">Comentario</span>
-                  </div>
-
-                  <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">
-                    {vigenteFeedback.comentario?.trim()
-                      ? vigenteFeedback.comentario
-                      : 'Sin comentario.'}
-                  </p>
-                </div>
-
-                <FeedbackAttachmentList attachments={vigenteFeedback.adjuntos} />
+            {!feedbacks || feedbacks.items.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-6 text-sm text-muted-foreground dark:bg-muted/10">
+                Todavía no hay feedbacks cargados para esta entrega.
               </div>
-            </section>
-          )}
+            ) : (
+              <div className="relative space-y-3 before:absolute before:bottom-5 before:left-[7px] before:top-5 before:w-px before:bg-border/70">
+                {vigenteFeedback ? (
+                  <FeedbackTimelineItem item={vigenteFeedback} current />
+                ) : null}
+                {previousFeedbacks.map((item) => (
+                  <FeedbackTimelineItem key={item.feedbackId} item={item} />
+                ))}
+              </div>
+            )}
+          </section>
         </div>
 
         <aside className="space-y-4 xl:sticky xl:top-6">
@@ -566,44 +497,6 @@ export function TeacherSubmissionDetailView({
         </aside>
       </div>
 
-      <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-        <div className="mb-5 space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Historial
-          </p>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            Historial de feedbacks
-          </h2>
-        </div>
-
-        {!feedbacks || feedbacks.items.length === 0 ? (
-          <Card className="rounded-2xl border border-border/60 bg-background/50 shadow-none">
-            <CardContent className="px-6 py-14">
-              <Empty className="border-0 p-0">
-                <EmptyMedia variant="icon">
-                  <History />
-                </EmptyMedia>
-                <EmptyHeader>
-                  <EmptyTitle>Sin feedbacks</EmptyTitle>
-                  <EmptyDescription>
-                    Todavía no hay feedbacks cargados para esta entrega.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            </CardContent>
-          </Card>
-        ) : previousFeedbacks.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-6 py-10 text-center text-sm text-muted-foreground">
-            No hay feedbacks anteriores para mostrar.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {previousFeedbacks.map((item) => (
-              <FeedbackHistoryItem key={item.feedbackId} item={item} />
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   )
 }
