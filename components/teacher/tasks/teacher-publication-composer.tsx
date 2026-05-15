@@ -1,0 +1,465 @@
+'use client'
+
+import {
+  ArrowLeft,
+  CalendarClock,
+  Link as LinkIcon,
+  Megaphone,
+  Paperclip,
+  Plus,
+  Trash2,
+} from 'lucide-react'
+
+import { FileUploadField } from '@/components/shared/file-upload-field'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  EstadoTarea,
+  type TeacherTaskUpdateResourceInput,
+} from '@/lib/teacher/tasks/types'
+import type { UploadedFileResult } from '@/lib/uploads/api'
+import { cn } from '@/lib/utils'
+
+export type ResourceDraft = {
+  id: string
+  tipo: string
+  url: string
+  nombre: string
+  storageProvider?: number | null
+  storageKey?: string | null
+  contentType?: string | null
+  sizeBytes?: number | null
+}
+
+export function createEmptyResource(): ResourceDraft {
+  return {
+    id: crypto.randomUUID(),
+    tipo: '1',
+    url: '',
+    nombre: '',
+    storageProvider: null,
+    storageKey: null,
+    contentType: null,
+    sizeBytes: null,
+  }
+}
+
+export function toTaskResourcesPayload(
+  resources: ResourceDraft[],
+): TeacherTaskUpdateResourceInput[] {
+  return resources
+    .map(
+      (resource): TeacherTaskUpdateResourceInput => ({
+        tipo: Number(resource.tipo),
+        url: resource.url.trim() || null,
+        nombre: resource.nombre.trim() || null,
+        storageProvider: resource.storageProvider ?? null,
+        storageKey: resource.storageKey?.trim() || null,
+        contentType: resource.contentType?.trim() || null,
+        sizeBytes: resource.sizeBytes ?? null,
+      }),
+    )
+    .filter((resource) => resource.url || resource.nombre)
+}
+
+type Props = {
+  mode: 'create' | 'edit'
+  titulo: string
+  consigna: string
+  fechaEntregaUtc: string
+  estado: string
+  recursos: ResourceDraft[]
+  saving: boolean
+  error: string | null
+  success: string | null
+  onBack: () => void
+  onTituloChange: (value: string) => void
+  onConsignaChange: (value: string) => void
+  onFechaEntregaChange: (value: string) => void
+  onEstadoChange: (value: string) => void
+  onAddResource: () => void
+  onRemoveResource: (id: string) => void
+  onChangeResource: (
+    id: string,
+    field: keyof Omit<ResourceDraft, 'id'>,
+    value: string | number | null,
+  ) => void
+  onUploadedFile: (id: string, file: UploadedFileResult) => void
+  onRemoveUploadedFile: (id: string) => void
+  onSave: () => void
+  onSaveDraft?: () => void
+  onPublish?: () => void
+}
+
+const fieldClassName =
+  'h-10 w-full rounded-xl border border-border/60 bg-background/75 px-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15'
+
+function EstadoBadge({ estado }: { estado: string }) {
+  const config =
+    estado === String(EstadoTarea.Borrador)
+      ? 'border-slate-400/20 bg-slate-500/10 text-slate-600 dark:text-slate-300'
+      : estado === String(EstadoTarea.Publicada)
+        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+        : 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+
+  const label =
+    estado === String(EstadoTarea.Borrador)
+      ? 'Borrador'
+      : estado === String(EstadoTarea.Publicada)
+        ? 'Publicada'
+        : 'Archivada'
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium',
+        config,
+      )}
+    >
+      {label}
+    </span>
+  )
+}
+
+function ResourceTypeBadge({ tipo }: { tipo: string }) {
+  const isLink = tipo === '1'
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
+        isLink
+          ? 'border-primary/15 bg-primary/5 text-primary'
+          : 'border-amber-500/15 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+      )}
+    >
+      {isLink ? <LinkIcon className="size-3.5" /> : <Paperclip className="size-3.5" />}
+      {isLink ? 'Link' : 'Archivo'}
+    </span>
+  )
+}
+
+export function TeacherPublicationComposer({
+  mode,
+  titulo,
+  consigna,
+  fechaEntregaUtc,
+  estado,
+  recursos,
+  saving,
+  error,
+  success,
+  onBack,
+  onTituloChange,
+  onConsignaChange,
+  onFechaEntregaChange,
+  onEstadoChange,
+  onAddResource,
+  onRemoveResource,
+  onChangeResource,
+  onUploadedFile,
+  onRemoveUploadedFile,
+  onSave,
+  onSaveDraft,
+  onPublish,
+}: Props) {
+  const isTask = Boolean(fechaEntregaUtc)
+
+  return (
+    <div className="space-y-4 pb-24 lg:pb-4">
+      <header className="flex flex-col gap-3 border-b border-border/60 pb-4">
+        <Button
+          variant="ghost"
+          className="h-9 w-fit justify-start rounded-lg px-2 text-muted-foreground hover:text-foreground"
+          onClick={onBack}
+        >
+          <ArrowLeft className="mr-2 size-4" />
+          {mode === 'create' ? 'Volver al curso' : 'Volver a la publicación'}
+        </Button>
+
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              {isTask ? (
+                <CalendarClock className="size-3.5" />
+              ) : (
+                <Megaphone className="size-3.5" />
+              )}
+              {isTask ? 'Tarea' : 'Anuncio'}
+            </span>
+            <EstadoBadge estado={estado} />
+          </div>
+
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              {mode === 'create' ? 'Crear publicación' : 'Editar publicación'}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {isTask
+                ? 'Con fecha de entrega: admite entregas del alumnado.'
+                : 'Sin fecha de entrega: se publicará como anuncio.'}
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="space-y-4">
+          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Título</label>
+                <input
+                  value={titulo}
+                  onChange={(event) => onTituloChange(event.target.value)}
+                  className={fieldClassName}
+                  placeholder="Título de la publicación"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Consigna o anuncio
+                </label>
+                <textarea
+                  value={consigna}
+                  onChange={(event) => onConsignaChange(event.target.value)}
+                  rows={8}
+                  className="min-h-44 w-full rounded-xl border border-border/60 bg-background/75 px-3 py-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15"
+                  placeholder="Escribí la consigna de la tarea o el contenido del anuncio..."
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold tracking-tight text-foreground">
+                  Recursos
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Links y archivos visibles junto a la publicación.
+                </p>
+              </div>
+
+              <Button
+                variant="outline"
+                className="h-9 rounded-lg border-border/70 bg-background/70 px-3 hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
+                onClick={onAddResource}
+              >
+                <Plus className="mr-2 size-4" />
+                Agregar recurso
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {recursos.map((resource) => (
+                <article
+                  key={resource.id}
+                  className="rounded-xl border border-border/60 bg-background/65 p-3"
+                >
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <ResourceTypeBadge tipo={resource.tipo} />
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 rounded-lg text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
+                      onClick={() => onRemoveResource(resource.id)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-[140px_minmax(0,1fr)]">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+                      <Select
+                        value={resource.tipo}
+                        onValueChange={(value) =>
+                          onChangeResource(resource.id, 'tipo', value)
+                        }
+                      >
+                        <SelectTrigger className="h-10 rounded-xl border-border/60 bg-background/75">
+                          <SelectValue placeholder="Seleccionar tipo" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-border/60">
+                          <SelectItem value="1">Link</SelectItem>
+                          <SelectItem value="2">Archivo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Nombre visible
+                      </label>
+                      <input
+                        value={resource.nombre}
+                        onChange={(event) =>
+                          onChangeResource(resource.id, 'nombre', event.target.value)
+                        }
+                        className={fieldClassName}
+                        placeholder="Nombre visible del recurso"
+                      />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {resource.tipo === '1' ? 'URL' : 'Archivo'}
+                      </label>
+
+                      {resource.tipo === '1' ? (
+                        <div className="relative">
+                          <LinkIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                          <input
+                            value={resource.url}
+                            onChange={(event) =>
+                              onChangeResource(resource.id, 'url', event.target.value)
+                            }
+                            className={cn(fieldClassName, 'pl-10')}
+                            placeholder="https://..."
+                          />
+                        </div>
+                      ) : (
+                        <FileUploadField
+                          folder="tasks"
+                          value={
+                            resource.url
+                              ? {
+                                  url: resource.url,
+                                  nombre: resource.nombre || 'Archivo',
+                                  storageProvider: resource.storageProvider ?? null,
+                                  storageKey: resource.storageKey ?? null,
+                                  contentType: resource.contentType ?? null,
+                                  sizeBytes: resource.sizeBytes ?? null,
+                                }
+                              : null
+                          }
+                          onUploaded={(file) => onUploadedFile(resource.id, file)}
+                          onRemove={() => onRemoveUploadedFile(resource.id)}
+                          label="Adjuntar archivo"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <aside className="space-y-4">
+          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-foreground">Publicación</h2>
+                <EstadoBadge estado={estado} />
+              </div>
+
+              <Select value={estado} onValueChange={onEstadoChange}>
+                <SelectTrigger className="h-10 rounded-xl border-border/60 bg-background/75">
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border/60">
+                  <SelectItem value={String(EstadoTarea.Borrador)}>Borrador</SelectItem>
+                  <SelectItem value={String(EstadoTarea.Publicada)}>Publicada</SelectItem>
+                  <SelectItem value={String(EstadoTarea.Archivada)}>Archivada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+            <div className="space-y-3">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">Fecha de entrega</h2>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Definí una fecha para convertir esta publicación en tarea.
+                </p>
+              </div>
+
+              <div className="relative">
+                <CalendarClock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="datetime-local"
+                  value={fechaEntregaUtc}
+                  onChange={(event) => onFechaEntregaChange(event.target.value)}
+                  className={cn(fieldClassName, 'pl-10')}
+                />
+              </div>
+
+              <div
+                className={cn(
+                  'rounded-xl border px-3 py-2 text-xs leading-5',
+                  isTask
+                    ? 'border-primary/15 bg-primary/5 text-foreground/80'
+                    : 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+                )}
+              >
+                {isTask
+                  ? 'Tarea: admite entregas y seguimiento.'
+                  : 'Anuncio: no admite entregas.'}
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      {(error || success) && (
+        <div className="space-y-3">
+          {error ? (
+            <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-600 dark:text-rose-300">
+              {error}
+            </div>
+          ) : null}
+
+          {success ? (
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-300">
+              {success}
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      <div className="sticky bottom-3 z-20 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+          {mode === 'create' ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={onSaveDraft}
+                disabled={saving}
+                className="h-10 rounded-xl border-border/70 bg-background/75 px-4"
+              >
+                {saving ? 'Guardando...' : 'Guardar borrador'}
+              </Button>
+              <Button
+                onClick={onPublish}
+                disabled={saving}
+                className="h-10 rounded-xl px-4 shadow-none"
+              >
+                {saving ? 'Guardando...' : 'Publicar'}
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={onSave}
+              disabled={saving}
+              className="h-10 rounded-xl px-4 shadow-none"
+            >
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

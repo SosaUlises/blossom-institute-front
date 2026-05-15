@@ -1,21 +1,21 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  CalendarClock,
-  Clock3,
-  ClipboardList,
-  Eye,
-  Pencil,
   Archive,
-  Search,
-  Plus,
-  Megaphone,
+  CalendarClock,
+  ClipboardList,
+  Clock3,
+  Eye,
   Inbox,
+  Megaphone,
+  Pencil,
+  Plus,
+  Search,
 } from 'lucide-react'
 
-import { RowActions } from '@/components/ui/row-actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -35,12 +35,13 @@ import {
 } from '@/components/ui/empty'
 import { formatDateTime } from '@/lib/teacher/course-detail/formatters'
 import type {
-  TeacherTaskListResponse,
   TeacherTaskListItem,
+  TeacherTaskListResponse,
 } from '@/lib/teacher/tasks/types'
 import { EstadoTarea } from '@/lib/teacher/tasks/types'
 import { getEstadoTareaConfig } from '@/lib/teacher/tasks/utils'
 import { archiveTeacherTask } from '@/lib/teacher/tasks/task-api'
+import { cn } from '@/lib/utils'
 
 type Envelope<T> = {
   message?: string
@@ -49,70 +50,170 @@ type Envelope<T> = {
 
 const SELECT_ALL = 'all'
 
-function TaskMetaItem({
-  icon: Icon,
-  label,
-  value,
-  tone = 'default',
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  tone?: 'default' | 'highlight'
-}) {
-  const containerClass =
-    tone === 'highlight'
-      ? 'rounded-md border border-primary/15 bg-primary/[0.04] px-2.5 py-1.5'
-      : 'rounded-md border border-border/60 bg-background/60 px-2.5 py-1.5'
-
-  const iconWrapClass =
-    tone === 'highlight'
-      ? 'bg-primary/10 text-primary'
-      : 'bg-background text-muted-foreground'
-
-  const labelClass = tone === 'highlight' ? 'text-primary/80' : 'text-muted-foreground'
-  const valueClass = tone === 'highlight' ? 'text-primary' : 'text-foreground'
-
+function FeedSkeleton() {
   return (
-    <div className={containerClass}>
-      <div className="flex items-center gap-2">
-        <div
-          className={`flex size-6 items-center justify-center rounded-md ${iconWrapClass}`}
-        >
-          <Icon className="size-4" />
+    <article className="rounded-xl border border-border/70 bg-card/95 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-4">
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-2">
+          <div className="size-9 animate-pulse rounded-lg bg-muted/40" />
+          <div className="h-5 w-16 animate-pulse rounded-full bg-muted/35" />
+          <div className="h-5 w-20 animate-pulse rounded-full bg-muted/35" />
         </div>
-        <span
-          className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${labelClass}`}
-        >
-          {label}
-        </span>
+        <div className="space-y-2">
+          <div className="h-6 w-2/3 animate-pulse rounded-lg bg-muted/40" />
+          <div className="h-4 w-4/5 animate-pulse rounded-lg bg-muted/30" />
+          <div className="flex gap-2">
+            <div className="h-5 w-28 animate-pulse rounded-full bg-muted/30" />
+            <div className="h-5 w-32 animate-pulse rounded-full bg-muted/30" />
+          </div>
+          <div className="flex gap-2 border-t border-border/50 pt-2.5">
+            <div className="h-8 w-24 animate-pulse rounded-lg bg-muted/30" />
+            <div className="h-8 w-20 animate-pulse rounded-lg bg-muted/30" />
+          </div>
+        </div>
       </div>
-
-      <p className={`mt-1.5 text-xs font-semibold ${valueClass}`}>{value}</p>
-    </div>
+    </article>
   )
 }
 
-function TaskCardSkeleton() {
+function MetaBadge({
+  icon: Icon,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  children: React.ReactNode
+}) {
   return (
-    <article className="rounded-xl border border-border/70 bg-card/95 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-4">
-      <div className="space-y-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex gap-2">
-            <div className="h-7 w-20 animate-pulse rounded-full bg-muted/40" />
-            <div className="h-7 w-24 animate-pulse rounded-full bg-muted/35" />
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground dark:bg-background/30">
+      <Icon className="size-3" />
+      {children}
+    </span>
+  )
+}
+
+function getPreview(task: TeacherTaskListItem) {
+  if (task.esAnuncio) {
+    return 'Comunicacion publicada para el curso.'
+  }
+
+  return task.fechaEntregaUtc
+    ? 'Actividad con fecha de entrega definida.'
+    : 'Actividad sin fecha de entrega definida.'
+}
+
+function FeedPost({
+  task,
+  courseId,
+  onArchive,
+}: {
+  task: TeacherTaskListItem
+  courseId: number
+  onArchive: (taskId: number) => void
+}) {
+  const estadoConfig = getEstadoTareaConfig(task.estado)
+  const Icon = task.esAnuncio ? Megaphone : ClipboardList
+
+  return (
+    <article
+      className={cn(
+        'group relative overflow-hidden rounded-xl border bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 hover:bg-card dark:bg-card/90',
+        task.esAnuncio
+          ? 'border-violet-200/70 hover:border-violet-300/70 dark:border-violet-500/15 dark:hover:border-violet-500/25'
+          : 'border-border/70 hover:border-primary/20',
+      )}
+    >
+      {!task.esAnuncio ? (
+        <div className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-primary/70" />
+      ) : null}
+
+      <div className={cn('p-3.5 sm:p-4', !task.esAnuncio && 'pl-5 sm:pl-6')}>
+        <div className="flex items-center gap-2">
+          <div
+            className={cn(
+              'flex size-9 shrink-0 items-center justify-center rounded-lg border',
+              task.esAnuncio
+                ? 'border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300'
+                : 'border-primary/15 bg-primary/10 text-primary',
+            )}
+          >
+            <Icon className="size-4" />
           </div>
-          <div className="h-8 w-8 animate-pulse rounded-xl bg-muted/35" />
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span
+              className={cn(
+                'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+                task.esAnuncio
+                  ? 'border-violet-200/70 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300'
+                  : 'border-primary/15 bg-primary/5 text-primary',
+              )}
+            >
+              {task.esAnuncio ? 'Anuncio' : 'Tarea'}
+            </span>
+            <span
+              className={cn(
+                'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+                estadoConfig.className,
+              )}
+            >
+              {estadoConfig.label}
+            </span>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="h-6 w-2/3 animate-pulse rounded-xl bg-muted/40" />
-          <div className="h-4 w-3/4 animate-pulse rounded-lg bg-muted/30" />
+        <h3 className="mt-2 line-clamp-2 text-base font-semibold leading-6 tracking-tight text-foreground sm:text-lg">
+          {task.titulo}
+        </h3>
+
+        <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
+          {getPreview(task)}
+        </p>
+
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          {!task.esAnuncio ? (
+            <MetaBadge icon={CalendarClock}>
+              {task.fechaEntregaUtc
+                ? `Entrega ${formatDateTime(task.fechaEntregaUtc)}`
+                : 'Sin entrega definida'}
+            </MetaBadge>
+          ) : null}
+          <MetaBadge icon={Clock3}>
+            Publicada {formatDateTime(task.createdAtUtc)}
+          </MetaBadge>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="h-12 animate-pulse rounded-lg bg-muted/30" />
-          <div className="h-12 animate-pulse rounded-lg bg-muted/30" />
+        <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border/55 pt-2.5">
+          <Button
+            asChild
+            variant="ghost"
+            className="h-8 rounded-lg px-2.5 text-xs font-semibold text-foreground hover:bg-primary/5 hover:text-primary"
+          >
+            <Link href={`/teacher/courses/${courseId}/tasks/${task.id}`}>
+              <Eye className="mr-1.5 size-3.5" />
+              Ver detalles
+            </Link>
+          </Button>
+
+          <Button
+            asChild
+            variant="ghost"
+            className="h-8 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+          >
+            <Link href={`/teacher/courses/${courseId}/tasks/${task.id}/edit`}>
+              <Pencil className="mr-1.5 size-3.5" />
+              Editar
+            </Link>
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onArchive(task.id)}
+            className="h-8 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400"
+          >
+            <Archive className="mr-1.5 size-3.5" />
+            Archivar
+          </Button>
         </div>
       </div>
     </article>
@@ -121,11 +222,9 @@ function TaskCardSkeleton() {
 
 export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   const router = useRouter()
-
   const [data, setData] = useState<TeacherTaskListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [estado, setEstado] = useState(SELECT_ALL)
@@ -161,13 +260,13 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
         const result = (await response.json()) as Envelope<TeacherTaskListResponse>
 
         if (!response.ok) {
-          throw new Error(result.message || 'No se pudieron obtener las tareas.')
+          throw new Error(result.message || 'No se pudieron obtener las publicaciones.')
         }
 
         setData(result.data?.items ?? [])
         setTotal(result.data?.total ?? 0)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ocurrió un error.')
+        setError(err instanceof Error ? err.message : 'Ocurrio un error.')
       } finally {
         setLoading(false)
       }
@@ -177,7 +276,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   }, [courseId, debouncedSearch, estado, pageNumber])
 
   const handleArchive = async (taskId: number) => {
-    const confirmed = window.confirm('¿Querés archivar esta publicación?')
+    const confirmed = window.confirm('Queres archivar esta publicacion?')
     if (!confirmed) return
 
     try {
@@ -190,7 +289,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
         ),
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ocurrió un error.')
+      setError(err instanceof Error ? err.message : 'Ocurrio un error.')
     }
   }
 
@@ -199,19 +298,18 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
   const pageLabel = useMemo(() => {
     if (total === 0) return 'Sin publicaciones'
-    return `Página ${pageNumber} de ${totalPages} · ${total} publicaciones`
+    return `Pagina ${pageNumber} de ${totalPages} - ${total} publicaciones`
   }, [pageNumber, totalPages, total])
 
   return (
-    <div className="space-y-3">
- 
-      <div className="rounded-xl border border-border/70 bg-card/85 p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-        <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:justify-between">
-          <div className="grid gap-2.5 md:grid-cols-2">
+    <div className="space-y-4">
+      <section className="rounded-xl border border-border/70 bg-card/85 p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+        <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
+          <div className="grid gap-2.5 md:grid-cols-[minmax(260px,1fr)_180px]">
             <div className="relative min-w-[260px]">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar publicación..."
+                placeholder="Buscar en el tablon..."
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
@@ -240,31 +338,30 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
             </Select>
           </div>
 
-           <Button
+          <Button
             onClick={() => router.push(`/teacher/courses/${courseId}/tasks/create`)}
-            variant="outline"
-            className="h-10 rounded-lg border-primary/15 bg-primary/[0.04] px-3 text-primary shadow-none transition-colors duration-200 hover:border-primary/25 hover:bg-primary/[0.07] hover:text-primary"
+            className="h-10 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
           >
             <Plus className="mr-2 size-4" />
             Crear publicación
           </Button>
         </div>
-      </div>
+      </section>
 
-      {error && (
+      {error ? (
         <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
-      )}
+      ) : null}
 
       {loading ? (
-        <div className="space-y-2.5">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <TaskCardSkeleton key={i} />
+        <div className="mx-auto max-w-[900px] space-y-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <FeedSkeleton key={index} />
           ))}
         </div>
       ) : data.length === 0 ? (
-        <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+        <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
           <CardContent className="px-6 py-14">
             <Empty className="border-0 p-0">
               <EmptyMedia variant="icon">
@@ -277,111 +374,22 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
                 <EmptyDescription>
                   {hasActiveFilters
                     ? 'No se encontraron publicaciones con esos filtros.'
-                    : 'Todavía no hay tareas ni anuncios en este curso.'}
+                    : 'Todavia no hay tareas ni anuncios en este curso.'}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {data.map((task) => {
-            const estadoConfig = getEstadoTareaConfig(task.estado)
-
-            return (
-              <article
-                key={task.id}
-                className="rounded-xl border border-border/70 bg-card/95 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 hover:border-primary/20 hover:bg-card dark:bg-card/90 sm:p-4"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <div
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-                          task.esAnuncio
-                            ? 'border-amber-500/15 bg-amber-500/10 text-amber-700 dark:text-amber-400'
-                            : 'border-primary/15 bg-primary/5 text-primary'
-                        }`}
-                      >
-                        {task.esAnuncio ? (
-                          <Megaphone className="size-3" />
-                        ) : (
-                          <ClipboardList className="size-3" />
-                        )}
-                        {task.esAnuncio ? 'Anuncio' : 'Tarea'}
-                      </div>
-
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${estadoConfig.className}`}
-                      >
-                        {estadoConfig.label}
-                      </span>
-                    </div>
-
-                    <div className="pl-2">
-                      <RowActions
-                        actions={[
-                          {
-                            label: 'Ver detalle',
-                            icon: Eye,
-                            onClick: () =>
-                              router.push(`/teacher/courses/${courseId}/tasks/${task.id}`),
-                          },
-                          {
-                            label: 'Editar',
-                            icon: Pencil,
-                            onClick: () =>
-                              router.push(`/teacher/courses/${courseId}/tasks/${task.id}/edit`),
-                          },
-                          {
-                            label: 'Archivar',
-                            icon: Archive,
-                            destructive: true,
-                            onClick: () => handleArchive(task.id),
-                          },
-                        ]}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
-                    <div className="min-w-0 space-y-1">
-                      <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                        {task.titulo}
-                      </h3>
-
-                      <p className="max-w-2xl text-sm leading-5 text-muted-foreground">
-                        {task.esAnuncio
-                          ? 'Publicación informativa para el curso. No admite entregas ni feedback.'
-                          : 'Gestioná entregas, edición y estado de la actividad.'}
-                      </p>
-                    </div>
-
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <TaskMetaItem
-                        icon={task.esAnuncio ? Megaphone : CalendarClock}
-                        label={task.esAnuncio ? 'Tipo' : 'Entrega'}
-                        value={
-                          task.esAnuncio
-                            ? 'Anuncio'
-                            : task.fechaEntregaUtc
-                              ? formatDateTime(task.fechaEntregaUtc)
-                              : 'Sin fecha definida'
-                        }
-                        tone="highlight"
-                      />
-
-                      <TaskMetaItem
-                        icon={Clock3}
-                        label="Publicación"
-                        value={formatDateTime(task.createdAtUtc)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </article>
-            )
-          })}
+        <div className="mx-auto max-w-[900px] space-y-3">
+          {data.map((task) => (
+            <FeedPost
+              key={task.id}
+              task={task}
+              courseId={courseId}
+              onArchive={handleArchive}
+            />
+          ))}
         </div>
       )}
 

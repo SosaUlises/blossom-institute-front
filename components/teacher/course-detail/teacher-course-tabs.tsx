@@ -18,7 +18,7 @@ type Props = {
   course: TeacherCourseDetail
 }
 
-type Tab = 'classes' | 'tasks' | 'students' | 'teachers'
+type Tab = 'tasks' | 'classes' | 'students' | 'teachers'
 
 const tabStyles: Record<
   Tab,
@@ -29,40 +29,34 @@ const tabStyles: Record<
     panelDescription: string
   }
 > = {
+  tasks: {
+    label: 'Tablón',
+    icon: ClipboardList,
+    panelTitle: 'Tablón docente',
+    panelDescription: 'Tareas y anuncios del curso.',
+  },
   classes: {
     label: 'Clases',
     icon: CalendarDays,
     panelTitle: 'Clases y asistencia',
-    panelDescription:
-      'Registro de clases, asistencia y seguimiento académico.',
-  },
-  tasks: {
-    label: 'Tareas',
-    icon: ClipboardList,
-    panelTitle: 'Tareas y entregas',
-    panelDescription:
-      'Actividades del curso, entregas de alumnos y feedback.',
+    panelDescription: 'Registro de clases y asistencia.',
   },
   students: {
     label: 'Alumnos',
     icon: Users,
     panelTitle: 'Alumnos del curso',
-    panelDescription:
-      'Listado y gestión de estudiantes asignados al curso.',
+    panelDescription: 'Listado y gestion de estudiantes asignados al curso.',
   },
   teachers: {
     label: 'Profesores',
     icon: GraduationCap,
     panelTitle: 'Profesores del curso',
-    panelDescription:
-      'Equipo docente asignado y vinculado al curso.',
+    panelDescription: 'Equipo docente asignado y vinculado al curso.',
   },
-
 }
 
 export function TeacherCourseTabs({ course }: Props) {
-  const [tab, setTab] = useState<Tab>('classes')
-
+  const [tab, setTab] = useState<Tab>('tasks')
   const currentTab = tabStyles[tab]
 
   return (
@@ -95,7 +89,7 @@ export function TeacherCourseTabs({ course }: Props) {
       </nav>
 
       <section className="space-y-2.5">
-        {tab !== 'classes' ? (
+        {tab !== 'classes' && tab !== 'tasks' ? (
           <div>
             <h2 className="text-base font-semibold tracking-tight text-foreground">
               {currentTab.panelTitle}
@@ -107,10 +101,10 @@ export function TeacherCourseTabs({ course }: Props) {
         ) : null}
 
         <div>
+          {tab === 'tasks' && <TeacherCourseTasks courseId={course.id} />}
+          {tab === 'classes' && <TeacherCourseClasses courseId={course.id} />}
           {tab === 'students' && <TeacherCourseStudents courseId={course.id} />}
           {tab === 'teachers' && <TeacherCourseTeachers courseId={course.id} />}
-          {tab === 'classes' && <TeacherCourseClasses courseId={course.id} />}
-          {tab === 'tasks' && <TeacherCourseTasks courseId={course.id} />}
         </div>
       </section>
     </div>
