@@ -60,10 +60,10 @@ export function TeacherCourseTabs({ course }: Props) {
   const currentTab = tabStyles[tab]
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <nav
         aria-label="Secciones del curso"
-        className="flex max-w-full gap-3 overflow-x-auto border-b border-border/60"
+        className="flex max-w-full gap-3 overflow-x-auto border-b border-border/60 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {(Object.keys(tabStyles) as Tab[]).map((key) => {
           const tabConfig = tabStyles[key]
@@ -88,7 +88,7 @@ export function TeacherCourseTabs({ course }: Props) {
         })}
       </nav>
 
-      <section className="space-y-2.5">
+      <section className="space-y-2">
         {tab !== 'classes' && tab !== 'tasks' ? (
           <div>
             <h2 className="text-base font-semibold tracking-tight text-foreground">

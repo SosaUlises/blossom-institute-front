@@ -52,8 +52,8 @@ const SELECT_ALL = 'all'
 
 function FeedSkeleton() {
   return (
-    <article className="rounded-xl border border-border/70 bg-card/95 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-4">
-      <div className="space-y-2.5">
+    <article className="rounded-xl border border-border/70 bg-card/95 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-3.5">
+      <div className="space-y-2">
         <div className="flex items-center gap-2">
           <div className="size-9 animate-pulse rounded-lg bg-muted/40" />
           <div className="h-5 w-16 animate-pulse rounded-full bg-muted/35" />
@@ -66,7 +66,7 @@ function FeedSkeleton() {
             <div className="h-5 w-28 animate-pulse rounded-full bg-muted/30" />
             <div className="h-5 w-32 animate-pulse rounded-full bg-muted/30" />
           </div>
-          <div className="flex gap-2 border-t border-border/50 pt-2.5">
+          <div className="flex gap-2 border-t border-border/50 pt-2">
             <div className="h-8 w-24 animate-pulse rounded-lg bg-muted/30" />
             <div className="h-8 w-20 animate-pulse rounded-lg bg-muted/30" />
           </div>
@@ -126,7 +126,7 @@ function FeedPost({
         <div className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-primary/70" />
       ) : null}
 
-      <div className={cn('p-3.5 sm:p-4', !task.esAnuncio && 'pl-5 sm:pl-6')}>
+      <div className={cn('p-3 sm:p-3.5', !task.esAnuncio && 'pl-5 sm:pl-6')}>
         <div className="flex items-center gap-2">
           <div
             className={cn(
@@ -161,15 +161,15 @@ function FeedPost({
           </div>
         </div>
 
-        <h3 className="mt-2 line-clamp-2 text-base font-semibold leading-6 tracking-tight text-foreground sm:text-lg">
+        <h3 className="mt-1.5 line-clamp-2 text-base font-semibold leading-6 tracking-tight text-foreground sm:text-lg">
           {task.titulo}
         </h3>
 
-        <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
+        <p className="mt-0.5 line-clamp-2 text-sm leading-5 text-muted-foreground">
           {getPreview(task)}
         </p>
 
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {!task.esAnuncio ? (
             <MetaBadge icon={CalendarClock}>
               {task.fechaEntregaUtc
@@ -182,7 +182,7 @@ function FeedPost({
           </MetaBadge>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border/55 pt-2.5">
+        <div className="mt-2.5 flex flex-wrap gap-1.5 border-t border-border/55 pt-2">
           <Button
             asChild
             variant="ghost"
@@ -302,8 +302,8 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   }, [pageNumber, totalPages, total])
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-xl border border-border/70 bg-card/85 p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+    <div className="space-y-3">
+      <section className="rounded-xl border border-border/70 bg-card/85 p-2 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
         <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
           <div className="grid gap-2.5 md:grid-cols-[minmax(260px,1fr)_180px]">
             <div className="relative min-w-[260px]">
@@ -355,7 +355,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
       ) : null}
 
       {loading ? (
-        <div className="mx-auto max-w-[900px] space-y-3">
+        <div className="mx-auto max-w-[900px] space-y-2.5">
           {Array.from({ length: 3 }).map((_, index) => (
             <FeedSkeleton key={index} />
           ))}
@@ -381,7 +381,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
           </CardContent>
         </Card>
       ) : (
-        <div className="mx-auto max-w-[900px] space-y-3">
+        <div className="mx-auto max-w-[900px] space-y-2.5">
           {data.map((task) => (
             <FeedPost
               key={task.id}
