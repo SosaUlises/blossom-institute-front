@@ -57,7 +57,6 @@ const tabStyles: Record<
 
 export function TeacherCourseTabs({ course }: Props) {
   const [tab, setTab] = useState<Tab>('tasks')
-  const currentTab = tabStyles[tab]
 
   return (
     <div className="space-y-2">
@@ -89,17 +88,6 @@ export function TeacherCourseTabs({ course }: Props) {
       </nav>
 
       <section className="space-y-2">
-        {tab !== 'classes' && tab !== 'tasks' ? (
-          <div>
-            <h2 className="text-base font-semibold tracking-tight text-foreground">
-              {currentTab.panelTitle}
-            </h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {currentTab.panelDescription}
-            </p>
-          </div>
-        ) : null}
-
         <div>
           {tab === 'tasks' && <TeacherCourseTasks courseId={course.id} />}
           {tab === 'classes' && <TeacherCourseClasses courseId={course.id} />}

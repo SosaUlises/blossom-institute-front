@@ -1,7 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { GraduationCap, Mail, IdCard } from 'lucide-react'
+import { GraduationCap } from 'lucide-react'
+import {
+  CoursePeopleSection,
+  PersonAvatar,
+  PersonMeta,
+  PersonRosterSurface,
+} from './course-people-ui'
 
 type Teacher = {
   profesorId: number
@@ -18,60 +24,39 @@ type Envelope<T> = {
   }
 }
 
-function TeacherCard({ teacher }: { teacher: Teacher }) {
-  const fullName = `${teacher.nombre} ${teacher.apellido}`
+function TeacherRosterCard({ teacher }: { teacher: Teacher }) {
+  const fullName = `${teacher.nombre} ${teacher.apellido}`.trim()
 
   return (
-    <article className="group rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-card dark:bg-card/90">
-      <div className="flex h-full flex-col">
-        <div className="flex items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-violet-500/15 bg-violet-500/10 text-violet-600 dark:text-violet-400">
-            <GraduationCap className="size-5" />
-          </div>
+    <PersonRosterSurface tone="teacher">
+      <div className="flex min-w-0 items-center gap-3">
+        <PersonAvatar name={fullName} tone="teacher" />
 
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate text-[17px] font-semibold tracking-tight text-foreground">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-[15px]">
               {fullName}
             </h3>
-
-            <div className="mt-2 space-y-2 text-[12px] text-muted-foreground">
-              <div className="flex min-w-0 items-center gap-1.5">
-                <IdCard className="size-3.5 shrink-0" />
-                <span className="truncate">DNI {teacher.dni}</span>
-              </div>
-
-              <div className="flex min-w-0 items-center gap-1.5">
-                <Mail className="size-3.5 shrink-0" />
-                <span
-                  className="truncate"
-                  title={teacher.email ?? 'Sin email registrado'}
-                >
-                  {teacher.email ?? 'Sin email registrado'}
-                </span>
-              </div>
-            </div>
+            <span className="inline-flex rounded-full border border-violet-500/15 bg-violet-500/10 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:text-violet-300">
+              Docente
+            </span>
           </div>
-        </div>
 
+          <PersonMeta email={teacher.email} />
+        </div>
       </div>
-    </article>
+    </PersonRosterSurface>
   )
 }
 
-function TeacherCardSkeleton() {
+function TeacherRosterSkeleton() {
   return (
-    <div className="rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-      <div className="space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 animate-pulse rounded-lg bg-muted/40" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="h-5 w-2/3 animate-pulse rounded-xl bg-muted/40" />
-            <div className="h-4 w-4/5 animate-pulse rounded-lg bg-muted/35" />
-          </div>
-        </div>
-
-        <div className="border-t border-border/40 pt-4">
-          <div className="h-4 w-36 animate-pulse rounded-lg bg-muted/35" />
+    <div className="rounded-xl border border-border/60 bg-background/55 px-3 py-3 sm:px-4">
+      <div className="flex items-center gap-3">
+        <div className="size-10 animate-pulse rounded-lg bg-muted/40" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-4 w-36 animate-pulse rounded-lg bg-muted/40" />
+          <div className="h-4 w-52 animate-pulse rounded-lg bg-muted/30" />
         </div>
       </div>
     </div>
@@ -112,9 +97,9 @@ export function TeacherCourseTeachers({ courseId }: { courseId: number }) {
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-2">
         {Array.from({ length: 3 }).map((_, index) => (
-          <TeacherCardSkeleton key={index} />
+          <TeacherRosterSkeleton key={index} />
         ))}
       </div>
     )
@@ -130,21 +115,21 @@ export function TeacherCourseTeachers({ courseId }: { courseId: number }) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-5 py-10 text-center text-sm text-muted-foreground">
+      <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-5 py-7 text-center dark:bg-muted/10">
         <GraduationCap className="mx-auto mb-3 size-5" />
-        Sin profesores asignados.
+        <p className="text-sm font-medium text-foreground">Todavía no hay docentes asignados.</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Cuando el curso tenga equipo docente, se verá acá.
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <CoursePeopleSection variant="grid">
       {data.map((teacher) => (
-        <TeacherCard
-          key={teacher.profesorId}
-          teacher={teacher}
-        />
+        <TeacherRosterCard key={teacher.profesorId} teacher={teacher} />
       ))}
-    </div>
+    </CoursePeopleSection>
   )
 }
