@@ -4,23 +4,24 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
-  BookOpen,
   CalendarDays,
   CheckCircle2,
-  ClipboardList,
-  FileCheck2,
   Loader2,
-  Plus,
   Search,
-  ShieldCheck,
-  Sparkles,
   Trophy,
-  Users,
 } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  PersonAvatar,
+  PersonMeta,
+} from '@/components/teacher/course-detail/course-people-ui'
+import {
+  TemplateSkillRows,
+  TemplateTypeBadge,
+} from './grade-template-ui'
 import {
   applyTeacherGradeTemplate,
   getTeacherCourseStudentsSimple,
@@ -33,7 +34,6 @@ import type {
 } from '@/lib/teacher/grade-templates/types'
 import {
   getGradeTemplateSkillLabel,
-  getTipoCalificacionLabel,
   supportsTemplateSkills,
 } from '@/lib/teacher/grade-templates/utils'
 
@@ -48,7 +48,6 @@ type StudentApplyFormItem = {
   alumnoId: number
   nombre: string
   apellido: string
-  dni: number
   email: string
   selected: boolean
   detalles: Array<{
@@ -56,85 +55,6 @@ type StudentApplyFormItem = {
     puntajeObtenido: string
     puntajeMaximo: number
   }>
-}
-
-function HeroMetaCard({
-  icon: Icon,
-  label,
-  value,
-  tone = 'default',
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  tone?: 'default' | 'highlight'
-}) {
-  const containerClass =
-    tone === 'highlight'
-      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
-      : 'rounded-2xl border border-border/60 bg-background/75 px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
-
-  const iconWrapClass =
-    tone === 'highlight'
-      ? 'bg-primary/10 text-primary'
-      : 'bg-background text-muted-foreground'
-
-  const labelClass = tone === 'highlight' ? 'text-primary/80' : 'text-muted-foreground'
-  const valueClass = tone === 'highlight' ? 'text-primary' : 'text-foreground'
-
-  return (
-    <div className={containerClass}>
-      <div className="flex items-center gap-3">
-        <div
-          className={`flex size-10 items-center justify-center rounded-2xl ${iconWrapClass}`}
-        >
-          <Icon className="size-4.5" />
-        </div>
-
-        <span
-          className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${labelClass}`}
-        >
-          {label}
-        </span>
-      </div>
-
-      <p className={`mt-4 text-base font-semibold tracking-tight ${valueClass}`}>{value}</p>
-    </div>
-  )
-}
-
-function getTipoVisual(tipo: number) {
-  switch (tipo) {
-    case 2:
-      return {
-        icon: ClipboardList,
-        badgeClass:
-          'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400',
-      }
-    case 3:
-      return {
-        icon: FileCheck2,
-        badgeClass:
-          'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-400',
-      }
-    case 4:
-      return {
-        icon: Users,
-        badgeClass:
-          'border-cyan-500/20 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400',
-      }
-    case 5:
-      return {
-        icon: ShieldCheck,
-        badgeClass:
-          'border-orange-500/20 bg-orange-500/10 text-orange-700 dark:text-orange-400',
-      }
-    default:
-      return {
-        icon: Sparkles,
-        badgeClass: 'border-primary/15 bg-primary/5 text-primary',
-      }
-  }
 }
 
 function buildStudentItems(
@@ -147,7 +67,6 @@ function buildStudentItems(
     alumnoId: student.alumnoId,
     nombre: student.nombre,
     apellido: student.apellido,
-    dni: student.dni,
     email: student.email,
     selected: false,
     detalles: templateDetails.map((detail) => ({
@@ -209,8 +128,7 @@ export function TeacherGradeTemplateApplyView({
       const fullName = `${student.nombre} ${student.apellido}`.toLowerCase()
       return (
         fullName.includes(term) ||
-        student.email.toLowerCase().includes(term) ||
-        String(student.dni).includes(term)
+        student.email.toLowerCase().includes(term)
       )
     })
   }, [students, search])
@@ -344,424 +262,263 @@ export function TeacherGradeTemplateApplyView({
     }
   }
 
-  const tipoVisual = getTipoVisual(template?.tipo ?? 0)
-  const TipoIcon = tipoVisual.icon
-
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader title="Aplicar plantilla de calificación" />
+      <AppHeader title="Aplicar plantilla" />
 
-      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-        <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
-          <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
+      <div className="space-y-4 p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8">
+        <header className="space-y-3">
+          <Button
+            variant="ghost"
+            className="h-9 justify-start rounded-xl px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+            onClick={() => router.push(`/teacher/courses/${courseId}/grade-templates`)}
+          >
+            <ArrowLeft className="mr-2 size-4" />
+            Volver a plantillas
+          </Button>
 
-          <div className="relative space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button
-                variant="outline"
-                className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
-                onClick={() => router.push(`/teacher/courses/${courseId}/grade-templates`)}
-              >
-                <ArrowLeft className="mr-2 size-4" />
-                Volver a plantillas
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Aplicar plantilla
-              </p>
-
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-                {template?.titulo ?? 'Cargando plantilla...'}
-              </h1>
-
-              <p className="max-w-3xl text-sm leading-7 text-muted-foreground md:text-[15px]">
-                Seleccioná alumnos del curso y cargá los puntajes obtenidos para generar las calificaciones a partir de esta plantilla.
-              </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <HeroMetaCard
-                icon={BookOpen}
-                label="Curso"
-                value={courseName}
-                tone="highlight"
-              />
-              <HeroMetaCard
-                icon={CalendarDays}
-                label="Año"
-                value={String(courseYear)}
-              />
-              <HeroMetaCard
-                icon={TipoIcon}
-                label="Tipo"
-                value={template ? getTipoCalificacionLabel(template.tipo) : '--'}
-              />
-              <HeroMetaCard
-                icon={Users}
-                label="Seleccionados"
-                value={String(selectedCount)}
-              />
-            </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Aplicar plantilla
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {template?.titulo ?? 'Cargando plantilla...'} · {courseName} · {courseYear}
+            </p>
           </div>
-        </section>
+        </header>
 
-        <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-7">
-          {loading ? (
-            <div className="rounded-2xl border border-dashed border-border/70 bg-background/40 px-6 py-16 text-center text-sm text-muted-foreground">
-              Cargando datos...
-            </div>
-          ) : !template ? (
-            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
-              No se pudo cargar la plantilla.
-            </div>
-          ) : (
-            <div className="space-y-6">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_320px]">
-        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-background/70 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-          <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
-
-          <div className="relative">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${tipoVisual.badgeClass}`}
-                  >
-                    <TipoIcon className="size-3.5" />
-                    {getTipoCalificacionLabel(template.tipo)}
-                  </span>
-
-                  {template.detalles?.length > 0 && (
-                    <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                      {template.detalles.length} skill{template.detalles.length === 1 ? '' : 's'}
-                    </span>
-                  )}
-                </div>
-
-                <h2 className="mt-3 text-xl font-semibold tracking-tight text-foreground">
-                  {template.titulo}
-                </h2>
-
-                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-                  {template.descripcion?.trim()
-                    ? template.descripcion
-                    : 'Sin descripción adicional.'}
-                </p>
-              </div>
-
-              <div className="hidden md:block">
-                <div className={`rounded-2xl border px-4 py-4 shadow-sm ${tipoVisual.badgeClass}`}>
-                  <div
-                    className={`flex size-11 items-center justify-center rounded-2xl ${tipoVisual.badgeClass}`}
-                  >
-                    <TipoIcon className="size-5" />
+        {loading ? (
+          <div className="rounded-2xl border border-dashed border-border/70 bg-background/40 px-6 py-12 text-center text-sm text-muted-foreground">
+            Cargando datos...
+          </div>
+        ) : !template ? (
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+            No se pudo cargar la plantilla.
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <section className="min-w-0 rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70 sm:p-5">
+                <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                      Alumnos
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Seleccioná a quiénes querés calificar y completá sus puntajes.
+                    </p>
                   </div>
-                </div>
-              </div>
-            </div>
 
-            <div className="mt-5">
-              {template.detalles?.length > 0 ? (
-                <div className="flex flex-wrap gap-2.5">
-                  {template.detalles.map((detail) => (
-                    <div
-                      key={detail.id ?? detail.skill}
-                      className="group inline-flex min-w-[170px] items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/85 px-3.5 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:border-primary/20 hover:bg-primary/[0.04]"
-                    >
-                      <div className="min-w-0">
-                        <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                          Skill
-                        </span>
-                        <span className="block truncate text-sm font-semibold text-foreground">
-                          {getGradeTemplateSkillLabel(detail.skill)}
-                        </span>
-                      </div>
-
-                      <div className="inline-flex shrink-0 items-center rounded-xl border border-primary/15 bg-primary/8 px-2.5 py-1.5">
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary/75">
-                          Máx.
-                        </span>
-                        <span className="ml-2 text-sm font-bold text-primary">
-                          {detail.puntajeMaximo}
-                        </span>
-                      </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <div className="relative w-full sm:w-64">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Buscar alumno..."
+                        className="h-10 rounded-xl border-border/60 bg-background/75 pl-10 shadow-none focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
+                      />
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="inline-flex items-center rounded-2xl border border-border/60 bg-background/75 px-3.5 py-2 text-xs font-medium text-muted-foreground">
-                  Sin skills configuradas
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
 
-        <div className="rounded-2xl border border-border/60 bg-background/70 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Configuración
-          </p>
-
-          <div className="mt-4 space-y-4">
-            <div className="rounded-2xl border border-border/60 bg-card/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-              <label className="text-sm font-medium text-foreground">Fecha</label>
-
-              <div className="relative mt-3">
-                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="date"
-                  value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
-                  className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <CheckCircle2 className="size-4.5" />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-primary">
-                    Aplicación masiva
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Se crearán calificaciones únicamente para los alumnos seleccionados.
-                  </p>
-                </div>
-              </div>
-            </div>
+                    <Button
+                      variant="outline"
+                      className="h-10 rounded-xl border-border/70 bg-background/70 px-3 shadow-none transition-colors hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
+                      onClick={handleToggleAllVisible}
+                    >
+                      {filteredStudents.length > 0 &&
+                      filteredStudents.every((student) => student.selected)
+                        ? 'Deseleccionar visibles'
+                        : 'Seleccionar visibles'}
+                    </Button>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Alumnos
-                  </p>
-                  <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-                    Selección y carga
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Marcá los alumnos a evaluar y completá los puntajes obtenidos.
-                  </p>
-                </div>
-
-                <div className="flex w-full flex-col gap-3 lg:w-auto lg:flex-row">
-                  <div className="relative w-full lg:w-[320px]">
-                    <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Buscar alumno..."
-                      className="h-11 rounded-2xl border-border/70 bg-background/85 pl-11 shadow-[0_1px_2px_rgba(15,23,42,0.035)]"
-                    />
+                {error && (
+                  <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+                    {error}
                   </div>
+                )}
+
+                {success && (
+                  <div className="mb-4 rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-600 dark:text-green-400">
+                    {success}
+                  </div>
+                )}
+
+                {filteredStudents.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-6 text-center text-sm text-muted-foreground dark:bg-muted/10">
+                    {students.length === 0
+                      ? 'Todavía no hay alumnos asignados a este curso.'
+                      : 'No hay alumnos para mostrar con el filtro actual.'}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredStudents.map((student) => {
+                      const fullName = `${student.nombre} ${student.apellido}`.trim()
+
+                      return (
+                        <article
+                          key={student.alumnoId}
+                          className={`rounded-xl border px-3 py-3 transition-colors sm:px-4 ${
+                            student.selected
+                              ? 'border-primary/25 bg-primary/[0.045]'
+                              : 'border-border/60 bg-background/60 hover:border-primary/20 hover:bg-card dark:bg-background/35'
+                          }`}
+                        >
+                          <div className="flex flex-col gap-3">
+                            <label className="flex cursor-pointer items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={student.selected}
+                                onChange={() => handleToggleStudent(student.alumnoId)}
+                                className="mt-3 size-4 rounded border-border text-primary focus:ring-primary"
+                              />
+
+                              <PersonAvatar name={fullName} tone="student" />
+
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-[15px]">
+                                    {fullName}
+                                  </p>
+                                  {student.selected ? (
+                                    <span className="inline-flex rounded-full border border-primary/15 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                      Seleccionado
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <PersonMeta email={student.email} />
+                              </div>
+                            </label>
+
+                            {templateUsesSkills && student.selected ? (
+                              <div className="grid gap-2 border-t border-border/50 pt-3 md:grid-cols-2">
+                                {student.detalles.map((detail) => (
+                                  <div
+                                    key={`${student.alumnoId}-${detail.skill}`}
+                                    className="rounded-xl border border-border/60 bg-background/70 p-3"
+                                  >
+                                    <div className="mb-2 flex items-center justify-between gap-2">
+                                      <span className="truncate text-sm font-medium text-foreground">
+                                        {getGradeTemplateSkillLabel(detail.skill)}
+                                      </span>
+                                      <span className="text-xs text-muted-foreground">
+                                        Máx. {detail.puntajeMaximo}
+                                      </span>
+                                    </div>
+
+                                    <div className="relative">
+                                      <Trophy className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max={detail.puntajeMaximo}
+                                        step="0.01"
+                                        value={detail.puntajeObtenido}
+                                        onChange={(e) =>
+                                          handleSkillScoreChange(
+                                            student.alumnoId,
+                                            detail.skill,
+                                            e.target.value
+                                          )
+                                        }
+                                        className="h-10 w-full rounded-xl border border-border/60 bg-background/75 pl-10 pr-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15 dark:bg-background/35"
+                                        placeholder={`0 - ${detail.puntajeMaximo}`}
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
+                )}
+              </section>
+
+              <aside className="xl:sticky xl:top-6 xl:self-start">
+                <div className="space-y-4 rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70 sm:p-5">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <TemplateTypeBadge tipo={template.tipo} />
+                      <span className="inline-flex rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                        {template.detalles.length} habilidades
+                      </span>
+                    </div>
+
+                    <h2 className="mt-3 text-base font-semibold tracking-tight text-foreground">
+                      {template.titulo}
+                    </h2>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      {template.descripcion?.trim()
+                        ? template.descripcion
+                        : 'Sin descripción adicional.'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Fecha</label>
+                    <div className="relative">
+                      <CalendarDays className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        type="date"
+                        value={fecha}
+                        onChange={(e) => setFecha(e.target.value)}
+                        className="h-10 w-full rounded-xl border border-border/60 bg-background/75 pl-10 pr-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15 dark:bg-background/35"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-border/60 bg-background/60 px-3 py-3 dark:bg-background/35">
+                    <p className="text-sm font-medium text-foreground">
+                      {selectedCount} {selectedCount === 1 ? 'alumno seleccionado' : 'alumnos seleccionados'}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Se crearán calificaciones solo para los alumnos seleccionados.
+                    </p>
+                  </div>
+
+                  <TemplateSkillRows detalles={template.detalles} />
 
                   <Button
-                    variant="outline"
-                    className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
-                    onClick={handleToggleAllVisible}
+                    onClick={handleSubmit}
+                    disabled={saving || loading}
+                    className="h-10 w-full rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
                   >
-                    <Plus className="mr-2 size-4" />
-                    {filteredStudents.length > 0 &&
-                    filteredStudents.every((student) => student.selected)
-                      ? 'Deseleccionar todos'
-                      : 'Seleccionar todos'}
+                    {saving ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Aplicando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-2 size-4" />
+                        Aplicar plantilla
+                      </>
+                    )}
                   </Button>
                 </div>
-              </div>
-
-              {error && (
-                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
-                  {error}
-                </div>
-              )}
-
-              {success && (
-                <div className="rounded-2xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-600 dark:text-green-400">
-                  {success}
-                </div>
-              )}
-
-              {filteredStudents.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border/70 bg-background/40 px-6 py-16 text-center text-sm text-muted-foreground">
-                  No hay alumnos para mostrar con el filtro actual.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredStudents.map((student) => (
-                    <article
-  key={student.alumnoId}
-  className={`group relative overflow-hidden rounded-2xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 ${
-    student.selected
-      ? 'border-primary/20 bg-primary/[0.05] shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
-      : 'border-border/60 bg-card/95 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
-  }`}
->
-  {student.selected && (
-    <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-r from-primary/[0.10] via-primary/[0.04] to-transparent" />
-  )}
-
-  <div className="relative">
-    <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <label className="inline-flex cursor-pointer items-start gap-3">
-              <div className="pt-0.5">
-                <input
-                  type="checkbox"
-                  checked={student.selected}
-                  onChange={() => handleToggleStudent(student.alumnoId)}
-                  className="size-4 rounded border-border text-primary focus:ring-primary"
-                />
-              </div>
-
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-base font-semibold tracking-tight text-foreground">
-                    {student.nombre} {student.apellido}
-                  </span>
-
-                  {student.selected && (
-                    <span className="inline-flex items-center rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
-                      Seleccionado
-                    </span>
-                  )}
-                </div>
-
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Alumno disponible para aplicar la plantilla.
-                </p>
-              </div>
-            </label>
-          </div>
-
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <span className="inline-flex items-center rounded-full border border-border/60 bg-background/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
-              DNI {student.dni}
-            </span>
-
-            <span className="inline-flex max-w-full items-center rounded-full border border-border/60 bg-background/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
-              <span className="truncate">{student.email}</span>
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {templateUsesSkills && student.selected && (
-      <div className="mt-5 rounded-2xl border border-border/60 bg-background/55 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              Evaluación por skills
-            </p>
-            <p className="mt-1 text-sm text-foreground">
-              Cargá el puntaje obtenido para cada skill del alumno.
-            </p>
-          </div>
-
-          <div className="inline-flex items-center rounded-full border border-primary/15 bg-primary/8 px-3 py-1 text-xs font-semibold text-primary">
-            {student.detalles.length} skill{student.detalles.length === 1 ? '' : 's'}
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {student.detalles.map((detail) => (
-            <div
-              key={`${student.alumnoId}-${detail.skill}`}
-              className="group/detail rounded-2xl border border-border/60 bg-card/90 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 hover:border-primary/15 hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Skill
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">
-                    {getGradeTemplateSkillLabel(detail.skill)}
-                  </p>
-                </div>
-
-                <div className="inline-flex shrink-0 items-center rounded-xl border border-primary/15 bg-primary/8 px-2.5 py-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary/75">
-                    Máx.
-                  </span>
-                  <span className="ml-2 text-sm font-bold text-primary">
-                    {detail.puntajeMaximo}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Puntaje obtenido
-                </label>
-
-                <div className="relative">
-                  <Trophy className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="number"
-                    min="0"
-                    max={detail.puntajeMaximo}
-                    step="0.01"
-                    value={detail.puntajeObtenido}
-                    onChange={(e) =>
-                      handleSkillScoreChange(
-                        student.alumnoId,
-                        detail.skill,
-                        e.target.value
-                      )
-                    }
-                    className="h-11 w-full rounded-2xl border border-border/70 bg-background/90 pl-10 pr-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.035)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
-                    placeholder={`0 - ${detail.puntajeMaximo}`}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>Rango permitido</span>
-                  <span>0 a {detail.puntajeMaximo}</span>
-                </div>
-              </div>
+              </aside>
             </div>
-          ))}
-        </div>
-      </div>
-    )}
-  </div>
-</article>
-                  ))}
-                </div>
-              )}
 
-              <div className="flex justify-end">
+            <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur dark:bg-background/90 xl:hidden">
+              <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {selectedCount} {selectedCount === 1 ? 'seleccionado' : 'seleccionados'}
+                </p>
                 <Button
                   onClick={handleSubmit}
                   disabled={saving || loading}
-                  className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+                  className="h-10 rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
                 >
-                  {saving ? (
-                    <>
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                      Aplicando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="mr-2 size-4" />
-                      Aplicar plantilla
-                    </>
-                  )}
+                  {saving ? 'Aplicando...' : 'Aplicar plantilla'}
                 </Button>
               </div>
             </div>
-          )}
-        </section>
+          </>
+        )}
       </div>
     </div>
   )
