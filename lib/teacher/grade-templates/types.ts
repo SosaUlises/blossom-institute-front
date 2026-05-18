@@ -86,6 +86,7 @@ export interface CourseStudentSimpleItem {
   apellido: string
   dni: number
   email: string
+  avatarUrl?: string | null
 }
 
 export interface CourseStudentSimpleResponse {

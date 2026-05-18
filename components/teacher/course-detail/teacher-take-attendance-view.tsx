@@ -26,6 +26,7 @@ type StudentItem = {
   nombre: string
   apellido: string
   email?: string | null
+  avatarUrl?: string | null
 }
 
 type StudentsEnvelope = {
@@ -38,6 +39,7 @@ type StudentsEnvelope = {
 type StudentState = {
   alumnoId: number
   nombreCompleto: string
+  avatarUrl?: string | null
   estado: EstadoAsistencia | null
 }
 
@@ -122,6 +124,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
           items.map((student) => ({
             alumnoId: student.alumnoId,
             nombreCompleto: `${student.nombre} ${student.apellido}`,
+            avatarUrl: student.avatarUrl,
             estado: null,
           })),
         )
@@ -351,7 +354,11 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
                 <PersonRosterSurface key={student.alumnoId} tone="student">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-center gap-3">
-                    <PersonAvatar name={student.nombreCompleto} tone="student" />
+                    <PersonAvatar
+                      name={student.nombreCompleto}
+                      avatarUrl={student.avatarUrl}
+                      tone="student"
+                    />
 
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-[15px]">

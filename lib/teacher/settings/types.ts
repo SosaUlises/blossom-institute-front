@@ -3,6 +3,7 @@ export type MyAccountSettings = {
   nombre: string
   apellido: string
   email: string
+  avatarUrl?: string | null
   telefono?: string | null
   dni: number
   activo: boolean
@@ -21,6 +22,10 @@ export type ChangePasswordDTO = {
   currentPassword: string
   newPassword: string
   confirmNewPassword: string
+}
+
+export type UpdateAvatarResponse = {
+  avatarUrl?: string | null
 }
 
 type ApiEnvelope<T> = {

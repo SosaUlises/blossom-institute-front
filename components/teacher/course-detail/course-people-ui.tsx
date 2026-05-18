@@ -1,37 +1,35 @@
 import type { ReactNode } from 'react'
 import { Mail } from 'lucide-react'
 
+import { UserAvatar, getUserInitials } from '@/components/shared/user-avatar'
+
 type Tone = 'student' | 'teacher'
 
 const toneClasses: Record<Tone, string> = {
-  student: 'border-primary/15 bg-primary/10 text-primary',
+  student: 'bg-primary/10 text-primary',
   teacher:
-    'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300',
+    'bg-violet-500/10 text-violet-700 dark:text-violet-300',
 }
 
-export function getPersonInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-}
+export const getPersonInitials = getUserInitials
 
 export function PersonAvatar({
   name,
+  avatarUrl,
   tone,
 }: {
   name: string
+  avatarUrl?: string | null
   tone: Tone
 }) {
   return (
-    <div
-      className={`flex size-10 shrink-0 items-center justify-center rounded-lg border text-sm font-semibold ${toneClasses[tone]}`}
-    >
-      {getPersonInitials(name) || '?'}
-    </div>
+    <UserAvatar
+      name={name}
+      avatarUrl={avatarUrl}
+      size={40}
+      className="shrink-0"
+      fallbackClassName={toneClasses[tone]}
+    />
   )
 }
 

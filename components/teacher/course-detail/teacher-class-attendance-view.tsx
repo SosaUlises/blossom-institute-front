@@ -33,6 +33,7 @@ type Props = {
 type StudentState = {
   alumnoId: number
   nombreCompleto: string
+  avatarUrl?: string | null
   estado: EstadoAsistencia | null
 }
 
@@ -99,6 +100,7 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
           result.alumnos.map((alumno) => ({
             alumnoId: alumno.alumnoId,
             nombreCompleto: alumno.nombreCompleto,
+            avatarUrl: alumno.avatarUrl,
             estado: alumno.estado ?? null,
           })),
         )
@@ -287,7 +289,11 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
                 <PersonRosterSurface key={student.alumnoId} tone="student">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                      <PersonAvatar name={student.nombreCompleto} tone="student" />
+                      <PersonAvatar
+                        name={student.nombreCompleto}
+                        avatarUrl={student.avatarUrl}
+                        tone="student"
+                      />
 
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-[15px]">

@@ -19,6 +19,7 @@ type Student = {
   apellido: string
   dni: number
   email?: string | null
+  avatarUrl?: string | null
 }
 
 type Envelope<T> = {
@@ -41,7 +42,11 @@ function StudentRosterRow({
     <PersonRosterSurface tone="student">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          <PersonAvatar name={fullName} tone="student" />
+          <PersonAvatar
+            name={fullName}
+            avatarUrl={student.avatarUrl}
+            tone="student"
+          />
 
           <div className="min-w-0">
             <h3 className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-[15px]">

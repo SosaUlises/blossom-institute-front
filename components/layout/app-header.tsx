@@ -7,6 +7,9 @@ import { useTheme } from 'next-themes'
 
 import { Button } from '@/components/ui/button'
 import { useSidebar } from '@/components/ui/sidebar'
+import { UserAvatar } from '@/components/shared/user-avatar'
+import type { SessionUser } from '@/lib/auth/session'
+import { CURRENT_USER_AVATAR_UPDATED_EVENT } from '@/lib/auth/client-events'
 import { cn } from '@/lib/utils'
 
 type AppHeaderProps = {
@@ -75,6 +78,7 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
   const [override, setOverride] = useState<HeaderOverride | null>(null)
+  const [user, setUser] = useState<SessionUser | null>(null)
   const headerTitle = override?.title ?? title
   const displayTitle = titleLabels[headerTitle] ?? headerTitle
   const displaySubtitle = override?.subtitle ?? subtitle ?? getHeaderSubtitle(pathname)
@@ -97,6 +101,51 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
     }
   }, [pathname])
 
+  useEffect(() => {
+    let active = true
+
+    fetch('/api/auth/me', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+      .then(async (response) => {
+        if (!response.ok) return null
+        const result = (await response.json()) as { data?: SessionUser }
+        return result.data ?? null
+      })
+      .then((nextUser) => {
+        if (active) setUser(nextUser)
+      })
+      .catch(() => {
+        if (active) setUser(null)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleAvatarUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ avatarUrl: string | null }>).detail
+
+      setUser((current) =>
+        current
+          ? {
+              ...current,
+              avatarUrl: detail?.avatarUrl ?? null,
+            }
+          : current,
+      )
+    }
+
+    window.addEventListener(CURRENT_USER_AVATAR_UPDATED_EVENT, handleAvatarUpdated)
+
+    return () => {
+      window.removeEventListener(CURRENT_USER_AVATAR_UPDATED_EVENT, handleAvatarUpdated)
+    }
+  }, [])
+
   return (
     <header
       className={cn(
@@ -117,6 +166,7 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
             variant="outline"
             size="icon"
             onClick={toggleSidebar}
+            aria-label="Abrir o cerrar navegacion"
             className={cn(
               'size-11 shrink-0 rounded-2xl border-border/70 bg-background/85 shadow-sm hover:bg-muted hover:text-foreground',
               isWorkspace && 'rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.03)] dark:bg-background/35',
@@ -136,9 +186,23 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          {user ? (
+            <UserAvatar
+              name={`${user.nombre} ${user.apellido}`.trim()}
+              avatarUrl={user.avatarUrl}
+              size={40}
+              className={cn(
+                'hidden sm:flex',
+                isWorkspace && 'ring-border/50',
+              )}
+              fallbackClassName="bg-primary/10 text-primary"
+            />
+          ) : null}
+
           <Button
             variant="outline"
             size="icon"
+            aria-label="Cambiar tema"
             className={cn(
               'size-11 rounded-2xl border-border/70 bg-background/85 shadow-sm transition-colors hover:bg-muted hover:text-foreground',
               isWorkspace && 'rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.03)] dark:bg-background/35',

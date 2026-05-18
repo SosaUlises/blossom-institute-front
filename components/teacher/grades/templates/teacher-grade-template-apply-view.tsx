@@ -49,6 +49,7 @@ type StudentApplyFormItem = {
   nombre: string
   apellido: string
   email: string
+  avatarUrl?: string | null
   selected: boolean
   detalles: Array<{
     skill: number
@@ -68,6 +69,7 @@ function buildStudentItems(
     nombre: student.nombre,
     apellido: student.apellido,
     email: student.email,
+    avatarUrl: student.avatarUrl,
     selected: false,
     detalles: templateDetails.map((detail) => ({
       skill: detail.skill,
@@ -374,7 +376,11 @@ export function TeacherGradeTemplateApplyView({
                                 className="mt-3 size-4 rounded border-border text-primary focus:ring-primary"
                               />
 
-                              <PersonAvatar name={fullName} tone="student" />
+                              <PersonAvatar
+                                name={fullName}
+                                avatarUrl={student.avatarUrl}
+                                tone="student"
+                              />
 
                               <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">

@@ -9,7 +9,6 @@ import {
   ChevronRight,
   LayoutDashboard,
   LogOut,
-  UserRound,
 } from 'lucide-react'
 
 import {
@@ -30,7 +29,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import type { SessionUser } from '@/lib/auth/session'
+import { CURRENT_USER_AVATAR_UPDATED_EVENT } from '@/lib/auth/client-events'
 import { cn } from '@/lib/utils'
 
 const studentNavItems = [
@@ -107,9 +108,41 @@ export function StudentSidebar({ user }: { user: SessionUser }) {
   const pathname = usePathname()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? null)
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/auth/me', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+      .then(async (response) => {
+        if (!response.ok) return null
+        const result = (await response.json()) as { data?: SessionUser }
+        return result.data ?? null
+      })
+      .then((currentUser) => {
+        setAvatarUrl(currentUser?.avatarUrl ?? null)
+      })
+      .catch(() => {
+        setAvatarUrl(user.avatarUrl ?? null)
+      })
+  }, [user.avatarUrl])
+
+  useEffect(() => {
+    const handleAvatarUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ avatarUrl: string | null }>).detail
+      setAvatarUrl(detail?.avatarUrl ?? null)
+    }
+
+    window.addEventListener(CURRENT_USER_AVATAR_UPDATED_EVENT, handleAvatarUpdated)
+
+    return () => {
+      window.removeEventListener(CURRENT_USER_AVATAR_UPDATED_EVENT, handleAvatarUpdated)
+    }
   }, [])
 
   const fullName = `${user.nombre} ${user.apellido}`.trim()
@@ -163,9 +196,12 @@ export function StudentSidebar({ user }: { user: SessionUser }) {
           <div className="pt-5">
             {!mounted ? (
               <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/80 px-3 py-3 shadow-[0_1px_1px_rgba(15,23,42,0.03)]">
-                <div className="flex size-10 items-center justify-center rounded-xl border border-border/60 bg-primary/10 text-primary ring-1 ring-primary/10">
-                  <UserRound className="size-4.5" />
-                </div>
+                <UserAvatar
+                  name={fullName}
+                  avatarUrl={avatarUrl}
+                  size={40}
+                  fallbackClassName="bg-primary/10 text-primary"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">
                     {fullName}
@@ -182,9 +218,13 @@ export function StudentSidebar({ user }: { user: SessionUser }) {
                     type="button"
                     className="group flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/80 px-3 py-3 text-left shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-all duration-200 hover:border-primary/15 hover:bg-sidebar-accent/60"
                   >
-                    <div className="flex size-10 items-center justify-center rounded-xl border border-border/60 bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-200 group-hover:scale-[1.02]">
-                      <UserRound className="size-4.5" />
-                    </div>
+                    <UserAvatar
+                      name={fullName}
+                      avatarUrl={avatarUrl}
+                      size={40}
+                      className="transition-transform duration-200 group-hover:scale-[1.02]"
+                      fallbackClassName="bg-primary/10 text-primary"
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-foreground">
                         {fullName}

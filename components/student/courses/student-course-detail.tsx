@@ -24,6 +24,7 @@ import {
   StudentStatusBadge,
   studentUi,
 } from '@/components/student/courses/student-course-ui'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import type { StudentCourseSectionItem } from '@/lib/student/courses/types'
 import { cn } from '@/lib/utils'
 
@@ -654,16 +655,6 @@ function getPersonRole(item: StudentCourseSectionItem): 'teacher' | 'classmate' 
   return 'classmate'
 }
 
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-}
-
 function getFullName(item: StudentCourseSectionItem) {
   const fullName = getValue(item, ['nombreCompleto'])
   if (fullName) return fullName
@@ -671,6 +662,10 @@ function getFullName(item: StudentCourseSectionItem) {
   const firstName = getValue(item, ['nombre'])
   const lastName = getValue(item, ['apellido'])
   return [firstName, lastName].filter(Boolean).join(' ').trim() || null
+}
+
+function getAvatarUrl(item: StudentCourseSectionItem) {
+  return safeText(item.avatarUrl)
 }
 
 function getPeopleGroups(items: StudentCourseSectionItem[]) {
@@ -1028,13 +1023,17 @@ function AttendanceHistory({
 
 function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
   const name = getFullName(item) ?? 'Nombre no disponible'
+  const avatarUrl = getAvatarUrl(item)
 
   return (
     <article className="rounded-xl border border-violet-200/60 bg-violet-50/30 p-4 transition-colors duration-200 ease-out hover:border-violet-300/70 hover:bg-violet-50/45 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
       <div className="flex items-center gap-3">
-        <StudentIconContainer className="border-violet-200 bg-background/80 text-sm font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
-          {getInitials(name) || '?'}
-        </StudentIconContainer>
+        <UserAvatar
+          name={name}
+          avatarUrl={avatarUrl}
+          size={44}
+          fallbackClassName="bg-background/80 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300"
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -1060,6 +1059,7 @@ function ClassmatePersonCard({
   currentStudentId?: number
 }) {
   const name = getFullName(item) ?? 'Nombre no disponible'
+  const avatarUrl = getAvatarUrl(item)
   const current = isCurrentStudent(item, currentStudentId)
 
   return (
@@ -1072,9 +1072,12 @@ function ClassmatePersonCard({
       )}
     >
       <div className="flex items-center gap-3">
-        <StudentIconContainer size="md" className="border-primary/10 bg-primary/8 text-sm font-semibold text-primary">
-          {getInitials(name) || '?'}
-        </StudentIconContainer>
+        <UserAvatar
+          name={name}
+          avatarUrl={avatarUrl}
+          size={40}
+          fallbackClassName="bg-primary/8 text-primary"
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

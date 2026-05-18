@@ -3,6 +3,7 @@ export interface CursoAlumno {
   nombre: string
   apellido: string
   email: string
+  avatarUrl?: string | null
   dni: number
 }
 
@@ -11,6 +12,7 @@ export interface CursoProfesor {
   nombre: string
   apellido: string
   email: string
+  avatarUrl?: string | null
   dni: number
 }
 

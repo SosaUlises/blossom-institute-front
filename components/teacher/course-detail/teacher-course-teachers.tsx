@@ -15,6 +15,7 @@ type Teacher = {
   apellido: string
   dni: number
   email?: string | null
+  avatarUrl?: string | null
 }
 
 type Envelope<T> = {
@@ -30,7 +31,11 @@ function TeacherRosterCard({ teacher }: { teacher: Teacher }) {
   return (
     <PersonRosterSurface tone="teacher">
       <div className="flex min-w-0 items-center gap-3">
-        <PersonAvatar name={fullName} tone="teacher" />
+        <PersonAvatar
+          name={fullName}
+          avatarUrl={teacher.avatarUrl}
+          tone="teacher"
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
