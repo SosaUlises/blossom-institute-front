@@ -113,7 +113,7 @@ function AttendancePill({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
+        'inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
         tone === 'success' &&
           'border-emerald-500/15 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-400',
         tone === 'danger' &&
@@ -123,7 +123,7 @@ function AttendancePill({
       )}
     >
       {icon}
-      <span className="font-semibold tabular-nums">{value}</span>
+      <span className="text-sm font-semibold tabular-nums">{value}</span>
       <span className="text-muted-foreground">{label}</span>
     </span>
   )
@@ -137,8 +137,8 @@ function ClassRow({
   courseId: number
 }) {
   return (
-    <article className="group rounded-xl border border-border/70 bg-card/95 px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-card dark:bg-card/90">
-      <div className="flex flex-col gap-3">
+    <article className="group rounded-xl border border-border/70 bg-card/95 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-card dark:bg-card/90 sm:py-3.5">
+      <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground dark:bg-background/30">
             <Calendar className="size-3" />
@@ -150,7 +150,7 @@ function ClassRow({
         </div>
 
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold leading-5 tracking-tight text-foreground">
+          <h3 className="text-base font-semibold leading-6 tracking-tight text-foreground sm:text-lg">
             {item.descripcion?.trim() || 'Clase sin descripcion'}
           </h3>
         </div>
@@ -179,11 +179,11 @@ function ClassRow({
           <Button
             asChild
             variant="ghost"
-            className="h-8 w-fit rounded-md px-2.5 text-xs font-semibold text-muted-foreground shadow-none transition-colors duration-200 hover:bg-primary/5 hover:text-primary"
+            className="h-8 w-fit rounded-lg px-2.5 text-xs font-semibold text-foreground shadow-none transition-colors duration-200 hover:bg-primary/5 hover:text-primary"
           >
             <Link href={`/teacher/courses/${courseId}/classes/${encodeURIComponent(item.fecha)}`}>
               Editar asistencia
-              <ChevronRight className="ml-1 size-3.5" />
+              <ChevronRight className="ml-0.5 size-3.5" />
             </Link>
           </Button>
         </div>
@@ -194,20 +194,20 @@ function ClassRow({
 
 function ClassRowSkeleton() {
   return (
-    <div className="rounded-xl border border-border/70 bg-card/95 px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-      <div className="space-y-3">
-        <div className="flex gap-1.5">
+    <div className="rounded-xl border border-border/70 bg-card/95 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:py-3.5">
+      <div className="space-y-2.5">
+        <div className="flex gap-2">
           <div className="h-5 w-24 animate-pulse rounded-full bg-muted/40" />
           <div className="h-5 w-20 animate-pulse rounded-full bg-muted/35" />
         </div>
-        <div className="h-4 w-52 animate-pulse rounded bg-muted/40" />
+        <div className="h-5 w-60 animate-pulse rounded bg-muted/40" />
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-1.5">
-            <div className="h-7 w-20 animate-pulse rounded-md bg-muted/35" />
-            <div className="h-7 w-24 animate-pulse rounded-md bg-muted/35" />
-            <div className="h-7 w-20 animate-pulse rounded-md bg-muted/35" />
+            <div className="h-7 w-20 animate-pulse rounded-full bg-muted/35" />
+            <div className="h-7 w-24 animate-pulse rounded-full bg-muted/35" />
+            <div className="h-7 w-20 animate-pulse rounded-full bg-muted/35" />
           </div>
-          <div className="h-8 w-28 animate-pulse rounded-md bg-muted/35" />
+          <div className="h-8 w-32 animate-pulse rounded-lg bg-muted/35" />
         </div>
       </div>
     </div>

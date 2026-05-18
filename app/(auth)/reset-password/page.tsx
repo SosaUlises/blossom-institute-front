@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Eye, EyeOff, Loader2, LockKeyhole } from 'lucide-react'
 
@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AuthRecoverySidePanel } from '@/components/auth/auth-recovery-side-panel'
 import { resetPasswordRequest } from '@/lib/auth/password-api'
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -28,6 +28,8 @@ export default function ResetPasswordPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const missingParams = !email || !token
+  const passwordsMismatch =
+    confirmPassword.length > 0 && newPassword !== confirmPassword
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,48 +69,47 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+    <div className="relative flex h-full overflow-hidden bg-background px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-5 [@media(max-height:760px)]:py-3">
       <div className="absolute inset-0 -z-10">
-        <div className="absolute left-[-8%] top-[-8%] h-[320px] w-[320px] rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute bottom-[-10%] right-[-8%] h-[280px] w-[280px] rounded-full bg-accent/8 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom_right,transparent,rgba(36,59,123,0.03),transparent)]" />
+        <div className="absolute left-[-8%] top-[-10%] h-[260px] w-[260px] rounded-full bg-primary/[0.06] blur-3xl" />
+        <div className="absolute bottom-[-12%] right-[-8%] h-[220px] w-[220px] rounded-full bg-primary/[0.035] blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom_right,transparent,rgba(36,59,123,0.018),transparent)]" />
       </div>
 
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-7xl items-center justify-center">
-        <div className="grid w-full overflow-hidden rounded-[28px] border border-border/60 bg-card/90 shadow-[0_24px_90px_-35px_rgba(15,23,42,0.28)] backdrop-blur-xl lg:grid-cols-[1fr_1.05fr]">
-          <section className="flex items-center justify-center px-6 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12 xl:px-16">
-            <div className="w-full max-w-lg">
-              <div className="mb-10">
-                <div className="mb-6">
-                  <p className="text-[1.5rem] font-semibold tracking-tight text-foreground">
+      <div className="mx-auto flex min-h-0 w-full max-w-[1360px] items-center justify-center">
+        <div className="grid w-full max-w-[560px] overflow-hidden rounded-[24px] border border-border/60 bg-card/90 shadow-[0_24px_90px_-35px_rgba(15,23,42,0.28)] backdrop-blur-xl lg:h-full lg:max-h-[760px] lg:max-w-none lg:min-h-0 lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)] lg:rounded-[28px] [@media(max-height:760px)]:lg:max-h-full">
+          <section className="flex min-h-0 items-center justify-center px-5 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-10 xl:px-16 [@media(max-height:760px)]:lg:py-6">
+            <div className="w-full max-w-[520px]">
+              <div className="mb-6 [@media(max-height:760px)]:mb-4">
+                <div className="mb-5 [@media(max-height:760px)]:mb-3">
+                  <div className="mb-3 h-1 w-12 rounded-full bg-primary" />
+                  <p className="text-base font-semibold tracking-tight text-foreground">
                     Blossom Institute
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Academic management platform
+                    Plataforma académica
                   </p>
                 </div>
 
-                <div className="mb-6 h-[3px] w-12 rounded-full bg-primary" />
-
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-primary/80">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
                     Restablecer contraseña
                   </p>
 
-                  <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-[2.65rem]">
+                  <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[2rem]">
                     Creá una nueva contraseña
                   </h1>
 
-                  <p className="mt-4 max-w-md text-[15px] leading-7 text-muted-foreground sm:text-base">
-                    Ingresá y confirmá tu nueva contraseña para recuperar el acceso a tu cuenta.
+                  <p className="mt-2 max-w-md text-sm leading-5 text-muted-foreground">
+                    Ingresá y confirmá tu nueva contraseña.
                   </p>
                 </div>
               </div>
 
               <form onSubmit={handleSubmit}>
-                <FieldGroup className="space-y-6">
+                <FieldGroup className="gap-4.5 [@media(max-height:760px)]:gap-3.5">
                   {missingParams && (
-                    <Alert className="rounded-2xl border-destructive/25 bg-destructive/5 text-destructive">
+                    <Alert className="rounded-xl border-destructive/25 bg-destructive/5 py-3 text-destructive">
                       <AlertDescription>
                         El enlace de recuperación es inválido o incompleto.
                       </AlertDescription>
@@ -116,33 +117,33 @@ export default function ResetPasswordPage() {
                   )}
 
                   {error && (
-                    <Alert className="rounded-2xl border-destructive/25 bg-destructive/5 text-destructive">
+                    <Alert className="rounded-xl border-destructive/25 bg-destructive/5 py-3 text-destructive">
                       <AlertDescription>{error}</AlertDescription>
                     </Alert>
                   )}
 
                   {successMessage && (
-                    <Alert className="rounded-2xl border-primary/20 bg-primary/5 text-foreground">
+                    <Alert className="rounded-xl border-primary/20 bg-primary/5 py-3 text-foreground">
                       <AlertDescription>{successMessage}</AlertDescription>
                     </Alert>
                   )}
 
-                  <Field>
-                    <FieldLabel className="mb-2.5 text-sm font-semibold text-foreground">
+                  <Field className="space-y-0">
+                    <FieldLabel className="mb-1.5 text-sm font-semibold text-foreground">
                       Email
                     </FieldLabel>
                     <Input
                       type="email"
                       value={email}
                       disabled
-                      className="h-13 rounded-2xl border-border/70 bg-muted/50 px-4 text-[15px] text-muted-foreground shadow-none"
+                      className="h-10 rounded-xl border-border/60 bg-muted/35 px-3 text-sm text-muted-foreground shadow-none"
                     />
                   </Field>
 
-                  <Field>
+                  <Field className="space-y-0">
                     <FieldLabel
                       htmlFor="newPassword"
-                      className="mb-2.5 text-sm font-semibold text-foreground"
+                      className="mb-1.5 text-sm font-semibold text-foreground"
                     >
                       Nueva contraseña
                     </FieldLabel>
@@ -158,13 +159,13 @@ export default function ResetPasswordPage() {
                         required
                         disabled={isLoading || missingParams}
                         autoComplete="new-password"
-                        className="h-13 rounded-2xl border-border/80 bg-background/90 pl-11 pr-12 text-[15px] text-foreground shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                        className="h-11 rounded-xl border-border/60 bg-background/75 pl-10 pr-11 text-sm text-foreground shadow-none placeholder:text-muted-foreground/80 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute right-1.5 top-1.5 h-10 w-10 rounded-xl text-muted-foreground transition-all duration-200 hover:bg-primary/8 hover:text-primary"
+                        className="absolute right-1 top-1 h-9 w-9 rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-primary/8 hover:text-primary"
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         disabled={isLoading || missingParams}
                       >
@@ -176,12 +177,12 @@ export default function ResetPasswordPage() {
                     </div>
                   </Field>
 
-                  <Field>
+                  <Field className="space-y-0">
                     <FieldLabel
                       htmlFor="confirmPassword"
-                      className="mb-2.5 text-sm font-semibold text-foreground"
+                      className="mb-1.5 text-sm font-semibold text-foreground"
                     >
-                      Confirmar contraseña
+                      Repetir nueva contraseña
                     </FieldLabel>
 
                     <div className="relative">
@@ -193,15 +194,16 @@ export default function ResetPasswordPage() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
+                        aria-invalid={passwordsMismatch}
                         disabled={isLoading || missingParams}
                         autoComplete="new-password"
-                        className="h-13 rounded-2xl border-border/80 bg-background/90 pl-11 pr-12 text-[15px] text-foreground shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                        className="h-11 rounded-xl border-border/60 bg-background/75 pl-10 pr-11 text-sm text-foreground shadow-none placeholder:text-muted-foreground/80 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute right-1.5 top-1.5 h-10 w-10 rounded-xl text-muted-foreground transition-all duration-200 hover:bg-primary/8 hover:text-primary"
+                        className="absolute right-1 top-1 h-9 w-9 rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-primary/8 hover:text-primary"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         disabled={isLoading || missingParams}
                       >
@@ -211,11 +213,16 @@ export default function ResetPasswordPage() {
                         </span>
                       </Button>
                     </div>
+                    {passwordsMismatch ? (
+                      <p className="text-sm text-destructive">
+                        Las contraseñas no coinciden.
+                      </p>
+                    ) : null}
                   </Field>
 
                   <Button
                     type="submit"
-                    className="h-13 w-full rounded-2xl bg-primary text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+                    className="h-11 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
                     disabled={isLoading || missingParams}
                   >
                     {isLoading ? (
@@ -230,7 +237,7 @@ export default function ResetPasswordPage() {
 
                   <Link
                     href="/login"
-                   className="inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-primary transition-all duration-200 hover:-translate-x-0.5 hover:text-primary/80"
+                   className="inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-primary transition-colors duration-200 hover:text-primary/80"
                   >
                     <ArrowLeft className="size-4" />
                     Volver al inicio de sesión
@@ -249,5 +256,13 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }

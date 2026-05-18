@@ -1,67 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import {
-  Loader2,
-  ShieldCheck,
-  Sparkles,
-  UserCog,
-  BadgeCheck,
-} from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { AccountProfileForm } from '@/components/teacher/settings/account-profile-form'
 import { ChangePasswordForm } from '@/components/teacher/settings/change-password-form'
+import { RoleChipList } from '@/components/teacher/settings/settings-ui'
 import { getMyAccountSettings } from '@/lib/teacher/settings/api'
 import type { MyAccountSettings } from '@/lib/teacher/settings/types'
-
-function SummaryCard({
-  title,
-  value,
-  subvalue,
-  icon: Icon,
-  accent = 'blue',
-}: {
-  title: string
-  value: string | number
-  subvalue?: string
-  icon: React.ComponentType<{ className?: string }>
-  accent?: 'blue' | 'emerald' | 'violet' | 'amber'
-}) {
-  const accentStyles =
-    accent === 'emerald'
-      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-      : accent === 'violet'
-        ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
-        : accent === 'amber'
-          ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-          : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-
-  return (
-    <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              {title}
-            </p>
-            <p className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-              {value}
-            </p>
-            {subvalue && (
-              <p className="mt-1 text-sm text-muted-foreground">{subvalue}</p>
-            )}
-          </div>
-
-          <div className={`flex size-10 items-center justify-center rounded-lg ${accentStyles}`}>
-            <Icon className="size-5" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 export default function TeacherSettingsPage() {
   const [account, setAccount] = useState<MyAccountSettings | null>(null)
@@ -85,42 +33,18 @@ export default function TeacherSettingsPage() {
 
   return (
     <>
-      <AppHeader title="Settings" />
+      <AppHeader title="Configuración" />
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
-        <div className="mx-auto max-w-6xl space-y-5">
-          <section className="rounded-2xl border border-border/65 bg-card/90 px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/80 sm:px-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary/80">
-                  Account settings
-                </p>
-
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                  Configuración de cuenta y seguridad
-                </h2>
-
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-[15px]">
-                  Gestioná tus datos personales, tus roles visibles y la seguridad de acceso desde un único espacio.
-                </p>
-              </div>
-
-              <div className="inline-flex items-center gap-3 rounded-xl border border-border/60 bg-background/75 px-4 py-3 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors hover:border-primary/20 hover:bg-background">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Sparkles className="size-5" />
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    Módulo
-                  </p>
-                  <p className="text-sm font-semibold text-foreground">
-                    Settings
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
+        <div className="mx-auto max-w-6xl space-y-4">
+          <header className="space-y-1 border-b border-border/60 pb-4">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              Configuración de cuenta
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Actualizá tus datos personales y la seguridad de acceso.
+            </p>
+          </header>
 
           {loading ? (
             <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
@@ -139,53 +63,32 @@ export default function TeacherSettingsPage() {
             </Card>
           ) : account ? (
             <>
-              <div className="grid gap-4 md:grid-cols-3">
-                <SummaryCard
-                  title="Usuario"
-                  value={`${account.nombre} ${account.apellido}`}
-                  subvalue={account.email}
-                  icon={UserCog}
-                  accent="blue"
-                />
+              <section className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-card/95 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold tracking-tight text-foreground">
+                    {account.nombre} {account.apellido}
+                  </p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {account.email}
+                  </p>
+                </div>
 
-                <SummaryCard
-                  title="Estado"
-                  value={account.activo ? 'Activo' : 'Inactivo'}
-                  subvalue="Estado actual de la cuenta"
-                  icon={ShieldCheck}
-                  accent="emerald"
-                />
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${
+                      account.activo
+                        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                        : 'border-border/60 bg-muted/40 text-muted-foreground'
+                    }`}
+                  >
+                    {account.activo ? 'Activo' : 'Inactivo'}
+                  </span>
 
-                <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                          Roles
-                        </p>
+                  <RoleChipList roles={account.roles} />
+                </div>
+              </section>
 
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {account.roles.map((role) => (
-                            <span
-                              key={role}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-                            >
-                              <BadgeCheck className="size-3.5" />
-                              {role}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex size-10 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                        <BadgeCheck className="size-5" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+              <div className="grid min-w-0 gap-6 xl:grid-cols-[1.15fr_0.85fr]">
                 <AccountProfileForm
                   account={account}
                   onUpdated={(updated) => setAccount(updated)}

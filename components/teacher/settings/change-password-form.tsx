@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { Eye, EyeOff, KeyRound, Loader2, ShieldCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { SettingsSection } from '@/components/teacher/settings/settings-ui'
 import { changeMyPassword } from '@/lib/teacher/settings/api'
 
 type PasswordFieldProps = {
@@ -35,7 +35,7 @@ function PasswordField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="h-11 rounded-2xl border-border/70 bg-card/85 pr-12 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+          className="h-10 rounded-xl border-border/60 bg-background/75 pr-11 shadow-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
           autoComplete="off"
         />
 
@@ -43,7 +43,7 @@ function PasswordField({
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute right-1.5 top-1.5 h-8 w-8 rounded-xl text-muted-foreground transition hover:bg-primary/5 hover:text-primary"
+          className="absolute right-1 top-1 h-8 w-8 rounded-lg text-muted-foreground transition hover:bg-primary/5 hover:text-primary"
           onClick={onToggle}
         >
           {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -91,26 +91,12 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-      <CardHeader className="pb-5">
-        <div className="flex items-start gap-4">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <ShieldCheck className="size-5" />
-          </div>
-
-          <div className="space-y-1">
-            <CardTitle className="text-xl font-semibold tracking-tight">
-              Seguridad
-            </CardTitle>
-            <CardDescription className="text-sm leading-6">
-              Actualizá tu contraseña para mantener tu cuenta protegida.
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-7">
+    <SettingsSection
+      icon={ShieldCheck}
+      title="Seguridad"
+      description="Actualizá tu contraseña para mantener tu cuenta protegida."
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
           <PasswordField
             label="Contraseña actual"
             value={formData.currentPassword}
@@ -134,7 +120,7 @@ export function ChangePasswordForm() {
           />
 
           <PasswordField
-            label="Confirmar nueva contraseña"
+            label="Repetir nueva contraseña"
             value={formData.confirmNewPassword}
             onChange={(value) =>
               setFormData((prev) => ({ ...prev, confirmNewPassword: value }))
@@ -145,13 +131,13 @@ export function ChangePasswordForm() {
           />
 
           {error && (
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="rounded-2xl border border-green-500/20 bg-green-500/5 px-4 py-3 text-sm text-green-700 dark:text-green-400">
+            <div className="rounded-xl border border-green-500/20 bg-green-500/5 px-3 py-2.5 text-sm text-green-700 dark:text-green-400">
               {success}
             </div>
           )}
@@ -160,7 +146,7 @@ export function ChangePasswordForm() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-2xl px-6 shadow-md shadow-primary/20 transition-all hover:shadow-lg"
+              className="h-10 rounded-xl px-4 shadow-none transition-colors duration-200 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? (
                 <>
@@ -170,13 +156,12 @@ export function ChangePasswordForm() {
               ) : (
                 <>
                   <KeyRound className="mr-2 size-4" />
-                  Cambiar contraseña
+                  Actualizar contraseña
                 </>
               )}
             </Button>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+      </form>
+    </SettingsSection>
   )
 }

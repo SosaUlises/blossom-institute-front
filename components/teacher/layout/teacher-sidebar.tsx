@@ -36,7 +36,7 @@ import { cn } from '@/lib/utils'
 const teacherNavItems = [
   { title: 'Dashboard', url: '/teacher/dashboard', icon: LayoutDashboard },
   { title: 'Courses', url: '/teacher/courses', icon: BookOpen },
-  { title: 'Settings', url: '/teacher/settings', icon: Settings },
+  { title: 'Configuración', url: '/teacher/settings', icon: Settings },
 ]
 
 function getItemDescription(title: string) {
@@ -45,7 +45,7 @@ function getItemDescription(title: string) {
       return 'Resumen general'
     case 'Courses':
       return 'Cursos asignados'
-    case 'Settings':
+    case 'Configuración':
       return 'Configuración'
     default:
       return ''
@@ -164,7 +164,7 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
           <div className="space-y-5">
             <SidebarGroup>
               <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-                Teaching
+                Docencia
               </SidebarGroupLabel>
 
               <SidebarGroupContent>
@@ -241,7 +241,7 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
                     className="rounded-xl px-3 py-2 text-sm text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400 hover:bg-red-50 focus:bg-red-50 data-[state=open]:bg-red-50"
                   >
                     <LogOut className="mr-2 size-4" />
-                    Sign out
+                    Cerrar sesión
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

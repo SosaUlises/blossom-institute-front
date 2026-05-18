@@ -89,7 +89,7 @@ function buildDateTime(dateStr: string, timeStr: string) {
 function formatClassDate(value: string) {
   const date = parseLocalDate(value)
   if (isToday(date)) return 'Hoy'
-  if (isTomorrow(date)) return 'Manana'
+  if (isTomorrow(date)) return 'Mañana'
   return format(date, 'EEE d MMM', { locale: es })
 }
 
@@ -195,11 +195,12 @@ function DashboardHero({
   const hasPending = pendingCount > 0
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border/65 bg-card/90 px-5 py-5 shadow-[0_12px_36px_-28px_rgba(15,23,42,0.28)] dark:bg-card/75 sm:px-6 md:min-h-[190px]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_92%_18%,rgba(14,165,233,0.14),transparent_30%),radial-gradient(circle_at_72%_100%,rgba(99,102,241,0.08),transparent_28%)] dark:bg-[radial-gradient(circle_at_92%_18%,rgba(56,189,248,0.10),transparent_32%),radial-gradient(circle_at_72%_100%,rgba(129,140,248,0.08),transparent_30%)]" />
-      <div className="absolute inset-y-0 left-0 z-0 w-[78%] bg-gradient-to-r from-background via-background/96 to-transparent dark:from-background dark:via-background/90" />
+    <section className="relative overflow-hidden rounded-2xl border border-border/90 bg-gradient-to-br from-card via-card to-secondary px-5 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.07),0_10px_26px_-22px_rgba(15,23,42,0.28)] dark:border-border/60 dark:bg-none dark:bg-card/80 dark:shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:px-6 sm:py-5">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_92%_10%,rgba(14,165,233,0.16),transparent_34%)] dark:bg-[radial-gradient(circle_at_92%_10%,rgba(56,189,248,0.08),transparent_32%)]" />
+      <div className="absolute inset-0 ring-1 ring-inset ring-white/80 dark:ring-0" />
+      <div className="absolute inset-0 opacity-[0.025] [background-image:linear-gradient(to_right,rgba(15,23,42,0.9)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.9)_1px,transparent_1px)] [background-size:28px_28px] dark:opacity-[0.045] dark:[background-image:linear-gradient(to_right,rgba(226,232,240,0.9)_1px,transparent_1px),linear-gradient(to_bottom,rgba(226,232,240,0.9)_1px,transparent_1px)]" />
 
-      <div className="relative z-10 max-w-3xl md:pr-64 lg:pr-80">
+      <div className="relative z-10 max-w-3xl">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-xs font-medium capitalize text-muted-foreground">
             {formatTodayLabel()}
@@ -214,22 +215,15 @@ function DashboardHero({
           </span>
         </div>
 
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           Hola, {name}
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-[15px]">
+        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-[15px]">
           {hasPending
             ? `Tenes ${pendingCount} ${pendingCount === 1 ? 'entrega' : 'entregas'} para revisar.`
             : 'Todo listo para hoy. Podes revisar agenda, cursos y actividad reciente.'}
         </p>
       </div>
-
-      <img
-        src="/hero-profesor.png"
-        alt=""
-        aria-hidden="true"
-       className="pointer-events-none absolute bottom-0 right-0 z-0 hidden h-[118%] w-auto max-w-[44%] select-none object-contain opacity-95 md:block md:bottom-0 md:right-4 md:h-[124%] md:max-w-[44%] lg:-bottom-6 lg:right-6 lg:h-[118%] lg:max-w-[42%]"
-      />
     </section>
   )
 }
@@ -632,7 +626,7 @@ export function TeacherDashboardView({
   const pendingDeliveries = getPendingDeliveries(dashboard.ultimasEntregas)
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <DashboardHero
         name={dashboard.nombre}
         pendingCount={dashboard.entregasPendientesCorreccionCount}
