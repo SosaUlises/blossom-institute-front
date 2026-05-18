@@ -323,12 +323,7 @@ function CompactDashboardHero({
     <section className="relative overflow-hidden rounded-2xl border border-border/65 bg-card/85 shadow-[0_12px_36px_-28px_rgba(15,23,42,0.28)] dark:bg-card/65">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_92%_20%,rgba(16,185,129,0.12),transparent_28%)]" />
       <div className="absolute inset-y-0 left-0 z-0 w-[78%] bg-gradient-to-r from-background via-background/96 to-transparent dark:from-background dark:via-background/92" />
-      <img
-        src="/hero-chicos.png"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-8 right-0 z-0 hidden h-[108%] w-auto max-w-[40%] select-none object-contain md:block md:-bottom-9 md:right-4 md:h-[112%] md:max-w-[39%] lg:-bottom-8 lg:right-6 lg:h-[96%] lg:max-w-[36%]"
-      />
+
 
       <div className="relative z-10 flex min-h-[168px] flex-col justify-between gap-5 p-5 sm:min-h-[176px] sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
