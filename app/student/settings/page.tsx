@@ -1,17 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, UserRound } from 'lucide-react'
 
-import { AccountProfileForm } from '@/components/account/settings/account-profile-form'
+import { AccountAvatarSection } from '@/components/account/settings/account-avatar-section'
 import { ChangePasswordForm } from '@/components/account/settings/change-password-form'
 import { RoleChipList } from '@/components/account/settings/role-chip-list'
+import { SettingsSection } from '@/components/account/settings/settings-section'
 import { AppHeader } from '@/components/layout/app-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { getMyAccountSettings } from '@/lib/account/settings/api'
 import type { MyAccountSettings } from '@/lib/account/settings/types'
 
-export default function TeacherSettingsPage() {
+export default function StudentSettingsPage() {
   const [account, setAccount] = useState<MyAccountSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +34,7 @@ export default function TeacherSettingsPage() {
 
   return (
     <>
-      <AppHeader title="Configuración" />
+      <AppHeader title="Configuración" subtitle="Blossom Institute · Alumno" />
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-6xl space-y-4">
@@ -42,7 +43,7 @@ export default function TeacherSettingsPage() {
               Configuración de cuenta
             </h2>
             <p className="text-sm text-muted-foreground">
-              Actualizá tus datos personales y la seguridad de acceso.
+              Actualizá tu foto de perfil y la seguridad de acceso.
             </p>
           </header>
 
@@ -89,10 +90,23 @@ export default function TeacherSettingsPage() {
               </section>
 
               <div className="grid min-w-0 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-                <AccountProfileForm
-                  account={account}
-                  onUpdated={(updated) => setAccount(updated)}
-                />
+                <SettingsSection
+                  icon={UserRound}
+                  title="Perfil"
+                  description="Foto de perfil y datos de cuenta."
+                >
+                  <div className="space-y-3">
+                    <AccountAvatarSection
+                      account={account}
+                      onUpdated={(updated) => setAccount(updated)}
+                    />
+
+                    <div className="rounded-xl border border-border/60 bg-background/75 px-4 py-3 text-sm text-muted-foreground dark:bg-background/35">
+                      Si necesitás cambiar algún dato personal de tu cuenta,
+                      comunicate con tu profesor.
+                    </div>
+                  </div>
+                </SettingsSection>
 
                 <ChangePasswordForm />
               </div>

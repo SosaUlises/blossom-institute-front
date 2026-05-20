@@ -391,12 +391,12 @@ function LearningRhythmInline({
       tone: getAttendanceTone(porcentajeAsistenciaGeneral),
     },
     {
-      label: 'Entregas',
+      label: 'Tareas entregadas',
       value: String(entregasRecientesCount),
       tone: entregasRecientesCount > 0 ? ('blue' as const) : ('neutral' as const),
     },
     {
-      label: 'Tareas',
+      label: 'Tareas pendientes',
       value: String(tareasPendientesCount),
       tone: getCountTone(tareasPendientesCount),
     },

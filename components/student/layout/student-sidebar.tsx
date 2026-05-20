@@ -9,6 +9,7 @@ import {
   ChevronRight,
   LayoutDashboard,
   LogOut,
+  Settings,
 } from 'lucide-react'
 
 import {
@@ -39,12 +40,18 @@ const studentNavItems = [
   { title: 'Courses', url: '/student/courses', icon: BookOpen },
 ]
 
+const studentSecondaryNavItems = [
+  { title: 'Configuración', url: '/student/settings', icon: Settings },
+]
+
 function getItemDescription(title: string) {
   switch (title) {
     case 'Dashboard':
       return 'Resumen general'
     case 'Courses':
       return 'Cursos asignados'
+    case 'Configuración':
+      return 'Cuenta y seguridad'
     default:
       return ''
   }
@@ -179,19 +186,35 @@ export function StudentSidebar({ user }: { user: SessionUser }) {
 
       <SidebarContent className="flex h-full flex-col px-3 py-4">
         <div className="flex min-h-0 flex-1 flex-col justify-between">
-          <SidebarGroup>
-            <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-              Student
-            </SidebarGroupLabel>
+          <div className="space-y-5">
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                Student
+              </SidebarGroupLabel>
 
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-2">
-                {studentNavItems.map((item) => (
-                  <NavItem key={item.title} item={item} pathname={pathname} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-2">
+                  {studentNavItems.map((item) => (
+                    <NavItem key={item.title} item={item} pathname={pathname} />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                Cuenta
+              </SidebarGroupLabel>
+
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-2">
+                  {studentSecondaryNavItems.map((item) => (
+                    <NavItem key={item.title} item={item} pathname={pathname} />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </div>
 
           <div className="pt-5">
             {!mounted ? (
