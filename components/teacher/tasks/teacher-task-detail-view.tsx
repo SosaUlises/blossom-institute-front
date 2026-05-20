@@ -22,6 +22,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import {
   Empty,
   EmptyDescription,
@@ -199,13 +200,21 @@ function SubmissionRow({
   const entregaEstado = getEstadoEntregaConfig(submission.estadoEntrega)
   const reviewStatus = getSubmissionReviewStatus(submission)
   const hasFeedback = Boolean(submission.feedbackVigente)
+  const alumnoName = `${submission.alumnoNombre} ${submission.alumnoApellido}`.trim() || 'Alumno'
 
   return (
     <article className="min-w-0 rounded-xl border border-border/60 bg-background/60 px-3 py-3 transition-colors duration-200 hover:border-primary/20 hover:bg-card dark:bg-background/35 sm:px-4">
       <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.45fr)_minmax(0,0.65fr)_108px] xl:items-center">
-        <div className="order-1 min-w-0 xl:order-none">
+        <div className="order-1 flex min-w-0 items-center gap-3 xl:order-none">
+          <UserAvatar
+            name={alumnoName}
+            avatarUrl={submission.alumnoAvatarUrl}
+            size={36}
+            className="shrink-0"
+            fallbackClassName="bg-primary/10 text-primary"
+          />
           <h3 className="truncate text-sm font-semibold text-foreground">
-            {submission.alumnoNombre} {submission.alumnoApellido}
+            {alumnoName}
           </h3>
         </div>
 

@@ -16,6 +16,7 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import {
   Empty,
   EmptyDescription,
@@ -398,6 +399,7 @@ export function TeacherSubmissionDetailView({
 
   const entregaEstado = getEstadoEntregaConfig(detail.estadoEntrega)
   const feedbackEstado = getEstadoCorreccionConfig(detail.feedbackVigente?.estado)
+  const alumnoName = `${detail.alumnoNombre ?? ''} ${detail.alumnoApellido ?? ''}`.trim() || 'Alumno'
   return (
     <div className="space-y-5">
       <header className="space-y-4 border-b border-border/60 pb-4">
@@ -424,10 +426,18 @@ export function TeacherSubmissionDetailView({
             </span>
           </div>
 
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              {detail.alumnoNombre} {detail.alumnoApellido}
-            </h1>
+          <div className="flex min-w-0 items-start gap-3">
+            <UserAvatar
+              name={alumnoName}
+              avatarUrl={detail.alumnoAvatarUrl}
+              size={40}
+              className="mt-1 shrink-0"
+              fallbackClassName="bg-primary/10 text-primary"
+            />
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                {alumnoName}
+              </h1>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <InlineMetaChip icon={FileText}>
                 {task?.titulo ?? 'Tarea'}
@@ -440,6 +450,7 @@ export function TeacherSubmissionDetailView({
                   ? '1 adjunto'
                   : `${detail.adjuntos.length} adjuntos`}
               </InlineMetaChip>
+            </div>
             </div>
           </div>
         </div>
