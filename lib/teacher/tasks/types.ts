@@ -47,6 +47,7 @@ export interface TeacherSubmissionListItem {
   alumnoNombre: string
   alumnoApellido: string
   alumnoDni: number
+  alumnoAvatarUrl?: string | null
   fechaEntregaUtc: string
   estadoEntrega: number
   tieneAdjuntos: boolean
@@ -65,6 +66,7 @@ export interface TeacherSubmissionListItem {
   alumnoNombre: string
   alumnoApellido: string
   alumnoDni: number
+  alumnoAvatarUrl?: string | null
 
   fechaEntregaUtc: string
   estadoEntrega: number
@@ -101,6 +103,7 @@ export interface TeacherFeedbackHistoryItem {
 export interface TeacherSubmissionDetail {
   alumnoNombre: string
   alumnoApellido: string
+  alumnoAvatarUrl?: string | null
   entregaId: number
   tareaId: number
   alumnoId: number

@@ -42,6 +42,7 @@ import {
   StudentStatusBadge,
   studentUi,
 } from '@/components/student/courses/student-course-ui'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import { cn } from '@/lib/utils'
 
 type ApiEnvelope<T> = {
@@ -73,6 +74,12 @@ type StudentDelivery = {
 
 type StudentCurrentFeedback = {
   feedbackId?: number | null
+  profesorNombre?: string | null
+  profesorApellido?: string | null
+  profesorAvatarUrl?: string | null
+  teacherName?: string | null
+  teacherAvatarUrl?: string | null
+  createdBy?: Record<string, unknown> | null
   estado?: string | number | null
   comentario?: string | null
   nota?: string | number | null
@@ -86,6 +93,10 @@ type StudentTask = {
   cursoNombre?: string | null
   profesorNombre?: string | null
   profesorApellido?: string | null
+  profesorAvatarUrl?: string | null
+  teacherName?: string | null
+  teacherAvatarUrl?: string | null
+  createdBy?: Record<string, unknown> | null
   titulo?: string | null
   descripcion?: string | null
   consigna?: string | null
@@ -141,6 +152,34 @@ function formatDateTime(value: unknown) {
 
 function safeText(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function getRecord(value: unknown) {
+  return value && typeof value === 'object'
+    ? (value as Record<string, unknown>)
+    : null
+}
+
+function getRecordText(record: Record<string, unknown> | null | undefined, keys: string[]) {
+  if (!record) return null
+
+  for (const key of keys) {
+    const value = safeText(record[key])
+    if (value) return value
+  }
+
+  return null
+}
+
+function getNestedRecord(record: Record<string, unknown> | null | undefined, keys: string[]) {
+  if (!record) return null
+
+  for (const key of keys) {
+    const nested = getRecord(record[key])
+    if (nested) return nested
+  }
+
+  return null
 }
 
 function displayValue(value: unknown) {
@@ -240,15 +279,88 @@ function getDeliveryFile(delivery?: StudentDelivery | null): StudentAttachment |
 }
 
 function getTeacherName(task?: StudentTask | null) {
-  const firstName = safeText(task?.profesorNombre)
-  const lastName = safeText(task?.profesorApellido)
+  const directName = safeText(task?.teacherName)
+  if (directName) return directName
+
+  const taskRecord = getRecord(task)
+  const createdBy = getNestedRecord(taskRecord, ['createdBy', 'CreatedBy', 'autor', 'author'])
+  const nestedName = getRecordText(createdBy, ['nombreCompleto', 'fullName', 'name'])
+  if (nestedName) return nestedName
+
+  const firstName = safeText(task?.profesorNombre) ?? getRecordText(createdBy, ['nombre', 'firstName'])
+  const lastName = safeText(task?.profesorApellido) ?? getRecordText(createdBy, ['apellido', 'lastName'])
   return [firstName, lastName].filter(Boolean).join(' ').trim() || 'Profesor'
 }
 
 function getAnnouncementTeacherName(task?: StudentTask | null) {
-  const firstName = safeText(task?.profesorNombre)
-  const lastName = safeText(task?.profesorApellido)
-  return [firstName, lastName].filter(Boolean).join(' ').trim() || null
+  const name = getTeacherName(task)
+  return name === 'Profesor' ? null : name
+}
+
+function getTeacherAvatarUrl(task?: StudentTask | null) {
+  const taskRecord = getRecord(task)
+  const createdBy = getNestedRecord(taskRecord, ['createdBy', 'CreatedBy', 'autor', 'author'])
+
+  return (
+    safeText(task?.profesorAvatarUrl) ??
+    safeText(task?.teacherAvatarUrl) ??
+    getRecordText(taskRecord, [
+      'ProfesorAvatarUrl',
+      'TeacherAvatarUrl',
+      'createdByAvatarUrl',
+      'avatarUrl',
+    ]) ??
+    getRecordText(createdBy, ['avatarUrl', 'fotoUrl', 'profileImageUrl'])
+  )
+}
+
+function getFeedbackTeacherName(
+  feedback?: StudentCurrentFeedback | null,
+  task?: StudentTask | null,
+) {
+  if (!feedback) return getAnnouncementTeacherName(task)
+
+  const feedbackRecord = getRecord(feedback)
+  const createdBy = getNestedRecord(feedbackRecord, ['createdBy', 'CreatedBy', 'autor', 'author'])
+  const directName =
+    safeText(feedback.teacherName) ??
+    getRecordText(feedbackRecord, ['profesorNombreCompleto', 'teacherName']) ??
+    getRecordText(createdBy, ['nombreCompleto', 'fullName', 'name'])
+
+  if (directName) return directName
+
+  const firstName =
+    safeText(feedback.profesorNombre) ??
+    getRecordText(feedbackRecord, ['ProfesorNombre', 'teacherFirstName']) ??
+    getRecordText(createdBy, ['nombre', 'firstName'])
+  const lastName =
+    safeText(feedback.profesorApellido) ??
+    getRecordText(feedbackRecord, ['ProfesorApellido', 'teacherLastName']) ??
+    getRecordText(createdBy, ['apellido', 'lastName'])
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim()
+
+  return fullName || getAnnouncementTeacherName(task)
+}
+
+function getFeedbackTeacherAvatarUrl(
+  feedback?: StudentCurrentFeedback | null,
+  task?: StudentTask | null,
+) {
+  const feedbackRecord = getRecord(feedback)
+  const createdBy = getNestedRecord(feedbackRecord, ['createdBy', 'CreatedBy', 'autor', 'author'])
+
+  return (
+    safeText(feedback?.profesorAvatarUrl) ??
+    safeText(feedback?.teacherAvatarUrl) ??
+    getRecordText(feedbackRecord, [
+      'ProfesorAvatarUrl',
+      'TeacherAvatarUrl',
+      'createdByAvatarUrl',
+      'avatarUrl',
+    ]) ??
+    getRecordText(createdBy, ['avatarUrl', 'fotoUrl', 'profileImageUrl']) ??
+    getTeacherAvatarUrl(task)
+  )
 }
 
 function isAnnouncementTask(task?: StudentTask | null) {
@@ -473,6 +585,38 @@ function TaskHeroMetaChip({
   )
 }
 
+function TeacherAvatarOrIcon({
+  name,
+  avatarUrl,
+  icon: Icon,
+  className,
+}: {
+  name: string | null
+  avatarUrl?: string | null
+  icon: ComponentType<{ className?: string }>
+  className?: string
+}) {
+  if (name) {
+    return (
+      <UserAvatar
+        name={name}
+        avatarUrl={avatarUrl ?? null}
+        size={36}
+        className="mt-0.5 shrink-0"
+        fallbackClassName="bg-primary/10 text-primary dark:bg-primary/15"
+      />
+    )
+  }
+
+  return (
+    <StudentIconContainer
+      icon={Icon}
+      size="sm"
+      className={cn('mt-0.5', className)}
+    />
+  )
+}
+
 export function StudentTaskDetail({
   courseId,
   taskId,
@@ -546,6 +690,9 @@ export function StudentTaskDetail({
   const isAnnouncement = isAnnouncementTask(task)
   const teacherName = getTeacherName(task)
   const announcementTeacherName = getAnnouncementTeacherName(task)
+  const teacherAvatarUrl = getTeacherAvatarUrl(task)
+  const feedbackTeacherName = getFeedbackTeacherName(currentFeedback, task)
+  const feedbackTeacherAvatarUrl = getFeedbackTeacherAvatarUrl(currentFeedback, task)
   const createdAt = formatDate(task?.createdAtUtc)
   const feedbackNeedsChanges = feedbackEstado.intent === 'redo'
   const feedbackApproved = feedbackEstado.intent === 'approved'
@@ -844,16 +991,19 @@ export function StudentTaskDetail({
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex min-w-0 items-start gap-2.5">
-                  <StudentIconContainer
+                  <TeacherAvatarOrIcon
+                    name={feedbackTeacherName}
+                    avatarUrl={feedbackTeacherAvatarUrl}
                     icon={MessageSquareText}
-                    size="sm"
-                    className={cn('mt-0.5', feedbackEstado.iconClass)}
+                    className={feedbackEstado.iconClass}
                   />
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold tracking-tight text-foreground">
-                      {feedbackNeedsChanges
-                        ? 'Tu profe pidió algunos cambios'
-                        : 'Mensaje de tu profe'}
+                      {feedbackTeacherName
+                        ? `${feedbackTeacherName} te dejó una devolución`
+                        : feedbackNeedsChanges
+                          ? 'Tu profe pidió algunos cambios'
+                          : 'Mensaje de tu profe'}
                     </h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {feedbackDate ?? 'Tu profe todavía no puso fecha'}
@@ -1038,7 +1188,9 @@ export function StudentTaskDetail({
         <article className={cn(studentUi.card.grade, 'border-violet-500/15 bg-card sm:p-6')}>
           <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
-              <StudentIconContainer
+              <TeacherAvatarOrIcon
+                name={announcementTeacherName}
+                avatarUrl={teacherAvatarUrl}
                 icon={Megaphone}
                 className="border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300"
               />

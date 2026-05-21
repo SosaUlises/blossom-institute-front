@@ -18,125 +18,83 @@ type Props = {
   course: TeacherCourseDetail
 }
 
-type Tab = 'classes' | 'tasks' | 'students' | 'teachers' 
+type Tab = 'tasks' | 'classes' | 'students' | 'teachers'
 
 const tabStyles: Record<
   Tab,
   {
     label: string
     icon: React.ComponentType<{ className?: string }>
-    activeClass: string
-    idleIconClass: string
     panelTitle: string
     panelDescription: string
   }
 > = {
+  tasks: {
+    label: 'Tablón',
+    icon: ClipboardList,
+    panelTitle: 'Tablón docente',
+    panelDescription: 'Tareas y anuncios del curso.',
+  },
   classes: {
     label: 'Clases',
     icon: CalendarDays,
-    activeClass:
-      'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400 shadow-sm',
-    idleIconClass: 'text-amber-600/80 dark:text-amber-400/80',
     panelTitle: 'Clases y asistencia',
-    panelDescription:
-      'Registro de clases, asistencia y seguimiento académico.',
-  },
-  tasks: {
-    label: 'Tareas',
-    icon: ClipboardList,
-    activeClass:
-      'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shadow-sm',
-    idleIconClass: 'text-emerald-600/80 dark:text-emerald-400/80',
-    panelTitle: 'Tareas y entregas',
-    panelDescription:
-      'Actividades del curso, entregas de alumnos y feedback.',
+    panelDescription: 'Registro de clases y asistencia.',
   },
   students: {
     label: 'Alumnos',
     icon: Users,
-    activeClass:
-      'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-400 shadow-sm',
-    idleIconClass: 'text-sky-600/80 dark:text-sky-400/80',
     panelTitle: 'Alumnos del curso',
-    panelDescription:
-      'Listado y gestión de estudiantes asignados al curso.',
+    panelDescription: 'Listado y gestion de estudiantes asignados al curso.',
   },
   teachers: {
     label: 'Profesores',
     icon: GraduationCap,
-    activeClass:
-      'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400 shadow-sm',
-    idleIconClass: 'text-violet-600/80 dark:text-violet-400/80',
     panelTitle: 'Profesores del curso',
-    panelDescription:
-      'Equipo docente asignado y vinculado al curso.',
+    panelDescription: 'Equipo docente asignado y vinculado al curso.',
   },
-
 }
 
 export function TeacherCourseTabs({ course }: Props) {
-  const [tab, setTab] = useState<Tab>('classes')
-
-  const currentTab = tabStyles[tab]
+  const [tab, setTab] = useState<Tab>('tasks')
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-[26px] border border-border/60 bg-card/90 p-2 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.16)] backdrop-blur-sm">
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(tabStyles) as Tab[]).map((key) => {
-            const tabConfig = tabStyles[key]
-            const Icon = tabConfig.icon
-            const active = tab === key
+    <div className="space-y-2">
+      <nav
+        aria-label="Secciones del curso"
+        className="flex max-w-full gap-3 overflow-x-auto border-b border-border/60 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {(Object.keys(tabStyles) as Tab[]).map((key) => {
+          const tabConfig = tabStyles[key]
+          const Icon = tabConfig.icon
+          const active = tab === key
 
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setTab(key)}
-                className={`group inline-flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-all ${
-                  active
-                    ? tabConfig.activeClass
-                    : 'border-transparent bg-transparent text-muted-foreground hover:border-border/60 hover:bg-background/80 hover:text-foreground'
-                }`}
-              >
-                <span
-                  className={`flex size-8 items-center justify-center rounded-xl border ${
-                    active
-                      ? 'border-current/15 bg-white/40 dark:bg-white/5'
-                      : 'border-border/60 bg-background/70'
-                  }`}
-                >
-                  <Icon
-                    className={`size-4 ${
-                      active ? 'text-current' : tabConfig.idleIconClass
-                    }`}
-                  />
-                </span>
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`group -mb-px inline-flex min-h-9 shrink-0 items-center gap-1.5 border-b-2 px-0.5 py-1.5 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:px-1 ${
+                active
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
+              }`}
+            >
+              <Icon className="size-3.5 transition-colors duration-200 ease-out" />
+              <span>{tabConfig.label}</span>
+            </button>
+          )
+        })}
+      </nav>
 
-                <span>{tabConfig.label}</span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="rounded-[30px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-        <div className="border-b border-border/60 px-6 py-5">
-          <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-            {currentTab.panelTitle}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {currentTab.panelDescription}
-          </p>
-        </div>
-
-        <div className="p-6">
+      <section className="space-y-2">
+        <div>
+          {tab === 'tasks' && <TeacherCourseTasks courseId={course.id} />}
+          {tab === 'classes' && <TeacherCourseClasses courseId={course.id} />}
           {tab === 'students' && <TeacherCourseStudents courseId={course.id} />}
           {tab === 'teachers' && <TeacherCourseTeachers courseId={course.id} />}
-          {tab === 'classes' && <TeacherCourseClasses courseId={course.id} />}
-          {tab === 'tasks' && <TeacherCourseTasks courseId={course.id} />}
         </div>
-      </div>
+      </section>
     </div>
   )
 }

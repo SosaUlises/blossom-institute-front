@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ClipboardList,
   Clock3,
-  FileText,
   Megaphone,
   Paperclip,
   Users,
@@ -24,6 +23,7 @@ import {
   StudentStatusBadge,
   studentUi,
 } from '@/components/student/courses/student-course-ui'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import type { StudentCourseSectionItem } from '@/lib/student/courses/types'
 import { cn } from '@/lib/utils'
 
@@ -599,9 +599,68 @@ function isAnnouncement(item: StudentCourseSectionItem) {
 }
 
 function getTeacherDisplayName(item: StudentCourseSectionItem) {
+  const fullName =
+    getValue(item, ['profesorNombreCompleto', 'teacherName', 'createdByName']) ??
+    getValueFromNestedRecord(item, ['createdBy', 'CreatedBy', 'autor', 'author'], [
+      'nombreCompleto',
+      'fullName',
+      'name',
+    ])
+
+  if (fullName) return fullName
+
   const firstName = safeText(item.profesorNombre)
   const lastName = safeText(item.profesorApellido)
-  return [firstName, lastName].filter(Boolean).join(' ').trim() || 'Profesor'
+  const nestedFirstName = getValueFromNestedRecord(
+    item,
+    ['createdBy', 'CreatedBy', 'autor', 'author'],
+    ['nombre', 'firstName'],
+  )
+  const nestedLastName = getValueFromNestedRecord(
+    item,
+    ['createdBy', 'CreatedBy', 'autor', 'author'],
+    ['apellido', 'lastName'],
+  )
+
+  return (
+    [firstName, lastName].filter(Boolean).join(' ').trim() ||
+    [nestedFirstName, nestedLastName].filter(Boolean).join(' ').trim() ||
+    'Profesor'
+  )
+}
+
+function getValueFromNestedRecord(
+  item: StudentCourseSectionItem,
+  recordKeys: string[],
+  valueKeys: string[],
+) {
+  for (const recordKey of recordKeys) {
+    const record = item[recordKey]
+    if (!record || typeof record !== 'object') continue
+
+    const value = getValue(record as Record<string, unknown>, valueKeys)
+    if (value) return value
+  }
+
+  return null
+}
+
+function getTeacherAvatarUrl(item: StudentCourseSectionItem) {
+  return (
+    getValue(item, [
+      'profesorAvatarUrl',
+      'ProfesorAvatarUrl',
+      'teacherAvatarUrl',
+      'TeacherAvatarUrl',
+      'createdByAvatarUrl',
+      'avatarUrl',
+    ]) ??
+    getValueFromNestedRecord(item, ['createdBy', 'CreatedBy', 'autor', 'author'], [
+      'avatarUrl',
+      'fotoUrl',
+      'imageUrl',
+    ])
+  )
 }
 
 function getResourceLabel(item: StudentCourseSectionItem) {
@@ -654,16 +713,6 @@ function getPersonRole(item: StudentCourseSectionItem): 'teacher' | 'classmate' 
   return 'classmate'
 }
 
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-}
-
 function getFullName(item: StudentCourseSectionItem) {
   const fullName = getValue(item, ['nombreCompleto'])
   if (fullName) return fullName
@@ -671,6 +720,33 @@ function getFullName(item: StudentCourseSectionItem) {
   const firstName = getValue(item, ['nombre'])
   const lastName = getValue(item, ['apellido'])
   return [firstName, lastName].filter(Boolean).join(' ').trim() || null
+}
+
+function getAvatarUrl(item: StudentCourseSectionItem) {
+  return (
+    getValue(item, [
+      'avatarUrl',
+      'AvatarUrl',
+      'fotoUrl',
+      'FotoUrl',
+      'profileImageUrl',
+      'ProfileImageUrl',
+      'imagenPerfilUrl',
+      'ImagenPerfilUrl',
+      'profesorAvatarUrl',
+      'ProfesorAvatarUrl',
+      'alumnoAvatarUrl',
+      'AlumnoAvatarUrl',
+      'userAvatarUrl',
+      'UserAvatarUrl',
+    ]) ??
+    getValueFromNestedRecord(item, ['user', 'User', 'usuario', 'Usuario'], [
+      'avatarUrl',
+      'fotoUrl',
+      'profileImageUrl',
+      'imagenPerfilUrl',
+    ])
+  )
 }
 
 function getPeopleGroups(items: StudentCourseSectionItem[]) {
@@ -763,6 +839,37 @@ function SectionCard({
   )
 }
 
+function PostAuthorAvatar({
+  teacherName,
+  teacherAvatarUrl,
+  fallbackIcon: FallbackIcon,
+  fallbackClassName,
+}: {
+  teacherName: string
+  teacherAvatarUrl: string | null
+  fallbackIcon: React.ComponentType<{ className?: string }>
+  fallbackClassName: string
+}) {
+  if (teacherName && teacherName !== 'Profesor') {
+    return (
+      <UserAvatar
+        name={teacherName}
+        avatarUrl={teacherAvatarUrl}
+        size={36}
+        className="mt-1 shrink-0"
+        fallbackClassName="bg-primary/10 text-primary dark:bg-primary/15"
+      />
+    )
+  }
+
+  return (
+    <StudentIconContainer
+      icon={FallbackIcon}
+      className={fallbackClassName}
+    />
+  )
+}
+
 function TaskPostCard({
   item,
   courseId,
@@ -772,6 +879,8 @@ function TaskPostCard({
 }) {
   const announcement = isAnnouncement(item)
   const teacherName = getTeacherDisplayName(item)
+  const teacherAvatarUrl = getTeacherAvatarUrl(item)
+  const hasTeacherName = teacherName !== 'Profesor'
   const title = getValue(item, ['titulo', 'nombre', 'tareaTitulo']) ?? 'Sin título'
   const description = getValue(item, ['descripcion', 'consigna'])
   const taskId = item.tareaId ?? item.id
@@ -793,13 +902,13 @@ function TaskPostCard({
 
         <div className="grid grid-cols-[auto,minmax(0,1fr)] gap-4 p-4 pl-5 sm:flex sm:items-start sm:gap-4 sm:p-5 sm:pl-6">
           <StudentIconContainer
-            icon={FileText}
+            icon={BookOpen}
             className="border-primary/15 bg-primary/10 text-primary"
           />
 
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium leading-5 text-muted-foreground">
-            Tarea de {teacherName}
+              {hasTeacherName ? `Tarea de ${teacherName}` : 'Tarea del curso'}
             </p>
             <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-7 tracking-tight text-foreground sm:line-clamp-2">
               {title}
@@ -854,14 +963,16 @@ function TaskPostCard({
   return (
     <article className={cn('group', studentUi.card.feed, 'border-violet-200/70 hover:border-violet-300/70 dark:border-violet-500/15 dark:hover:border-violet-500/25')}>
       <div className="grid grid-cols-[auto,minmax(0,1fr)] gap-4 p-4 sm:flex sm:items-start sm:gap-4 sm:p-5">
-        <StudentIconContainer
-          icon={Megaphone}
-          className="border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300"
+        <PostAuthorAvatar
+          teacherName={teacherName}
+          teacherAvatarUrl={teacherAvatarUrl}
+          fallbackIcon={Megaphone}
+          fallbackClassName="border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300"
         />
 
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium leading-5 text-muted-foreground">
-            Anuncio de {teacherName}
+            {hasTeacherName ? `Anuncio de ${teacherName}` : 'Anuncio del curso'}
           </p>
           <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-7 tracking-tight text-foreground sm:line-clamp-2">
             {title}
@@ -1028,13 +1139,17 @@ function AttendanceHistory({
 
 function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
   const name = getFullName(item) ?? 'Nombre no disponible'
+  const avatarUrl = getAvatarUrl(item)
 
   return (
     <article className="rounded-xl border border-violet-200/60 bg-violet-50/30 p-4 transition-colors duration-200 ease-out hover:border-violet-300/70 hover:bg-violet-50/45 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
       <div className="flex items-center gap-3">
-        <StudentIconContainer className="border-violet-200 bg-background/80 text-sm font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
-          {getInitials(name) || '?'}
-        </StudentIconContainer>
+        <UserAvatar
+          name={name}
+          avatarUrl={avatarUrl}
+          size={44}
+          fallbackClassName="bg-background/80 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300"
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -1060,6 +1175,7 @@ function ClassmatePersonCard({
   currentStudentId?: number
 }) {
   const name = getFullName(item) ?? 'Nombre no disponible'
+  const avatarUrl = getAvatarUrl(item)
   const current = isCurrentStudent(item, currentStudentId)
 
   return (
@@ -1072,9 +1188,12 @@ function ClassmatePersonCard({
       )}
     >
       <div className="flex items-center gap-3">
-        <StudentIconContainer size="md" className="border-primary/10 bg-primary/8 text-sm font-semibold text-primary">
-          {getInitials(name) || '?'}
-        </StudentIconContainer>
+        <UserAvatar
+          name={name}
+          avatarUrl={avatarUrl}
+          size={40}
+          fallbackClassName="bg-primary/8 text-primary"
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

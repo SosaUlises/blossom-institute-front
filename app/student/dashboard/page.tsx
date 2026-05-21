@@ -11,6 +11,7 @@ import {
 import Link from 'next/link'
 
 import { AppHeader } from '@/components/layout/app-header'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import {
   StudentIconContainer,
   studentUi,
@@ -41,6 +42,9 @@ type Movement = {
   icon: ComponentType<{ className?: string }>
   priority?: boolean
   score?: string
+  actorName?: string
+  actorAvatarUrl?: string | null
+  actorType?: 'teacher' | 'system'
 }
 
 const MAX_LEARNING_FEED_ITEMS = 6
@@ -175,6 +179,86 @@ function getRecordArray(record: Record<string, unknown>, keys: string[]) {
   }
 
   return []
+}
+
+function getNestedRecord(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const nested = getRecord(record[key])
+    if (nested) return nested
+  }
+
+  return null
+}
+
+function getActorName(record: Record<string, unknown>) {
+  const directName = getRecordText(record, [
+    'profesorNombreCompleto',
+    'ProfesorNombreCompleto',
+    'teacherName',
+    'TeacherName',
+    'createdByName',
+    'autorNombreCompleto',
+    'authorName',
+  ])
+
+  if (directName) return directName
+
+  const firstName = getRecordText(record, [
+    'profesorNombre',
+    'ProfesorNombre',
+    'teacherFirstName',
+    'TeacherFirstName',
+    'createdByNombre',
+    'autorNombre',
+  ])
+  const lastName = getRecordText(record, [
+    'profesorApellido',
+    'ProfesorApellido',
+    'teacherLastName',
+    'TeacherLastName',
+    'createdByApellido',
+    'autorApellido',
+  ])
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim()
+
+  if (fullName) return fullName
+
+  const createdBy = getNestedRecord(record, ['createdBy', 'CreatedBy', 'autor', 'author'])
+  if (!createdBy) return null
+
+  const nestedName = getRecordText(createdBy, [
+    'nombreCompleto',
+    'fullName',
+    'name',
+  ])
+
+  if (nestedName) return nestedName
+
+  const nestedFirstName = getRecordText(createdBy, ['nombre', 'firstName'])
+  const nestedLastName = getRecordText(createdBy, ['apellido', 'lastName'])
+
+  return [nestedFirstName, nestedLastName].filter(Boolean).join(' ').trim() || null
+}
+
+function getActorAvatarUrl(record: Record<string, unknown>) {
+  const directAvatarUrl = getRecordText(record, [
+    'profesorAvatarUrl',
+    'ProfesorAvatarUrl',
+    'teacherAvatarUrl',
+    'TeacherAvatarUrl',
+    'createdByAvatarUrl',
+    'autorAvatarUrl',
+    'avatarUrl',
+    'AvatarUrl',
+  ])
+
+  if (directAvatarUrl) return directAvatarUrl
+
+  const createdBy = getNestedRecord(record, ['createdBy', 'CreatedBy', 'autor', 'author'])
+
+  return createdBy
+    ? getRecordText(createdBy, ['avatarUrl', 'fotoUrl', 'imageUrl'])
+    : null
 }
 
 function getAverageTone(value: number | null | undefined): SemanticTone {
@@ -323,12 +407,7 @@ function CompactDashboardHero({
     <section className="relative overflow-hidden rounded-2xl border border-border/65 bg-card/85 shadow-[0_12px_36px_-28px_rgba(15,23,42,0.28)] dark:bg-card/65">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_92%_20%,rgba(16,185,129,0.12),transparent_28%)]" />
       <div className="absolute inset-y-0 left-0 z-0 w-[78%] bg-gradient-to-r from-background via-background/96 to-transparent dark:from-background dark:via-background/92" />
-      <img
-        src="/hero-chicos.png"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-8 right-0 z-0 hidden h-[108%] w-auto max-w-[40%] select-none object-contain md:block md:-bottom-9 md:right-4 md:h-[112%] md:max-w-[39%] lg:-bottom-8 lg:right-6 lg:h-[96%] lg:max-w-[36%]"
-      />
+
 
       <div className="relative z-10 flex min-h-[168px] flex-col justify-between gap-5 p-5 sm:min-h-[176px] sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
@@ -396,12 +475,12 @@ function LearningRhythmInline({
       tone: getAttendanceTone(porcentajeAsistenciaGeneral),
     },
     {
-      label: 'Entregas',
+      label: 'Tareas entregadas',
       value: String(entregasRecientesCount),
       tone: entregasRecientesCount > 0 ? ('blue' as const) : ('neutral' as const),
     },
     {
-      label: 'Tareas',
+      label: 'Tareas pendientes',
       value: String(tareasPendientesCount),
       tone: getCountTone(tareasPendientesCount),
     },
@@ -506,6 +585,8 @@ function MovementItem({
   featured?: boolean
 }) {
   const Icon = movement.icon
+  const showActorAvatar =
+    movement.actorType === 'teacher' && Boolean(movement.actorName)
   const isPriority =
     featured || (movement.priority ?? (movement.tone === 'amber' || movement.tone === 'rose'))
 
@@ -517,14 +598,24 @@ function MovementItem({
       )}
     >
       <div className="flex gap-3">
-        <span
-          className={cn(
-            'mt-1 flex size-8 shrink-0 items-center justify-center rounded-full',
-            toneStyles[movement.tone].icon,
-          )}
-        >
-          <Icon className="size-4" />
-        </span>
+        {showActorAvatar ? (
+          <UserAvatar
+            name={movement.actorName ?? ''}
+            avatarUrl={movement.actorAvatarUrl ?? null}
+            size={32}
+            className="mt-1 shrink-0"
+            fallbackClassName="bg-primary/10 text-primary dark:bg-primary/15"
+          />
+        ) : (
+          <span
+            className={cn(
+              'mt-1 flex size-8 shrink-0 items-center justify-center rounded-full',
+              toneStyles[movement.tone].icon,
+            )}
+          >
+            <Icon className="size-4" />
+          </span>
+        )}
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -553,6 +644,7 @@ function MovementItem({
           </p>
 
           <p className="mt-1 text-xs text-muted-foreground/80">
+            {movement.actorName ? `${movement.actorName} · ` : ''}
             {movement.course} · {movement.when}
           </p>
         </div>
@@ -589,6 +681,7 @@ function buildMovements({
   const feedbackMovements: Movement[] = feedbacks.slice(0, 3).map((feedback, index) => {
     const estado = getFeedbackEstado(feedback)
     const date = getTextField(feedback.fechaCorreccionUtc ?? feedback.FechaCorreccionUtc)
+    const actorName = getActorName(feedback)
 
     return {
       key: `feedback-${feedback.feedbackId ?? feedback.FeedbackId ?? index}`,
@@ -607,6 +700,9 @@ function buildMovements({
       tone: estado.tone,
       icon: MessageSquareText,
       priority: estado.tone === 'amber',
+      actorName: actorName ?? undefined,
+      actorAvatarUrl: getActorAvatarUrl(feedback),
+      actorType: actorName ? 'teacher' : undefined,
     }
   })
 
@@ -683,6 +779,7 @@ function buildMovements({
         'FechaUtc',
         'fecha',
       ])
+      const actorName = getActorName(record)
 
       return {
         key: `announcement-${taskId ?? index}`,
@@ -710,6 +807,9 @@ function buildMovements({
         label: 'Anuncio',
         tone: 'violet',
         icon: Megaphone,
+        actorName: actorName ?? undefined,
+        actorAvatarUrl: getActorAvatarUrl(record),
+        actorType: actorName ? 'teacher' : undefined,
       }
     })
     .filter((movement): movement is Movement => Boolean(movement))

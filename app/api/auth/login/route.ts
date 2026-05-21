@@ -14,6 +14,7 @@ interface BackendLoginResponse {
       email: string
       nombre: string
       apellido: string
+      avatarUrl?: string | null
       roles: string[]
     }
   }

@@ -3,6 +3,7 @@ import { Manrope } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
+// @ts-ignore: Handle side-effect CSS import when no declaration file is present
 import './globals.css'
 
 const manrope = Manrope({
@@ -12,7 +13,7 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Blossom Institute - Admin Dashboard',
+    default: 'Blossom Institute',
     template: '%s | Blossom Institute',
   },
   description: 'Educational management system for Blossom Institute',

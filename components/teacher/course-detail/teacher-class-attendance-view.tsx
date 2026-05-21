@@ -4,12 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
-  CalendarDays,
-  CheckSquare,
   Save,
-  Users,
-  CheckCircle2,
-  XCircle,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -25,6 +20,10 @@ import {
 import { getEstadoClaseLabel as getAttendanceEstadoClaseLabel } from '@/lib/teacher/course-detail/attendance-utils'
 import { formatDate } from '@/lib/teacher/course-detail/formatters'
 import { cn } from '@/lib/utils'
+import {
+  PersonAvatar,
+  PersonRosterSurface,
+} from './course-people-ui'
 
 type Props = {
   courseId: number
@@ -34,81 +33,43 @@ type Props = {
 type StudentState = {
   alumnoId: number
   nombreCompleto: string
+  avatarUrl?: string | null
   estado: EstadoAsistencia | null
 }
 
-function AttendanceOptionButton({
-  label,
-  active,
-  tone = 'default',
-  onClick,
-}: {
-  label: string
-  active: boolean
-  tone?: 'success' | 'danger' | 'default'
-  onClick: () => void
-}) {
-  const toneClass =
-    tone === 'success'
-      ? active
-        ? 'border-emerald-500/20 bg-emerald-500/12 text-emerald-700 dark:text-emerald-400 shadow-sm'
-        : 'border-border/60 bg-background/85 text-muted-foreground hover:border-emerald-500/20 hover:bg-emerald-500/5 hover:text-emerald-700 dark:hover:text-emerald-400'
-      : tone === 'danger'
-        ? active
-          ? 'border-rose-500/20 bg-rose-500/12 text-rose-700 dark:text-rose-400 shadow-sm'
-          : 'border-border/60 bg-background/85 text-muted-foreground hover:border-rose-500/20 hover:bg-rose-500/5 hover:text-rose-700 dark:hover:text-rose-400'
-        : active
-          ? 'border-primary/20 bg-primary/10 text-primary shadow-sm'
-          : 'border-border/60 bg-background/85 text-muted-foreground hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'rounded-2xl border px-4 py-2.5 text-sm font-medium transition-all duration-200',
-        'hover:-translate-y-[1px]',
-        toneClass,
-      )}
-    >
-      {label}
-    </button>
-  )
-}
-
-function StatCard({
-  icon,
-  label,
+function AttendanceSegmentedControl({
   value,
-  tone = 'default',
+  onChange,
 }: {
-  icon: React.ReactNode
-  label: string
-  value: number
-  tone?: 'default' | 'success' | 'danger'
+  value: EstadoAsistencia | null
+  onChange: (value: EstadoAsistencia) => void
 }) {
   return (
-    <div
-      className={cn(
-        'rounded-[24px] border p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]',
-        tone === 'success' &&
-          'border-emerald-500/20 bg-emerald-500/[0.06]',
-        tone === 'danger' &&
-          'border-rose-500/20 bg-rose-500/[0.06]',
-        tone === 'default' &&
-          'border-border/60 bg-background/80',
-      )}
-    >
-      <div className="flex items-center gap-2 text-muted-foreground">
-        {icon}
-        <span className="text-xs font-medium uppercase tracking-[0.14em]">
-          {label}
-        </span>
-      </div>
-
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-        {value}
-      </p>
+    <div className="grid h-10 w-full grid-cols-2 rounded-xl border border-border/60 bg-background/70 p-1 sm:w-auto sm:min-w-56 dark:bg-background/35">
+      <button
+        type="button"
+        onClick={() => onChange(EstadoAsistencia.Presente)}
+        className={cn(
+          'rounded-lg px-3 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
+          value === EstadoAsistencia.Presente
+            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+            : 'text-muted-foreground hover:bg-emerald-500/5 hover:text-emerald-700 dark:hover:text-emerald-300',
+        )}
+      >
+        Presente
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(EstadoAsistencia.Ausente)}
+        className={cn(
+          'rounded-lg px-3 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
+          value === EstadoAsistencia.Ausente
+            ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
+            : 'text-muted-foreground hover:bg-rose-500/5 hover:text-rose-700 dark:hover:text-rose-300',
+        )}
+      >
+        Ausente
+      </button>
     </div>
   )
 }
@@ -139,6 +100,7 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
           result.alumnos.map((alumno) => ({
             alumnoId: alumno.alumnoId,
             nombreCompleto: alumno.nombreCompleto,
+            avatarUrl: alumno.avatarUrl,
             estado: alumno.estado ?? null,
           })),
         )
@@ -152,11 +114,6 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
     load()
   }, [courseId, fecha])
 
-  const registeredCount = useMemo(
-    () => students.filter((x) => x.estado != null).length,
-    [students],
-  )
-
   const presentCount = useMemo(
     () => students.filter((x) => x.estado === EstadoAsistencia.Presente).length,
     [students],
@@ -166,6 +123,7 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
     () => students.filter((x) => x.estado === EstadoAsistencia.Ausente).length,
     [students],
   )
+  const unmarkedCount = students.length - presentCount - absentCount
 
   const handleChangeEstado = (
     alumnoId: number,
@@ -207,7 +165,7 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
+      <div className="rounded-xl border border-border/60 bg-background/60 px-5 py-6 text-sm text-muted-foreground dark:bg-background/35">
         Cargando asistencia...
       </div>
     )
@@ -215,7 +173,7 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
 
   if (error && !detail) {
     return (
-      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
         {error}
       </div>
     )
@@ -223,89 +181,52 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
 
   if (!detail) {
     return (
-      <div className="rounded-[24px] border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
         No se encontró la asistencia.
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.18)] md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.06),transparent_28%)]" />
+    <div className="space-y-5 pb-24 md:pb-0">
+      <header className="space-y-3 border-b border-border/60 pb-4">
+        <Button
+          variant="ghost"
+          className="-ml-2 h-9 w-fit rounded-lg px-2 text-muted-foreground hover:bg-primary/5 hover:text-primary"
+          onClick={() => router.push(`/teacher/courses/${courseId}`)}
+        >
+          <ArrowLeft className="mr-2 size-4" />
+          Volver al curso
+        </Button>
 
-        <div className="relative space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Button
-              variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
-              onClick={() => router.push(`/teacher/courses/${courseId}`)}
-            >
-              <ArrowLeft className="mr-2 size-4" />
-              Volver al curso
-            </Button>
-
-            <span className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-              {getAttendanceEstadoClaseLabel(detail.estadoClase)}
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-              <CheckSquare className="size-3.5" />
-              Asistencia
-            </div>
-
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-              Asistencia · {formatDate(detail.fecha)}
-            </h1>
-
-            <p className="max-w-2xl text-[15px] leading-7 text-muted-foreground">
-              Registrá presentes y ausentes para la clase del día y guardá la
-              descripción del contenido visto.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <StatCard
-              icon={<Users className="size-4" />}
-              label="Registros"
-              value={registeredCount}
-            />
-            <StatCard
-              icon={<CheckSquare className="size-4" />}
-              label="Presentes"
-              value={presentCount}
-              tone="success"
-            />
-            <StatCard
-              icon={<CalendarDays className="size-4" />}
-              label="Ausentes"
-              value={absentCount}
-              tone="danger"
-            />
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            Asistencia · {formatDate(detail.fecha)}
+          </h1>
+          <span className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-blue-300">
+            {getAttendanceEstadoClaseLabel(detail.estadoClase)}
+          </span>
         </div>
-      </section>
+      </header>
 
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70 sm:p-5">
         <div className="space-y-3">
           <label className="text-sm font-medium text-foreground">
-            Descripción de la clase
+            Tema de la clase
           </label>
 
           <textarea
             value={descripcionClase}
             onChange={(e) => setDescripcionClase(e.target.value)}
             rows={4}
-            className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm outline-none transition-all duration-200 focus:border-primary/30 focus:ring-4 focus:ring-primary/10"
-            placeholder="Temas vistos, observaciones, contenido trabajado..."
+            className="w-full rounded-xl border border-border/60 bg-background/75 px-3 py-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15 dark:bg-background/35"
+            placeholder="Temas vistos, contenido trabajado..."
           />
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Alumnos
@@ -313,12 +234,16 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
             <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
               Registro por alumno
             </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {students.length} alumnos · {presentCount} presentes · {absentCount}{' '}
+              ausentes · {unmarkedCount} sin marcar
+            </p>
           </div>
 
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+            className="h-10 rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
           >
             <Save className="mr-2 size-4" />
             {saving ? 'Guardando...' : 'Guardar asistencia'}
@@ -337,14 +262,21 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
           </div>
         )}
 
-        <div className="space-y-3">
-          {students.map((student) => {
+        {students.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-6 text-center dark:bg-muted/10">
+            <p className="text-sm font-medium text-foreground">
+              Todavía no hay alumnos asignados a este curso.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {students.map((student) => {
             const statusLabel =
               student.estado === EstadoAsistencia.Presente
                 ? 'Presente'
                 : student.estado === EstadoAsistencia.Ausente
                   ? 'Ausente'
-                  : 'Sin registro'
+                  : 'Sin marcar'
 
             const statusClass =
               student.estado === EstadoAsistencia.Presente
@@ -353,60 +285,68 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
                   ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
                   : 'border-border/60 bg-muted/40 text-muted-foreground'
 
-            return (
-              <div
-                key={student.alumnoId}
-                className="rounded-[26px] border border-border/60 bg-background/75 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md"
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="min-w-0 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-base font-semibold text-foreground">
-                        {student.nombreCompleto}
-                      </p>
+              return (
+                <PersonRosterSurface key={student.alumnoId} tone="student">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <PersonAvatar
+                        name={student.nombreCompleto}
+                        avatarUrl={student.avatarUrl}
+                        tone="student"
+                      />
 
-                      <span
-                        className={cn(
-                          'inline-flex rounded-full border px-3 py-1 text-xs font-medium',
-                          statusClass,
-                        )}
-                      >
-                        {statusLabel}
-                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-[15px]">
+                          {student.nombreCompleto}
+                        </p>
+                        <span
+                          className={cn(
+                            'mt-1 inline-flex rounded-full border px-2.5 py-1 text-xs font-medium',
+                            statusClass,
+                          )}
+                        >
+                          {statusLabel}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <AttendanceOptionButton
-                      label="Presente"
-                      tone="success"
-                      active={student.estado === EstadoAsistencia.Presente}
-                      onClick={() =>
-                        handleChangeEstado(
-                          student.alumnoId,
-                          EstadoAsistencia.Presente,
-                        )
-                      }
-                    />
-
-                    <AttendanceOptionButton
-                      label="Ausente"
-                      tone="danger"
-                      active={student.estado === EstadoAsistencia.Ausente}
-                      onClick={() =>
-                        handleChangeEstado(
-                          student.alumnoId,
-                          EstadoAsistencia.Ausente,
-                        )
+                    <AttendanceSegmentedControl
+                      value={student.estado}
+                      onChange={(estado) =>
+                        handleChangeEstado(student.alumnoId, estado)
                       }
                     />
                   </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+                </PersonRosterSurface>
+              )
+            })}
+          </div>
+        )}
       </section>
+
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-background/95 px-5 py-3 backdrop-blur dark:bg-background/90 md:hidden">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-foreground">
+              {unmarkedCount > 0
+                ? `Faltan ${unmarkedCount} por marcar`
+                : 'Asistencia completa'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {presentCount} presentes · {absentCount} ausentes
+            </p>
+          </div>
+
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="h-10 shrink-0 rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
+          >
+            <Save className="mr-2 size-4" />
+            {saving ? 'Guardando...' : 'Guardar asistencia'}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

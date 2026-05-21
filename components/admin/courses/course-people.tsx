@@ -6,7 +6,6 @@ import {
   Search,
   Trash2,
   Users,
-  UserRound,
   Mail,
   IdCard,
   Plus,
@@ -32,6 +31,7 @@ import { getTeachers } from '@/lib/admin/teachers/api'
 import type { Alumno } from '@/lib/admin/students/types'
 import type { Profesor } from '@/lib/admin/teachers/types'
 import { cn } from '@/lib/utils'
+import { UserAvatar } from '@/components/shared/user-avatar'
 
 type TabKey = 'alumnos' | 'profesores'
 
@@ -112,6 +112,7 @@ function CurrentPersonCard({
   name,
   email,
   dni,
+  avatarUrl,
   type,
   onRemove,
   loading,
@@ -119,17 +120,17 @@ function CurrentPersonCard({
   name: string
   email: string
   dni: number
+  avatarUrl?: string | null
   type: 'alumno' | 'profesor'
   onRemove: () => void
   loading: boolean
 }) {
-  const Icon = type === 'alumno' ? UserRound : GraduationCap
   const toneClass =
     type === 'alumno'
       ? 'group-hover:border-primary/20 group-hover:bg-primary/[0.04]'
       : 'group-hover:border-violet-500/20 group-hover:bg-violet-500/[0.04]'
 
-  const iconClass =
+  const avatarFallbackClass =
     type === 'alumno'
       ? 'bg-primary/10 text-primary'
       : 'bg-violet-500/10 text-violet-700 dark:text-violet-400'
@@ -143,14 +144,12 @@ function CurrentPersonCard({
     >
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="min-w-0 flex items-start gap-3">
-          <div
-            className={cn(
-              'flex size-11 shrink-0 items-center justify-center rounded-2xl',
-              iconClass,
-            )}
-          >
-            <Icon className="size-4.5" />
-          </div>
+          <UserAvatar
+            name={name}
+            avatarUrl={avatarUrl}
+            size={44}
+            fallbackClassName={avatarFallbackClass}
+          />
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -197,6 +196,7 @@ function AssignablePersonCard({
   name,
   email,
   dni,
+  avatarUrl,
   type,
 }: {
   checked: boolean
@@ -204,10 +204,9 @@ function AssignablePersonCard({
   name: string
   email: string
   dni: number
+  avatarUrl?: string | null
   type: 'alumno' | 'profesor'
 }) {
-  const Icon = type === 'alumno' ? UserRound : GraduationCap
-
   const selectedTone =
     type === 'alumno'
       ? 'border-primary/25 bg-primary/8 shadow-[0_16px_26px_-22px_rgba(36,59,123,0.24)]'
@@ -218,7 +217,7 @@ function AssignablePersonCard({
       ? 'hover:border-primary/15 hover:bg-primary/[0.04]'
       : 'hover:border-violet-500/15 hover:bg-violet-500/[0.04]'
 
-  const iconTone =
+  const avatarFallbackClass =
     type === 'alumno'
       ? checked
         ? 'bg-primary/15 text-primary'
@@ -243,14 +242,12 @@ function AssignablePersonCard({
       />
 
       <div className="flex min-w-0 flex-1 items-start gap-3">
-        <div
-          className={cn(
-            'flex size-10 shrink-0 items-center justify-center rounded-2xl',
-            iconTone,
-          )}
-        >
-          <Icon className="size-4.5" />
-        </div>
+        <UserAvatar
+          name={name}
+          avatarUrl={avatarUrl}
+          size={40}
+          fallbackClassName={avatarFallbackClass}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -573,6 +570,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                     name={`${alumno.nombre} ${alumno.apellido}`}
                     email={alumno.email}
                     dni={alumno.dni}
+                    avatarUrl={alumno.avatarUrl}
                     type="alumno"
                     loading={actionLoadingId === alumno.alumnoId}
                     onRemove={() => handleRemoveAlumno(alumno)}
@@ -590,6 +588,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                   name={`${profesor.nombre} ${profesor.apellido}`}
                   email={profesor.email}
                   dni={profesor.dni}
+                  avatarUrl={profesor.avatarUrl}
                   type="profesor"
                   loading={actionLoadingId === profesor.profesorId}
                   onRemove={() => handleRemoveProfesor(profesor)}
@@ -708,6 +707,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                       name={`${student.nombre} ${student.apellido}`}
                       email={student.email}
                       dni={student.dni}
+                      avatarUrl={student.avatarUrl}
                       type="alumno"
                     />
                   )
@@ -729,6 +729,7 @@ export function CoursePeople({ cursoId }: { cursoId: number }) {
                     name={`${teacher.nombre} ${teacher.apellido}`}
                     email={teacher.email}
                     dni={teacher.dni}
+                    avatarUrl={teacher.avatarUrl}
                     type="profesor"
                   />
                 )

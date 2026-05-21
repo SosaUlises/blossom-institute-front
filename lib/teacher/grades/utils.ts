@@ -3,8 +3,8 @@ import { SkillEvaluada, TipoCalificacion } from './types'
 export const tipoCalificacionOptions = [
   { value: String(TipoCalificacion.Quiz), label: 'Quiz' },
   { value: String(TipoCalificacion.Test), label: 'Test' },
-  { value: String(TipoCalificacion.Participation), label: 'Participation' },
-  { value: String(TipoCalificacion.Behaviour), label: 'Behaviour' },
+  { value: String(TipoCalificacion.Participation), label: 'Participación' },
+  { value: String(TipoCalificacion.Behaviour), label: 'Comportamiento' },
 ]
 
 export const skillOptions = [
@@ -48,13 +48,13 @@ export function getTipoCalificacionLabel(tipo: number) {
     case TipoCalificacion.Test:
       return 'Test'
     case TipoCalificacion.Participation:
-      return 'Participation'
+      return 'Participación'
     case TipoCalificacion.Behaviour:
-      return 'Behaviour'
+      return 'Comportamiento'
     case TipoCalificacion.Homework:
-      return 'Homework'
+      return 'Tarea'
     default:
-      return 'Unknown'
+      return 'Evaluación'
   }
 }
 

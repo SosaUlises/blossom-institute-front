@@ -10,15 +10,15 @@ export function getEstadoCorreccionConfig(estado?: number | null) {
       }
     case EstadoCorreccion.Rehacer:
       return {
-        label: 'Rehacer',
+        label: 'Pedir cambios',
         className:
-          'border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400',
+          'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400',
       }
     default:
       return {
-        label: 'Sin feedback',
+        label: 'Sin corregir',
         className:
-          'border-border/60 bg-muted/40 text-muted-foreground',
+          'border-border/60 bg-background/70 text-foreground dark:bg-background/35',
       }
   }
 }

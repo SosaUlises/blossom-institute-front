@@ -13,7 +13,6 @@ import {
   Users,
   ShieldCheck,
   Sparkles,
-  FileText,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -39,6 +38,9 @@ const qualitativeNoteOptions = [
   { label: 'G', value: '80' },
   { label: 'R', value: '65' },
 ]
+
+const fieldClassName =
+  'h-10 w-full rounded-xl border border-border/60 bg-background/75 px-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15'
 
 function isQualitativeNoteValue(value: string) {
   return qualitativeNoteOptions.some((option) => option.value === value)
@@ -110,7 +112,7 @@ function getTipoVisual(tipo: number) {
 function getCalculatedGradeTone(nota: number) {
   if (nota >= 80) {
     return {
-      card: 'border-emerald-500/20 bg-emerald-500/[0.08] shadow-[0_18px_34px_-22px_rgba(16,185,129,0.24)] hover:bg-emerald-500/[0.10] hover:shadow-[0_24px_42px_-22px_rgba(16,185,129,0.30)]',
+      card: 'border-emerald-500/20 bg-emerald-500/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.035)] hover:bg-emerald-500/[0.10] hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
       label: 'text-emerald-700/80 dark:text-emerald-400/90',
       value: 'text-emerald-700 dark:text-emerald-400',
       suffix: 'text-emerald-700/70 dark:text-emerald-400/70',
@@ -122,7 +124,7 @@ function getCalculatedGradeTone(nota: number) {
 
   if (nota >= 60) {
     return {
-      card: 'border-amber-500/20 bg-amber-500/[0.08] shadow-[0_18px_34px_-22px_rgba(245,158,11,0.22)] hover:bg-amber-500/[0.10] hover:shadow-[0_24px_42px_-22px_rgba(245,158,11,0.28)]',
+      card: 'border-amber-500/20 bg-amber-500/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.035)] hover:bg-amber-500/[0.10] hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
       label: 'text-amber-700/80 dark:text-amber-400/90',
       value: 'text-amber-700 dark:text-amber-400',
       suffix: 'text-amber-700/70 dark:text-amber-400/70',
@@ -133,7 +135,7 @@ function getCalculatedGradeTone(nota: number) {
   }
 
   return {
-    card: 'border-rose-500/20 bg-rose-500/[0.08] shadow-[0_18px_34px_-22px_rgba(244,63,94,0.22)] hover:bg-rose-500/[0.10] hover:shadow-[0_24px_42px_-22px_rgba(244,63,94,0.28)]',
+    card: 'border-rose-500/20 bg-rose-500/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.035)] hover:bg-rose-500/[0.10] hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
     label: 'text-rose-700/80 dark:text-rose-400/90',
     value: 'text-rose-700 dark:text-rose-400',
     suffix: 'text-rose-700/70 dark:text-rose-400/70',
@@ -283,80 +285,16 @@ export function TeacherGradeForm({
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-        <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <div className="group rounded-[24px] border border-primary/15 bg-primary/5 p-5 shadow-[0_12px_28px_-20px_rgba(36,59,123,0.24)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/[0.07] hover:shadow-[0_18px_34px_-22px_rgba(36,59,123,0.30)]">
-            <div className="flex items-start gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-[1.02]">
-                <TipoIcon className="size-4.5" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary/80">
-                  Tipo seleccionado
-                </p>
-                <p className="mt-2 text-base font-semibold tracking-tight text-primary">
-                  {tipoVisual.title}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {tipoVisual.description}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="group rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.12)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.16)]">
-            <div className="flex items-start gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground transition-transform duration-200 group-hover:scale-[1.02]">
-                <CalendarDays className="size-4.5" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Fecha
-                </p>
-                <p className="mt-2 text-base font-semibold tracking-tight text-foreground">
-                  {fecha || 'Sin fecha seleccionada'}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  La fecha es obligatoria para registrar la calificación.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="group rounded-[24px] border border-border/60 bg-background/75 p-5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.12)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.16)]">
-            <div className="flex items-start gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground transition-transform duration-200 group-hover:scale-[1.02]">
-                {useSkills ? (
-                  <Trophy className="size-4.5" />
-                ) : (
-                  <Percent className="size-4.5" />
-                )}
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Modo de carga
-                </p>
-                <p className="mt-2 text-base font-semibold tracking-tight text-foreground">
-                  {useSkills
-                    ? 'Calculada por skills'
-                    : useDirectNote
-                      ? 'Nota directa'
-                      : 'Seleccioná un tipo'}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {useSkills
-                    ? 'La nota final se calcula automáticamente.'
-                    : useDirectNote
-                      ? 'La nota se ingresa manualmente.'
-                      : 'El tipo define cómo se registra la calificación.'}
-                </p>
-              </div>
-            </div>
-          </div>
+    <div className="space-y-4 pb-24 lg:pb-4">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${tipoVisual.badgeClass}`}>
+            <TipoIcon className="size-3.5" />
+            {tipoVisual.title}
+          </span>
+          <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground dark:bg-background/35">
+            {useSkills ? 'Calculada por habilidades' : useDirectNote ? 'Nota directa' : 'Elegí un tipo'}
+          </span>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -365,7 +303,7 @@ export function TeacherGradeForm({
             <select
               value={tipo}
               onChange={(e) => setTipo(e.target.value)}
-              className="flex h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+              className={fieldClassName}
             >
               <option value="">Seleccionar tipo</option>
               {tipoCalificacionOptions.map((option) => (
@@ -384,7 +322,7 @@ export function TeacherGradeForm({
                 type="date"
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
-                className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                className={`${fieldClassName} pl-10`}
               />
             </div>
           </div>
@@ -394,18 +332,18 @@ export function TeacherGradeForm({
             <input
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
-              className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
-              placeholder="Ej. Quiz Unit 3, Participation March, Test Midterm..."
+              className={fieldClassName}
+              placeholder="Ej. Quiz Unit 3, Participación marzo..."
             />
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-foreground">Descripción</label>
+            <label className="text-sm font-medium text-foreground">Comentario</label>
             <textarea
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               rows={4}
-              className="w-full rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+              className="w-full rounded-xl border border-border/60 bg-background/75 px-3 py-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15"
               placeholder="Detalle opcional de la evaluación..."
             />
           </div>
@@ -413,17 +351,14 @@ export function TeacherGradeForm({
       </section>
 
       {useDirectNote && (
-        <section className={`rounded-[28px] border p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] ${tipoVisual.accent}`}>
-          <div className="mb-5 space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        <section className={`rounded-2xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5 ${tipoVisual.accent}`}>
+          <div className="mb-4">
+            <h2 className="text-base font-semibold tracking-tight text-foreground">
               Nota directa
-            </p>
-            <h3 className="text-lg font-semibold tracking-tight text-foreground">
-              Calificación manual
-            </h3>
+            </h2>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Nota</label>
               <div className="relative">
@@ -431,7 +366,7 @@ export function TeacherGradeForm({
                 <select
                   value={nota}
                   onChange={(e) => setNota(e.target.value)}
-                  className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 pl-10 pr-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                  className={`${fieldClassName} pl-10`}
                 >
                   <option value="">Seleccionar nota</option>
                   {nota.trim() && !isQualitativeNoteValue(nota) && (
@@ -447,102 +382,73 @@ export function TeacherGradeForm({
                 </select>
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                Ingresá el valor final de la calificación. El máximo permitido es 100.
-              </p>
+              <p className="text-xs text-muted-foreground">Máximo permitido: 100.</p>
             </div>
 
-            <div className="rounded-[24px] border border-primary/15 bg-primary/5 px-5 py-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
-                Vista previa
-              </p>
-
-              <div className="mt-2 flex items-end justify-between gap-3">
-                <div>
-                  <p className="text-3xl font-semibold tracking-tight text-primary">
-                    {nota.trim() ? Number(nota).toFixed(2) : '--'}
-                  </p>
-                  <p className="mt-1 text-xs text-primary/70">
-                    Resultado manual cargado
-                  </p>
-                </div>
-
-                <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Trophy className="size-4.5" />
-                </div>
-              </div>
+            <div className="inline-flex items-center gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-primary">
+              <Trophy className="size-4" />
+              <span className="text-sm font-medium">Nota final</span>
+              <span className="text-base font-semibold">
+                {nota.trim() ? Number(nota).toFixed(2) : '--'}
+              </span>
             </div>
           </div>
         </section>
       )}
 
       {useSkills && (
-        <section className={`rounded-[28px] border p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] ${tipoVisual.accent}`}>
-          <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div className="space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Skills
-              </p>
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                Detalle por skills
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Cada skill solo puede usarse una vez dentro de la misma calificación.
+        <section className={`rounded-2xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5 ${tipoVisual.accent}`}>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-base font-semibold tracking-tight text-foreground">
+                Detalle por habilidades
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Cada habilidad solo puede usarse una vez.
               </p>
             </div>
 
             <Button
               variant="outline"
-              className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              className="h-9 rounded-lg border-border/70 bg-background/70 px-3 transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
               onClick={handleAddDetail}
             >
               <Plus className="mr-2 size-4" />
-              Agregar skill
+              Agregar habilidad
             </Button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {detalles.map((detail, index) => (
               <div
                 key={detail.id}
-                className="rounded-[24px] border border-border/60 bg-card/80 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-card hover:shadow-md"
+                className="rounded-xl border border-border/60 bg-background/55 p-3 transition-colors duration-200 hover:border-primary/20 hover:bg-background/75 dark:bg-background/25"
               >
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${tipoVisual.iconTone}`}>
-                      <TipoIcon className="size-4.5" />
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Skill {index + 1}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Definí skill, puntaje obtenido y puntaje máximo.
-                      </p>
-                    </div>
-                  </div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">
+                    Habilidad {index + 1}
+                  </p>
 
                   <Button
                     variant="outline"
-                    className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
+                    className="size-9 rounded-lg border-border/70 bg-background/70 p-0 transition-colors duration-200 hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
                     onClick={() => handleRemoveDetail(detail.id)}
                   >
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_180px]">
+                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_140px]">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Skill</label>
+                    <label className="text-sm font-medium text-foreground">Habilidad</label>
                     <select
                       value={detail.skill}
                       onChange={(e) =>
                         handleChangeDetail(detail.id, 'skill', e.target.value)
                       }
-                      className="flex h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                      className={fieldClassName}
                     >
-                      <option value="">Seleccionar skill</option>
+                      <option value="">Seleccionar habilidad</option>
                       {skillOptions
                         .filter(
                           (option) =>
@@ -568,7 +474,7 @@ export function TeacherGradeForm({
                       onChange={(e) =>
                         handleChangeDetail(detail.id, 'puntajeObtenido', e.target.value)
                       }
-                      className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                      className={fieldClassName}
                     />
                   </div>
 
@@ -583,7 +489,7 @@ export function TeacherGradeForm({
                       onChange={(e) =>
                         handleChangeDetail(detail.id, 'puntajeMaximo', e.target.value)
                       }
-                      className="h-11 w-full rounded-2xl border border-border/70 bg-background/85 px-4 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] outline-none transition-all duration-200 focus:ring-4 focus:ring-primary/15"
+                      className={fieldClassName}
                     />
                   </div>
                 </div>
@@ -591,61 +497,22 @@ export function TeacherGradeForm({
             ))}
           </div>
 
-          <div className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.25fr]">
-            <div className="group rounded-[24px] border border-border/60 bg-card/80 p-5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-card hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start gap-3">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-background text-muted-foreground shadow-sm">
-                  <ClipboardList className="size-4.5" />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Skills válidas
-                  </p>
-
-                  <div className="mt-2 flex items-end gap-2">
-                    <p className="text-3xl font-semibold tracking-tight text-foreground">
-                      {validSkillsCount}
-                    </p>
-                    <span className="pb-1 text-xs font-medium text-muted-foreground">
-                      completas
-                    </span>
-                  </div>
-
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Cantidad de skills listas para entrar en el cálculo final.
-                  </p>
-                </div>
-              </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-sm text-muted-foreground dark:bg-background/25">
+              <ClipboardList className="size-4" />
+              {validSkillsCount} completas
             </div>
 
-            <div className={`group rounded-[26px] border p-5 transition-all duration-200 hover:-translate-y-[1px] ${calculatedTone.card}`}>
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${calculatedTone.label}`}>
-                    Nota calculada
-                  </p>
-
-                  <div className="mt-3 flex items-end gap-3">
-                    <p className={`text-[2.25rem] font-semibold leading-none tracking-tight ${calculatedTone.value}`}>
-                      {calculatedGrade.toFixed(2)}
-                    </p>
-                    <span className={`pb-1 text-xs font-medium ${calculatedTone.suffix}`}>
-                      / 100
-                    </span>
-                  </div>
-
-                  <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-                    Resultado automático según los puntajes cargados en cada skill.
-                  </p>
-                </div>
-
-                <div className={`flex size-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-[1.03] ${calculatedTone.icon}`}>
-                  <Trophy className="size-5" />
-                </div>
+            <div className={`rounded-xl border p-3 transition-colors duration-200 ${calculatedTone.card}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className={`text-sm font-medium ${calculatedTone.label}`}>
+                  Nota calculada
+                </span>
+                <span className={`text-base font-semibold ${calculatedTone.value}`}>
+                  {calculatedGrade.toFixed(2)} / 100
+                </span>
               </div>
-
-              <div className={`mt-5 h-2 overflow-hidden rounded-full ${calculatedTone.barBg}`}>
+              <div className={`mt-2 h-2 overflow-hidden rounded-full ${calculatedTone.barBg}`}>
                 <div
                   className={`h-full rounded-full transition-all duration-300 ${calculatedTone.barFill}`}
                   style={{ width: `${Math.max(0, Math.min(100, calculatedGrade))}%` }}
@@ -668,18 +535,18 @@ export function TeacherGradeForm({
         </div>
       )}
 
-      <div className="flex justify-end">
+      <div className="sticky bottom-0 z-10 -mx-5 flex justify-end border-t border-border/60 bg-background/95 px-5 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0">
         <Button
           onClick={handleSubmit}
           disabled={saving}
-          className="rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+          className="h-10 rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
         >
           <Save className="mr-2 size-4" />
           {saving
             ? 'Guardando...'
             : submitLabel ?? (mode === 'create'
-              ? 'Crear calificación'
-              : 'Guardar cambios')}
+              ? 'Guardar calificación'
+              : 'Actualizar calificación')}
         </Button>
       </div>
     </div>

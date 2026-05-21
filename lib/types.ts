@@ -13,6 +13,7 @@ export interface User {
   firstName: string
   lastName: string
   avatar?: string
+  avatarUrl?: string | null
   role: UserRole
   status: Status
   createdAt: string

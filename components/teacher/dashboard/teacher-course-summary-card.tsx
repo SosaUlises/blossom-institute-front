@@ -83,9 +83,9 @@ function CourseRow({ item }: { item: ProfesorDashboardResumenCursoItem }) {
 
   return (
     <li>
-      <div className="group flex flex-col gap-5 rounded-3xl border border-border/50 bg-muted/[0.18] px-5 py-5 text-center transition-all duration-200 ease-out hover:-translate-y-[2px] hover:bg-muted/[0.32] hover:shadow-md md:flex-row md:items-center md:justify-between md:text-left">
+      <div className="group flex flex-col gap-4 rounded-xl border border-border/60 bg-muted/[0.18] px-4 py-4 text-center transition-colors duration-200 ease-out hover:bg-muted/[0.32] md:flex-row md:items-center md:justify-between md:text-left">
         <div className="min-w-0 flex flex-col items-center gap-4 md:flex-row md:items-center">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-background/90 text-primary shadow-sm">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-background/90 text-primary shadow-[0_1px_1px_rgba(15,23,42,0.03)]">
             <BookOpen className="size-5" />
           </div>
 
@@ -142,7 +142,7 @@ export function TeacherCourseSummaryCard({
   items: ProfesorDashboardResumenCursoItem[]
 }) {
   return (
-    <Card className="rounded-[28px] border border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
+    <Card className="rounded-2xl border border-border/60 bg-card/95 text-card-foreground shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
       <CardHeader className="pb-3 text-center md:text-left">
         <CardTitle className="text-lg font-semibold tracking-tight">
           Mis cursos

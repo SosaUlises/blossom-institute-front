@@ -14,10 +14,10 @@ export default async function TeacherSubmissionDetailPage({ params }: PageProps)
 
   return (
     <>
-      <AppHeader title="Submission Detail" />
+      <AppHeader title="Detalle de entrega" />
 
-      <main className="px-6 py-8">
-        <div className="mx-auto max-w-7xl">
+      <main className="min-w-0 flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
+        <div className="mx-auto min-w-0 max-w-6xl">
           <TeacherSubmissionDetailView
             courseId={Number(id)}
             taskId={Number(taskId)}

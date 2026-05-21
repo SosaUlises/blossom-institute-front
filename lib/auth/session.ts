@@ -10,6 +10,7 @@ export interface SessionUser {
   email: string
   nombre: string
   apellido: string
+  avatarUrl?: string | null
   roles: string[]
 }
 
@@ -41,6 +42,10 @@ function normalizeRoles(roleClaim: unknown): string[] {
   return []
 }
 
+function normalizeOptionalString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
 export function hasRole(session: SessionData | null, role: string) {
   if (!session) return false
   return session.user.roles.includes(role)
@@ -66,6 +71,7 @@ export async function verifyToken(token: string): Promise<SessionData | null> {
       email: String(payload.email ?? ''),
       nombre: String(payload.given_name ?? ''),
       apellido: String(payload.family_name ?? ''),
+      avatarUrl: normalizeOptionalString(payload.avatarUrl ?? payload.avatar_url),
       roles: normalizeRoles(payload.role),
     }
 

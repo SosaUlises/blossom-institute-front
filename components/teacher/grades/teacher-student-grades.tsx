@@ -4,11 +4,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Archive,
-  CalendarDays,
+  ArrowLeft,
   Pencil,
   Plus,
   Sparkles,
-  Trophy,
   ClipboardList,
   Inbox,
   FileCheck2,
@@ -19,6 +18,7 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import { RowActions } from '@/components/ui/row-actions'
 import {
   Empty,
@@ -33,17 +33,14 @@ import {
   getTeacherGradeDetail,
 } from '@/lib/teacher/grades/api'
 import type { GradeDetail, GradeListItem } from '@/lib/teacher/grades/types'
-import {
-  getTipoCalificacionBadgeClass,
-  getTipoCalificacionLabel,
-} from '@/lib/teacher/grades/utils'
+import { getTipoCalificacionLabel } from '@/lib/teacher/grades/utils'
 
 type Props = {
   courseId: number
   alumnoId: number
   alumnoNombre?: string
   alumnoApellido?: string
-  alumnoDni?: number
+  alumnoAvatarUrl?: string | null
 }
 
 function formatDate(date: string) {
@@ -59,44 +56,42 @@ function formatDate(date: string) {
 }
 
 function getGradeTone(nota: number) {
+  if (!Number.isFinite(nota)) {
+    return {
+      badge:
+        'border-border/60 bg-background/70 text-muted-foreground dark:bg-background/35',
+      score:
+        'border-border/60 bg-background/70 text-muted-foreground dark:bg-background/35',
+      label: 'Sin nota',
+    }
+  }
+
   if (nota >= 80) {
     return {
-      container:
-        'rounded-[24px] border border-emerald-500/20 bg-emerald-500/[0.10] px-5 py-5 shadow-[0_12px_24px_-18px_rgba(16,185,129,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-emerald-500/[0.14] hover:shadow-md',
-      label:
-        'text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700/80 dark:text-emerald-400/90',
-      value:
-        'text-3xl font-semibold tracking-tight text-emerald-700 dark:text-emerald-400',
-      iconWrap:
-        'flex size-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-      suffix: 'text-xs text-emerald-700/70 dark:text-emerald-400/70',
+      badge:
+        'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+      score:
+        'border-emerald-500/20 bg-emerald-500/[0.10] text-emerald-700 dark:text-emerald-300',
+      label: 'Buen desempeño',
     }
   }
 
   if (nota >= 60) {
     return {
-      container:
-        'rounded-[24px] border border-amber-500/20 bg-amber-500/[0.10] px-5 py-5 shadow-[0_12px_24px_-18px_rgba(245,158,11,0.30)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-amber-500/[0.14] hover:shadow-md',
-      label:
-        'text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700/80 dark:text-amber-400/90',
-      value:
-        'text-3xl font-semibold tracking-tight text-amber-700 dark:text-amber-400',
-      iconWrap:
-        'flex size-10 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-700 dark:text-amber-400',
-      suffix: 'text-xs text-amber-700/70 dark:text-amber-400/70',
+      badge:
+        'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+      score:
+        'border-amber-500/20 bg-amber-500/[0.10] text-amber-700 dark:text-amber-300',
+      label: 'En progreso',
     }
   }
 
   return {
-    container:
-      'rounded-[24px] border border-rose-500/20 bg-rose-500/[0.10] px-5 py-5 shadow-[0_12px_24px_-18px_rgba(244,63,94,0.30)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-rose-500/[0.14] hover:shadow-md',
-    label:
-      'text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-700/80 dark:text-rose-400/90',
-    value:
-      'text-3xl font-semibold tracking-tight text-rose-700 dark:text-rose-400',
-    iconWrap:
-      'flex size-10 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-700 dark:text-rose-400',
-    suffix: 'text-xs text-rose-700/70 dark:text-rose-400/70',
+    badge:
+      'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300',
+    score:
+      'border-rose-500/20 bg-rose-500/[0.10] text-rose-700 dark:text-rose-300',
+    label: 'Necesita refuerzo',
   }
 }
 
@@ -150,7 +145,8 @@ function getGradeTypeVisual(tipoLabel: string) {
 
   return {
     icon: Sparkles,
-    badge: getTipoCalificacionBadgeClass(tipoLabel as never),
+    badge:
+      'border-border/60 bg-background/70 text-muted-foreground dark:bg-background/35',
     title: 'Calificación registrada',
     description: 'Registro manual de evaluación para seguimiento académico.',
   }
@@ -169,7 +165,7 @@ function getSkillLabel(skill: number) {
     case 5:
       return 'Speaking'
     default:
-      return 'Skill'
+      return 'Habilidad'
   }
 }
 
@@ -177,23 +173,45 @@ function isSkillBasedGrade(tipo: number) {
   return tipo === 2 || tipo === 3
 }
 
-function GradeValueCard({ nota }: { nota: number }) {
+function getSkillTone(percentage: number) {
+  if (percentage >= 80) {
+    return {
+      label: 'Fortaleza',
+      text: 'text-emerald-700 dark:text-emerald-300',
+      bar: 'bg-emerald-500',
+    }
+  }
+
+  if (percentage >= 60) {
+    return {
+      label: 'En progreso',
+      text: 'text-amber-700 dark:text-amber-300',
+      bar: 'bg-amber-500',
+    }
+  }
+
+  return {
+    label: 'A reforzar',
+    text: 'text-rose-700 dark:text-rose-300',
+    bar: 'bg-rose-500',
+  }
+}
+
+function GradeScore({ nota }: { nota: number }) {
   const tone = getGradeTone(nota)
 
   return (
-    <div className={tone.container}>
-      <p className={tone.label}>Calificación</p>
-
-      <div className="mt-2 flex items-end justify-between gap-3">
-        <div>
-          <p className={tone.value}>{nota.toFixed(2)}</p>
-          <p className={`mt-1 ${tone.suffix}`}>Resultado final registrado</p>
-        </div>
-
-        <div className={tone.iconWrap}>
-          <Trophy className="size-4.5" />
-        </div>
-      </div>
+    <div className="flex items-center gap-2 sm:justify-end">
+      <span
+        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${tone.badge}`}
+      >
+        {tone.label}
+      </span>
+      <span
+        className={`inline-flex min-w-14 justify-center rounded-xl border px-3 py-2 text-base font-semibold tracking-tight ${tone.score}`}
+      >
+        {Number.isFinite(nota) ? nota.toFixed(2) : '-'}
+      </span>
     </div>
   )
 }
@@ -214,115 +232,78 @@ function GradeSkillsDetail({
   if (!detalles.length) return null
 
   return (
-    <div className="overflow-hidden rounded-[26px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/[0.18] shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)]">
+    <div className="border-t border-border/60 pt-3">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-all duration-200 hover:bg-muted/[0.28]"
+        className="group flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm font-semibold text-foreground transition-colors duration-200 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-2"
       >
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
-            <ClipboardList className="size-4.5" />
-          </div>
-
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
-              Skills evaluadas
-            </p>
-            <p className="text-sm font-semibold tracking-tight text-foreground">
-              Desglose por habilidad
-            </p>
-          </div>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="hidden rounded-full border border-border/60 bg-background/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:inline-flex">
-            {detalles.length} skill{detalles.length === 1 ? '' : 's'}
+        <div className="flex min-w-0 items-center gap-2">
+          <ClipboardList className="size-4 shrink-0 text-muted-foreground" />
+          <span>
+            {isOpen ? 'Ocultar detalle por habilidades' : 'Ver detalle por habilidades'}
           </span>
-
-          <div className="flex size-9 items-center justify-center rounded-full border border-border/60 bg-background/85 shadow-sm">
-            <ChevronDown
-              className={`size-4 text-muted-foreground transition-transform duration-200 ${
-                isOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </div>
         </div>
+
+        <ChevronDown
+          className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:text-foreground ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
       </button>
 
-      <div
-        className={`grid transition-all duration-300 ease-out ${
-          isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-        }`}
-      >
-        <div className="overflow-hidden">
-          <div className="border-t border-border/50 px-5 pb-5 pt-4">
-            <div className="grid gap-3">
-              {detalles.map((detalle, index) => {
-                const percentage =
-                  detalle.puntajeMaximo > 0
-                    ? (detalle.puntajeObtenido / detalle.puntajeMaximo) * 100
-                    : 0
+      {isOpen ? (
+        <div className="mt-3 space-y-3 rounded-xl border border-border/60 bg-background/55 p-3 animate-in fade-in-0 slide-in-from-top-1 duration-200 dark:border-border/70 dark:bg-background/25">
+          {detalles.map((detalle, index) => {
+            const percentage =
+              detalle.puntajeMaximo > 0
+                ? (detalle.puntajeObtenido / detalle.puntajeMaximo) * 100
+                : 0
+            const clampedPercentage = Math.min(100, Math.max(0, percentage))
+            const tone = getSkillTone(clampedPercentage)
 
-                return (
+            return (
+              <div key={`${detalle.skill}-${index}`} className="space-y-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
+                  <span className="font-medium text-foreground">
+                    {getSkillLabel(detalle.skill)}
+                  </span>
+                  <span className={`text-xs font-medium ${tone.text}`}>
+                    {detalle.puntajeObtenido} / {detalle.puntajeMaximo} · {tone.label}
+                  </span>
+                </div>
+
+                <div className="h-2 overflow-hidden rounded-full bg-muted/70">
                   <div
-                    key={`${detalle.skill}-${index}`}
-                    className="rounded-[22px] border border-border/60 bg-card/80 p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-card hover:shadow-md"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-[15px] font-semibold tracking-tight text-foreground">
-                          {getSkillLabel(detalle.skill)}
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {detalle.puntajeObtenido} / {detalle.puntajeMaximo} puntos
-                        </p>
-                      </div>
-
-                      <div className="shrink-0 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[11px] font-semibold text-primary">
-                        {percentage.toFixed(2)}%
-                      </div>
-                    </div>
-
-                    <div className="mt-4">
-                      <div className="h-2.5 overflow-hidden rounded-full bg-muted/70">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all duration-500"
-                          style={{ width: `${Math.min(percentage, 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+                    className={`h-full rounded-full transition-[width] duration-500 ${tone.bar}`}
+                    style={{ width: `${clampedPercentage}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })}
         </div>
-      </div>
+      ) : null}
     </div>
   )
 }
 
 function GradeCardSkeleton() {
   return (
-    <article className="rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] md:p-6">
-      <div className="space-y-5">
-        <div className="flex items-start justify-between gap-4">
+    <article className="rounded-2xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+        <div className="space-y-3">
           <div className="flex gap-2">
-            <div className="h-7 w-24 animate-pulse rounded-full bg-muted/35" />
-            <div className="h-7 w-28 animate-pulse rounded-full bg-muted/35" />
+            <div className="h-6 w-20 animate-pulse rounded-full bg-muted/35" />
+            <div className="h-6 w-24 animate-pulse rounded-full bg-muted/30" />
           </div>
-          <div className="h-8 w-8 animate-pulse rounded-xl bg-muted/35" />
-        </div>
-
-        <div className="space-y-2">
-          <div className="h-6 w-2/3 animate-pulse rounded-xl bg-muted/40" />
+          <div className="h-5 w-2/3 animate-pulse rounded-lg bg-muted/40" />
           <div className="h-4 w-4/5 animate-pulse rounded-lg bg-muted/30" />
         </div>
-
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="h-20 w-44 animate-pulse rounded-[20px] bg-muted/30" />
-          <div className="h-28 animate-pulse rounded-[24px] bg-muted/30" />
+        <div className="flex gap-2">
+          <div className="h-8 w-28 animate-pulse rounded-full bg-muted/30" />
+          <div className="h-9 w-16 animate-pulse rounded-xl bg-muted/35" />
+          <div className="h-9 w-9 animate-pulse rounded-xl bg-muted/30" />
         </div>
       </div>
     </article>
@@ -380,26 +361,34 @@ function GradeCard({
   }, [courseId, alumnoId, grade.id, grade.tipo])
 
   return (
-    <article className="relative rounded-[28px] border border-border/70 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(30,42,68,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_24px_52px_-24px_rgba(30,42,68,0.22)] md:p-6">
-      <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.06),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.05),transparent_22%)]" />
-
-      <div className="relative space-y-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-              <Sparkles className="size-3.5" />
-              Calificación
+    <article className="rounded-2xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 hover:border-primary/25 hover:bg-card focus-within:border-primary/25 dark:border-border/60 dark:hover:border-primary/25">
+      <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${visual.badge}`}
+              >
+                <TipoIcon className="size-3.5" />
+                {tipoLabel}
+              </span>
+              <time>{formatDate(grade.fecha)}</time>
             </div>
 
-            <span
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${visual.badge}`}
-            >
-              <TipoIcon className="size-3.5" />
-              {tipoLabel}
-            </span>
+            <h3 className="mt-3 text-base font-semibold leading-6 tracking-tight text-foreground sm:text-lg">
+              {grade.titulo}
+            </h3>
+
+            {grade.descripcion?.trim() ? (
+              <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
+                {grade.descripcion}
+              </p>
+            ) : null}
           </div>
 
-          <div className="pl-2">
+          <div className="flex flex-wrap items-center gap-2 md:justify-self-end">
+            <GradeScore nota={grade.nota} />
+
             <RowActions
               actions={[
                 {
@@ -421,47 +410,19 @@ function GradeCard({
           </div>
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
-          <div className="min-w-0 space-y-4">
-            <div className="space-y-2">
-              <h3 className="text-xl font-semibold tracking-tight text-foreground">
-                {grade.titulo}
-              </h3>
-
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                {grade.descripcion?.trim() ? grade.descripcion : visual.description}
-              </p>
-            </div>
-
-            <div className="inline-flex items-center gap-3 rounded-[20px] border border-border/60 bg-background/75 px-4 py-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md">
-              <div className="flex size-10 items-center justify-center rounded-2xl bg-background text-muted-foreground">
-                <CalendarDays className="size-4.5" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Fecha
-                </p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  {formatDate(grade.fecha)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <GradeValueCard nota={grade.nota} />
-        </div>
-
         {isSkillBasedGrade(grade.tipo) && (
           <>
             {detailLoading ? (
-              <div className="rounded-[24px] border border-border/60 bg-background/70 p-4">
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              <div className="rounded-xl border border-border/60 bg-background/55 p-3 dark:bg-background/25">
+                <div className="grid gap-3">
                   {Array.from({ length: 4 }).map((_, index) => (
                     <div
                       key={index}
-                      className="h-20 animate-pulse rounded-2xl bg-muted/30"
-                    />
+                      className="space-y-2"
+                    >
+                      <div className="h-4 w-full animate-pulse rounded-md bg-muted/35" />
+                      <div className="h-2 w-full animate-pulse rounded-full bg-muted/30" />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -480,11 +441,12 @@ export function TeacherStudentGrades({
   alumnoId,
   alumnoNombre,
   alumnoApellido,
-  alumnoDni,
+  alumnoAvatarUrl,
 }: Props) {
   const router = useRouter()
 
   const [data, setData] = useState<GradeListItem[]>([])
+  const [studentContext, setStudentContext] = useState<GradeListItem | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -494,23 +456,29 @@ export function TeacherStudentGrades({
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
-  const pageLabel = useMemo(() => {
-    if (total === 0) return 'Sin calificaciones'
-    return `Página ${pageNumber} de ${totalPages} · ${total} calificaciones`
-  }, [pageNumber, total, totalPages])
-
   const alumnoContext = useMemo(() => {
-    const first = data[0]
+    const first = studentContext ?? data[0]
 
     return {
       nombre: alumnoNombre || first?.alumnoNombre || '',
       apellido: alumnoApellido || first?.alumnoApellido || '',
-      dni: alumnoDni ?? first?.alumnoDni ?? null,
+      avatarUrl: alumnoAvatarUrl ?? first?.alumnoAvatarUrl ?? null,
     }
-  }, [data, alumnoNombre, alumnoApellido, alumnoDni])
+  }, [data, studentContext, alumnoNombre, alumnoApellido, alumnoAvatarUrl])
 
   const alumnoFullName =
     `${alumnoContext.nombre} ${alumnoContext.apellido}`.trim() || 'Alumno'
+  const courseName = (studentContext ?? data[0])?.cursoNombre?.trim() || 'Curso actual'
+  const visibleGradesLabel =
+    data.length === 0
+      ? 'Sin calificaciones'
+      : `${data.length} ${data.length === 1 ? 'calificación mostrada' : 'calificaciones mostradas'}`
+  const pageLabel =
+    data.length === 0
+      ? 'Sin calificaciones'
+      : `Página ${pageNumber} de ${totalPages} · ${data.length} ${
+          data.length === 1 ? 'calificación mostrada' : 'calificaciones mostradas'
+        }`
 
   const loadGrades = async () => {
     try {
@@ -524,8 +492,10 @@ export function TeacherStudentGrades({
         pageSize,
       )
 
-      const filtered = (result.items ?? []).filter((item) => item.tipo !== 1)
+      const rawItems = result.items ?? []
+      const filtered = rawItems.filter((item) => item.tipo !== 1)
 
+      setStudentContext(rawItems[0] ?? null)
       setData(filtered)
       setTotal(result.total ?? 0)
     } catch (err) {
@@ -556,7 +526,7 @@ export function TeacherStudentGrades({
 
   if (loading) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <GradeCardSkeleton key={i} />
         ))}
@@ -566,7 +536,7 @@ export function TeacherStudentGrades({
 
   if (error) {
     return (
-      <div className="rounded-[24px] border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-5 text-sm text-destructive">
         {error}
       </div>
     )
@@ -574,76 +544,67 @@ export function TeacherStudentGrades({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Calificaciones
+      <section className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0 space-y-3">
+          <Button
+            variant="ghost"
+            onClick={() => router.push(`/teacher/courses/${courseId}`)}
+            className="-ml-3 h-9 rounded-lg px-3 text-muted-foreground hover:bg-primary/5 hover:text-primary"
+          >
+            <ArrowLeft className="mr-2 size-4" />
+            Volver al curso
+          </Button>
+
+          <div className="flex min-w-0 items-center gap-3">
+            <UserAvatar
+              name={alumnoFullName}
+              avatarUrl={alumnoContext.avatarUrl}
+              size={40}
+              className="shrink-0"
+              fallbackClassName="bg-primary/10 text-primary"
+            />
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                {alumnoFullName}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {courseName} · {visibleGradesLabel}
               </p>
-
-              <h3 className="text-xl font-semibold tracking-tight text-foreground">
-                Historial de calificaciones
-              </h3>
-
-              <p className="text-sm text-muted-foreground">
-                {alumnoContext.nombre || alumnoContext.apellido
-                  ? `Registro de evaluaciones manuales de ${alumnoFullName}.`
-                  : 'Registro de evaluaciones manuales del alumno.'}
-              </p>
-            </div>
-
-            <div className="inline-flex items-center gap-3 rounded-[22px] border border-border/60 bg-background/75 px-4 py-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md">
-              <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <Users className="size-4.5" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  {alumnoFullName}
-                </p>
-
-                {alumnoContext.dni ? (
-                  <p className="text-xs text-muted-foreground">
-                    DNI: {alumnoContext.dni}
-                  </p>
-                ) : null}
-              </div>
             </div>
           </div>
-
-          <Button
-            onClick={() =>
-              router.push(
-                `/teacher/courses/${courseId}/students/${alumnoId}/grades/create`,
-              )
-            }
-            className="h-11 rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_26px_-12px_rgba(36,59,123,0.45)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_16px_34px_-14px_rgba(36,59,123,0.55)] active:translate-y-0"
-          >
-            <Plus className="mr-2 size-4" />
-            Crear calificación
-          </Button>
         </div>
+
+        <Button
+          onClick={() =>
+            router.push(
+              `/teacher/courses/${courseId}/students/${alumnoId}/grades/create`,
+            )
+          }
+          className="h-10 rounded-xl px-4 shadow-none transition-colors duration-200 sm:shrink-0"
+        >
+          <Plus className="mr-2 size-4" />
+          Crear calificación
+        </Button>
       </section>
 
       {data.length === 0 ? (
-        <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
-          <CardContent className="px-6 py-14">
+        <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70">
+          <CardContent className="px-5 py-6">
             <Empty className="border-0 p-0">
               <EmptyMedia variant="icon">
                 <Inbox />
               </EmptyMedia>
               <EmptyHeader>
-                <EmptyTitle>Sin calificaciones</EmptyTitle>
+                <EmptyTitle>Todavía no hay calificaciones</EmptyTitle>
                 <EmptyDescription>
-                  No hay calificaciones manuales registradas para este alumno.
+                  Todavía no cargaste calificaciones para este alumno.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {data.map((grade) => (
             <GradeCard
               key={grade.id}
@@ -662,7 +623,7 @@ export function TeacherStudentGrades({
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+            className="h-10 rounded-xl border-border/70 bg-background/70 transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40"
             disabled={pageNumber === 1}
             onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
           >
@@ -671,7 +632,7 @@ export function TeacherStudentGrades({
 
           <Button
             variant="outline"
-            className="rounded-2xl border-border/70 bg-background/70 transition-all duration-200 hover:-translate-y-[1px] hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40 disabled:hover:translate-y-0"
+            className="h-10 rounded-xl border-border/70 bg-background/70 transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40"
             disabled={pageNumber >= totalPages || total === 0}
             onClick={() => setPageNumber((prev) => prev + 1)}
           >

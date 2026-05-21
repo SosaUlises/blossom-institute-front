@@ -1,7 +1,5 @@
 import type { ApiResponse } from './types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
-
 export interface ForgotPasswordRequest {
   email: string
   frontendResetUrl: string
@@ -14,8 +12,23 @@ export interface ResetPasswordRequest {
   confirmPassword: string
 }
 
+async function readApiResponse(response: Response) {
+  const rawBody = await response.text()
+
+  try {
+    return JSON.parse(rawBody) as ApiResponse<any>
+  } catch {
+    return {
+      message: 'La respuesta del servidor no fue válida.',
+      success: false,
+      statusCode: response.status,
+      data: null,
+    } satisfies ApiResponse<any>
+  }
+}
+
 export async function forgotPasswordRequest(payload: ForgotPasswordRequest) {
-  const response = await fetch(`${API_URL}/api/v1/auth/forgot-password`, {
+  const response = await fetch('/api/auth/forgot-password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -23,7 +36,7 @@ export async function forgotPasswordRequest(payload: ForgotPasswordRequest) {
     body: JSON.stringify(payload),
   })
 
-  const result: ApiResponse<any> = await response.json()
+  const result = await readApiResponse(response)
 
   if (!response.ok || !result.success) {
     throw {
@@ -36,7 +49,7 @@ export async function forgotPasswordRequest(payload: ForgotPasswordRequest) {
 }
 
 export async function resetPasswordRequest(payload: ResetPasswordRequest) {
-  const response = await fetch(`${API_URL}/api/v1/auth/reset-password`, {
+  const response = await fetch('/api/auth/reset-password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -44,7 +57,7 @@ export async function resetPasswordRequest(payload: ResetPasswordRequest) {
     body: JSON.stringify(payload),
   })
 
-  const result: ApiResponse<any> = await response.json()
+  const result = await readApiResponse(response)
 
   if (!response.ok || !result.success) {
     throw {

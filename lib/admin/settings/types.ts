@@ -3,6 +3,7 @@ export interface MyAccountSettings {
   nombre: string
   apellido: string
   email: string
+  avatarUrl?: string | null
   telefono?: string | null
   dni: number
   activo: boolean

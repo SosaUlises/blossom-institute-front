@@ -5,6 +5,7 @@ export interface Alumno {
   dni: number
   telefono?: string | null
   email: string
+  avatarUrl?: string | null
   activo: boolean
 }
 

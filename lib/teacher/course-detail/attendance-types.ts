@@ -11,6 +11,7 @@ export enum EstadoClase {
 export interface AttendanceStudentItem {
   alumnoId: number
   nombreCompleto: string
+  avatarUrl?: string | null
   estado?: EstadoAsistencia | null
 }
 

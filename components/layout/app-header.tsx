@@ -7,6 +7,9 @@ import { useTheme } from 'next-themes'
 
 import { Button } from '@/components/ui/button'
 import { useSidebar } from '@/components/ui/sidebar'
+import { UserAvatar } from '@/components/shared/user-avatar'
+import type { SessionUser } from '@/lib/auth/session'
+import { CURRENT_USER_AVATAR_UPDATED_EVENT } from '@/lib/auth/client-events'
 import { cn } from '@/lib/utils'
 
 type AppHeaderProps = {
@@ -71,14 +74,19 @@ function getHeaderSubtitle(pathname: string) {
 }
 
 export function AppHeader({ title, subtitle }: AppHeaderProps) {
-  const { toggleSidebar } = useSidebar()
+  const { state, isMobile, openMobile, toggleSidebar } = useSidebar()
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
   const [override, setOverride] = useState<HeaderOverride | null>(null)
+  const [user, setUser] = useState<SessionUser | null>(null)
   const headerTitle = override?.title ?? title
   const displayTitle = titleLabels[headerTitle] ?? headerTitle
   const displaySubtitle = override?.subtitle ?? subtitle ?? getHeaderSubtitle(pathname)
   const isStudent = pathname.startsWith('/student')
+  const isTeacher = pathname.startsWith('/teacher')
+  const isWorkspace = isStudent || isTeacher
+  const isSidebarHidden = isMobile ? !openMobile : state === 'collapsed'
+  const showHeaderAvatar = !isWorkspace || isSidebarHidden
 
   useEffect(() => {
     setOverride(null)
@@ -95,11 +103,56 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
     }
   }, [pathname])
 
+  useEffect(() => {
+    let active = true
+
+    fetch('/api/auth/me', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+      .then(async (response) => {
+        if (!response.ok) return null
+        const result = (await response.json()) as { data?: SessionUser }
+        return result.data ?? null
+      })
+      .then((nextUser) => {
+        if (active) setUser(nextUser)
+      })
+      .catch(() => {
+        if (active) setUser(null)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleAvatarUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ avatarUrl: string | null }>).detail
+
+      setUser((current) =>
+        current
+          ? {
+              ...current,
+              avatarUrl: detail?.avatarUrl ?? null,
+            }
+          : current,
+      )
+    }
+
+    window.addEventListener(CURRENT_USER_AVATAR_UPDATED_EVENT, handleAvatarUpdated)
+
+    return () => {
+      window.removeEventListener(CURRENT_USER_AVATAR_UPDATED_EVENT, handleAvatarUpdated)
+    }
+  }, [])
+
   return (
     <header
       className={cn(
         'sticky top-0 z-30 border-b backdrop-blur supports-[backdrop-filter]:bg-background/80',
-        isStudent
+        isWorkspace
           ? 'border-border/70 bg-background/90'
           : 'border-border/60 bg-background/95',
       )}
@@ -107,7 +160,7 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
       <div
         className={cn(
           'flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8',
-          isStudent ? 'py-2.5' : 'py-3',
+          isWorkspace ? 'py-2.5' : 'py-3',
         )}
       >
         <div className="flex min-w-0 items-center gap-3">
@@ -115,9 +168,10 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
             variant="outline"
             size="icon"
             onClick={toggleSidebar}
+            aria-label="Abrir o cerrar navegacion"
             className={cn(
               'size-11 shrink-0 rounded-2xl border-border/70 bg-background/85 shadow-sm hover:bg-muted hover:text-foreground',
-              isStudent && 'rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.03)] dark:bg-background/35',
+              isWorkspace && 'rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.03)] dark:bg-background/35',
             )}
           >
             <PanelLeft className="size-4.5" />
@@ -134,12 +188,26 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          {user && showHeaderAvatar ? (
+            <UserAvatar
+              name={`${user.nombre} ${user.apellido}`.trim()}
+              avatarUrl={user.avatarUrl}
+              size={40}
+              className={cn(
+                'hidden sm:flex',
+                isWorkspace && 'ring-border/50',
+              )}
+              fallbackClassName="bg-primary/10 text-primary"
+            />
+          ) : null}
+
           <Button
             variant="outline"
             size="icon"
+            aria-label="Cambiar tema"
             className={cn(
               'size-11 rounded-2xl border-border/70 bg-background/85 shadow-sm transition-colors hover:bg-muted hover:text-foreground',
-              isStudent && 'rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.03)] dark:bg-background/35',
+              isWorkspace && 'rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.03)] dark:bg-background/35',
             )}
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
