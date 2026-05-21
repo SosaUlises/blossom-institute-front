@@ -59,7 +59,7 @@ export function TeacherCourseHero({ course }: Props) {
         >
           <Link href={`/teacher/courses/${course.id}/grade-templates`}>
             <ClipboardList className="mr-2 size-4" />
-            Calificaciones
+            Plantilla de Calificaciones
           </Link>
         </Button>
       </div>

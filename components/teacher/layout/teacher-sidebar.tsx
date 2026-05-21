@@ -37,6 +37,9 @@ import { cn } from '@/lib/utils'
 const teacherNavItems = [
   { title: 'Dashboard', url: '/teacher/dashboard', icon: LayoutDashboard },
   { title: 'Courses', url: '/teacher/courses', icon: BookOpen },
+]
+
+const teacherSecondaryNavItems = [
   { title: 'Configuración', url: '/teacher/settings', icon: Settings },
 ]
 
@@ -47,7 +50,7 @@ function getItemDescription(title: string) {
     case 'Courses':
       return 'Cursos asignados'
     case 'Configuración':
-      return 'Configuración'
+      return 'Cuenta y seguridad'
     default:
       return ''
   }
@@ -208,6 +211,20 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                Cuenta
+              </SidebarGroupLabel>
+
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-2">
+                  {teacherSecondaryNavItems.map((item) => (
+                    <NavItem key={item.title} item={item} pathname={pathname} />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </div>
 
           <div className="pt-5">
@@ -277,7 +294,7 @@ export function TeacherSidebar({ user }: { user: SessionUser }) {
 
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="rounded-xl px-3 py-2 text-sm text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400 hover:bg-red-50 focus:bg-red-50 data-[state=open]:bg-red-50"
+                    className="rounded-xl px-3 py-2 text-sm text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-600 data-[state=open]:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300 dark:focus:bg-red-500/10 dark:focus:text-red-300 dark:data-[state=open]:bg-red-500/10"
                   >
                     <LogOut className="mr-2 size-4" />
                     Cerrar sesión

@@ -127,93 +127,101 @@ function FeedPost({
       ) : null}
 
       <div className={cn('p-3 sm:p-3.5', !task.esAnuncio && 'pl-5 sm:pl-6')}>
-        <div className="flex items-center gap-2">
-          <div
-            className={cn(
-              'flex size-9 shrink-0 items-center justify-center rounded-lg border',
-              task.esAnuncio
-                ? 'border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300'
-                : 'border-primary/15 bg-primary/10 text-primary',
-            )}
-          >
-            <Icon className="size-4" />
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  'flex size-9 shrink-0 items-center justify-center rounded-lg border',
+                  task.esAnuncio
+                    ? 'border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300'
+                    : 'border-primary/15 bg-primary/10 text-primary',
+                )}
+              >
+                <Icon className="size-4" />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span
+                  className={cn(
+                    'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+                    task.esAnuncio
+                      ? 'border-violet-200/70 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300'
+                      : 'border-primary/15 bg-primary/5 text-primary',
+                  )}
+                >
+                  {task.esAnuncio ? 'Anuncio' : 'Tarea'}
+                </span>
+                <span
+                  className={cn(
+                    'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+                    estadoConfig.className,
+                  )}
+                >
+                  {estadoConfig.label}
+                </span>
+              </div>
+            </div>
+
+            <h3 className="mt-1.5 line-clamp-2 text-base font-semibold leading-6 tracking-tight text-foreground sm:text-lg">
+              {task.titulo}
+            </h3>
+
+            <p className="mt-0.5 line-clamp-2 text-sm leading-5 text-muted-foreground">
+              {getPreview(task)}
+            </p>
+
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {!task.esAnuncio ? (
+                <MetaBadge icon={CalendarClock}>
+                  {task.fechaEntregaUtc
+                    ? `Entrega ${formatDateTime(task.fechaEntregaUtc)}`
+                    : 'Sin entrega definida'}
+                </MetaBadge>
+              ) : null}
+              <MetaBadge icon={Clock3}>
+                Publicada {formatDateTime(task.createdAtUtc)}
+              </MetaBadge>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span
-              className={cn(
-                'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                task.esAnuncio
-                  ? 'border-violet-200/70 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300'
-                  : 'border-primary/15 bg-primary/5 text-primary',
-              )}
+          <div className="flex flex-wrap gap-1.5 border-t border-border/55 pt-2 md:min-w-32 md:flex-col md:items-stretch md:border-t-0 md:pt-0">
+            <Button
+              asChild
+              variant="outline"
+              className="h-8 justify-start rounded-lg border-border/70 bg-background/70 px-2.5 text-xs font-semibold text-foreground shadow-none transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary md:w-full md:justify-center"
             >
-              {task.esAnuncio ? 'Anuncio' : 'Tarea'}
-            </span>
-            <span
-              className={cn(
-                'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                estadoConfig.className,
-              )}
+              <Link href={`/teacher/courses/${courseId}/tasks/${task.id}`}>
+                <Eye className="mr-1.5 size-3.5" />
+                {task.esAnuncio ? 'Ver detalles' : 'Ver entregas'}
+              </Link>
+            </Button>
+
+            <Button
+              asChild
+              variant="outline"
+              className="h-8 justify-start rounded-lg border-border/70 bg-background/70 px-2.5 text-xs font-semibold text-muted-foreground shadow-none transition-colors duration-200 hover:border-border hover:bg-muted/40 hover:text-foreground md:w-full md:justify-center"
             >
-              {estadoConfig.label}
-            </span>
+              <Link href={`/teacher/courses/${courseId}/tasks/${task.id}/edit`}>
+                <Pencil className="mr-1.5 size-3.5" />
+                Editar
+              </Link>
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onArchive(task.id)}
+              className={cn(
+                'h-8 justify-start rounded-lg border-border/70 bg-background/70 px-2.5 text-xs font-semibold text-muted-foreground shadow-none transition-colors duration-200 hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 md:w-full md:justify-center',
+                task.estado === EstadoTarea.Archivada && 'opacity-60',
+              )}
+              disabled={task.estado === EstadoTarea.Archivada}
+            >
+              <Archive className="mr-1.5 size-3.5" />
+              Archivar
+            </Button>
           </div>
-        </div>
-
-        <h3 className="mt-1.5 line-clamp-2 text-base font-semibold leading-6 tracking-tight text-foreground sm:text-lg">
-          {task.titulo}
-        </h3>
-
-        <p className="mt-0.5 line-clamp-2 text-sm leading-5 text-muted-foreground">
-          {getPreview(task)}
-        </p>
-
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          {!task.esAnuncio ? (
-            <MetaBadge icon={CalendarClock}>
-              {task.fechaEntregaUtc
-                ? `Entrega ${formatDateTime(task.fechaEntregaUtc)}`
-                : 'Sin entrega definida'}
-            </MetaBadge>
-          ) : null}
-          <MetaBadge icon={Clock3}>
-            Publicada {formatDateTime(task.createdAtUtc)}
-          </MetaBadge>
-        </div>
-
-        <div className="mt-2.5 flex flex-wrap gap-1.5 border-t border-border/55 pt-2">
-          <Button
-            asChild
-            variant="ghost"
-            className="h-8 rounded-lg px-2.5 text-xs font-semibold text-foreground hover:bg-primary/5 hover:text-primary"
-          >
-            <Link href={`/teacher/courses/${courseId}/tasks/${task.id}`}>
-              <Eye className="mr-1.5 size-3.5" />
-              Ver detalles
-            </Link>
-          </Button>
-
-          <Button
-            asChild
-            variant="ghost"
-            className="h-8 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-          >
-            <Link href={`/teacher/courses/${courseId}/tasks/${task.id}/edit`}>
-              <Pencil className="mr-1.5 size-3.5" />
-              Editar
-            </Link>
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onArchive(task.id)}
-            className="h-8 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400"
-          >
-            <Archive className="mr-1.5 size-3.5" />
-            Archivar
-          </Button>
         </div>
       </div>
     </article>

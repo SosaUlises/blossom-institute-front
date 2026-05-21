@@ -296,7 +296,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="rounded-xl px-3 py-2 text-sm text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400 hover:bg-red-50 focus:bg-red-50 data-[state=open]:bg-red-50"
+                    className="rounded-xl px-3 py-2 text-sm text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-600 data-[state=open]:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300 dark:focus:bg-red-500/10 dark:focus:text-red-300 dark:data-[state=open]:bg-red-500/10"
                   >
                     <LogOut className="mr-2 size-4" />
                     Sign out
