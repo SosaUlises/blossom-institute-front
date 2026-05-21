@@ -17,22 +17,13 @@ import {
   EstadoEntrega,
   type ProfesorDashboardUltimaEntregaItem,
 } from '@/lib/teacher/dashboard/types'
+import { UserAvatar } from '@/components/shared/user-avatar'
 
 function formatRelative(value: string): string {
   return formatDistanceToNow(new Date(value), {
     addSuffix: true,
     locale: es,
   })
-}
-
-function getInitial(item: ProfesorDashboardUltimaEntregaItem): string {
-  const apellido = item.alumnoApellido?.trim()
-  const nombre = item.alumnoNombre?.trim()
-
-  if (apellido?.length) return apellido.charAt(0).toUpperCase()
-  if (nombre?.length) return nombre.charAt(0).toUpperCase()
-
-  return '?'
 }
 
 function getPendingItems(items: ProfesorDashboardUltimaEntregaItem[]) {
@@ -57,6 +48,7 @@ function PendingDeliveryRow({
   item: ProfesorDashboardUltimaEntregaItem
 }) {
   const esFuera = item.estadoEntrega === EstadoEntrega.FueraDeTermino
+  const alumnoName = `${item.alumnoNombre} ${item.alumnoApellido}`.trim() || 'Alumno'
 
   return (
     <li>
@@ -67,9 +59,13 @@ function PendingDeliveryRow({
         )}
       >
         <div className="min-w-0 flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/12 text-sm font-semibold text-amber-700 dark:text-amber-400">
-            {getInitial(item)}
-          </div>
+          <UserAvatar
+            name={alumnoName}
+            avatarUrl={item.alumnoAvatarUrl}
+            size={40}
+            className="shrink-0"
+            fallbackClassName="bg-amber-500/12 text-amber-700 dark:text-amber-400"
+          />
 
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-foreground">

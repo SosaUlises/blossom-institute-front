@@ -55,6 +55,7 @@ export interface GradeListItem {
   alumnoNombre: string
   alumnoApellido: string
   alumnoDni: number
+  alumnoAvatarUrl?: string | null
   tipo: number
   titulo: string
   descripcion?: string | null

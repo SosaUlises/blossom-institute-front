@@ -18,6 +18,7 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import { RowActions } from '@/components/ui/row-actions'
 import {
   Empty,
@@ -39,6 +40,7 @@ type Props = {
   alumnoId: number
   alumnoNombre?: string
   alumnoApellido?: string
+  alumnoAvatarUrl?: string | null
 }
 
 function formatDate(date: string) {
@@ -439,10 +441,12 @@ export function TeacherStudentGrades({
   alumnoId,
   alumnoNombre,
   alumnoApellido,
+  alumnoAvatarUrl,
 }: Props) {
   const router = useRouter()
 
   const [data, setData] = useState<GradeListItem[]>([])
+  const [studentContext, setStudentContext] = useState<GradeListItem | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -453,17 +457,18 @@ export function TeacherStudentGrades({
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   const alumnoContext = useMemo(() => {
-    const first = data[0]
+    const first = studentContext ?? data[0]
 
     return {
       nombre: alumnoNombre || first?.alumnoNombre || '',
       apellido: alumnoApellido || first?.alumnoApellido || '',
+      avatarUrl: alumnoAvatarUrl ?? first?.alumnoAvatarUrl ?? null,
     }
-  }, [data, alumnoNombre, alumnoApellido])
+  }, [data, studentContext, alumnoNombre, alumnoApellido, alumnoAvatarUrl])
 
   const alumnoFullName =
     `${alumnoContext.nombre} ${alumnoContext.apellido}`.trim() || 'Alumno'
-  const courseName = data[0]?.cursoNombre?.trim() || 'Curso actual'
+  const courseName = (studentContext ?? data[0])?.cursoNombre?.trim() || 'Curso actual'
   const visibleGradesLabel =
     data.length === 0
       ? 'Sin calificaciones'
@@ -487,8 +492,10 @@ export function TeacherStudentGrades({
         pageSize,
       )
 
-      const filtered = (result.items ?? []).filter((item) => item.tipo !== 1)
+      const rawItems = result.items ?? []
+      const filtered = rawItems.filter((item) => item.tipo !== 1)
 
+      setStudentContext(rawItems[0] ?? null)
       setData(filtered)
       setTotal(result.total ?? 0)
     } catch (err) {
@@ -548,13 +555,22 @@ export function TeacherStudentGrades({
             Volver al curso
           </Button>
 
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-              {alumnoFullName}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {courseName} · {visibleGradesLabel}
-            </p>
+          <div className="flex min-w-0 items-center gap-3">
+            <UserAvatar
+              name={alumnoFullName}
+              avatarUrl={alumnoContext.avatarUrl}
+              size={40}
+              className="shrink-0"
+              fallbackClassName="bg-primary/10 text-primary"
+            />
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                {alumnoFullName}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {courseName} · {visibleGradesLabel}
+              </p>
+            </div>
           </div>
         </div>
 

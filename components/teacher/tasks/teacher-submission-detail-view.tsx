@@ -438,19 +438,19 @@ export function TeacherSubmissionDetailView({
               <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 {alumnoName}
               </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <InlineMetaChip icon={FileText}>
-                {task?.titulo ?? 'Tarea'}
-              </InlineMetaChip>
-              <InlineMetaChip icon={CalendarClock}>
-                Entregada {formatDateTime(detail.fechaEntregaUtc)}
-              </InlineMetaChip>
-              <InlineMetaChip icon={Paperclip}>
-                {detail.adjuntos.length === 1
-                  ? '1 adjunto'
-                  : `${detail.adjuntos.length} adjuntos`}
-              </InlineMetaChip>
-            </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <InlineMetaChip icon={FileText}>
+                  {task?.titulo ?? 'Tarea'}
+                </InlineMetaChip>
+                <InlineMetaChip icon={CalendarClock}>
+                  Entregada {formatDateTime(detail.fechaEntregaUtc)}
+                </InlineMetaChip>
+                <InlineMetaChip icon={Paperclip}>
+                  {detail.adjuntos.length === 1
+                    ? '1 adjunto'
+                    : `${detail.adjuntos.length} adjuntos`}
+                </InlineMetaChip>
+              </div>
             </div>
           </div>
         </div>

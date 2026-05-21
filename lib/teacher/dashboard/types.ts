@@ -56,6 +56,7 @@ export interface ProfesorDashboardUltimaEntregaItem {
   alumnoId: number
   alumnoNombre: string
   alumnoApellido: string
+  alumnoAvatarUrl?: string | null
   fechaEntregaUtc: string
   estadoEntrega: EstadoEntrega
   tieneFeedbackVigente: boolean

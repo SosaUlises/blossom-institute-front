@@ -28,6 +28,7 @@ import {
   type ProfesorDashboardUltimaClaseItem,
   type ProfesorDashboardUltimaEntregaItem,
 } from '@/lib/teacher/dashboard/types'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import { cn } from '@/lib/utils'
 
 type Tone = 'default' | 'primary' | 'amber' | 'emerald' | 'rose' | 'sky'
@@ -129,10 +130,6 @@ function getPendingDeliveries(items: ProfesorDashboardUltimaEntregaItem[]) {
       if (aLate !== bLate) return aLate - bLate
       return new Date(a.fechaEntregaUtc).getTime() - new Date(b.fechaEntregaUtc).getTime()
     })
-}
-
-function getInitial(item: ProfesorDashboardUltimaEntregaItem) {
-  return (item.alumnoApellido?.[0] ?? item.alumnoNombre?.[0] ?? '?').toUpperCase()
 }
 
 function SectionHeader({
@@ -374,6 +371,7 @@ function PendingReviews({
         <div className="space-y-3">
           {pending.slice(0, 5).map((item) => {
             const late = item.estadoEntrega === EstadoEntrega.FueraDeTermino
+            const alumnoName = `${item.alumnoNombre} ${item.alumnoApellido}`.trim() || 'Alumno'
 
             return (
               <article
@@ -385,14 +383,13 @@ function PendingReviews({
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-start gap-3">
-                    <span
-                      className={cn(
-                        'flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-                        late ? toneStyles.rose.icon : toneStyles.amber.icon,
-                      )}
-                    >
-                      {getInitial(item)}
-                    </span>
+                    <UserAvatar
+                      name={alumnoName}
+                      avatarUrl={item.alumnoAvatarUrl}
+                      size={40}
+                      className="shrink-0"
+                      fallbackClassName={late ? toneStyles.rose.icon : toneStyles.amber.icon}
+                    />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="truncate text-sm font-semibold text-foreground">
@@ -539,6 +536,9 @@ function buildActivity({
     sortTime: new Date(item.fechaEntregaUtc).getTime(),
     icon: FileCheck2,
     tone: item.tieneFeedbackVigente ? ('emerald' as const) : ('amber' as const),
+    actorType: 'student' as const,
+    actorName: `${item.alumnoNombre} ${item.alumnoApellido}`.trim() || 'Alumno',
+    actorAvatarUrl: item.alumnoAvatarUrl,
   }))
 
   const classItems = classes.map((item) => ({
@@ -550,6 +550,7 @@ function buildActivity({
     sortTime: parseLocalDate(item.fecha).getTime(),
     icon: CalendarCheck2,
     tone: item.estadoClase === EstadoClase.Cancelada ? ('rose' as const) : ('sky' as const),
+    actorType: 'system' as const,
   }))
 
   return [...deliveryItems, ...classItems]
@@ -583,6 +584,7 @@ function ActivityFeed({
         <div className="divide-y divide-border/60 border-y border-border/70 bg-background/35 dark:bg-background/20">
           {items.map((item) => {
             const Icon = item.icon
+            const isStudentActivity = item.actorType === 'student'
 
             return (
               <Link
@@ -590,14 +592,24 @@ function ActivityFeed({
                 href={item.href}
                 className="group flex gap-3 px-2 py-3 transition-colors hover:bg-muted/20 sm:px-3"
               >
-                <span
-                  className={cn(
-                    'mt-1 flex size-8 shrink-0 items-center justify-center rounded-full',
-                    toneStyles[item.tone].icon,
-                  )}
-                >
-                  <Icon className="size-4" />
-                </span>
+                {isStudentActivity ? (
+                  <UserAvatar
+                    name={item.actorName}
+                    avatarUrl={item.actorAvatarUrl}
+                    size={32}
+                    className="mt-1 shrink-0"
+                    fallbackClassName={toneStyles[item.tone].icon}
+                  />
+                ) : (
+                  <span
+                    className={cn(
+                      'mt-1 flex size-8 shrink-0 items-center justify-center rounded-full',
+                      toneStyles[item.tone].icon,
+                    )}
+                  >
+                    <Icon className="size-4" />
+                  </span>
+                )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-foreground">
                     {item.title}

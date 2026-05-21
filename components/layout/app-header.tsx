@@ -74,7 +74,7 @@ function getHeaderSubtitle(pathname: string) {
 }
 
 export function AppHeader({ title, subtitle }: AppHeaderProps) {
-  const { toggleSidebar } = useSidebar()
+  const { state, isMobile, openMobile, toggleSidebar } = useSidebar()
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
   const [override, setOverride] = useState<HeaderOverride | null>(null)
@@ -85,6 +85,8 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
   const isStudent = pathname.startsWith('/student')
   const isTeacher = pathname.startsWith('/teacher')
   const isWorkspace = isStudent || isTeacher
+  const isSidebarHidden = isMobile ? !openMobile : state === 'collapsed'
+  const showHeaderAvatar = !isWorkspace || isSidebarHidden
 
   useEffect(() => {
     setOverride(null)
@@ -186,7 +188,7 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {user ? (
+          {user && showHeaderAvatar ? (
             <UserAvatar
               name={`${user.nombre} ${user.apellido}`.trim()}
               avatarUrl={user.avatarUrl}
