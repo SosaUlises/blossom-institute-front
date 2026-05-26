@@ -12,7 +12,6 @@ import {
   LogOut,
   BarChart3,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react'
 
 import {
@@ -87,19 +86,19 @@ function NavItem({
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild tooltip={item.title} className="h-auto rounded-[20px] p-0 transition-none">
+      <SidebarMenuButton asChild tooltip={item.title} className="h-auto rounded-xl p-0 transition-none">
         <Link
           href={item.url}
           className={cn(
-            'group flex min-h-[46px] w-full items-center gap-3 rounded-[20px] border px-3 py-2.5 text-sm font-medium transition-all duration-200',
+            'group flex min-h-[48px] w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors duration-200',
             isActive
-              ? 'border-primary/15 bg-primary/8 text-foreground shadow-[0_14px_24px_-18px_rgba(36,59,123,0.24)] hover:bg-primary/10'
-              : 'border-transparent bg-transparent text-sidebar-foreground/85 hover:border-sidebar-border/50 hover:bg-sidebar-accent/35 hover:text-sidebar-accent-foreground',
+              ? 'border-primary/15 bg-primary/8 text-foreground shadow-[0_1px_1px_rgba(15,23,42,0.04)] hover:bg-primary/10'
+              : 'border-transparent bg-transparent text-sidebar-foreground/85 hover:border-sidebar-border/60 hover:bg-sidebar-accent/45 hover:text-sidebar-accent-foreground',
           )}
         >
           <div
             className={cn(
-              'flex size-9 shrink-0 items-center justify-center rounded-xl border transition-all duration-200',
+              'flex size-9 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200',
               isActive
                 ? 'border-primary/15 bg-primary/10 text-primary'
                 : 'border-border/50 bg-background/60 text-muted-foreground group-hover:border-primary/10 group-hover:bg-primary/5 group-hover:text-primary/80',
@@ -108,20 +107,20 @@ function NavItem({
             <item.icon className="size-4.5" />
           </div>
 
-        <div className="min-w-0 flex-1">
-  <p
-    className={cn(
-      'truncate text-sm font-semibold leading-tight',
-      isActive ? 'text-foreground' : 'text-sidebar-foreground/90',
-    )}
-  >
-    {item.title}
-  </p>
+          <div className="min-w-0 flex-1">
+            <p
+              className={cn(
+                'truncate text-sm font-semibold leading-tight',
+                isActive ? 'text-foreground' : 'text-sidebar-foreground/90',
+              )}
+            >
+              {item.title}
+            </p>
 
-  <p className="mt-1 truncate text-[11px] leading-[1.25] text-muted-foreground">
-    {getItemDescription(item.title)}
-  </p>
-</div>
+            <p className="mt-1 truncate text-[11px] leading-[1.25] text-muted-foreground">
+              {getItemDescription(item.title)}
+            </p>
+          </div>
 
           <ChevronRight
             className={cn(
@@ -192,34 +191,34 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   return (
     <Sidebar className="border-r border-sidebar-border/70 bg-sidebar/95 text-sidebar-foreground backdrop-blur-2xl">
-<SidebarHeader className="border-b border-sidebar-border/70 px-4 py-5">
-  <Link
-    href="/admin/dashboard"
-    className="group flex items-center justify-center rounded-[24px] px-2 py-2 transition-all duration-200 hover:bg-sidebar-accent/30"
-  >
-    <div className="flex h-[55px] w-full items-center justify-center overflow-hidden rounded-[24px] px-3 transition-all duration-200 group-hover:scale-[1.01]">
-      <Image
-        src="/blossom-logo.png"
-        alt="Blossom Institute"
-        width={180}
-        height={54}
-        className="h-auto max-h-[52px] w-auto object-contain"
-        priority
-      />
-    </div>
-  </Link>
-</SidebarHeader>
+      <SidebarHeader className="border-b border-sidebar-border/70 px-4 py-4">
+        <Link
+          href="/admin/dashboard"
+          className="group flex items-center justify-center rounded-xl px-2 py-2 transition-colors duration-200 hover:bg-sidebar-accent/40"
+        >
+          <div className="flex h-[52px] w-full items-center justify-center overflow-hidden rounded-xl px-3 transition-colors duration-200">
+            <Image
+              src="/blossom-logo.png"
+              alt="Blossom Institute"
+              width={180}
+              height={54}
+              className="h-auto max-h-[52px] w-auto object-contain"
+              priority
+            />
+          </div>
+        </Link>
+      </SidebarHeader>
 
-      <SidebarContent className="flex h-full flex-col px-3 py-3">
+      <SidebarContent className="flex h-full flex-col px-3 py-4">
         <div className="flex min-h-0 flex-1 flex-col justify-between">
-          <div className="space-y-4">
+          <div className="space-y-5">
             <SidebarGroup>
               <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
                 Main
               </SidebarGroupLabel>
 
               <SidebarGroupContent>
-                <SidebarMenu className="space-y-1.5">
+                <SidebarMenu className="space-y-2">
                   {mainNavItems.map((item) => (
                     <NavItem key={item.title} item={item} pathname={pathname} />
                   ))}
@@ -228,9 +227,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </SidebarGroup>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-5">
             {!mounted ? (
-              <div className="flex w-full items-center gap-3 rounded-[22px] border border-sidebar-border/70 bg-card/85 px-3 py-2.5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.18)]">
+              <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/80 px-3 py-3 shadow-[0_1px_1px_rgba(15,23,42,0.03)]">
                 <UserAvatar
                   name={fullName}
                   avatarUrl={avatarUrl}
@@ -252,7 +251,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="group flex w-full items-center gap-3 rounded-[22px] border border-sidebar-border/70 bg-card/85 px-3 py-2.5 text-left shadow-[0_10px_20px_-18px_rgba(15,23,42,0.18)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-sidebar-accent/60 hover:shadow-md"
+                    className="group flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/80 px-3 py-3 text-left shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 hover:bg-sidebar-accent/60"
                   >
                     <UserAvatar
                       name={fullName}
@@ -278,9 +277,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 <DropdownMenuContent
                   align="start"
                   side="top"
-                  className="w-64 rounded-2xl border border-border/70 bg-popover/95 p-2 shadow-[0_22px_50px_-24px_rgba(15,23,42,0.30)] backdrop-blur-xl"
+                  className="w-64 rounded-2xl border border-border/70 bg-popover/95 p-2 shadow-[0_1px_2px_rgba(15,23,42,0.035)] backdrop-blur-xl"
                 >
-                  <div className="mb-2 rounded-[18px] border border-border/60 bg-muted/35 px-3 py-3">
+                  <div className="mb-2 rounded-xl border border-border/60 bg-muted/25 px-3 py-3">
                     <p className="truncate text-sm font-semibold text-foreground">
                       {fullName}
                     </p>

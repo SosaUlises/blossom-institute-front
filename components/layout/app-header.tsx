@@ -82,9 +82,10 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
   const headerTitle = override?.title ?? title
   const displayTitle = titleLabels[headerTitle] ?? headerTitle
   const displaySubtitle = override?.subtitle ?? subtitle ?? getHeaderSubtitle(pathname)
+  const isAdmin = pathname.startsWith('/admin')
   const isStudent = pathname.startsWith('/student')
   const isTeacher = pathname.startsWith('/teacher')
-  const isWorkspace = isStudent || isTeacher
+  const isWorkspace = isAdmin || isStudent || isTeacher
   const isSidebarHidden = isMobile ? !openMobile : state === 'collapsed'
   const showHeaderAvatar = !isWorkspace || isSidebarHidden
 

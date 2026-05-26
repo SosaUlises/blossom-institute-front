@@ -1,9 +1,10 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { Loader2, ShieldCheck, Sparkles, UserCog, BadgeCheck } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
+import { WorkspaceHeader } from '@/components/shared/workspace-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { AccountProfileForm } from '@/components/admin/settings/account-profile-form'
 import { ChangePasswordForm } from '@/components/admin/settings/change-password-form'
@@ -33,7 +34,7 @@ function SummaryCard({
           : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
 
   return (
-    <Card className="rounded-[24px] border border-border/60 bg-card/95 shadow-[0_14px_34px_-22px_rgba(15,23,42,0.14)]">
+    <Card className="rounded-xl border border-border/60 bg-card/95 shadow-sm">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -68,7 +69,7 @@ export default function SettingsPage() {
         const data = await getMyAccountSettings()
         setAccount(data)
       } catch (err: any) {
-        setError(err?.message || 'No se pudo cargar la configuración.')
+        setError(err?.message || 'No se pudo cargar la configuraciÃ³n.')
       } finally {
         setLoading(false)
       }
@@ -81,56 +82,29 @@ export default function SettingsPage() {
     <>
       <AppHeader title="Settings" />
 
-      <div className="flex-1 overflow-auto px-6 py-8 lg:px-8">
-        <div className="mx-auto max-w-6xl space-y-8">
-          <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.05),transparent_24%)]" />
-
-            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <div className="mb-5 h-[3px] w-12 rounded-full bg-primary" />
-
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
-                  Account settings
-                </p>
-
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-[2.45rem]">
-                  Configuración de cuenta y seguridad
-                </h2>
-
-                <p className="mt-4 max-w-3xl text-[15px] leading-7 text-muted-foreground">
-                  Gestioná tus datos personales, tus roles visibles y la seguridad de acceso desde un único espacio.
-                </p>
+      <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
+        <div className="mx-auto max-w-6xl space-y-5">
+          <WorkspaceHeader
+            title="Configuracion de cuenta y seguridad"
+            description="Gestiona datos personales, roles visibles y acceso."
+            metadata={
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4 text-primary" />
+                <span className="font-medium text-foreground">Modulo Settings</span>
               </div>
-
-              <div className="group inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Sparkles className="size-5" />
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Módulo
-                  </p>
-                  <p className="text-sm font-semibold text-foreground">
-                    Settings
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
+            }
+          />
           {loading ? (
-            <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+            <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-sm">
               <CardContent className="flex min-h-[240px] items-center justify-center">
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <Loader2 className="size-4 animate-spin" />
-                  Cargando configuración...
+                  Cargando configuraciÃ³n...
                 </div>
               </CardContent>
             </Card>
           ) : error ? (
-            <Card className="rounded-[28px] border border-destructive/20 bg-destructive/5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.10)]">
+            <Card className="rounded-2xl border border-destructive/20 bg-destructive/5 shadow-sm">
               <CardContent className="p-6 text-sm text-destructive">
                 {error}
               </CardContent>
@@ -154,7 +128,7 @@ export default function SettingsPage() {
                   accent="emerald"
                 />
 
-                <Card className="rounded-[24px] border border-border/60 bg-card/95 shadow-[0_14px_34px_-22px_rgba(15,23,42,0.14)]">
+                <Card className="rounded-xl border border-border/60 bg-card/95 shadow-sm">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -193,7 +167,7 @@ export default function SettingsPage() {
               </div>
             </>
           ) : (
-            <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+            <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-sm">
               <CardContent className="p-6 text-sm text-muted-foreground">
                 No se encontraron datos de cuenta.
               </CardContent>

@@ -3,21 +3,20 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import {
+  IdCard,
   Pencil,
+  Phone,
   Plus,
   Power,
   Search,
   UserCheck,
-  GraduationCap,
-  Mail,
-  IdCard,
-  Phone,
   Users,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { EntityRosterRow } from '@/components/shared/entity-roster-row'
 import {
   activateTeacher,
   deactivateTeacher,
@@ -26,94 +25,84 @@ import {
 import type { Profesor } from '@/lib/admin/teachers/types'
 import { cn } from '@/lib/utils'
 
+type StatusFilter = 'all' | 'active' | 'inactive'
+
 function TeachersToolbar({
   search,
   setSearch,
+  statusFilter,
+  setStatusFilter,
 }: {
   search: string
   setSearch: (value: string) => void
+  statusFilter: StatusFilter
+  setStatusFilter: (value: StatusFilter) => void
 }) {
   return (
-    <section className="rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] md:p-6">
-      <div className="flex flex-col gap-5 text-center xl:flex-row xl:items-end xl:justify-between xl:text-left">
-        <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Gestión
-          </p>
-          <h3 className="text-xl font-semibold tracking-tight text-foreground">
-            Listado de profesores
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Buscá, editá y administrá el estado de los profesores del instituto.
-          </p>
+    <section className="rounded-xl border border-border/70 bg-card/80 p-3 shadow-sm dark:bg-card/70">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_170px_auto] lg:items-center">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+          <Input
+            placeholder="Buscar profesor..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="h-10 rounded-xl border-border/60 bg-background/75 pl-10 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
+          />
         </div>
 
-        <div className="flex w-full flex-col items-center gap-3 md:flex-row md:items-center xl:w-auto">
-          <div className="relative w-full max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nombre, apellido, email o DNI..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-11 rounded-2xl border-border/70 bg-background/85 pl-10 text-center shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15 md:text-left"
-            />
-          </div>
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+          className="h-10 rounded-xl border border-border/60 bg-background/75 px-3 text-sm text-foreground shadow-none outline-none transition-colors focus:border-primary/30 focus:ring-2 focus:ring-primary/15 dark:bg-background/35"
+        >
+          <option value="all">Todos</option>
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+        </select>
 
-          <Link href="/admin/dashboard/teachers/new" className="w-full md:w-auto">
-            <Button className="h-11 w-full rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md md:w-auto">
-              <Plus className="mr-2 size-4" />
-              Nuevo profesor
-            </Button>
+        <Button asChild className="h-10 rounded-xl px-4 shadow-none">
+          <Link href="/admin/dashboard/teachers/new">
+            <Plus className="mr-2 size-4" />
+            Nuevo profesor
           </Link>
-        </div>
+        </Button>
       </div>
     </section>
   )
 }
 
-function MetaPill({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-}) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-[18px] border border-border/60 bg-background/80 px-3 py-2 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md">
-      <div className="flex size-8 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground">
-        <Icon className="size-4" />
-      </div>
-
-      <div className="min-w-0 leading-none">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-1 truncate text-sm font-medium text-foreground">
-          {value}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function TeacherStatusBadge({ activo }: { activo: boolean }) {
+function StatusBadge({ active }: { active: boolean }) {
   return (
     <span
       className={cn(
-        'inline-flex rounded-full border px-3 py-1 text-xs font-medium',
-        activo
-          ? 'border-emerald-500/15 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-          : 'border-rose-500/15 bg-rose-500/10 text-rose-700 dark:text-rose-400',
+        'inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium',
+        active
+          ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+          : 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400',
       )}
     >
-      {activo ? 'Activo' : 'Inactivo'}
+      {active ? 'Activo' : 'Inactivo'}
     </span>
   )
 }
 
-function TeacherCard({
+function MetadataItem({
+  icon: Icon,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  children: React.ReactNode
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/[0.18] px-2.5 py-1">
+      <Icon className="size-3.5 shrink-0" />
+      {children}
+    </span>
+  )
+}
+
+function TeacherRow({
   teacher,
   actionLoadingId,
   onToggleActive,
@@ -122,60 +111,44 @@ function TeacherCard({
   actionLoadingId: number | null
   onToggleActive: (teacher: Profesor) => Promise<void>
 }) {
+  const fullName = `${teacher.nombre} ${teacher.apellido}`.trim()
+
   return (
-    <article className="group relative overflow-hidden rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-[1px] hover:border-border/80 hover:shadow-[0_24px_52px_-24px_rgba(15,23,42,0.22)] md:p-6">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.05),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.04),transparent_22%)]" />
-
-      <div className="relative grid gap-5 text-center xl:grid-cols-[minmax(0,1.3fr)_auto_auto] xl:items-center xl:text-left">
-        <div className="min-w-0">
-          <div className="flex flex-col items-center gap-4 xl:flex-row xl:items-start">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
-              <GraduationCap className="size-5" />
-            </div>
-
-            <div className="min-w-0 space-y-2 text-center xl:text-left">
-              <div className="flex flex-wrap items-center justify-center gap-2.5 xl:justify-start">
-                <h4 className="truncate text-[1.08rem] font-semibold tracking-tight text-foreground">
-                  {teacher.nombre} {teacher.apellido}
-                </h4>
-
-                <TeacherStatusBadge activo={teacher.activo} />
-              </div>
-
-              <div className="inline-flex max-w-full items-center justify-center gap-2 text-sm text-muted-foreground xl:justify-start">
-                <Mail className="size-4 shrink-0" />
-                <span className="truncate">{teacher.email}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-3 xl:justify-center">
-          <MetaPill icon={IdCard} label="DNI" value={String(teacher.dni)} />
-          <MetaPill icon={Phone} label="Teléfono" value={teacher.telefono || '-'} />
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-2 xl:justify-end">
-          <Link href={`/admin/dashboard/teachers/${teacher.id}`}>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-10 min-w-[128px] rounded-xl border-border/70 bg-background/75 px-3 text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/8 hover:text-primary sm:min-w-0"
-            >
+    <EntityRosterRow
+      name={fullName}
+      email={teacher.email}
+      avatarUrl={teacher.avatarUrl}
+      avatarFallbackClassName="bg-violet-500/10 text-violet-700 dark:text-violet-400"
+      status={<StatusBadge active={teacher.activo} />}
+      metadata={
+        <>
+          <MetadataItem icon={IdCard}>DNI {teacher.dni}</MetadataItem>
+          <MetadataItem icon={Phone}>{teacher.telefono || 'Sin telefono'}</MetadataItem>
+        </>
+      }
+      actions={
+        <>
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="h-9 rounded-lg border-border/70 bg-background/70 px-3 shadow-none hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
+          >
+            <Link href={`/admin/dashboard/teachers/${teacher.id}`}>
               <Pencil className="mr-2 size-4" />
               Editar
-            </Button>
-          </Link>
+            </Link>
+          </Button>
 
           <Button
             size="sm"
             onClick={() => onToggleActive(teacher)}
             disabled={actionLoadingId === teacher.id}
             className={cn(
-              'h-10 min-w-[128px] rounded-xl px-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 sm:min-w-0',
+              'h-9 rounded-lg border px-3 shadow-none',
               teacher.activo
-                ? 'border border-rose-500/15 bg-rose-500/10 text-rose-700 hover:bg-rose-500/15 dark:text-rose-400'
-                : 'border border-emerald-500/15 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400',
+                ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 hover:bg-rose-500/15 dark:text-rose-400'
+                : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400',
             )}
           >
             {teacher.activo ? (
@@ -190,37 +163,32 @@ function TeacherCard({
               </>
             )}
           </Button>
-        </div>
-      </div>
-    </article>
+        </>
+      }
+    />
   )
 }
 
 function TeachersSkeleton() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {Array.from({ length: 5 }).map((_, index) => (
         <div
           key={index}
-          className="rounded-[28px] border border-border/60 bg-card/95 p-5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)] md:p-6"
+          className="rounded-xl border border-border/70 bg-card/90 px-4 py-3 shadow-sm"
         >
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_auto_auto] xl:items-center">
-            <div className="flex flex-col items-center gap-4 xl:flex-row xl:items-start">
-              <div className="size-12 animate-pulse rounded-2xl bg-muted/35" />
-              <div className="space-y-2 text-center xl:text-left">
-                <div className="mx-auto h-5 w-44 animate-pulse rounded-lg bg-muted/35 xl:mx-0" />
-                <div className="mx-auto h-4 w-64 animate-pulse rounded-lg bg-muted/25 xl:mx-0" />
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="size-10 animate-pulse rounded-full bg-muted/45" />
+              <div className="space-y-2">
+                <div className="h-4 w-44 animate-pulse rounded-lg bg-muted/45" />
+                <div className="h-4 w-60 animate-pulse rounded-lg bg-muted/30" />
+                <div className="h-6 w-52 animate-pulse rounded-full bg-muted/25" />
               </div>
             </div>
-
-            <div className="flex flex-wrap justify-center gap-3 xl:justify-center">
-              <div className="h-12 w-36 animate-pulse rounded-[18px] bg-muted/30" />
-              <div className="h-12 w-40 animate-pulse rounded-[18px] bg-muted/30" />
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-2 xl:justify-end">
-              <div className="h-10 w-24 animate-pulse rounded-xl bg-muted/30" />
-              <div className="h-10 w-28 animate-pulse rounded-xl bg-muted/30" />
+            <div className="flex gap-2">
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-muted/30" />
+              <div className="h-9 w-28 animate-pulse rounded-lg bg-muted/30" />
             </div>
           </div>
         </div>
@@ -231,18 +199,16 @@ function TeachersSkeleton() {
 
 function EmptyTeachersState({ text }: { text: string }) {
   return (
-    <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-      <CardContent className="px-6 py-14">
+    <Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm">
+      <CardContent className="px-6 py-12">
         <div className="flex flex-col items-center justify-center text-center">
-          <div className="flex size-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
-            <Users className="size-6" />
+          <div className="flex size-11 items-center justify-center rounded-xl bg-violet-500/10 text-violet-700 dark:text-violet-400">
+            <Users className="size-5" />
           </div>
-
-          <h4 className="mt-4 text-lg font-semibold tracking-tight text-foreground">
+          <h4 className="mt-4 text-base font-semibold tracking-tight text-foreground">
             Sin profesores para mostrar
           </h4>
-
-          <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+          <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground">
             {text}
           </p>
         </div>
@@ -255,6 +221,7 @@ export function TeachersTable() {
   const [items, setItems] = useState<Profesor[]>([])
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [loading, setLoading] = useState(true)
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null)
 
@@ -286,18 +253,24 @@ export function TeachersTable() {
     loadTeachers()
   }, [debouncedSearch])
 
+  const visibleItems = useMemo(() => {
+    if (statusFilter === 'active') return items.filter((item) => item.activo)
+    if (statusFilter === 'inactive') return items.filter((item) => !item.activo)
+    return items
+  }, [items, statusFilter])
+
   const emptyStateText = useMemo(() => {
-    if (debouncedSearch.trim()) {
-      return 'No se encontraron profesores para esa búsqueda.'
+    if (debouncedSearch.trim() || statusFilter !== 'all') {
+      return 'No se encontraron profesores con esos filtros.'
     }
 
-    return 'Todavía no hay profesores cargados en el sistema.'
-  }, [debouncedSearch])
+    return 'Todavia no hay profesores cargados en el sistema.'
+  }, [debouncedSearch, statusFilter])
 
   const handleToggleActive = async (teacher: Profesor) => {
     const confirmText = teacher.activo
-      ? `¿Querés desactivar a ${teacher.nombre} ${teacher.apellido}?`
-      : `¿Querés activar a ${teacher.nombre} ${teacher.apellido}?`
+      ? `Queres desactivar a ${teacher.nombre} ${teacher.apellido}?`
+      : `Queres activar a ${teacher.nombre} ${teacher.apellido}?`
 
     const confirmed = window.confirm(confirmText)
     if (!confirmed) return
@@ -318,17 +291,22 @@ export function TeachersTable() {
   }
 
   return (
-    <div className="space-y-6">
-      <TeachersToolbar search={search} setSearch={setSearch} />
+    <div className="space-y-4">
+      <TeachersToolbar
+        search={search}
+        setSearch={setSearch}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+      />
 
       {loading ? (
         <TeachersSkeleton />
-      ) : items.length === 0 ? (
+      ) : visibleItems.length === 0 ? (
         <EmptyTeachersState text={emptyStateText} />
       ) : (
-        <div className="space-y-4">
-          {items.map((teacher) => (
-            <TeacherCard
+        <div className="space-y-2">
+          {visibleItems.map((teacher) => (
+            <TeacherRow
               key={teacher.id}
               teacher={teacher}
               actionLoadingId={actionLoadingId}

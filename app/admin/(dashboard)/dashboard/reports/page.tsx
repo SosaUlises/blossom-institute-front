@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import {
   BarChart3,
   ClipboardCheck,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
+import { WorkspaceHeader } from '@/components/shared/workspace-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const reportCards = [
@@ -37,14 +38,14 @@ const reportCards = [
   },
   {
     title: 'Resumen de estudiante',
-    description: 'Resumen académico completo por alumno.',
+    description: 'Resumen acadÃ©mico completo por alumno.',
     href: 'reports/student-summary',
     icon: UserRoundSearch,
     accent: 'violet',
   },
   {
     title: 'Detalle de evaluaciones por estudiante',
-    description: 'Detalle cronológico de evaluaciones por alumno, con skills por calificación.',
+    description: 'Detalle cronolÃ³gico de evaluaciones por alumno, con skills por calificaciÃ³n.',
     href: 'reports/student-assessments',
     icon: GraduationCap,
     accent: 'rose',
@@ -111,52 +112,25 @@ export default function ReportsPage() {
     <>
       <AppHeader title="Reports" />
 
-      <div className="flex-1 overflow-auto px-6 py-8 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-8">
-          <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.05),transparent_24%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(72,99,180,0.12),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.08),transparent_26%)]" />
-
-            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <div className="mb-5 h-[3px] w-12 rounded-full bg-primary" />
-
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
-                  Reports center
-                </p>
-
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-[2.45rem]">
-                  Reportes académicos y operativos
-                </h2>
-
-                <p className="mt-4 max-w-3xl text-[15px] leading-7 text-muted-foreground">
-                  Explorá reportes por curso, trimestre y alumno para analizar rendimiento, asistencia, homework y evaluaciones detalladas desde una vista centralizada.
-                </p>
+      <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
+        <div className="mx-auto max-w-7xl space-y-5">
+          <WorkspaceHeader
+            title="Reportes academicos y operativos"
+            description="Elige un modulo para analizar rendimiento, asistencia, homework y evaluaciones."
+            metadata={
+              <div className="flex items-center gap-2">
+                <BarChart3 className="size-4 text-primary" />
+                <span className="font-medium text-foreground">Centro de reportes</span>
               </div>
-
-              <div className="group inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-200 group-hover:scale-[1.05] group-hover:bg-primary/15">
-                  <BarChart3 className="size-5" />
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Centro
-                  </p>
-                  <p className="text-sm font-semibold text-foreground">
-                    Reportes
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
+            }
+          />
           <section className="space-y-4">
             <div className="space-y-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Report modules
               </p>
               <h3 className="text-xl font-semibold tracking-tight text-foreground">
-                Seleccioná un reporte
+                SeleccionÃ¡ un reporte
               </h3>
             </div>
 
@@ -167,7 +141,7 @@ export default function ReportsPage() {
                 return (
                   <Link key={card.title} href={card.href} className="group">
                     <Card
-                      className={`h-full rounded-[28px] text-card-foreground shadow-[0_16px_34px_-22px_rgba(15,23,42,0.16)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_22px_46px_-24px_rgba(15,23,42,0.20)] ${styles.card}`}
+                      className={`h-full rounded-2xl text-card-foreground shadow-sm transition-colors duration-200 hover:border-primary/20 hover:bg-card ${styles.card}`}
                     >
                       <CardHeader className="pb-3">
                         <div className="mb-4 flex items-start justify-between gap-3">
