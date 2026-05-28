@@ -7,7 +7,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <AppHeader title="Dashboard" />
+      <AppHeader title="Panel de administración" />
       <AdminDashboardView dashboard={dashboard} />
     </>
   )

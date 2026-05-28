@@ -50,6 +50,30 @@ export interface DashboardStudentAttendanceRisk {
   attendancePercentage: number
 }
 
+export interface DashboardStudentConsecutiveAbsenceRisk {
+  alumnoId: number
+  alumnoNombre: string
+  alumnoAvatarUrl?: string | null
+  cursoId: number
+  cursoNombre: string
+  cursoDescripcion?: string | null
+  consecutiveAbsences: number
+  lastAbsenceDate: string
+  attendancePercentage: number
+}
+
+export interface DashboardStudentCombinedRisk {
+  alumnoId: number
+  alumnoNombre: string
+  alumnoAvatarUrl?: string | null
+  cursoId: number
+  cursoNombre: string
+  cursoDescripcion?: string | null
+  averageGrade: number
+  attendancePercentage: number
+  absences: number
+}
+
 export interface DashboardCourseAttendanceRisk {
   cursoId: number
   cursoNombre: string
@@ -57,6 +81,15 @@ export interface DashboardCourseAttendanceRisk {
   attendancePercentage: number
   ausentes: number
   expectedAttendanceRecords: number
+}
+
+export interface DashboardCourseTrendRisk {
+  cursoId: number
+  cursoNombre: string
+  cursoDescripcion?: string | null
+  currentValue: number
+  previousValue: number
+  delta: number
 }
 
 export interface DashboardCriticalCourse {
@@ -126,10 +159,14 @@ export interface AdminDashboardResponse {
   studentsManualLowPerformance: DashboardLowManualGradeAlert[]
   studentsAtRiskByAverage: DashboardStudentAverageRisk[]
   studentsWithMultipleAbsences: DashboardStudentAttendanceRisk[]
+  studentsWithConsecutiveAbsences: DashboardStudentConsecutiveAbsenceRisk[]
+  studentsWithCombinedAcademicRisk: DashboardStudentCombinedRisk[]
 
   coursesAtRiskByOverallAverage: DashboardAverageGradeByCourse[]
   coursesAtRiskByManualAverage: DashboardAverageGradeByCourse[]
   coursesAtRiskByAttendance: DashboardCourseAttendanceRisk[]
+  coursesWithAttendanceDecline: DashboardCourseTrendRisk[]
+  coursesWithPerformanceDecline: DashboardCourseTrendRisk[]
   criticalCourses: DashboardCriticalCourse[]
   academicTrends: DashboardAcademicTrend[]
 

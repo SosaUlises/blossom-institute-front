@@ -59,7 +59,7 @@ const titleLabels: Record<string, string> = {
 
 function getHeaderSubtitle(pathname: string) {
   if (pathname.startsWith('/admin')) {
-    return 'Blossom Institute · Administración'
+    return 'Control académico'
   }
 
   if (pathname.startsWith('/teacher')) {
