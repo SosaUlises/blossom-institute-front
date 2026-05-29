@@ -13,17 +13,33 @@ export interface DashboardOverview {
 }
 
 export interface DashboardPeriod {
+  type?: string
   strategy: string
+  label?: string
+  monthRangeLabel?: string
   from: string
   to: string
   year: number
   month: number
+  quarter?: number
+}
+
+export interface DashboardTrendComparison {
+  type: string
+  label: string
+}
+
+export interface DashboardRollingWindow {
+  type: string
+  days: number
+  label: string
 }
 
 export interface DashboardAverageGradeByCourse {
   cursoId: number
   cursoNombre: string
   cursoDescripcion?: string | null
+  profesoresNombres?: string[]
   averageGrade: number
 }
 
@@ -48,6 +64,7 @@ export interface DashboardStudentAttendanceRisk {
   ausentes: number
   clasesTotales: number
   attendancePercentage: number
+  averageGrade?: number | null
 }
 
 export interface DashboardStudentConsecutiveAbsenceRisk {
@@ -60,6 +77,7 @@ export interface DashboardStudentConsecutiveAbsenceRisk {
   consecutiveAbsences: number
   lastAbsenceDate: string
   attendancePercentage: number
+  averageGrade?: number | null
 }
 
 export interface DashboardStudentCombinedRisk {
@@ -78,6 +96,7 @@ export interface DashboardCourseAttendanceRisk {
   cursoId: number
   cursoNombre: string
   cursoDescripcion?: string | null
+  profesoresNombres?: string[]
   attendancePercentage: number
   ausentes: number
   expectedAttendanceRecords: number
@@ -87,6 +106,7 @@ export interface DashboardCourseTrendRisk {
   cursoId: number
   cursoNombre: string
   cursoDescripcion?: string | null
+  profesoresNombres?: string[]
   currentValue: number
   previousValue: number
   delta: number
@@ -96,6 +116,7 @@ export interface DashboardCriticalCourse {
   cursoId: number
   cursoNombre: string
   cursoDescripcion?: string | null
+  profesoresNombres?: string[]
   averageGrade: number | null
   attendancePercentage: number | null
   pendingCorrectionCount: number
@@ -122,6 +143,7 @@ export interface DashboardLowManualGradeAlert {
   tipo: number
   nota: number
   fecha: string
+  averageGrade?: number | null
 }
 
 export interface DashboardUpcomingAssignment {
@@ -145,6 +167,8 @@ export interface DashboardUpcomingClass {
 
 export interface AdminDashboardResponse {
   period: DashboardPeriod
+  trendComparison?: DashboardTrendComparison
+  consecutiveAbsencesWindow?: DashboardRollingWindow
   overview: DashboardOverview
   generalAverage: number | null
   currentPeriodAverage: number | null
