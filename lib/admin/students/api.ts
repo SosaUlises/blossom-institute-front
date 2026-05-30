@@ -3,6 +3,7 @@ import type {
   CreateAlumnoDTO,
   UpdateAlumnoDTO,
   StudentsListResponse,
+  StudentAcademicSummary,
 } from './types'
 
 function buildQuery(params?: {
@@ -80,6 +81,18 @@ export async function getStudentById(id: number): Promise<Alumno> {
   })
 
   return parseResponse<Alumno>(response)
+}
+
+export async function getStudentAcademicSummary(
+  id: number,
+): Promise<StudentAcademicSummary> {
+  const response = await fetch(`/api/admin/students/${id}/academic-summary`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  })
+
+  return parseResponse<StudentAcademicSummary>(response)
 }
 
 export async function createStudent(payload: CreateAlumnoDTO): Promise<void> {

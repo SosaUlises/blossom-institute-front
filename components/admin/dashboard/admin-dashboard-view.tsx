@@ -1226,15 +1226,13 @@ function StudentFollowUpRow({
                 Asistencia {attendanceLabel}
               </SignalPill>
             ) : null}
-            <SheetTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
-              >
-                Revisar
-                <ArrowRight className="ml-1 size-3.5" />
-              </button>
-            </SheetTrigger>
+            <Link
+              href={`/admin/dashboard/students/${item.alumnoId}/profile`}
+              className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+            >
+              Ver seguimiento
+              <ArrowRight className="ml-1 size-3.5" />
+            </Link>
           </div>
         </div>
       </article>
@@ -1476,7 +1474,7 @@ function CourseFollowUpRow({
                   {item.affectedStudents.map((student) => (
                     <Link
                       key={student.id}
-                      href={`/admin/dashboard/students/${student.alumnoId}`}
+                      href={`/admin/dashboard/students/${student.alumnoId}/profile`}
                       className="flex items-start gap-2.5 rounded-xl bg-muted/15 px-3 py-2.5 transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 dark:bg-muted/10"
                     >
                       <StudentPhoto

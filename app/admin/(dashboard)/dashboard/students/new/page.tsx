@@ -20,13 +20,13 @@ export default function NewStudentPage() {
 
   return (
     <>
-      <AppHeader title="New student" />
+      <AppHeader title="Crear alumno" />
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-5xl space-y-5">
           <WorkspaceHeader
-            title="Nuevo alumno"
-            description="Carga la informacion principal para crear una cuenta de alumno."
+            title="Crear alumno"
+            description="Cargá la información principal para crear una cuenta de alumno."
             metadata={
               <div className="flex items-center gap-2">
                 <UserPlus className="size-4 text-primary" />
@@ -34,7 +34,11 @@ export default function NewStudentPage() {
               </div>
             }
           />
-          <StudentForm mode="create" onSubmit={handleSubmit} />
+          <StudentForm
+            mode="create"
+            onSubmit={handleSubmit}
+            cancelHref="/admin/dashboard/students"
+          />
         </div>
       </div>
     </>
