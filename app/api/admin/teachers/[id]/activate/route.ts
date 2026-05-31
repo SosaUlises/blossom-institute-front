@@ -46,7 +46,7 @@ export async function PATCH(_: Request, context: RouteContext) {
           message:
             backendResult?.message ||
             backendResult?.raw ||
-            `Error activando profesor. Status: ${backendResponse.status}`,
+            `Error activando docente. Código: ${backendResponse.status}`,
         },
         { status: backendResponse.status }
       )
@@ -55,14 +55,14 @@ export async function PATCH(_: Request, context: RouteContext) {
     return NextResponse.json(
       backendResult ?? {
         success: true,
-        message: 'Profesor activado correctamente.',
+        message: 'Docente activado correctamente.',
         data: null,
       },
       { status: backendResponse.status }
     )
   } catch {
     return NextResponse.json(
-      { success: false, message: 'No se pudo activar el profesor.' },
+      { success: false, message: 'No se pudo activar el docente.' },
       { status: 500 }
     )
   }

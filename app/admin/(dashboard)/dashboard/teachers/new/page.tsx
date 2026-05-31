@@ -20,17 +20,17 @@ export default function NewTeacherPage() {
 
   return (
     <>
-      <AppHeader title="New teacher" />
+      <AppHeader title="Nuevo docente" />
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-5xl space-y-5">
           <WorkspaceHeader
-            title="Nuevo profesor"
-            description="Carga la informacion principal para crear una cuenta docente."
+            title="Nuevo docente"
+            description="Cargá la información principal para sumar una cuenta docente al equipo académico."
             metadata={
               <div className="flex items-center gap-2">
                 <UserPlus className="size-4 text-primary" />
-                <span className="font-medium text-foreground">Alta de profesor</span>
+                <span className="font-medium text-foreground">Alta de docente</span>
               </div>
             }
           />

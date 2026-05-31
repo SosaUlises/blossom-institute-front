@@ -31,6 +31,7 @@ import type {
   DashboardUpcomingAssignment,
   DashboardUpcomingClass,
 } from '@/lib/admin/dashboard/types'
+import type { Profesor } from '@/lib/admin/teachers/types'
 import { cn } from '@/lib/utils'
 
 type Tone = 'neutral' | 'amber' | 'rose' | 'emerald' | 'primary'
@@ -73,6 +74,20 @@ type CourseHealthItem = {
   affectedStudents: CourseAffectedStudent[]
   pendingCorrectionCount?: number
   signalsCount: number
+  severity: SignalSeverity
+}
+
+type TeacherOperationalItem = {
+  id: number
+  fullName: string
+  email: string
+  avatarUrl?: string | null
+  studentsCount: number
+  pendingCorrectionsCount: number
+  unloadedAttendanceCount: number
+  coursesAtRiskCount: number
+  mainSignal: string
+  reasons: string[]
   severity: SignalSeverity
 }
 
@@ -321,6 +336,32 @@ function StudentPhoto({
   )
 }
 
+function TeacherPhoto({
+  name,
+  avatarUrl,
+}: {
+  name: string
+  avatarUrl?: string | null
+}) {
+  const cleanAvatarUrl = avatarUrl?.trim()
+  const initials = getTeacherInitials(name)
+
+  return (
+    <Avatar className="size-8 shrink-0 rounded-lg border border-border/40 bg-muted">
+      {cleanAvatarUrl ? (
+        <AvatarImage
+          src={cleanAvatarUrl}
+          alt={name.trim() || 'Foto del docente'}
+          className="object-cover"
+        />
+      ) : null}
+      <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-semibold text-primary">
+        {initials}
+      </AvatarFallback>
+    </Avatar>
+  )
+}
+
 function severityTone(severity: SignalSeverity): Tone {
   if (severity === 'critical') return 'rose'
   if (severity === 'attention') return 'amber'
@@ -484,6 +525,94 @@ function formatShortDate(value: string | null | undefined) {
 
 function cleanTeacherNames(names?: string[] | null) {
   return (names ?? []).map((name) => name.trim()).filter(Boolean)
+}
+
+function getTeacherFullName(teacher: Profesor) {
+  return `${teacher.nombre} ${teacher.apellido}`.trim()
+}
+
+function getTeacherInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+
+  if (parts.length === 0) return 'DO'
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join('')
+    .toUpperCase()
+}
+
+function getTeacherOperationalReasons(teacher: Profesor) {
+  const reasons: string[] = []
+  const coursesAtRiskCount = teacher.coursesAtRiskCount ?? 0
+  const pendingCorrectionsCount = teacher.pendingCorrectionsCount ?? 0
+  const unloadedAttendanceCount = teacher.unloadedAttendanceCount ?? 0
+
+  if (coursesAtRiskCount > 0) {
+    reasons.push(
+      coursesAtRiskCount === 1
+        ? '1 curso requiere atención'
+        : `${coursesAtRiskCount} cursos requieren atención`,
+    )
+  }
+
+  if (pendingCorrectionsCount > 0) {
+    reasons.push(
+      pendingCorrectionsCount === 1
+        ? '1 corrección pendiente'
+        : `${pendingCorrectionsCount} correcciones pendientes`,
+    )
+  }
+
+  if (unloadedAttendanceCount > 0) {
+    reasons.push(
+      unloadedAttendanceCount === 1
+        ? '1 asistencia pendiente'
+        : `${unloadedAttendanceCount} asistencias pendientes`,
+    )
+  }
+
+  return reasons
+}
+
+function buildTeacherOperationalItems(teachers: Profesor[]): TeacherOperationalItem[] {
+  return teachers
+    .map((teacher) => {
+      const reasons = getTeacherOperationalReasons(teacher)
+      const coursesAtRiskCount = teacher.coursesAtRiskCount ?? 0
+      const pendingCorrectionsCount = teacher.pendingCorrectionsCount ?? 0
+      const unloadedAttendanceCount = teacher.unloadedAttendanceCount ?? 0
+      const severity: SignalSeverity = coursesAtRiskCount > 0 ? 'critical' : 'attention'
+
+      return {
+        id: teacher.id,
+        fullName: getTeacherFullName(teacher),
+        email: teacher.email,
+        avatarUrl: teacher.avatarUrl,
+        studentsCount: teacher.studentsCount ?? 0,
+        pendingCorrectionsCount,
+        unloadedAttendanceCount,
+        coursesAtRiskCount,
+        mainSignal: teacher.mainSignal || reasons[0] || 'Sin señales pendientes',
+        reasons,
+        severity,
+      }
+    })
+    .filter((teacher) => teacher.reasons.length > 0)
+    .sort((a, b) => {
+      const severityWeight = { critical: 0, attention: 1, healthy: 2 }
+      const severityDiff = severityWeight[a.severity] - severityWeight[b.severity]
+      if (severityDiff !== 0) return severityDiff
+
+      const aSignals =
+        a.coursesAtRiskCount + a.pendingCorrectionsCount + a.unloadedAttendanceCount
+      const bSignals =
+        b.coursesAtRiskCount + b.pendingCorrectionsCount + b.unloadedAttendanceCount
+
+      return bSignals - aSignals || a.fullName.localeCompare(b.fullName)
+    })
+    .slice(0, 6)
 }
 
 function buildStudentsFollowUpItems(dashboard: AdminDashboardResponse): StudentFollowUpItem[] {
@@ -1502,10 +1631,87 @@ function CourseFollowUpRow({
   )
 }
 
+function TeacherOperationalRow({ item }: { item: TeacherOperationalItem }) {
+  const tone = severityTone(item.severity)
+
+  return (
+    <Link
+      href={`/admin/dashboard/teachers/${item.id}/profile`}
+      className="group block rounded-xl border border-border/55 bg-background/45 px-3.5 py-3 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 dark:bg-background/25"
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 gap-3">
+          <TeacherPhoto name={item.fullName} avatarUrl={item.avatarUrl} />
+          <span className="min-w-0">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="truncate text-sm font-semibold leading-5 text-foreground">
+                {item.fullName}
+              </span>
+              <SubtleState tone={tone}>
+                {item.severity === 'critical' ? 'Crítico' : 'Seguimiento'}
+              </SubtleState>
+            </span>
+            <span className="mt-0.5 block truncate text-xs leading-5 text-muted-foreground">
+              {item.email}
+            </span>
+            <span className="mt-1 block text-xs font-medium leading-5 text-foreground/80">
+              {item.mainSignal}
+            </span>
+          </span>
+        </div>
+
+        <span className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          {item.coursesAtRiskCount > 0 ? (
+            <SignalPill tone="rose">
+              {item.coursesAtRiskCount} {pluralize(item.coursesAtRiskCount, 'curso', 'cursos')}
+            </SignalPill>
+          ) : null}
+          {item.pendingCorrectionsCount > 0 ? (
+            <SignalPill tone="amber">
+              {item.pendingCorrectionsCount} {pluralize(item.pendingCorrectionsCount, 'corrección', 'correcciones')}
+            </SignalPill>
+          ) : null}
+          {item.unloadedAttendanceCount > 0 ? (
+            <SignalPill tone="amber">
+              {item.unloadedAttendanceCount} {pluralize(item.unloadedAttendanceCount, 'asistencia', 'asistencias')}
+            </SignalPill>
+          ) : null}
+          <span className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors group-hover:bg-primary/10">
+            Ver seguimiento
+            <ArrowRight className="ml-1 size-3.5" />
+          </span>
+        </span>
+      </div>
+    </Link>
+  )
+}
+
+function TeacherOperationalPanel({ teachers }: { teachers: Profesor[] }) {
+  const teacherItems = buildTeacherOperationalItems(teachers)
+
+  if (teacherItems.length === 0) return null
+
+  return (
+    <section className="mt-5 min-w-0">
+      <SectionHeader
+        title="Seguimiento docente"
+        description="Señales operativas con acceso directo al perfil del docente."
+      />
+      <div className="mt-2 grid gap-2 xl:grid-cols-2">
+        {teacherItems.map((item) => (
+          <TeacherOperationalRow key={item.id} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function AcademicAttentionPanel({
   dashboard,
+  teacherSignals,
 }: {
   dashboard: AdminDashboardResponse
+  teacherSignals: Profesor[]
 }) {
   const studentsFollowUpItems = buildStudentsFollowUpItems(dashboard)
   const coursesHealthItems = buildCoursesHealthItems(dashboard, studentsFollowUpItems)
@@ -1566,6 +1772,8 @@ function AcademicAttentionPanel({
           </div>
         </section>
       </div>
+
+      <TeacherOperationalPanel teachers={teacherSignals} />
     </section>
   )
 }
@@ -1942,14 +2150,17 @@ function ImmediateAgenda({
 
 export function AdminDashboardView({
   dashboard,
+  teacherSignals,
 }: {
   dashboard: AdminDashboardResponse
+  teacherSignals?: Profesor[]
 }) {
   const studentsFollowUpItems = buildStudentsFollowUpItems(dashboard)
+  const teacherOperationalItems = buildTeacherOperationalItems(teacherSignals ?? [])
   const academicAlertCount = buildAcademicSummaryItems(
     dashboard,
     studentsFollowUpItems,
-  ).length
+  ).length + teacherOperationalItems.length
   const periodLabel = formatPeriodLabel(dashboard)
 
   return (
@@ -1962,7 +2173,10 @@ export function AdminDashboardView({
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] xl:items-start">
           <div className="space-y-5">
-            <AcademicAttentionPanel dashboard={dashboard} />
+            <AcademicAttentionPanel
+              dashboard={dashboard}
+              teacherSignals={teacherSignals ?? []}
+            />
             <InstitutionalDirectionPanel dashboard={dashboard} />
           </div>
 

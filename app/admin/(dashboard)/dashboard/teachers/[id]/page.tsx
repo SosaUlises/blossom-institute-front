@@ -34,7 +34,7 @@ export default function EditTeacherPage() {
         const data = await getTeacherById(teacherId)
         setTeacher(data)
       } catch (err: any) {
-        setLoadError(err?.message || 'No se pudo cargar el profesor.')
+        setLoadError(err?.message || 'No se pudo cargar el docente.')
       } finally {
         setLoading(false)
       }
@@ -51,27 +51,35 @@ export default function EditTeacherPage() {
 
   return (
     <>
-      <AppHeader title="Edit teacher" />
+      <AppHeader title="Editar docente" />
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-5xl space-y-5">
           <WorkspaceHeader
-            title="Editar profesor"
-            description="Actualiza los datos principales del profesor seleccionado."
+            title="Editar docente"
+            description="Actualizá los datos principales del docente seleccionado."
             metadata={
               <div className="flex items-center gap-2">
                 <PencilLine className="size-4 text-primary" />
-                <span className="font-medium text-foreground">Edicion de profesor</span>
+                <span className="font-medium text-foreground">Edición de docente</span>
               </div>
             }
           />
           {loading ? (
             <div className="space-y-6">
-              <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-sm">
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  <div className="h-24 animate-pulse rounded-xl bg-muted/30" />
-                  <div className="h-24 animate-pulse rounded-xl bg-muted/30" />
-                  <div className="h-24 animate-pulse rounded-xl bg-muted/30" />
+              <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-sm">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="size-12 animate-pulse rounded-full bg-muted/35" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-44 animate-pulse rounded-lg bg-muted/40" />
+                      <div className="h-4 w-56 animate-pulse rounded-lg bg-muted/25" />
+                    </div>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="h-14 w-48 animate-pulse rounded-xl bg-muted/25" />
+                    <div className="h-14 w-48 animate-pulse rounded-xl bg-muted/25" />
+                  </div>
                 </div>
               </section>
 
@@ -105,7 +113,7 @@ export default function EditTeacherPage() {
                   </div>
 
                   <h4 className="mt-4 text-lg font-semibold tracking-tight text-foreground">
-                    No se pudo cargar el profesor
+                    No se pudo cargar el docente
                   </h4>
 
                   <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
@@ -125,11 +133,11 @@ export default function EditTeacherPage() {
                   </div>
 
                   <h4 className="mt-4 text-lg font-semibold tracking-tight text-foreground">
-                    Profesor no disponible
+                    Docente no disponible
                   </h4>
 
                   <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                    No se pudo cargar la informaciÃ³n del profesor seleccionado.
+                    No se pudo cargar la información del docente seleccionado.
                   </p>
                 </div>
               </CardContent>
