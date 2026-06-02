@@ -1,11 +1,11 @@
-﻿'use client'
+'use client'
 
 import { useRouter } from 'next/navigation'
 import { BookOpen } from 'lucide-react'
 
+import { CourseForm } from '@/components/admin/courses/course-form'
 import { AppHeader } from '@/components/layout/app-header'
 import { WorkspaceHeader } from '@/components/shared/workspace-header'
-import { CourseForm } from '@/components/admin/courses/course-form'
 import { createCourse } from '@/lib/admin/courses/api'
 import type { CreateCursoDTO, UpdateCursoDTO } from '@/lib/admin/courses/types'
 
@@ -20,17 +20,17 @@ export default function NewCoursePage() {
 
   return (
     <>
-      <AppHeader title="New course" />
+      <AppHeader title="Nuevo curso" />
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-5xl space-y-5">
           <WorkspaceHeader
-            title="Nuevo curso"
-            description="Define datos generales, estado y horarios del curso."
+            title="Alta académica"
+            description="Creá la base del curso para habilitar asistencia, docentes y seguimiento."
             metadata={
               <div className="flex items-center gap-2">
                 <BookOpen className="size-4 text-primary" />
-                <span className="font-medium text-foreground">Alta de curso</span>
+                <span className="font-medium text-foreground">Curso en preparación</span>
               </div>
             }
           />

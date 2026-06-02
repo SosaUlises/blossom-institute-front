@@ -9,6 +9,8 @@ import {
   ArrowLeft,
   BookOpen,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   Edit3,
   Inbox,
@@ -39,6 +41,8 @@ import { cn } from '@/lib/utils'
 
 type OperationalStatusLevel = 'normal' | 'follow-up' | 'critical'
 type MetricTone = 'neutral' | 'attention' | 'critical' | 'healthy'
+
+const ACTIVITY_PAGE_SIZE = 6
 
 interface OperationalStatus {
   level: OperationalStatusLevel
@@ -92,6 +96,10 @@ function formatDateTime(value?: string | null) {
   }).format(date)
 }
 
+function hasNumericValue(value?: number | null): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
 function normalizeCopy(value?: string | null) {
   if (!value) return ''
 
@@ -130,6 +138,48 @@ function getCourseRows(teacher: Profesor, summary?: TeacherAcademicSummary | nul
     averageGrade: null,
     requiresAttention: false,
   }))
+}
+
+function getCourseStatus(course: TeacherAcademicCourse) {
+  if (course.requiresAttention) {
+    return {
+      label: 'Requiere atención',
+      description: 'Priorizar intervención académica',
+      tone: 'critical' as const,
+    }
+  }
+
+  const lowAverage = hasNumericValue(course.averageGrade) && course.averageGrade < 70
+  const lowAttendance = hasNumericValue(course.attendanceAverage) && course.attendanceAverage < 82
+
+  if (lowAverage || lowAttendance) {
+    return {
+      label: 'Seguimiento',
+      description: 'Monitorear desempeño y continuidad',
+      tone: 'attention' as const,
+    }
+  }
+
+  return {
+    label: 'Normal',
+    description: 'Sin señales prioritarias',
+    tone: 'healthy' as const,
+  }
+}
+
+function getCourseMetricTone(kind: 'average' | 'attendance', value?: number | null): MetricTone {
+  if (!hasNumericValue(value)) return 'neutral'
+
+  if (kind === 'average') {
+    if (value < 60) return 'critical'
+    if (value < 70) return 'attention'
+    return 'healthy'
+  }
+
+  if (value < 70) return 'critical'
+  if (value < 82) return 'attention'
+
+  return 'healthy'
 }
 
 function getMainCourseLabel(teacher: Profesor, summary?: TeacherAcademicSummary | null) {
@@ -383,58 +433,104 @@ function SectionPanel({
   )
 }
 
+function CourseMeta({
+  label,
+  value,
+  tone = 'neutral',
+}: {
+  label: string
+  value: string
+  tone?: MetricTone
+}) {
+  return (
+    <div className="min-w-0 rounded-xl bg-background/75 px-3 py-2.5 ring-1 ring-border/50 dark:bg-background/30">
+      <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+      <p
+        className={cn(
+          'mt-1 text-xl font-semibold leading-none text-foreground',
+          tone === 'healthy' && 'text-emerald-700 dark:text-emerald-300',
+          tone === 'attention' && 'text-amber-700 dark:text-amber-300',
+          tone === 'critical' && 'text-rose-700 dark:text-rose-300',
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  )
+}
+
 function CourseRow({ course }: { course: TeacherAcademicCourse }) {
-  const attentionTone = course.requiresAttention ? 'critical' : 'healthy'
+  const status = getCourseStatus(course)
 
   return (
-    <article className="rounded-xl border border-border/60 bg-background/60 p-3 dark:bg-background/25">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <BookOpen className="size-4" />
-            </div>
-            <h4 className="text-sm font-semibold text-foreground">{course.name}</h4>
-            <span
-              className={cn(
-                'rounded-full border px-2 py-0.5 text-xs font-medium',
-                attentionTone === 'critical' &&
-                  'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300',
-                attentionTone === 'healthy' &&
-                  'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-              )}
-            >
-              {course.requiresAttention ? 'Requiere atención' : 'En rango'}
-            </span>
+    <article
+      className={cn(
+        'rounded-2xl border bg-background/65 p-4 transition-colors dark:bg-background/25',
+        status.tone === 'critical' && 'border-rose-500/25',
+        status.tone === 'attention' && 'border-amber-500/25',
+        status.tone === 'healthy' && 'border-border/60',
+      )}
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 gap-3">
+          <div
+            className={cn(
+              'flex size-10 shrink-0 items-center justify-center rounded-xl',
+              status.tone === 'critical' && 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+              status.tone === 'attention' && 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+              status.tone === 'healthy' && 'bg-primary/10 text-primary',
+            )}
+          >
+            <BookOpen className="size-4" />
           </div>
-          <p className="mt-2 text-sm leading-5 text-muted-foreground">
-            {course.description || 'Sin descripción cargada.'}
-          </p>
-        </div>
-        <div className="grid min-w-[260px] grid-cols-3 gap-2 text-xs">
-          <div className="rounded-lg border border-border/60 bg-background/70 px-2 py-1.5 dark:bg-background/30">
-            <p className="text-muted-foreground">Alumnos</p>
-            <p className="mt-0.5 font-semibold text-foreground">{formatNumber(course.studentsCount)}</p>
-          </div>
-          <div className="rounded-lg border border-border/60 bg-background/70 px-2 py-1.5 dark:bg-background/30">
-            <p className="text-muted-foreground">Promedio</p>
-            <p className="mt-0.5 font-semibold text-foreground">{formatDecimal(course.averageGrade)}</p>
-          </div>
-          <div className="rounded-lg border border-border/60 bg-background/70 px-2 py-1.5 dark:bg-background/30">
-            <p className="text-muted-foreground">Asistencia</p>
-            <p className="mt-0.5 font-semibold text-foreground">{formatPercent(course.attendanceAverage)}</p>
+          <div className="min-w-0">
+            <h4 className="text-base font-semibold leading-6 text-foreground">{course.name}</h4>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
+              {course.description || 'Sin descripción cargada.'}
+            </p>
           </div>
         </div>
+        <div className="shrink-0 lg:text-right">
+          <span
+            className={cn(
+              'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold',
+              status.tone === 'critical' && 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+              status.tone === 'attention' && 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+              status.tone === 'healthy' && 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+            )}
+          >
+            {status.label}
+          </span>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">{status.description}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 border-t border-border/50 pt-3 sm:grid-cols-3">
+        <CourseMeta label="Alumnos" value={formatNumber(course.studentsCount)} />
+        <CourseMeta
+          label="Promedio"
+          value={formatDecimal(course.averageGrade)}
+          tone={getCourseMetricTone('average', course.averageGrade)}
+        />
+        <CourseMeta
+          label="Asistencia"
+          value={formatPercent(course.attendanceAverage)}
+          tone={getCourseMetricTone('attendance', course.attendanceAverage)}
+        />
       </div>
     </article>
   )
 }
 
 function getActivityIcon(type: string): ComponentType<{ className?: string }> {
-  if (type.includes('attendance')) return CalendarDays
-  if (type.includes('correction')) return CheckCircle2
-  if (type.includes('task') || type.includes('homework')) return NotebookText
-  if (type.includes('course')) return ShieldAlert
+  const normalized = type.toLowerCase()
+  if (normalized.includes('task') || normalized.includes('homework')) return NotebookText
+  if (normalized.includes('attendance')) return CalendarDays
+  if (normalized.includes('assignment') || normalized.includes('assigned')) return BookOpen
+  if (normalized.includes('risk') || normalized.includes('alert') || normalized.includes('incident')) {
+    return AlertCircle
+  }
+  if (normalized.includes('course')) return ShieldAlert
 
   return AlertCircle
 }
@@ -446,13 +542,63 @@ function getActivityTone(activity: TeacherRecentActivity): MetricTone {
   return 'neutral'
 }
 
+function isDirectorRelevantActivity(activity: TeacherRecentActivity) {
+  const type = activity.type.toLowerCase()
+  const severity = activity.severity?.toLowerCase()
+  const title = normalizeCopy(activity.title).toLowerCase()
+  const description = normalizeCopy(activity.description).toLowerCase()
+  const searchable = `${type} ${title} ${description}`
+  const isTaskCreation =
+    (type.includes('task') || type.includes('homework') || searchable.includes('tarea')) &&
+    (searchable.includes('created') ||
+      searchable.includes('creada') ||
+      searchable.includes('creo') ||
+      searchable.includes('creó') ||
+      searchable.includes('publicada') ||
+      searchable.includes('publico') ||
+      searchable.includes('publicó') ||
+      searchable.includes('nueva tarea'))
+  const isAttendanceTaken =
+    type.includes('attendance') &&
+    (searchable.includes('loaded') ||
+      searchable.includes('taken') ||
+      searchable.includes('tomada') ||
+      searchable.includes('tomo asistencia') ||
+      searchable.includes('tomó asistencia') ||
+      searchable.includes('cargo asistencia') ||
+      searchable.includes('cargó asistencia') ||
+      searchable.includes('asistencia cargada'))
+
+  if (type.includes('correction')) return false
+  if (type.includes('unloaded-attendance') || type.includes('unloaded_attendance')) return false
+  if (isTaskCreation || isAttendanceTaken) return true
+  if (type.includes('task') || type.includes('homework')) return false
+  if (type.includes('attendance')) return false
+
+  if (severity === 'critical' || severity === 'attention') return true
+
+  return (
+    searchable.includes('requiere atención') ||
+    searchable.includes('seguimiento') ||
+    searchable.includes('riesgo') ||
+    searchable.includes('risk') ||
+    searchable.includes('alert') ||
+    searchable.includes('incident') ||
+    searchable.includes('incidencia') ||
+    searchable.includes('intervention') ||
+    searchable.includes('intervención') ||
+    searchable.includes('assignment') ||
+    searchable.includes('asignación')
+  )
+}
+
 function ActivityRow({ activity }: { activity: TeacherRecentActivity }) {
   const Icon = getActivityIcon(activity.type)
   const tone = getActivityTone(activity)
   const formattedDate = formatDateTime(activity.occurredAtUtc)
 
   return (
-    <article className="rounded-xl border border-border/60 bg-background/60 p-3 dark:bg-background/25">
+    <article className="rounded-xl bg-background/55 p-3 ring-1 ring-border/50 dark:bg-background/25">
       <div className="flex gap-3">
         <div
           className={cn(
@@ -475,7 +621,7 @@ function ActivityRow({ activity }: { activity: TeacherRecentActivity }) {
                 {normalizeCopy(activity.description)}
               </p>
               {activity.courseName ? (
-                <p className="mt-1 text-xs font-medium text-muted-foreground">{activity.courseName}</p>
+                <p className="mt-2 text-xs font-medium text-muted-foreground">{activity.courseName}</p>
               ) : null}
             </div>
             {formattedDate ? (
@@ -485,6 +631,59 @@ function ActivityRow({ activity }: { activity: TeacherRecentActivity }) {
         </div>
       </div>
     </article>
+  )
+}
+
+function ActivityPagination({
+  page,
+  pageSize,
+  total,
+  onPageChange,
+}: {
+  page: number
+  pageSize: number
+  total: number
+  onPageChange: (page: number) => void
+}) {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1
+  const to = Math.min(page * pageSize, total)
+
+  if (total <= pageSize) return null
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-border/50 pt-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <p>
+        {from}-{to} de {formatNumber(total)}
+      </p>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-9 rounded-xl shadow-none"
+          disabled={page <= 1}
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+        >
+          <ChevronLeft className="mr-1 size-4" />
+          Anterior
+        </Button>
+        <span className="min-w-16 text-center text-xs font-medium">
+          {page} / {totalPages}
+        </span>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-9 rounded-xl shadow-none"
+          disabled={page >= totalPages}
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+        >
+          Siguiente
+          <ChevronRight className="ml-1 size-4" />
+        </Button>
+      </div>
+    </div>
   )
 }
 
@@ -502,8 +701,8 @@ function ProfileSkeleton() {
         </div>
       </section>
       <div className="h-11 w-full max-w-xl animate-pulse rounded-xl bg-muted/30" />
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, index) => (
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
           <div key={index} className="h-24 animate-pulse rounded-xl bg-muted/30" />
         ))}
       </div>
@@ -538,6 +737,7 @@ function TeacherProfileContent({
   teacher: Profesor
   summary: TeacherAcademicSummary | null
 }) {
+  const [activityPage, setActivityPage] = useState(1)
   const fullName = summary ? getSummaryFullName(summary) : getFullName(teacher)
   const avatarUrl = summary?.teacher.avatarUrl ?? teacher.avatarUrl
   const email = summary?.teacher.email ?? teacher.email
@@ -546,14 +746,19 @@ function TeacherProfileContent({
   const coursesCount = getCoursesCount(teacher, summary)
   const studentsCount = summary?.studentsCount ?? teacher.studentsCount ?? 0
   const pendingCorrections = summary?.pendingCorrectionsCount ?? teacher.pendingCorrectionsCount ?? 0
-  const unloadedAttendance = summary?.unloadedAttendanceCount ?? teacher.unloadedAttendanceCount ?? 0
   const coursesAtAttention =
     summary?.assignedCourses?.filter((course) => course.requiresAttention).length ??
     teacher.coursesAtRiskCount ??
     0
   const status = getOperationalStatus(teacher, summary)
   const statusTone = getStatusTone(status.level)
-  const recentActivity = summary?.recentActivity ?? []
+  const recentActivity = (summary?.recentActivity ?? []).filter(isDirectorRelevantActivity)
+  const totalActivityPages = Math.max(1, Math.ceil(recentActivity.length / ACTIVITY_PAGE_SIZE))
+  const currentActivityPage = Math.min(activityPage, totalActivityPages)
+  const paginatedActivity = recentActivity.slice(
+    (currentActivityPage - 1) * ACTIVITY_PAGE_SIZE,
+    currentActivityPage * ACTIVITY_PAGE_SIZE,
+  )
   const tabs = [
     { value: 'summary', label: 'Resumen' },
     { value: 'courses', label: 'Cursos' },
@@ -670,40 +875,33 @@ function TeacherProfileContent({
             ) : null}
           </section>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <InlineMetric
+              icon={BookOpen}
+              label="Cursos asignados"
+              value={formatNumber(coursesCount)}
+              detail={getMainCourseLabel(teacher, summary)}
+              tone={coursesCount === 0 ? 'attention' : 'neutral'}
+            />
             <InlineMetric
               icon={Users}
-              label="Alumnos"
+              label="Alumnos gestionados"
               value={formatNumber(studentsCount)}
               detail={`${pluralize(studentsCount, 'alumno gestionado', 'alumnos gestionados')}`}
             />
             <InlineMetric
               icon={NotebookText}
-              label="Correcciones"
+              label="Correcciones pendientes"
               value={formatNumber(pendingCorrections)}
               detail={pendingCorrections > 0 ? 'Pendientes de revisión' : 'Sin pendientes'}
               tone={pendingCorrections > 0 ? 'attention' : 'healthy'}
             />
             <InlineMetric
-              icon={CalendarDays}
-              label="Asistencia pendiente"
-              value={formatNumber(unloadedAttendance)}
-              detail={unloadedAttendance > 0 ? 'Clases sin carga' : 'Al día'}
-              tone={unloadedAttendance > 0 ? 'attention' : 'healthy'}
-            />
-            <InlineMetric
               icon={ShieldAlert}
-              label="Cursos con atención"
+              label="Cursos que requieren atención"
               value={formatNumber(coursesAtAttention)}
               detail={coursesAtAttention > 0 ? 'Revisar prioridad' : 'Sin cursos críticos'}
               tone={coursesAtAttention > 0 ? 'critical' : 'healthy'}
-            />
-            <InlineMetric
-              icon={BookOpen}
-              label="Cursos"
-              value={formatNumber(coursesCount)}
-              detail={getMainCourseLabel(teacher, summary)}
-              tone={coursesCount === 0 ? 'attention' : 'neutral'}
             />
           </div>
         </TabsContent>
@@ -711,10 +909,10 @@ function TeacherProfileContent({
         <TabsContent value="courses">
           <SectionPanel
             title="Cursos"
-            description="Detalle operativo por curso asignado al docente."
+            description="Responsabilidades académicas asignadas, con señales de desempeño y continuidad."
           >
             {courses.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {courses.map((course) => (
                   <CourseRow key={course.id} course={course} />
                 ))}
@@ -732,22 +930,30 @@ function TeacherProfileContent({
         <TabsContent value="activity">
           <SectionPanel
             title="Actividad"
-            description="Eventos recientes relevantes para seguimiento docente."
+            description="Señales institucionales, tareas creadas, asistencia tomada e incidencias relevantes."
           >
             {recentActivity.length > 0 ? (
-              <div className="space-y-2">
-                {recentActivity.map((activity, index) => (
-                  <ActivityRow
-                    key={`${activity.type}-${activity.title}-${activity.occurredAtUtc ?? index}`}
-                    activity={activity}
-                  />
-                ))}
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  {paginatedActivity.map((activity, index) => (
+                    <ActivityRow
+                      key={`${activity.type}-${activity.title}-${activity.occurredAtUtc ?? index}`}
+                      activity={activity}
+                    />
+                  ))}
+                </div>
+                <ActivityPagination
+                  page={currentActivityPage}
+                  pageSize={ACTIVITY_PAGE_SIZE}
+                  total={recentActivity.length}
+                  onPageChange={setActivityPage}
+                />
               </div>
             ) : (
               <InlineEmpty
                 icon={CheckCircle2}
-                title="Sin actividad reciente"
-                description="Todavía no hay eventos recientes para mostrar en este perfil."
+                title="Sin señales relevantes"
+                description="No hay alertas, incidencias o asignaciones recientes que requieran seguimiento institucional."
               />
             )}
           </SectionPanel>

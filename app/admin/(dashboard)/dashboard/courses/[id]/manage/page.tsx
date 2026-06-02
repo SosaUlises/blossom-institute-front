@@ -71,7 +71,7 @@ export default function ManageCoursePage() {
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-7xl space-y-5">
           <WorkspaceHeader
-            title="Gestionar curso"
+            title="Ver curso"
             description="Administra alumnos y profesores asignados al curso."
             metadata={
               <div className="flex items-center gap-2">

@@ -121,6 +121,12 @@ export interface DashboardCriticalCourse {
   attendancePercentage: number | null
   pendingCorrectionCount: number
   signalsCount: number
+  health?: {
+    level: 'normal' | 'follow-up' | 'critical' | string
+    label: string
+    reasons: string[]
+    color: 'emerald' | 'amber' | 'rose' | string
+  }
 }
 
 export interface DashboardAcademicTrend {

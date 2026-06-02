@@ -39,7 +39,7 @@ const titleLabels: Record<string, string> = {
   'Edit student': 'Editar alumno',
   'Edit teacher': 'Editar docente',
   'Homework report': 'Reporte de tareas',
-  'Manage course': 'Gestionar curso',
+  'Manage course': 'Ver curso',
   'Marks report': 'Reporte de notas',
   'New course': 'Nuevo curso',
   'New student': 'Nuevo alumno',

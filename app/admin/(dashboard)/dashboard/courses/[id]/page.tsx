@@ -1,15 +1,17 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { PencilLine, Inbox, BookOpen } from 'lucide-react'
+import { ArrowUpRight, BookOpen, Inbox } from 'lucide-react'
 
+import { CourseForm } from '@/components/admin/courses/course-form'
 import { AppHeader } from '@/components/layout/app-header'
 import { WorkspaceHeader } from '@/components/shared/workspace-header'
-import { CourseForm } from '@/components/admin/courses/course-form'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { getCourseById, updateCourse } from '@/lib/admin/courses/api'
 import type { CreateCursoDTO, CursoById, UpdateCursoDTO } from '@/lib/admin/courses/types'
-import { Card, CardContent } from '@/components/ui/card'
 
 export default function EditCoursePage() {
   const params = useParams<{ id: string }>()
@@ -47,46 +49,55 @@ export default function EditCoursePage() {
 
   return (
     <>
-      <AppHeader title="Edit course" />
+      <AppHeader title="Ajustes académicos" />
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-5xl space-y-5">
           <WorkspaceHeader
-            title="Editar curso"
-            description="Actualiza datos generales, estado y horarios del curso."
+            title="Ajustes académicos"
+            description="Mantené la base del curso alineada con el seguimiento institucional."
             metadata={
               <div className="flex items-center gap-2">
                 <BookOpen className="size-4 text-primary" />
-                <span className="font-medium text-foreground">Edicion de curso</span>
+                <span className="font-medium text-foreground">Curso en seguimiento</span>
               </div>
             }
+            action={
+              <Button asChild variant="outline" className="h-10 rounded-xl shadow-none">
+                <Link href={`/admin/dashboard/courses/${courseId}/profile`}>
+                  Ver seguimiento
+                  <ArrowUpRight className="ml-2 size-4" />
+                </Link>
+              </Button>
+            }
           />
+
           {loading ? (
-            <div className="space-y-6">
-              <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-sm">
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  <div className="h-24 animate-pulse rounded-xl bg-muted/30" />
-                  <div className="h-24 animate-pulse rounded-xl bg-muted/30" />
-                  <div className="h-24 animate-pulse rounded-xl bg-muted/30" />
+            <div className="space-y-5">
+              <section className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-sm">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
+                  <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
+                  <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-sm">
+              <section className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-sm">
                 <div className="space-y-5">
                   <div className="h-6 w-48 animate-pulse rounded-xl bg-muted/40" />
                   <div className="grid gap-5 md:grid-cols-2">
-                    <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
-                    <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
+                    <div className="h-11 animate-pulse rounded-xl bg-muted/35" />
+                    <div className="h-11 animate-pulse rounded-xl bg-muted/35" />
                   </div>
-                  <div className="h-12 w-80 animate-pulse rounded-2xl bg-muted/35" />
+                  <div className="h-24 animate-pulse rounded-xl bg-muted/35" />
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-sm">
+              <section className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-sm">
                 <div className="space-y-5">
                   <div className="h-6 w-48 animate-pulse rounded-xl bg-muted/40" />
-                  <div className="h-12 animate-pulse rounded-2xl bg-muted/35" />
-                  <div className="h-24 animate-pulse rounded-2xl bg-muted/35" />
+                  <div className="h-11 w-80 animate-pulse rounded-xl bg-muted/35" />
+                  <div className="h-28 animate-pulse rounded-2xl bg-muted/35" />
                 </div>
               </section>
             </div>
@@ -94,7 +105,7 @@ export default function EditCoursePage() {
             <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-sm">
               <CardContent className="px-6 py-14">
                 <div className="flex flex-col items-center justify-center text-center">
-                  <div className="flex size-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Inbox className="size-6" />
                   </div>
 
@@ -114,7 +125,7 @@ export default function EditCoursePage() {
             <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-sm">
               <CardContent className="px-6 py-14">
                 <div className="flex flex-col items-center justify-center text-center">
-                  <div className="flex size-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Inbox className="size-6" />
                   </div>
 
@@ -123,7 +134,7 @@ export default function EditCoursePage() {
                   </h4>
 
                   <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                    No se pudo cargar la informaciÃ³n del curso seleccionado.
+                    No se pudo cargar la información del curso seleccionado.
                   </p>
                 </div>
               </CardContent>

@@ -31,6 +31,7 @@ import type {
   DashboardUpcomingAssignment,
   DashboardUpcomingClass,
 } from '@/lib/admin/dashboard/types'
+import { calculateCourseHealth, type CourseHealth } from '@/lib/admin/courses/course-health'
 import type { Profesor } from '@/lib/admin/teachers/types'
 import { cn } from '@/lib/utils'
 
@@ -75,6 +76,7 @@ type CourseHealthItem = {
   pendingCorrectionCount?: number
   signalsCount: number
   severity: SignalSeverity
+  health: CourseHealth
 }
 
 type TeacherOperationalItem = {
@@ -774,16 +776,23 @@ function buildCoursesHealthItems(
     }
 
     const affectedStudents = affectedStudentsByCourse.get(input.cursoId) ?? []
+    const teacherNames = cleanTeacherNames(input.profesoresNombres)
     const created: CourseHealthItem = {
       cursoId: input.cursoId,
       cursoNombre: input.cursoNombre,
       cursoDescripcion: input.cursoDescripcion,
-      profesoresNombres: cleanTeacherNames(input.profesoresNombres),
+      profesoresNombres: teacherNames,
       reasons: [],
       affectedStudentsCount: affectedStudents.length,
       affectedStudents,
       signalsCount: 0,
       severity: 'healthy',
+      health: calculateCourseHealth({
+        attendanceAverage: null,
+        academicAverage: null,
+        studentsAtRiskCount: 0,
+        teacherAssigned: teacherNames.length > 0,
+      }),
     }
 
     items.set(input.cursoId, created)
@@ -851,6 +860,30 @@ function buildCoursesHealthItems(
   }
 
   return [...items.values()]
+    .map((item) => {
+      const health = calculateCourseHealth({
+        attendanceAverage: item.attendancePercentage,
+        academicAverage: item.averageGrade,
+        studentsAtRiskCount: item.affectedStudentsCount,
+        teacherAssigned: (item.profesoresNombres?.length ?? 0) > 0,
+      })
+      const healthSeverity: SignalSeverity =
+        health.level === 'critical'
+          ? 'critical'
+          : health.level === 'follow-up'
+            ? 'attention'
+            : 'healthy'
+
+      return {
+        ...item,
+        health,
+        severity: mergeSeverity(healthSeverity, item.severity),
+        reasons: [
+          ...health.reasons.filter((reason) => reason !== 'Sin alertas académicas'),
+          ...item.reasons,
+        ].filter((reason, index, reasons) => reasons.indexOf(reason) === index),
+      }
+    })
     .filter((item) => item.reasons.length > 0)
     .sort((a, b) => {
       const severityWeight = { critical: 0, attention: 1, healthy: 2 }
@@ -1496,21 +1529,22 @@ function CourseFollowUpRow({
       <article className="rounded-xl border border-border/55 bg-background/45 px-3.5 py-3 transition-colors hover:bg-muted/15 dark:bg-background/25">
         <div className="space-y-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <p className="min-w-0 text-sm font-semibold leading-5 text-foreground">
-              <CourseTitleLine
-                name={item.cursoNombre}
-                description={item.cursoDescripcion}
-              />
-            </p>
-            <SheetTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 sm:justify-start"
-              >
-                Ver curso
-                <ArrowRight className="ml-1 size-3.5" />
-              </button>
-            </SheetTrigger>
+            <div className="min-w-0 space-y-1">
+              <p className="min-w-0 text-sm font-semibold leading-5 text-foreground">
+                <CourseTitleLine
+                  name={item.cursoNombre}
+                  description={item.cursoDescripcion}
+                />
+              </p>
+              <SubtleState tone={item.health.color}>{item.health.label}</SubtleState>
+            </div>
+            <Link
+              href={`/admin/dashboard/courses/${item.cursoId}/profile`}
+              className="inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 sm:justify-start"
+            >
+              Ver curso
+              <ArrowRight className="ml-1 size-3.5" />
+            </Link>
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3">
@@ -2050,7 +2084,7 @@ function buildAgendaItems({
         dateLabel: item.diaSemana,
         courseName: item.cursoNombre,
         courseDescription: item.cursoDescripcion,
-        href: `/admin/dashboard/courses/${item.cursoId}/manage`,
+        href: `/admin/dashboard/courses/${item.cursoId}/profile`,
       }
     })
 
@@ -2068,7 +2102,7 @@ function buildAgendaItems({
         courseName: item.cursoNombre,
         courseDescription: item.cursoDescripcion,
         detail: item.titulo,
-        href: `/admin/dashboard/courses/${item.cursoId}/manage`,
+        href: `/admin/dashboard/courses/${item.cursoId}/profile`,
       }
     })
 
