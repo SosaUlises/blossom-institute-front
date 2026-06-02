@@ -27,16 +27,26 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import type {
   AdminDashboardResponse,
   DashboardAverageGradeByCourse,
+  DashboardCriticalCourse,
   DashboardCourseTrendRisk,
+  DashboardPendingFollowUp,
   DashboardUpcomingAssignment,
   DashboardUpcomingClass,
 } from '@/lib/admin/dashboard/types'
-import { calculateCourseHealth, type CourseHealth } from '@/lib/admin/courses/course-health'
+import { calculateCourseHealth } from '@/lib/admin/courses/course-health'
 import type { Profesor } from '@/lib/admin/teachers/types'
 import { cn } from '@/lib/utils'
 
 type Tone = 'neutral' | 'amber' | 'rose' | 'emerald' | 'primary'
 type SignalSeverity = 'critical' | 'attention' | 'healthy'
+type CourseAlertCategory = 'current' | 'pending' | 'trend'
+
+type CourseHealth = {
+  level: 'normal' | 'follow-up' | 'critical'
+  label: string
+  reasons: string[]
+  color: 'emerald' | 'amber' | 'rose'
+}
 
 type StudentFollowUpItem = {
   id: string
@@ -60,6 +70,8 @@ type StudentFollowUpItem = {
 }
 
 type CourseHealthItem = {
+  id: string
+  category: CourseAlertCategory
   cursoId: number
   cursoNombre: string
   cursoDescripcion?: string | null
@@ -77,6 +89,9 @@ type CourseHealthItem = {
   signalsCount: number
   severity: SignalSeverity
   health: CourseHealth
+  periodLabel?: string | null
+  pendingFollowUpCount?: number
+  pendingFollowUp?: DashboardPendingFollowUp[]
 }
 
 type TeacherOperationalItem = {
@@ -392,6 +407,44 @@ function countTone(value: number, amberLimit = 5): Tone {
   if (value === 0) return 'emerald'
   if (value <= amberLimit) return 'amber'
   return 'rose'
+}
+
+const NORMAL_COURSE_HEALTH: CourseHealth = {
+  level: 'normal',
+  label: 'Normal',
+  reasons: ['Sin alertas en el trimestre actual'],
+  color: 'emerald',
+}
+
+function normalizeCourseHealth(
+  health?: DashboardCriticalCourse['health'] | DashboardCriticalCourse['academicStatusCurrent'] | null,
+): CourseHealth {
+  const level =
+    health?.level === 'critical' || health?.level === 'follow-up' ? health.level : 'normal'
+  const color =
+    health?.color === 'rose' || health?.color === 'amber' || health?.color === 'emerald'
+      ? health.color
+      : level === 'critical'
+        ? 'rose'
+        : level === 'follow-up'
+          ? 'amber'
+          : 'emerald'
+
+  return {
+    level,
+    label: health?.label || NORMAL_COURSE_HEALTH.label,
+    reasons:
+      health?.reasons && health.reasons.length > 0
+        ? health.reasons
+        : NORMAL_COURSE_HEALTH.reasons,
+    color,
+  }
+}
+
+function severityFromHealth(health: CourseHealth): SignalSeverity {
+  if (health.level === 'critical') return 'critical'
+  if (health.level === 'follow-up') return 'attention'
+  return 'healthy'
 }
 
 function getCourseSeverity(item: {
@@ -778,6 +831,8 @@ function buildCoursesHealthItems(
     const affectedStudents = affectedStudentsByCourse.get(input.cursoId) ?? []
     const teacherNames = cleanTeacherNames(input.profesoresNombres)
     const created: CourseHealthItem = {
+      id: `legacy-${input.cursoId}`,
+      category: 'current',
       cursoId: input.cursoId,
       cursoNombre: input.cursoNombre,
       cursoDescripcion: input.cursoDescripcion,
@@ -896,6 +951,254 @@ function buildCoursesHealthItems(
     .slice(0, 8)
 }
 
+function createCourseDashboardItem(input: {
+  category: CourseAlertCategory
+  cursoId: number
+  cursoNombre: string
+  cursoDescripcion?: string | null
+  profesoresNombres?: string[] | null
+  health?: CourseHealth
+}): CourseHealthItem {
+  return {
+    id: `${input.category}-${input.cursoId}`,
+    category: input.category,
+    cursoId: input.cursoId,
+    cursoNombre: input.cursoNombre,
+    cursoDescripcion: input.cursoDescripcion,
+    profesoresNombres: cleanTeacherNames(input.profesoresNombres),
+    reasons: [],
+    affectedStudentsCount: 0,
+    affectedStudents: [],
+    signalsCount: 0,
+    severity: 'healthy',
+    health: input.health ?? NORMAL_COURSE_HEALTH,
+  }
+}
+
+function buildCurrentCourseRiskItems(
+  dashboard: AdminDashboardResponse,
+  studentsFollowUpItems: StudentFollowUpItem[],
+): CourseHealthItem[] {
+  const items = new Map<number, CourseHealthItem>()
+  const affectedStudentsByCourse = studentsFollowUpItems.reduce(
+    (acc, student) => {
+      const current = acc.get(student.cursoId) ?? []
+      current.push({
+        id: student.id,
+        alumnoId: student.alumnoId,
+        alumnoNombre: student.alumnoNombre,
+        alumnoAvatarUrl: student.alumnoAvatarUrl,
+        reasons: student.reasons,
+        severity: student.severity,
+      })
+      acc.set(student.cursoId, current)
+      return acc
+    },
+    new Map<number, CourseAffectedStudent[]>(),
+  )
+
+  function ensureItem(input: {
+    cursoId: number
+    cursoNombre: string
+    cursoDescripcion?: string | null
+    profesoresNombres?: string[] | null
+  }) {
+    const existing = items.get(input.cursoId)
+    if (existing) {
+      existing.cursoDescripcion = existing.cursoDescripcion ?? input.cursoDescripcion
+      existing.profesoresNombres = existing.profesoresNombres?.length
+        ? existing.profesoresNombres
+        : cleanTeacherNames(input.profesoresNombres)
+      return existing
+    }
+
+    const row = createCourseDashboardItem({ category: 'current', ...input })
+    row.affectedStudents = affectedStudentsByCourse.get(input.cursoId) ?? []
+    row.affectedStudentsCount = row.affectedStudents.length
+    items.set(input.cursoId, row)
+    return row
+  }
+
+  function addAverageRisk(course: DashboardAverageGradeByCourse, label: string) {
+    const row = ensureItem(course)
+    row.averageGrade = row.averageGrade ?? course.averageGrade
+    addUnique(row.reasons, `Riesgo actual: ${label}`)
+    row.signalsCount += 1
+    row.severity = mergeSeverity(row.severity, getCourseSeverity(row))
+  }
+
+  for (const course of dashboard.coursesAtRiskByManualAverage ?? []) {
+    addAverageRisk(course, 'promedio manual bajo en el trimestre actual')
+  }
+
+  for (const course of getAdditionalOverallCourseRisks(dashboard)) {
+    addAverageRisk(course, 'promedio bajo en el trimestre actual')
+  }
+
+  for (const course of dashboard.coursesAtRiskByAttendance ?? []) {
+    const row = ensureItem(course)
+    row.attendancePercentage = course.attendancePercentage
+    addUnique(row.reasons, 'Riesgo actual: asistencia menor al 70% en el trimestre actual')
+    row.signalsCount += 1
+    row.severity = mergeSeverity(row.severity, getCourseSeverity(row))
+  }
+
+  for (const course of dashboard.criticalCourses ?? []) {
+    const row = ensureItem(course)
+    const health = normalizeCourseHealth(course.academicStatusCurrent ?? course.health)
+    row.health = health
+    row.averageGrade = row.averageGrade ?? course.averageGrade
+    row.attendancePercentage = row.attendancePercentage ?? course.attendancePercentage
+    row.pendingCorrectionCount = course.pendingCorrectionCount
+    row.pendingFollowUpCount = course.pendingFollowUpCount
+    row.signalsCount = Math.max(row.signalsCount, course.signalsCount)
+    row.severity = mergeSeverity(row.severity, severityFromHealth(health))
+
+    for (const reason of health.reasons) {
+      if (reason !== NORMAL_COURSE_HEALTH.reasons[0]) {
+        addUnique(row.reasons, `Riesgo actual: ${reason}`)
+      }
+    }
+
+    if (course.signalsCount >= 2) {
+      addUnique(row.reasons, 'Riesgo actual: señales académicas repetidas')
+    }
+  }
+
+  return [...items.values()]
+    .filter((item) => item.reasons.length > 0)
+    .sort((a, b) => {
+      const severityWeight = { critical: 0, attention: 1, healthy: 2 }
+      return (
+        severityWeight[a.severity] - severityWeight[b.severity] ||
+        b.signalsCount - a.signalsCount ||
+        b.affectedStudentsCount - a.affectedStudentsCount
+      )
+    })
+    .slice(0, 8)
+}
+
+function getDashboardPendingFollowUpItems(dashboard: AdminDashboardResponse) {
+  const items = [
+    ...(dashboard.coursesPendingFollowUp ?? []),
+    ...(dashboard.coursesWithPendingFollowUp ?? []),
+    ...(dashboard.pendingFollowUp ?? []),
+    ...(dashboard.criticalCourses ?? []).flatMap((course) => course.pendingFollowUp ?? []),
+  ]
+
+  return items.filter((item, index, all) => {
+    const key = `${item.cursoId}-${item.alumnoId ?? 'curso'}-${item.periodLabel}-${item.reason}`
+    return all.findIndex((candidate) => (
+      `${candidate.cursoId}-${candidate.alumnoId ?? 'curso'}-${candidate.periodLabel}-${candidate.reason}`
+    ) === key) === index
+  })
+}
+
+function formatPendingFollowUpReason(item: DashboardPendingFollowUp) {
+  const periodLabel = item.periodLabel || (item.quarterNumber ? `${item.quarterNumber}º trimestre` : 'trimestre anterior')
+  const average = typeof item.averageValue === 'number'
+    ? `Promedio ${item.averageValue.toFixed(0)} en ${periodLabel}`
+    : null
+  const attendance = typeof item.attendanceValue === 'number'
+    ? `Asistencia ${item.attendanceValue.toFixed(0)}% en ${periodLabel}`
+    : null
+  const levelLabel = item.level === 'critical'
+    ? `Crítico en ${periodLabel}`
+    : `Seguimiento pendiente en ${periodLabel}`
+
+  return item.description || average || attendance || item.reason || levelLabel
+}
+
+function buildCoursePendingFollowUpItems(dashboard: AdminDashboardResponse): CourseHealthItem[] {
+  const items = new Map<number, CourseHealthItem>()
+
+  for (const pending of getDashboardPendingFollowUpItems(dashboard)) {
+    const existing = items.get(pending.cursoId)
+    const row = existing ?? createCourseDashboardItem({
+      category: 'pending',
+      cursoId: pending.cursoId,
+      cursoNombre: pending.cursoNombre,
+      cursoDescripcion: pending.cursoDescripcion,
+      health: {
+        level: pending.level === 'critical' ? 'critical' : 'follow-up',
+        label: 'Seguimiento pendiente',
+        reasons: ['Seguimiento pendiente del trimestre anterior'],
+        color: pending.level === 'critical' ? 'rose' : 'amber',
+      },
+    })
+
+    row.periodLabel = row.periodLabel ?? pending.periodLabel
+    row.pendingFollowUp = [...(row.pendingFollowUp ?? []), pending]
+    row.pendingFollowUpCount = row.pendingFollowUp.length
+    row.signalsCount += 1
+    row.severity = mergeSeverity(row.severity, pending.level === 'critical' ? 'critical' : 'attention')
+    addUnique(row.reasons, formatPendingFollowUpReason(pending))
+    if (pending.level === 'critical') {
+      addUnique(row.reasons, `Crítico en ${pending.periodLabel}`)
+    }
+
+    items.set(pending.cursoId, row)
+  }
+
+  return [...items.values()]
+    .sort((a, b) => {
+      const severityWeight = { critical: 0, attention: 1, healthy: 2 }
+      return (
+        severityWeight[a.severity] - severityWeight[b.severity] ||
+        (b.pendingFollowUpCount ?? 0) - (a.pendingFollowUpCount ?? 0)
+      )
+    })
+    .slice(0, 8)
+}
+
+function buildCourseTrendItems(dashboard: AdminDashboardResponse): CourseHealthItem[] {
+  const items = new Map<number, CourseHealthItem>()
+
+  function ensureItem(course: DashboardCourseTrendRisk) {
+    const existing = items.get(course.cursoId)
+    if (existing) return existing
+
+    const row = createCourseDashboardItem({
+      category: 'trend',
+      cursoId: course.cursoId,
+      cursoNombre: course.cursoNombre,
+      cursoDescripcion: course.cursoDescripcion,
+      profesoresNombres: course.profesoresNombres,
+      health: {
+        level: 'follow-up',
+        label: 'Tendencia',
+        reasons: ['Historial reciente con caída de tendencia'],
+        color: 'amber',
+      },
+    })
+    row.severity = 'attention'
+    items.set(course.cursoId, row)
+    return row
+  }
+
+  for (const course of dashboard.coursesWithPerformanceDecline ?? []) {
+    const row = ensureItem(course)
+    row.averageGrade = course.currentValue
+    row.previousAverageGrade = course.previousValue
+    row.performanceDelta = course.delta
+    row.signalsCount += 1
+    addUnique(row.reasons, 'Tendencia: caída de rendimiento en historial reciente')
+  }
+
+  for (const course of dashboard.coursesWithAttendanceDecline ?? []) {
+    const row = ensureItem(course)
+    row.attendancePercentage = course.currentValue
+    row.previousAttendancePercentage = course.previousValue
+    row.attendanceDelta = course.delta
+    row.signalsCount += 1
+    addUnique(row.reasons, 'Tendencia: caída de asistencia en historial reciente')
+  }
+
+  return [...items.values()]
+    .sort((a, b) => b.signalsCount - a.signalsCount || a.cursoNombre.localeCompare(b.cursoNombre))
+    .slice(0, 8)
+}
+
 function buildAcademicSummaryItems(
   dashboard: AdminDashboardResponse,
   students: StudentFollowUpItem[],
@@ -909,6 +1212,9 @@ function buildAcademicSummaryItems(
     ...(dashboard.coursesWithAttendanceDecline ?? []).map((course) => course.cursoId),
     ...(dashboard.coursesWithPerformanceDecline ?? []).map((course) => course.cursoId),
   ]).size
+  const pendingCourseFollowUpCount = new Set(
+    getDashboardPendingFollowUpItems(dashboard).map((item) => item.cursoId),
+  ).size
   const performanceStudentCount = new Set([
     ...(dashboard.studentsManualLowPerformance ?? []).map((student) => student.alumnoId),
     ...(dashboard.studentsAtRiskByAverage ?? []).map((student) => student.alumnoId),
@@ -945,7 +1251,19 @@ function buildAcademicSummaryItems(
         courseDeclineCount,
         'curso muestra',
         'cursos muestran',
-      )} caída de tendencia`,
+      )} tendencia negativa en historial reciente`,
+      tone: 'amber',
+    })
+  }
+
+  if (pendingCourseFollowUpCount > 0) {
+    items.push({
+      id: 'course-pending-follow-up',
+      text: `${pendingCourseFollowUpCount} ${pluralize(
+        pendingCourseFollowUpCount,
+        'curso tiene',
+        'cursos tienen',
+      )} seguimiento pendiente del trimestre anterior`,
       tone: 'amber',
     })
   }
@@ -1066,10 +1384,10 @@ function buildCourseDeclineSummary(dashboard: AdminDashboardResponse) {
 
 function getAcademicAlertSummary(alertCount: number) {
   if (alertCount === 0) {
-    return 'No hay alertas académicas prioritarias para hoy.'
+    return 'Sin alertas en el trimestre actual ni seguimiento pendiente prioritario.'
   }
 
-  return 'Casos priorizados por asistencia, rendimiento y cambios de tendencia.'
+  return 'Casos separados por riesgo actual, seguimiento pendiente y tendencias.'
 }
 
 function SectionHeader({
@@ -1500,6 +1818,24 @@ function CourseFollowUpRow({
   item: CourseHealthItem
   comparisonLabel: string
 }) {
+  const categoryTone: Tone =
+    item.category === 'current'
+      ? severityTone(item.severity)
+      : item.category === 'pending'
+        ? 'amber'
+        : 'primary'
+  const categoryLabel =
+    item.category === 'current'
+      ? 'Riesgo actual'
+      : item.category === 'pending'
+        ? 'Seguimiento pendiente'
+        : 'Tendencia'
+  const categoryContext =
+    item.category === 'current'
+      ? 'Trimestre actual'
+      : item.category === 'pending'
+        ? 'Seguimiento pendiente del trimestre anterior'
+        : 'Historial reciente'
   const averageLabel =
     item.averageGrade !== undefined && item.averageGrade !== null
       ? item.averageGrade.toFixed(0)
@@ -1522,6 +1858,11 @@ function CourseFollowUpRow({
     'alumno',
     'alumnos',
   )}`
+  const pendingFollowUpLabel = `${item.pendingFollowUpCount ?? 0} ${pluralize(
+    item.pendingFollowUpCount ?? 0,
+    'pendiente',
+    'pendientes',
+  )}`
   const reasonSummary = item.reasons.slice(0, 3).join(' · ')
 
   return (
@@ -1536,7 +1877,12 @@ function CourseFollowUpRow({
                   description={item.cursoDescripcion}
                 />
               </p>
-              <SubtleState tone={item.health.color}>{item.health.label}</SubtleState>
+              <div className="flex flex-wrap items-center gap-2">
+                <SubtleState tone={categoryTone}>{categoryLabel}</SubtleState>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {categoryContext}
+                </span>
+              </div>
             </div>
             <Link
               href={`/admin/dashboard/courses/${item.cursoId}/profile`}
@@ -1550,7 +1896,7 @@ function CourseFollowUpRow({
           <div className="grid gap-2 sm:grid-cols-3">
             {averageLabel ? (
               <CourseSignalMetric
-                label="Promedio trimestral"
+                label={item.category === 'trend' ? 'Promedio en historial reciente' : 'Promedio trimestre actual'}
                 value={averageLabel}
                 detail={compactPerformanceTrend}
                 tone={averageTone}
@@ -1558,18 +1904,27 @@ function CourseFollowUpRow({
             ) : null}
             {attendanceLabel ? (
               <CourseSignalMetric
-                label="Asistencia trimestral"
+                label={item.category === 'trend' ? 'Asistencia en historial reciente' : 'Asistencia trimestre actual'}
                 value={attendanceLabel}
                 detail={compactAttendanceTrend}
                 tone={courseAttendanceTone}
               />
             ) : null}
-            <CourseSignalMetric
-              label="Alumnos afectados"
-              value={affectedStudentsLabel}
-              detail={item.affectedStudentsCount > 0 ? 'Casos asociados' : 'Sin alumnos asociados'}
-              tone={countTone(item.affectedStudentsCount, 2)}
-            />
+            {item.category === 'pending' ? (
+              <CourseSignalMetric
+                label="Seguimiento pendiente"
+                value={pendingFollowUpLabel}
+                detail="Con seguimiento pendiente"
+                tone={countTone(item.pendingFollowUpCount ?? 0, 2)}
+              />
+            ) : (
+              <CourseSignalMetric
+                label="Alumnos afectados"
+                value={affectedStudentsLabel}
+                detail={item.affectedStudentsCount > 0 ? 'Casos actuales asociados' : 'Sin alumnos actuales asociados'}
+                tone={countTone(item.affectedStudentsCount, 2)}
+              />
+            )}
           </div>
 
           {reasonSummary ? (
@@ -1601,18 +1956,27 @@ function CourseFollowUpRow({
               ) : null}
               {attendanceLabel ? (
                 <DetailMetric
-                  label="Asistencia trimestral"
+                  label={item.category === 'trend' ? 'Asistencia historial reciente' : 'Asistencia trimestre actual'}
                   value={attendanceLabel}
                   context={attendanceTrend ?? (item.previousAttendancePercentage == null ? `Sin comparación con ${comparisonLabel}` : `Anterior: ${item.previousAttendancePercentage.toFixed(0)}%`)}
                   tone={item.attendancePercentage == null ? 'neutral' : attendanceTone(item.attendancePercentage)}
                 />
               ) : null}
-              <DetailMetric
-                label="Alumnos afectados"
-                value={String(item.affectedStudentsCount)}
-                context="Casos en seguimiento"
-                tone={countTone(item.affectedStudentsCount, 2)}
-              />
+              {item.category === 'pending' ? (
+                <DetailMetric
+                  label="Seguimiento pendiente"
+                  value={String(item.pendingFollowUpCount ?? 0)}
+                  context="Seguimiento pendiente del trimestre anterior"
+                  tone={countTone(item.pendingFollowUpCount ?? 0, 2)}
+                />
+              ) : (
+                <DetailMetric
+                  label="Alumnos afectados"
+                  value={String(item.affectedStudentsCount)}
+                  context={item.category === 'current' ? 'Riesgo actual' : 'Historial reciente'}
+                  tone={countTone(item.affectedStudentsCount, 2)}
+                />
+              )}
             </div>
 
             <DetailList
@@ -1740,6 +2104,45 @@ function TeacherOperationalPanel({ teachers }: { teachers: Profesor[] }) {
   )
 }
 
+function CourseRiskGroup({
+  title,
+  description,
+  emptyTitle,
+  emptyDescription,
+  items,
+  comparisonLabel,
+}: {
+  title: string
+  description: string
+  emptyTitle: string
+  emptyDescription: string
+  items: CourseHealthItem[]
+  comparisonLabel: string
+}) {
+  return (
+    <section className="min-w-0 rounded-xl border border-border/45 bg-background/35 p-3 dark:bg-background/20">
+      <SectionHeader title={title} description={description} />
+      <div className="mt-2 space-y-2">
+        {items.length === 0 ? (
+          <EmptyState
+            icon={CheckCircle2}
+            title={emptyTitle}
+            description={emptyDescription}
+          />
+        ) : (
+          items.map((item) => (
+            <CourseFollowUpRow
+              key={item.id}
+              item={item}
+              comparisonLabel={comparisonLabel}
+            />
+          ))
+        )}
+      </div>
+    </section>
+  )
+}
+
 function AcademicAttentionPanel({
   dashboard,
   teacherSignals,
@@ -1748,7 +2151,9 @@ function AcademicAttentionPanel({
   teacherSignals: Profesor[]
 }) {
   const studentsFollowUpItems = buildStudentsFollowUpItems(dashboard)
-  const coursesHealthItems = buildCoursesHealthItems(dashboard, studentsFollowUpItems)
+  const currentCourseRiskItems = buildCurrentCourseRiskItems(dashboard, studentsFollowUpItems)
+  const pendingCourseFollowUpItems = buildCoursePendingFollowUpItems(dashboard)
+  const courseTrendItems = buildCourseTrendItems(dashboard)
   const academicSummaryItems = buildAcademicSummaryItems(dashboard, studentsFollowUpItems)
   const comparisonLabel = getTrendComparisonLabel(dashboard)
   const consecutiveWindowLabel = getConsecutiveAbsencesWindowLabel(dashboard)
@@ -1761,7 +2166,7 @@ function AcademicAttentionPanel({
         <section className="min-w-0">
           <SectionHeader
             title="Alumnos que requieren seguimiento"
-            description="Casos con riesgo académico o señales de pérdida de continuidad."
+            description="Riesgo actual del trimestre actual y señales de pérdida de continuidad."
           />
           <div className="mt-2 space-y-2">
             {studentsFollowUpItems.length === 0 ? (
@@ -1782,28 +2187,35 @@ function AcademicAttentionPanel({
           </div>
         </section>
 
-        <section className="min-w-0">
+        <section className="min-w-0 space-y-3">
           <SectionHeader
-            title="Cursos que requieren atención"
-            description="Cursos donde conviene coordinar una intervención institucional."
+            title="Cursos"
+            description="Riesgo actual, seguimiento pendiente y tendencias separados por contexto."
           />
-          <div className="mt-2 space-y-2">
-            {coursesHealthItems.length === 0 ? (
-              <EmptyState
-                icon={CheckCircle2}
-                title="No hay cursos para revisar."
-                description="No hay cursos con señales de atención en el trimestre actual."
-              />
-            ) : (
-              coursesHealthItems.map((item) => (
-                <CourseFollowUpRow
-                  key={item.cursoId}
-                  item={item}
-                  comparisonLabel={comparisonLabel}
-                />
-              ))
-            )}
-          </div>
+          <CourseRiskGroup
+            title="Riesgo actual"
+            description="Cursos con alertas del trimestre actual."
+            emptyTitle="Sin alertas en el trimestre actual"
+            emptyDescription="No hay cursos con riesgo actual en el trimestre actual."
+            items={currentCourseRiskItems}
+            comparisonLabel={comparisonLabel}
+          />
+          <CourseRiskGroup
+            title="Seguimiento pendiente"
+            description="Seguimiento pendiente del trimestre anterior o historial reciente no resuelto."
+            emptyTitle="Sin seguimiento pendiente"
+            emptyDescription="No hay cursos con seguimiento pendiente del trimestre anterior."
+            items={pendingCourseFollowUpItems}
+            comparisonLabel={comparisonLabel}
+          />
+          <CourseRiskGroup
+            title="Tendencias"
+            description="Historial reciente comparado con el período anterior."
+            emptyTitle="Sin tendencias negativas"
+            emptyDescription="No hay cursos con caída relevante en historial reciente."
+            items={courseTrendItems}
+            comparisonLabel={comparisonLabel}
+          />
         </section>
       </div>
 
@@ -2052,9 +2464,9 @@ function InstitutionHealthPanel({ dashboard }: { dashboard: AdminDashboardRespon
           tone={pendingCorrectionsTone}
         />
         <HealthSupportMetric
-          label="Cursos a revisar"
+          label="Cursos con riesgo actual"
           value={(dashboard.criticalCourses?.length ?? 0).toLocaleString()}
-          context="Con señales académicas combinadas"
+          context="Trimestre actual"
           href="/admin/dashboard/courses"
           tone={criticalCoursesTone}
         />

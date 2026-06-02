@@ -17,8 +17,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { getCourses } from '@/lib/admin/courses/api'
-import { calculateCourseHealth, type CourseHealth } from '@/lib/admin/courses/course-health'
-import { EstadoCurso, type CursoListItem } from '@/lib/admin/courses/types'
+import type { CourseHealth } from '@/lib/admin/courses/course-health'
+import { EstadoCurso, type CursoHealthStatus, type CursoListItem } from '@/lib/admin/courses/types'
 import { cn } from '@/lib/utils'
 
 const PAGE_SIZE = 20
@@ -96,20 +96,73 @@ function CoursesToolbar({
   )
 }
 
+const NORMAL_COURSE_HEALTH: CourseHealth = {
+  level: 'normal',
+  label: 'Normal',
+  reasons: ['Sin alertas en el trimestre actual'],
+  color: 'emerald',
+}
+
+function normalizeCourseHealth(health?: CursoHealthStatus | null): CourseHealth {
+  const level =
+    health?.level === 'critical' || health?.level === 'follow-up' ? health.level : 'normal'
+  const color =
+    health?.color === 'rose' || health?.color === 'amber' || health?.color === 'emerald'
+      ? health.color
+      : level === 'critical'
+        ? 'rose'
+        : level === 'follow-up'
+          ? 'amber'
+          : 'emerald'
+
+  return {
+    level,
+    label: health?.label || NORMAL_COURSE_HEALTH.label,
+    reasons:
+      health?.reasons && health.reasons.length > 0
+        ? health.reasons
+        : NORMAL_COURSE_HEALTH.reasons,
+    color,
+  }
+}
+
 function getCourseHealth(course: CursoListItem) {
-  return calculateCourseHealth({
-    attendanceAverage: course.attendanceAverage,
-    academicAverage: course.academicAverage,
-    studentsAtRiskCount: course.studentsAtRiskCount ?? 0,
-    teacherAssigned: (course.teachers?.length ?? course.cantidadProfesores) > 0,
-  })
+  return normalizeCourseHealth(course.academicStatusCurrent ?? course.healthStatus)
+}
+
+function getCourseCurrentAttendance(course: CursoListItem) {
+  return (
+    course.metricsCurrent?.attendanceAverage ??
+    course.metricsCurrent?.asistenciaActual ??
+    course.asistenciaActual ??
+    course.attendanceAverage
+  )
+}
+
+function getCourseCurrentAverage(course: CursoListItem) {
+  return (
+    course.metricsCurrent?.academicAverage ??
+    course.metricsCurrent?.promedioActual ??
+    course.promedioActual ??
+    course.academicAverage
+  )
+}
+
+function getCoursePendingFollowUpCount(course: CursoListItem) {
+  return course.pendingFollowUpCount ?? course.metricsCurrent?.pendingFollowUpCount ?? course.pendingFollowUp?.length ?? 0
 }
 
 function courseRequiresAttention(course: CursoListItem) {
   const studentsCount = course.studentsCount ?? course.cantidadAlumnos
   const health = getCourseHealth(course)
+  const pendingFollowUpCount = getCoursePendingFollowUpCount(course)
 
-  return health.level !== 'normal' || studentsCount < 5 || (course.pendingCorrectionsCount ?? 0) > 0
+  return (
+    health.level !== 'normal' ||
+    pendingFollowUpCount > 0 ||
+    studentsCount < 5 ||
+    (course.pendingCorrectionsCount ?? 0) > 0
+  )
 }
 
 function HealthBadge({ health }: { health: CourseHealth }) {
@@ -188,29 +241,72 @@ function CourseTeachers({ course }: { course: CursoListItem }) {
   )
 }
 
-function SignalLine({ course }: { course: CursoListItem }) {
+function CourseAlertBlocks({ course }: { course: CursoListItem }) {
   const health = getCourseHealth(course)
-  const requiresAttention = courseRequiresAttention(course)
-  const mainSignal =
-    health.level !== 'normal'
-      ? health.reasons[0]
-      : course.mainSignal || health.reasons[0] || 'Sin señales académicas'
+  const currentReasons =
+    health.level !== 'normal' ? health.reasons : ['Sin alertas en el trimestre actual']
+  const pendingFollowUpCount = getCoursePendingFollowUpCount(course)
+  const pendingPreview = course.pendingFollowUp?.[0]
+  const hasPendingFollowUp = pendingFollowUpCount > 0
 
   return (
-    <div
-      className={cn(
-        'inline-flex max-w-full items-start gap-2 rounded-xl px-3 py-2 text-sm',
-        requiresAttention
-          ? 'bg-amber-500/10 text-amber-800 dark:text-amber-200'
-          : 'bg-muted/25 text-muted-foreground',
-      )}
-    >
-      {requiresAttention ? (
-        <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-      ) : (
-        <BookOpen className="mt-0.5 size-4 shrink-0" />
-      )}
-      <span className="min-w-0 leading-5">{mainSignal}</span>
+    <div className="grid gap-2 sm:grid-cols-2">
+      <div
+        className={cn(
+          'rounded-xl border px-3 py-2 text-sm',
+          health.level === 'critical' &&
+            'border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-200',
+          health.level === 'follow-up' &&
+            'border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-200',
+          health.level === 'normal' &&
+            'border-border/60 bg-muted/20 text-muted-foreground',
+        )}
+      >
+        <div className="flex items-start gap-2">
+          {health.level === 'normal' ? (
+            <BookOpen className="mt-0.5 size-4 shrink-0" />
+          ) : (
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          )}
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide">
+              Alertas del trimestre actual
+            </p>
+            <p className="mt-1 line-clamp-2 leading-5">
+              {currentReasons[0] || 'Sin alertas en el trimestre actual'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={cn(
+          'rounded-xl border px-3 py-2 text-sm',
+          hasPendingFollowUp
+            ? 'border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-200'
+            : 'border-border/60 bg-muted/20 text-muted-foreground',
+        )}
+      >
+        <div className="flex items-start gap-2">
+          {hasPendingFollowUp ? (
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          ) : (
+            <BookOpen className="mt-0.5 size-4 shrink-0" />
+          )}
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide">
+              Seguimiento pendiente
+            </p>
+            <p className="mt-1 line-clamp-2 leading-5">
+              {hasPendingFollowUp
+                ? pendingPreview?.description ||
+                  pendingPreview?.reason ||
+                  'Con seguimiento pendiente del trimestre anterior'
+                : 'Sin seguimiento pendiente'}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -243,6 +339,8 @@ function RosterMetric({
 
 function CourseRow({ course }: { course: CursoListItem }) {
   const studentsCount = course.studentsCount ?? course.cantidadAlumnos
+  const attendanceAverage = getCourseCurrentAttendance(course)
+  const academicAverage = getCourseCurrentAverage(course)
   const description = course.descripcion?.trim() || 'Sin descripción cargada.'
   const health = getCourseHealth(course)
   const requiresAttention = courseRequiresAttention(course)
@@ -273,7 +371,7 @@ function CourseRow({ course }: { course: CursoListItem }) {
             </div>
           </div>
 
-          <SignalLine course={course} />
+          <CourseAlertBlocks course={course} />
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
@@ -298,13 +396,13 @@ function CourseRow({ course }: { course: CursoListItem }) {
           <div className="grid grid-cols-3 gap-3">
             <RosterMetric
               label="Asistencia"
-              value={formatPercent(course.attendanceAverage)}
-              tone={getAttendanceTone(course.attendanceAverage)}
+              value={formatPercent(attendanceAverage)}
+              tone={getAttendanceTone(attendanceAverage)}
             />
             <RosterMetric
               label="Promedio"
-              value={formatDecimal(course.academicAverage)}
-              tone={getAverageTone(course.academicAverage)}
+              value={formatDecimal(academicAverage)}
+              tone={getAverageTone(academicAverage)}
             />
             <div className="min-w-0">
               <p className="text-xs font-medium text-muted-foreground">Salud</p>
@@ -589,14 +687,16 @@ export function CoursesTable() {
 function matchesCourseFilter(course: CursoListItem, filter: CourseFilterKey) {
   const studentsCount = course.studentsCount ?? course.cantidadAlumnos
   const teachersCount = course.teachers?.length ?? course.cantidadProfesores
+  const attendanceAverage = getCourseCurrentAttendance(course)
+  const academicAverage = getCourseCurrentAverage(course)
 
   switch (filter) {
     case 'requires-attention':
       return courseRequiresAttention(course)
     case 'low-attendance':
-      return hasNumber(course.attendanceAverage) && course.attendanceAverage < 70
+      return hasNumber(attendanceAverage) && attendanceAverage < 70
     case 'low-performance':
-      return hasNumber(course.academicAverage) && course.academicAverage < 60
+      return hasNumber(academicAverage) && academicAverage < 60
     case 'no-teachers':
       return teachersCount === 0
     case 'low-enrollment':

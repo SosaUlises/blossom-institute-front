@@ -127,6 +127,15 @@ export interface DashboardCriticalCourse {
     reasons: string[]
     color: 'emerald' | 'amber' | 'rose' | string
   }
+  academicStatusCurrent?: {
+    level: 'normal' | 'follow-up' | 'critical' | string
+    label: string
+    reasons?: string[]
+    color?: 'emerald' | 'amber' | 'rose' | string
+  } | null
+  studentsAtRiskCurrentCount?: number
+  pendingFollowUpCount?: number
+  pendingFollowUp?: DashboardPendingFollowUp[]
 }
 
 export interface DashboardAcademicTrend {
@@ -150,6 +159,25 @@ export interface DashboardLowManualGradeAlert {
   nota: number
   fecha: string
   averageGrade?: number | null
+}
+
+export interface DashboardPendingFollowUp {
+  alumnoId?: number
+  alumnoNombre?: string
+  alumnoApellido?: string
+  alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
+  cursoId: number
+  cursoNombre: string
+  cursoDescripcion?: string | null
+  periodLabel: string
+  quarterNumber?: number
+  year?: number
+  level: 'normal' | 'follow-up' | 'critical' | string
+  reason: string
+  averageValue?: number | null
+  attendanceValue?: number | null
+  description?: string | null
 }
 
 export interface DashboardUpcomingAssignment {
@@ -198,6 +226,11 @@ export interface AdminDashboardResponse {
   coursesWithAttendanceDecline: DashboardCourseTrendRisk[]
   coursesWithPerformanceDecline: DashboardCourseTrendRisk[]
   criticalCourses: DashboardCriticalCourse[]
+  pendingFollowUp?: DashboardPendingFollowUp[]
+  coursesPendingFollowUp?: DashboardPendingFollowUp[]
+  coursesWithPendingFollowUp?: DashboardPendingFollowUp[]
+  pendingFollowUpCount?: number
+  coursesPendingFollowUpCount?: number
   academicTrends: DashboardAcademicTrend[]
 
   upcomingAssignments: DashboardUpcomingAssignment[]

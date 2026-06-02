@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getStudentAcademicSummary } from '@/lib/admin/students/api'
 import type {
   StudentAcademicEnrollment,
+  StudentPendingFollowUp,
   StudentAcademicSignal,
   StudentAcademicStatus,
   StudentAcademicSummary,
@@ -281,6 +282,69 @@ function GradeLine({ grade, label }: { grade: StudentGradeSignal; label: string 
   )
 }
 
+function getPendingFollowUpValue(item: StudentPendingFollowUp) {
+  if (hasValue(item.averageValue)) {
+    return {
+      label: 'Promedio',
+      value: formatNumber(item.averageValue),
+    }
+  }
+
+  if (hasValue(item.attendanceValue)) {
+    return {
+      label: 'Asistencia',
+      value: `${formatNumber(item.attendanceValue)}%`,
+    }
+  }
+
+  return {
+    label: 'Valor',
+    value: 'Sin datos',
+  }
+}
+
+function PendingFollowUpItem({ item }: { item: StudentPendingFollowUp }) {
+  const metric = getPendingFollowUpValue(item)
+  const periodLabel = item.periodLabel || (item.quarterNumber ? `${item.quarterNumber}º trimestre` : 'Trimestre anterior')
+  const title =
+    metric.value === 'Sin datos'
+      ? normalizeCopy(item.description || item.reason)
+      : `${metric.label} ${metric.value} en ${periodLabel}`
+
+  return (
+    <article className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+              {periodLabel}
+            </span>
+            {item.courseName ? (
+              <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5 text-xs text-muted-foreground">
+                {item.courseName}
+              </span>
+            ) : null}
+          </div>
+          <h4 className="mt-2 text-sm font-semibold text-foreground">{title}</h4>
+          <p className="mt-1 text-sm leading-5 text-muted-foreground">
+            {normalizeCopy(item.reason || item.description)}
+          </p>
+        </div>
+        <div className="grid min-w-28 grid-cols-2 gap-2 text-xs sm:text-right">
+          <div className="rounded-lg border border-border/60 bg-card/80 px-2 py-1">
+            <p className="text-muted-foreground">Motivo</p>
+            <p className="mt-0.5 font-medium text-foreground">{metric.label}</p>
+          </div>
+          <div className="rounded-lg border border-border/60 bg-card/80 px-2 py-1">
+            <p className="text-muted-foreground">Valor</p>
+            <p className="mt-0.5 font-medium text-foreground">{metric.value}</p>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
 function CourseRow({ enrollment }: { enrollment: StudentAcademicEnrollment }) {
   const statusLabel = enrollment.courseStatus ? normalizeCopy(enrollment.courseStatus) : null
 
@@ -390,6 +454,8 @@ function AcademicProfileContent({ summary }: { summary: StudentAcademicSummary }
     hasValue(attendance.presentCount) && hasValue(attendance.totalClasses)
       ? `${formatNumber(attendance.presentCount)} presentes de ${formatNumber(attendance.totalClasses)} clases`
       : null
+  const pendingFollowUp = summary.pendingFollowUp ?? []
+  const pendingFollowUpCount = summary.pendingFollowUpCount ?? pendingFollowUp.length
   const visibleSignals = summary.recentSignals.slice(0, 3)
 
   const tabs = [
@@ -477,7 +543,7 @@ function AcademicProfileContent({ summary }: { summary: StudentAcademicSummary }
           >
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <InlineMetric
-                label="Estado académico"
+                label="Estado actual"
                 value={normalizeCopy(summary.academicStatus.label)}
                 detail={summary.academicStatus.reasons[0] ? normalizeCopy(summary.academicStatus.reasons[0]) : null}
                 tone={statusTone}
@@ -522,6 +588,43 @@ function AcademicProfileContent({ summary }: { summary: StudentAcademicSummary }
                 ))}
               </div>
             ) : null}
+
+            <div className="mt-4 rounded-xl border border-border/60 bg-background/60 p-3 dark:bg-background/25">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">Seguimiento pendiente</h4>
+                  <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                    Señales heredadas de trimestres anteriores, separadas del estado actual.
+                  </p>
+                </div>
+                {pendingFollowUpCount > 0 ? (
+                  <span className="w-fit rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+                    Seguimiento pendiente del trimestre anterior
+                  </span>
+                ) : null}
+              </div>
+
+              {pendingFollowUpCount > 0 ? (
+                pendingFollowUp.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    {pendingFollowUp.map((item, index) => (
+                      <PendingFollowUpItem
+                        key={`${item.periodLabel}-${item.reason}-${index}`}
+                        item={item}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Hay seguimiento pendiente registrado, pero no se recibieron detalles para mostrar.
+                  </p>
+                )
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Sin seguimiento pendiente de trimestres anteriores.
+                </p>
+              )}
+            </div>
 
             <div className="mt-5">
               <div className="mb-2 flex items-center gap-2">

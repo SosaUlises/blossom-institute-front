@@ -40,6 +40,8 @@ export interface StudentAcademicSummary {
   gradesSummary: StudentGradesSummary
   homeworkSummary: StudentHomeworkSummary
   academicStatus: StudentAcademicStatus
+  pendingFollowUp?: StudentPendingFollowUp[]
+  pendingFollowUpCount?: number
   recentSignals: StudentAcademicSignal[]
 }
 
@@ -122,6 +124,19 @@ export interface StudentAcademicSignal {
   description: string
   severity: 'neutral' | 'attention' | 'critical' | string
   date?: string | null
+}
+
+export interface StudentPendingFollowUp {
+  periodLabel: string
+  quarterNumber?: number
+  year?: number
+  level: 'normal' | 'follow-up' | 'critical' | string
+  reason: string
+  averageValue?: number | null
+  attendanceValue?: number | null
+  description?: string | null
+  courseId?: number | null
+  courseName?: string | null
 }
 
 export interface CreateAlumnoDTO {

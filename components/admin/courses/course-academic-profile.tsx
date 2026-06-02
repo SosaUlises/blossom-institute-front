@@ -27,9 +27,10 @@ import { UserAvatar } from '@/components/shared/user-avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { getCourseAcademicProfile } from '@/lib/admin/courses/api'
-import { calculateCourseHealth, type CourseHealth } from '@/lib/admin/courses/course-health'
+import type { CourseHealth } from '@/lib/admin/courses/course-health'
 import type {
   CourseAcademicProfile as CourseAcademicProfileData,
+  CourseAcademicProfileHealth,
   CourseAcademicProfileSignal,
 } from '@/lib/admin/courses/types'
 import { cn } from '@/lib/utils'
@@ -62,6 +63,36 @@ const STATUS_OPTIONS: Array<{
     icon: ShieldAlert,
   },
 ]
+
+const NORMAL_COURSE_HEALTH: CourseHealth = {
+  level: 'normal',
+  label: 'Normal',
+  reasons: ['Sin alertas en el trimestre actual'],
+  color: 'emerald',
+}
+
+function normalizeCourseHealth(health?: CourseAcademicProfileHealth | null): CourseHealth {
+  const level =
+    health?.level === 'critical' || health?.level === 'follow-up' ? health.level : 'normal'
+  const color =
+    health?.color === 'rose' || health?.color === 'amber' || health?.color === 'emerald'
+      ? health.color
+      : level === 'critical'
+        ? 'rose'
+        : level === 'follow-up'
+          ? 'amber'
+          : 'emerald'
+
+  return {
+    level,
+    label: health?.label || NORMAL_COURSE_HEALTH.label,
+    reasons:
+      health?.reasons && health.reasons.length > 0
+        ? health.reasons
+        : NORMAL_COURSE_HEALTH.reasons,
+    color,
+  }
+}
 
 function normalizeCopy(value?: string | null) {
   if (!value) return ''
@@ -420,6 +451,76 @@ function StudentFollowUpRow({
   )
 }
 
+function PendingFollowUpRow({
+  item,
+}: {
+  item: NonNullable<CourseAcademicProfileData['pendingFollowUp']>[number]
+}) {
+  const fullName = `${item.alumnoNombre ?? ''} ${item.alumnoApellido ?? ''}`.trim()
+  const studentName = fullName || 'Alumno en seguimiento'
+  const level = normalizeHealthLevel(item.level)
+  const periodLabel = item.periodLabel || `${item.quarterNumber}º trimestre`
+
+  return (
+    <article className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 gap-3">
+          <UserAvatar
+            name={studentName}
+            avatarUrl={item.avatarUrl}
+            size={40}
+            className="shrink-0"
+            fallbackClassName="bg-amber-500/10 text-amber-700 dark:text-amber-300 text-sm"
+          />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="truncate text-sm font-semibold text-foreground">
+                {studentName}
+              </h4>
+              <span
+                className={cn(
+                  'rounded-full border px-2 py-0.5 text-xs font-medium',
+                  level === 'critical' &&
+                    'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300',
+                  level === 'follow-up' &&
+                    'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+                  level === 'normal' && 'border-border/60 bg-card/80 text-muted-foreground',
+                )}
+              >
+                {level === 'critical'
+                  ? `Crítico en ${periodLabel}`
+                  : level === 'follow-up'
+                    ? `Seguimiento en ${periodLabel}`
+                    : periodLabel}
+              </span>
+            </div>
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">
+              {normalizeCopy(item.description || item.reason)}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5">
+                Promedio {formatDecimal(item.averageValue)}
+              </span>
+              <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5">
+                Asistencia {formatPercent(item.attendanceValue)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {item.alumnoId ? (
+          <Button asChild className="h-9 shrink-0 rounded-xl px-3 text-sm shadow-none transition-[transform,background-color] duration-200 ease-out active:scale-[0.98]">
+            <Link href={`/admin/dashboard/students/${item.alumnoId}/profile`}>
+              Ver alumno
+              <ArrowUpRight className="ml-2 size-4" />
+            </Link>
+          </Button>
+        ) : null}
+      </div>
+    </article>
+  )
+}
+
 function TeacherRow({
   teacher,
 }: {
@@ -483,16 +584,27 @@ function ProfileSkeleton() {
 }
 
 function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData }) {
-  const metrics = profile.academicMetrics
-  const health = calculateCourseHealth({
-    attendanceAverage: metrics.attendanceAverage,
-    academicAverage: metrics.academicAverage,
-    studentsAtRiskCount: metrics.studentsAtRiskCount,
-    teacherAssigned: profile.teachers.length > 0,
-  })
+  const metrics = profile.metricsCurrent ?? profile.academicMetrics
+  const attendanceAverage =
+    metrics.attendanceAverage ?? metrics.asistenciaActual ?? profile.academicMetrics.attendanceAverage
+  const academicAverage =
+    metrics.academicAverage ?? metrics.promedioActual ?? profile.academicMetrics.academicAverage
+  const studentsAtRiskCurrentCount =
+    metrics.studentsAtRiskCurrentCount ??
+    profile.studentsAtRiskCurrentCount ??
+    profile.academicMetrics.studentsAtRiskCurrentCount ??
+    profile.academicMetrics.studentsAtRiskCount
+  const pendingCorrectionsCount =
+    metrics.pendingCorrectionsCount ?? profile.academicMetrics.pendingCorrectionsCount
+  const health = normalizeCourseHealth(profile.academicStatusCurrent ?? profile.health)
   const healthLevel = normalizeHealthLevel(health.level)
   const studentsCount = profile.students.studentsCount
   const teachersCount = profile.teachers.length
+  const affectedStudentsCurrent =
+    profile.affectedStudentsCurrent ?? profile.studentsRequiringFollowUp
+  const pendingFollowUp = profile.pendingFollowUp ?? []
+  const pendingFollowUpCount =
+    profile.pendingFollowUpCount ?? metrics.pendingFollowUpCount ?? pendingFollowUp.length
   const sortedSignals = [...profile.academicSignals].sort(
     (first, second) => severityWeight(first) - severityWeight(second),
   )
@@ -550,16 +662,16 @@ function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData 
         <InlineMetric
           icon={Percent}
           label="Asistencia"
-          value={formatPercent(metrics.attendanceAverage)}
-          detail="Promedio de continuidad del curso"
-          tone={getMetricTone('attendance', metrics.attendanceAverage)}
+          value={formatPercent(attendanceAverage)}
+          detail="Trimestre actual"
+          tone={getMetricTone('attendance', attendanceAverage)}
         />
         <InlineMetric
           icon={TrendingUp}
           label="Promedio académico"
-          value={formatDecimal(metrics.academicAverage)}
-          detail="Rendimiento consolidado"
-          tone={getMetricTone('average', metrics.academicAverage)}
+          value={formatDecimal(academicAverage)}
+          detail="Trimestre actual"
+          tone={getMetricTone('average', academicAverage)}
         />
         <InlineMetric
           icon={Users}
@@ -577,24 +689,28 @@ function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData 
         <InlineMetric
           icon={ShieldAlert}
           label="Alumnos en riesgo"
-          value={formatNumber(metrics.studentsAtRiskCount)}
-          detail={metrics.studentsAtRiskCount > 0 ? 'Requieren seguimiento' : 'Sin riesgo detectado'}
-          tone={getMetricTone('count', metrics.studentsAtRiskCount)}
+          value={formatNumber(studentsAtRiskCurrentCount)}
+          detail={
+            studentsAtRiskCurrentCount > 0
+              ? 'Alertas del trimestre actual'
+              : 'Sin alertas en el trimestre actual'
+          }
+          tone={getMetricTone('count', studentsAtRiskCurrentCount)}
         />
         <InlineMetric
           icon={ClipboardCheck}
           label="Correcciones pendientes"
-          value={formatNumber(metrics.pendingCorrectionsCount)}
-          detail={metrics.pendingCorrectionsCount > 0 ? 'Pendientes de revisión' : 'Sin pendientes'}
-          tone={getMetricTone('count', metrics.pendingCorrectionsCount)}
+          value={formatNumber(pendingCorrectionsCount)}
+          detail={pendingCorrectionsCount > 0 ? 'Pendientes de revisión' : 'Sin pendientes'}
+          tone={getMetricTone('count', pendingCorrectionsCount)}
         />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-5">
           <SectionPanel
-            title="Estado académico"
-            description="Lectura operacional del curso para decidir prioridad y seguimiento."
+            title="Alertas del trimestre actual"
+            description="Lectura operacional calculada solo con datos del trimestre actual."
           >
             <div className="grid gap-3 md:grid-cols-3">
               {STATUS_OPTIONS.map((option) => (
@@ -609,8 +725,8 @@ function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData 
           </SectionPanel>
 
           <SectionPanel
-            title="Señales"
-            description="Señales académicas ordenadas por prioridad."
+            title="Señales del trimestre actual"
+            description="Alertas académicas actuales ordenadas por prioridad."
           >
             {sortedSignals.length > 0 ? (
               <div className="space-y-2">
@@ -621,8 +737,8 @@ function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData 
             ) : (
               <EmptyPanel
                 icon={CheckCircle2}
-                title="Sin señales prioritarias"
-                description="No hay alertas académicas relevantes para este curso."
+                title="Sin alertas en el trimestre actual"
+                description="No hay señales académicas actuales para este curso."
               />
             )}
           </SectionPanel>
@@ -630,20 +746,49 @@ function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData 
 
         <div className="space-y-5">
           <SectionPanel
-            title="Alumnos afectados"
-            description="Alumnos que requieren seguimiento académico."
+            title="Alumnos afectados actuales"
+            description="Alumnos con alertas del trimestre actual."
           >
-            {profile.studentsRequiringFollowUp.length > 0 ? (
+            {affectedStudentsCurrent.length > 0 ? (
               <div className="space-y-2">
-                {profile.studentsRequiringFollowUp.map((student) => (
+                {affectedStudentsCurrent.map((student) => (
                   <StudentFollowUpRow key={student.id} student={student} />
                 ))}
               </div>
             ) : (
               <EmptyPanel
                 icon={GraduationCap}
-                title="Sin alumnos en seguimiento"
-                description="No hay alumnos marcados para intervención en este curso."
+                title="Sin alertas en el trimestre actual"
+                description="No hay alumnos marcados para intervención actual en este curso."
+              />
+            )}
+          </SectionPanel>
+
+          <SectionPanel
+            title="Seguimiento pendiente"
+            description="Señales heredadas de trimestres anteriores, separadas del estado actual."
+          >
+            {pendingFollowUpCount > 0 ? (
+              <div className="space-y-3">
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-800 dark:text-amber-200">
+                  Con seguimiento pendiente del trimestre anterior
+                </div>
+                {pendingFollowUp.length > 0 ? (
+                  <div className="space-y-2">
+                    {pendingFollowUp.map((item, index) => (
+                      <PendingFollowUpRow
+                        key={`${item.alumnoId ?? 'alumno'}-${item.periodLabel}-${index}`}
+                        item={item}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <EmptyPanel
+                icon={CheckCircle2}
+                title="Sin seguimiento pendiente"
+                description="No hay señales heredadas de trimestres anteriores para este curso."
               />
             )}
           </SectionPanel>

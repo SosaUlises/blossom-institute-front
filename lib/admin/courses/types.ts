@@ -25,10 +25,20 @@ export interface CursoListItem {
   studentsCount?: number
   attendanceAverage?: number | null
   academicAverage?: number | null
+  asistenciaActual?: number | null
+  promedioActual?: number | null
+  period?: CourseAcademicPeriod | null
+  metricsCurrent?: CourseMetricsCurrent | null
   pendingCorrectionsCount?: number
   studentsAtRiskCount?: number
+  studentsAtRiskCurrentCount?: number
+  alumnosCriticosActualesCount?: number
+  alumnosConBajaAsistenciaActualCount?: number
+  pendingFollowUpCount?: number
+  pendingFollowUp?: CoursePendingFollowUp[]
   requiresAttention?: boolean
   healthStatus?: CursoHealthStatus | null
+  academicStatusCurrent?: CursoHealthStatus | null
   mainSignal?: string | null
 }
 
@@ -44,6 +54,45 @@ export interface CursoHealthStatus {
   label: string
   reasons?: string[]
   color?: 'emerald' | 'amber' | 'rose' | string
+}
+
+export interface CourseAcademicPeriod {
+  label: string
+  from: string
+  to: string
+  year: number
+  quarterNumber?: number
+  quarter?: number
+  monthRangeLabel?: string
+}
+
+export interface CourseMetricsCurrent {
+  attendanceAverage?: number | null
+  academicAverage?: number | null
+  asistenciaActual?: number | null
+  promedioActual?: number | null
+  studentsAtRiskCurrentCount?: number
+  alumnosCriticosActualesCount?: number
+  alumnosConBajaAsistenciaActualCount?: number
+  pendingFollowUpCount?: number
+  pendingCorrectionsCount?: number
+}
+
+export interface CoursePendingFollowUp {
+  alumnoId?: number
+  alumnoNombre?: string
+  alumnoApellido?: string
+  avatarUrl?: string | null
+  cursoId: number
+  cursoNombre: string
+  periodLabel: string
+  quarterNumber: number
+  year: number
+  level: 'normal' | 'follow-up' | 'critical' | string
+  reason: string
+  averageValue?: number | null
+  attendanceValue?: number | null
+  description: string
 }
 
 export interface CourseAcademicProfileCourse {
@@ -66,7 +115,13 @@ export interface CourseAcademicProfileStudents {
 export interface CourseAcademicProfileMetrics {
   attendanceAverage?: number | null
   academicAverage?: number | null
+  asistenciaActual?: number | null
+  promedioActual?: number | null
   studentsAtRiskCount: number
+  studentsAtRiskCurrentCount?: number
+  alumnosCriticosActualesCount?: number
+  alumnosConBajaAsistenciaActualCount?: number
+  pendingFollowUpCount?: number
   pendingCorrectionsCount: number
 }
 
@@ -103,11 +158,18 @@ export interface CourseRecentActivity {
 
 export interface CourseAcademicProfile {
   course: CourseAcademicProfileCourse
+  period?: CourseAcademicPeriod | null
   teachers: CourseAcademicProfileTeacher[]
   students: CourseAcademicProfileStudents
   academicMetrics: CourseAcademicProfileMetrics
+  metricsCurrent?: CourseMetricsCurrent | null
   health: CourseAcademicProfileHealth
+  academicStatusCurrent?: CourseAcademicProfileHealth | null
+  studentsAtRiskCurrentCount?: number
+  pendingFollowUpCount?: number
+  affectedStudentsCurrent?: CourseAcademicProfileAffectedStudent[]
   studentsRequiringFollowUp: CourseAcademicProfileAffectedStudent[]
+  pendingFollowUp?: CoursePendingFollowUp[]
   academicSignals: CourseAcademicProfileSignal[]
   recentActivity?: CourseRecentActivity[]
 }
@@ -144,6 +206,7 @@ export interface CoursesListResponse {
   total: number
   pageNumber: number
   pageSize: number
+  period?: CourseAcademicPeriod | null
 }
 
 export interface ApiResponse<T> {
