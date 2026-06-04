@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
+import { AdminBreadcrumbs } from '@/components/layout/breadcrumbs'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -868,6 +869,12 @@ export function StudentAcademicProfile() {
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-7xl space-y-5">
+          <AdminBreadcrumbs
+            items={[
+              { label: 'Alumnos', href: '/admin/dashboard/students' },
+              { label: summary?.student.fullName ?? 'Perfil académico' },
+            ]}
+          />
           {loading ? (
             <ProfileSkeleton />
           ) : error ? (

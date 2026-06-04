@@ -20,6 +20,7 @@ export interface ReporteMarksItem {
   alumnoNombre: string
   alumnoApellido: string
   alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
   alumnoDni: number
   alumnoEmail?: string | null
   quizCount: number
@@ -64,6 +65,7 @@ export interface ReporteAttendanceItem {
   alumnoNombre: string
   alumnoApellido: string
   alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
   alumnoDni: number
   alumnoEmail?: string | null
   clasesTotales: number
@@ -102,6 +104,7 @@ export interface ReporteHomeworkItem {
   alumnoNombre: string
   alumnoApellido: string
   alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
   alumnoDni: number
   alumnoEmail?: string | null
   homeworkTotal: number
@@ -214,6 +217,7 @@ export interface DeliveriesByTaskItem {
   alumnoNombre: string
   alumnoApellido: string
   alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
   alumnoDni: number
   estado: EstadoEntregaReporte
   entregaId?: number | null

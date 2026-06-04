@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { GraduationCap, UserPlus } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
+import { AdminBreadcrumbs } from '@/components/layout/breadcrumbs'
 import { WorkspaceHeader } from '@/components/shared/workspace-header'
 import { TeacherForm } from '@/components/admin/teachers/teacher-form'
 import { createTeacher } from '@/lib/admin/teachers/api'
@@ -24,6 +25,12 @@ export default function NewTeacherPage() {
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-5xl space-y-5">
+          <AdminBreadcrumbs
+            items={[
+              { label: 'Docentes', href: '/admin/dashboard/teachers' },
+              { label: 'Nuevo docente' },
+            ]}
+          />
           <WorkspaceHeader
             title="Nuevo docente"
             description="Cargá la información principal para sumar una cuenta docente al equipo académico."

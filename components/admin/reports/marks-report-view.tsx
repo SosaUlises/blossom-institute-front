@@ -17,25 +17,28 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getCourses } from '@/lib/admin/courses/api'
+import { getCursoAlumnos } from '@/lib/admin/courses/people-api'
 import {
   getMarksExportExcelUrl,
   getMarksExportPdfUrl,
   getMarksReport,
 } from '@/lib/admin/reports/api'
+import type { CursoAlumno } from '@/lib/admin/courses/people-types'
 import type { CursoListItem } from '@/lib/admin/courses/types'
 import type { ReporteMarksResponse } from '@/lib/admin/reports/types'
 import { cn } from '@/lib/utils'
 import {
   buildReportFilename,
+  CourseReportHero,
   getCourseProfileHref,
   getStudentProfileHref,
+  ReportHeroContext,
   ReportEntityLink,
   ReportEmptyTableRow,
   ReportExportButton,
   ReportExportSection,
   ReportFilterPanel,
   ReportLoadingState,
-  ReportPageShell,
   ReportPersonLink,
   ReportResultsSection,
   ReportSummarySection,
@@ -132,66 +135,6 @@ function FilterField({
   )
 }
 
-function ReportMetaCard({
-  icon: Icon,
-  label,
-  value,
-  helper,
-  tone = 'default',
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  helper?: string
-  tone?: 'default' | 'highlight'
-}) {
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition duration-200 hover:-translate-y-[1px] hover:shadow-sm',
-        tone === 'highlight'
-          ? 'border-primary/15 bg-primary/5'
-          : 'border-border/60 bg-background/75',
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            'flex size-10 items-center justify-center rounded-2xl',
-            tone === 'highlight'
-              ? 'bg-primary/10 text-primary'
-              : 'bg-background text-muted-foreground',
-          )}
-        >
-          <Icon className="size-4.5" />
-        </div>
-
-        <div className="min-w-0">
-          <p
-            className={cn(
-              'text-[11px] font-semibold uppercase tracking-[0.14em]',
-              tone === 'highlight' ? 'text-primary/80' : 'text-muted-foreground',
-            )}
-          >
-            {label}
-          </p>
-          <p
-            className={cn(
-              'mt-2 text-sm font-semibold leading-6',
-              tone === 'highlight' ? 'text-primary' : 'text-foreground',
-            )}
-          >
-            {value}
-          </p>
-          {helper ? (
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function getAverageTone(value?: number | null) {
   if (value == null) {
     return 'border-border/60 bg-background/70 text-foreground'
@@ -206,6 +149,12 @@ function getAverageTone(value?: number | null) {
   }
 
   return 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
+}
+
+function buildStudentAvatarMap(students?: CursoAlumno[]) {
+  return new Map(
+    (students ?? []).map((student) => [student.alumnoId, student.avatarUrl])
+  )
 }
 
 export function MarksReportView() {
@@ -234,7 +183,7 @@ export function MarksReportView() {
   }, [])
 
   const selectedCourseName =
-    courses.find((course) => String(course.id) === cursoId)?.nombre ?? 'Sin curso seleccionado'
+    courses.find((course) => String(course.id) === cursoId)?.nombre
 
   const termLabel = useMemo(() => {
     if (term === '1') return 'Trimestre 1'
@@ -251,16 +200,31 @@ export function MarksReportView() {
       if (!year.trim()) throw new Error('Ingresá un año.')
       if (!term.trim()) throw new Error('Seleccioná un trimestre.')
 
-      const data = await getMarksReport({
-        cursoId: Number(cursoId),
-        year: Number(year),
-        term: Number(term),
-        pageNumber: 1,
-        pageSize: 100,
-        search,
-      })
+      const [data, courseStudents] = await Promise.all([
+        getMarksReport({
+          cursoId: Number(cursoId),
+          year: Number(year),
+          term: Number(term),
+          pageNumber: 1,
+          pageSize: 100,
+          search,
+        }),
+        getCursoAlumnos(Number(cursoId)).catch(() => null),
+      ])
 
-      setReport(data)
+      const studentAvatarMap = buildStudentAvatarMap(courseStudents?.items)
+
+      setReport({
+        ...data,
+        items: data.items.map((item) => ({
+          ...item,
+          alumnoAvatarUrl:
+            item.alumnoAvatarUrl ??
+            item.avatarUrl ??
+            studentAvatarMap.get(item.alumnoId) ??
+            null,
+        })),
+      })
     } catch (err: any) {
       setError(err?.message || 'No se pudo cargar el reporte.')
       setReport(null)
@@ -270,25 +234,29 @@ export function MarksReportView() {
   }
 
   return (
-    <ReportPageShell
+    <CourseReportHero
       title="Reporte de calificaciones"
       description="Analizá el rendimiento de un curso por año y trimestre, con exportación en Excel o PDF."
-      meta={
-        <>
-          <ReportMetaCard
-            icon={BookOpen}
-            label="Curso"
-            value={selectedCourseName}
-            helper="Se actualiza según la selección."
-            tone="highlight"
-          />
-          <ReportMetaCard
-            icon={CalendarRange}
-            label="Período"
-            value={`${year || '-'} · ${termLabel}`}
-            helper="Año y trimestre del reporte."
-          />
-        </>
+      context={
+        <ReportHeroContext
+          items={[
+            {
+              icon: BookOpen,
+              label: 'Curso',
+              value: selectedCourseName,
+              helper: 'Se actualiza según la selección.',
+              tone: 'highlight',
+              visible: Boolean(cursoId),
+            },
+            {
+              icon: CalendarRange,
+              label: 'Período',
+              value: `${year || '-'} · ${termLabel}`,
+              helper: 'Año y trimestre del reporte.',
+              visible: Boolean(cursoId && year && term),
+            },
+          ]}
+        />
       }
     >
       <ReportFilterPanel
@@ -477,7 +445,7 @@ export function MarksReportView() {
                           <ReportPersonLink
                             href={getStudentProfileHref(item.alumnoId)}
                             name={`${item.alumnoNombre} ${item.alumnoApellido}`}
-                            avatarUrl={item.alumnoAvatarUrl}
+                            avatarUrl={item.alumnoAvatarUrl ?? item.avatarUrl}
                           />
                         </td>
 
@@ -582,7 +550,7 @@ export function MarksReportView() {
           </ReportExportSection>
         </>
       )}
-    </ReportPageShell>
+    </CourseReportHero>
   )
 }
 

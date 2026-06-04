@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { PencilLine, Inbox } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
+import { AdminBreadcrumbs } from '@/components/layout/breadcrumbs'
 import { WorkspaceHeader } from '@/components/shared/workspace-header'
 import { TeacherForm } from '@/components/admin/teachers/teacher-form'
 import { getTeacherById, updateTeacher } from '@/lib/admin/teachers/api'
@@ -55,6 +56,18 @@ export default function EditTeacherPage() {
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-5xl space-y-5">
+          <AdminBreadcrumbs
+            items={[
+              { label: 'Docentes', href: '/admin/dashboard/teachers' },
+              {
+                label: teacher
+                  ? `${teacher.nombre} ${teacher.apellido}`.trim()
+                  : 'Docente',
+                href: `/admin/dashboard/teachers/${teacherId}/profile`,
+              },
+              { label: 'Editar' },
+            ]}
+          />
           <WorkspaceHeader
             title="Editar docente"
             description="Actualizá los datos principales del docente seleccionado."

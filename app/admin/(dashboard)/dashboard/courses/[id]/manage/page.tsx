@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { Settings2, BookOpen, Users, GraduationCap, Inbox } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
+import { AdminBreadcrumbs } from '@/components/layout/breadcrumbs'
 import { WorkspaceHeader } from '@/components/shared/workspace-header'
 import { CoursePeople } from '@/components/admin/courses/course-people'
 import { getCourseById } from '@/lib/admin/courses/api'
@@ -70,6 +71,16 @@ export default function ManageCoursePage() {
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-7xl space-y-5">
+          <AdminBreadcrumbs
+            items={[
+              { label: 'Cursos', href: '/admin/dashboard/courses' },
+              {
+                label: course?.nombre ?? 'Curso',
+                href: `/admin/dashboard/courses/${courseId}/profile`,
+              },
+              { label: 'Gestionar' },
+            ]}
+          />
           <WorkspaceHeader
             title="Ver curso"
             description="Administrá alumnos y profesores asignados al curso."

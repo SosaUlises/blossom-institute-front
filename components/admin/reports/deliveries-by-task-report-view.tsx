@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getCourses } from '@/lib/admin/courses/api'
+import { getCursoAlumnos } from '@/lib/admin/courses/people-api'
 import { getDeliveriesByTaskReport } from '@/lib/admin/reports/api'
 import {
   EstadoEntregaReporte,
@@ -29,6 +30,8 @@ import { getTasksByCourse } from '@/lib/admin/tasks/api'
 import { EstadoTarea, type CursoTareaListItem } from '@/lib/admin/tasks/types'
 import { cn } from '@/lib/utils'
 import {
+  buildStudentAvatarLookup,
+  CourseReportHero,
   getCourseProfileHref,
   getStudentProfileHref,
   ReportEmptyTableRow,
@@ -36,8 +39,8 @@ import {
   ReportExportUnavailable,
   ReportExportSection,
   ReportFilterPanel,
+  ReportHeroContext,
   ReportLoadingState,
-  ReportPageShell,
   ReportPersonLink,
   ReportResultsSection,
   ReportSummarySection,
@@ -171,64 +174,6 @@ function SummaryCard({
   )
 }
 
-function ReportMetaCard({
-  icon: Icon,
-  label,
-  value,
-  helper,
-  tone = 'default',
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: React.ReactNode
-  helper?: string
-  tone?: 'default' | 'highlight'
-}) {
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition duration-200 hover:-translate-y-[1px] hover:shadow-sm',
-        tone === 'highlight'
-          ? 'border-primary/15 bg-primary/5'
-          : 'border-border/60 bg-background/75',
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            'flex size-10 items-center justify-center rounded-2xl',
-            tone === 'highlight'
-              ? 'bg-primary/10 text-primary'
-              : 'bg-background text-muted-foreground',
-          )}
-        >
-          <Icon className="size-4.5" />
-        </div>
-
-        <div className="min-w-0">
-          <p
-            className={cn(
-              'text-[11px] font-semibold uppercase tracking-[0.14em]',
-              tone === 'highlight' ? 'text-primary/80' : 'text-muted-foreground',
-            )}
-          >
-            {label}
-          </p>
-          <p
-            className={cn(
-              'mt-2 text-sm font-semibold leading-6',
-              tone === 'highlight' ? 'text-primary' : 'text-foreground',
-            )}
-          >
-            {value}
-          </p>
-          {helper ? <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p> : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function FilterField({
   label,
   children,
@@ -329,9 +274,7 @@ export function DeliveriesByTaskReportView() {
   )
 
   const selectedCourseName =
-    courses.find((course) => String(course.id) === cursoId)?.nombre ?? 'Sin curso seleccionado'
-
-  const taskStatusLabel = selectedTask ? formatTaskStatus(selectedTask.estado) : 'Sin tarea seleccionada'
+    courses.find((course) => String(course.id) === cursoId)?.nombre
 
   const handleLoad = async () => {
     setError(null)
@@ -341,20 +284,35 @@ export function DeliveriesByTaskReportView() {
       if (!cursoId) throw new Error('Seleccioná un curso.')
       if (!tareaId) throw new Error('Seleccioná una tarea.')
 
-      const data = await getDeliveriesByTaskReport({
-        cursoId: Number(cursoId),
-        tareaId: Number(tareaId),
-        pageNumber: 1,
-        pageSize: 100,
-        search,
-        estado: estado !== '' ? Number(estado) : undefined,
-        pendienteCorreccion:
-          pendienteCorreccion === ''
-            ? undefined
-            : pendienteCorreccion === 'true',
-      })
+      const [data, courseStudents] = await Promise.all([
+        getDeliveriesByTaskReport({
+          cursoId: Number(cursoId),
+          tareaId: Number(tareaId),
+          pageNumber: 1,
+          pageSize: 100,
+          search,
+          estado: estado !== '' ? Number(estado) : undefined,
+          pendienteCorreccion:
+            pendienteCorreccion === ''
+              ? undefined
+              : pendienteCorreccion === 'true',
+        }),
+        getCursoAlumnos(Number(cursoId)).catch(() => null),
+      ])
 
-      setReport(data)
+      const studentAvatarLookup = buildStudentAvatarLookup(courseStudents?.items)
+
+      setReport({
+        ...data,
+        items: data.items.map((item) => ({
+          ...item,
+          alumnoAvatarUrl:
+            item.alumnoAvatarUrl ??
+            item.avatarUrl ??
+            studentAvatarLookup.get(item.alumnoId) ??
+            null,
+        })),
+      })
     } catch (err: any) {
       setError(err?.message || 'No se pudo cargar el reporte.')
       setReport(null)
@@ -378,34 +336,34 @@ export function DeliveriesByTaskReportView() {
     report?.items.filter((x) => x.feedbackVigente?.requiereRehacer).length ?? 0
 
   return (
-    <ReportPageShell
+    <CourseReportHero
       title="Entregas por tarea"
       description="Consultá el estado de las entregas de una tarea específica por curso desde una vista consolidada."
-      meta={
-        <>
-          <ReportMetaCard
-            icon={BookOpen}
-            label="Curso"
-            value={
-              cursoId ? (
+      context={
+        <ReportHeroContext
+          items={[
+            {
+              icon: BookOpen,
+              label: 'Curso',
+              value: cursoId ? (
                 <ReportEntityLink
                   href={getCourseProfileHref(cursoId)}
-                  label={selectedCourseName}
+                  label={selectedCourseName ?? 'Curso seleccionado'}
                 />
-              ) : (
-                selectedCourseName
-              )
-            }
-            helper="Se actualiza según la selección."
-            tone="highlight"
-          />
-          <ReportMetaCard
-            icon={ClipboardCheck}
-            label="Tarea"
-            value={selectedTask?.titulo ?? 'Sin tarea seleccionada'}
-            helper={selectedTask ? `Estado: ${taskStatusLabel}` : 'Seleccioná una tarea para continuar.'}
-          />
-        </>
+              ) : undefined,
+              helper: 'Se actualiza según la selección.',
+              tone: 'highlight',
+              visible: Boolean(cursoId),
+            },
+            {
+              icon: ClipboardCheck,
+              label: 'Tarea',
+              value: selectedTask?.titulo,
+              helper: selectedTask ? `Estado: ${formatTaskStatus(selectedTask.estado)}` : undefined,
+              visible: Boolean(selectedTask),
+            },
+          ]}
+        />
       }
     >
       <ReportFilterPanel
@@ -640,7 +598,7 @@ export function DeliveriesByTaskReportView() {
                           <ReportPersonLink
                             href={getStudentProfileHref(item.alumnoId)}
                             name={`${item.alumnoNombre} ${item.alumnoApellido}`}
-                            avatarUrl={item.alumnoAvatarUrl}
+                            avatarUrl={item.alumnoAvatarUrl ?? item.avatarUrl}
                           />
                         </td>
 
@@ -716,7 +674,7 @@ export function DeliveriesByTaskReportView() {
           <ReportExportSection
             description="Este reporte todavía no tiene exportación configurada porque el backend no expone endpoint PDF ni Excel para entregas por tarea."
             details={[
-              { label: 'Curso', value: selectedCourseName },
+              { label: 'Curso', value: selectedCourseName ?? 'Curso seleccionado' },
               { label: 'Período', value: selectedTask?.titulo ?? 'Tarea seleccionada' },
               { label: 'Registros', value: report.items.length },
             ]}
@@ -725,7 +683,7 @@ export function DeliveriesByTaskReportView() {
           </ReportExportSection>
         </>
       )}
-    </ReportPageShell>
+    </CourseReportHero>
   )
 }
 

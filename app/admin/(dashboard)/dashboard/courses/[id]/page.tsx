@@ -7,6 +7,7 @@ import { ArrowUpRight, BookOpen, Inbox } from 'lucide-react'
 
 import { CourseForm } from '@/components/admin/courses/course-form'
 import { AppHeader } from '@/components/layout/app-header'
+import { AdminBreadcrumbs } from '@/components/layout/breadcrumbs'
 import { WorkspaceHeader } from '@/components/shared/workspace-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -53,6 +54,16 @@ export default function EditCoursePage() {
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-5xl space-y-5">
+          <AdminBreadcrumbs
+            items={[
+              { label: 'Cursos', href: '/admin/dashboard/courses' },
+              {
+                label: course?.nombre ?? 'Curso',
+                href: `/admin/dashboard/courses/${courseId}/profile`,
+              },
+              { label: 'Editar' },
+            ]}
+          />
           <WorkspaceHeader
             title="Ajustes académicos"
             description="Mantené la base del curso alineada con el seguimiento institucional."

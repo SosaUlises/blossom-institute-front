@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   FileText,
   GraduationCap,
@@ -11,7 +11,6 @@ import {
   Sparkles,
   CalendarRange,
   Filter,
-  UserRound,
   Sigma,
 } from 'lucide-react'
 
@@ -40,10 +39,10 @@ import {
   ReportExportSection,
   ReportFilterPanel,
   ReportLoadingState,
-  ReportPageShell,
   ReportPersonLink,
   ReportResultsSection,
   ReportSummarySection,
+  StudentReportHero,
 } from './report-sections'
 
 interface CursoAlumnoOption {
@@ -267,66 +266,6 @@ function MetricCard({
   )
 }
 
-function ReportMetaCard({
-  icon: Icon,
-  label,
-  value,
-  helper,
-  tone = 'default',
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: React.ReactNode
-  helper?: string
-  tone?: 'default' | 'highlight'
-}) {
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition duration-200 hover:-translate-y-[1px] hover:shadow-sm',
-        tone === 'highlight'
-          ? 'border-primary/15 bg-primary/5'
-          : 'border-border/60 bg-background/75',
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            'flex size-10 items-center justify-center rounded-2xl',
-            tone === 'highlight'
-              ? 'bg-primary/10 text-primary'
-              : 'bg-background text-muted-foreground',
-          )}
-        >
-          <Icon className="size-4.5" />
-        </div>
-
-        <div className="min-w-0">
-          <p
-            className={cn(
-              'text-[11px] font-semibold uppercase tracking-[0.14em]',
-              tone === 'highlight' ? 'text-primary/80' : 'text-muted-foreground',
-            )}
-          >
-            {label}
-          </p>
-          <p
-            className={cn(
-              'mt-2 text-sm font-semibold leading-6',
-              tone === 'highlight' ? 'text-primary' : 'text-foreground',
-            )}
-          >
-            {value}
-          </p>
-          {helper ? (
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function FilterField({
   label,
   children,
@@ -395,20 +334,7 @@ export function StudentSummaryReportView() {
     loadStudentsByCourse()
   }, [cursoId])
 
-  const selectedCourseName =
-    courses.find((course) => String(course.id) === cursoId)?.nombre ?? 'Sin curso seleccionado'
-
   const selectedStudent = students.find((student) => String(student.alumnoId) === alumnoId)
-
-  const selectedStudentName = selectedStudent
-    ? `${selectedStudent.nombre} ${selectedStudent.apellido}`
-    : 'Sin alumno seleccionado'
-
-  const termLabel = useMemo(() => {
-    if (term === '1') return 'Trimestre 1'
-    if (term === '2') return 'Trimestre 2'
-    return 'Trimestre 3'
-  }, [term])
 
   const handleLoad = async () => {
     setError(null)
@@ -444,51 +370,9 @@ export function StudentSummaryReportView() {
   }
 
   return (
-    <ReportPageShell
+    <StudentReportHero
       title="Resumen del alumno"
-      description="Consultá el resumen académico completo de un alumno por curso y trimestre desde una vista consolidada."
-      meta={
-        <>
-          <ReportMetaCard
-            icon={UserRound}
-            label="Alumno"
-            value={
-              alumnoId ? (
-                <ReportPersonLink
-                  href={getStudentProfileHref(alumnoId)}
-                  name={selectedStudentName}
-                  avatarUrl={selectedStudent?.alumnoAvatarUrl ?? selectedStudent?.avatarUrl}
-                />
-              ) : (
-                selectedStudentName
-              )
-            }
-            helper="Se actualiza según la selección."
-            tone="highlight"
-          />
-          <ReportMetaCard
-            icon={BookOpen}
-            label="Curso"
-            value={
-              cursoId ? (
-                <ReportEntityLink
-                  href={getCourseProfileHref(cursoId)}
-                  label={selectedCourseName}
-                />
-              ) : (
-                selectedCourseName
-              )
-            }
-            helper="Curso utilizado para consultar alumnos."
-          />
-          <ReportMetaCard
-            icon={CalendarRange}
-            label="Período"
-            value={`${year || '-'} · ${termLabel}`}
-            helper="Año y trimestre del reporte."
-          />
-        </>
-      }
+      description="Seleccioná curso, alumno y período para generar una lectura académica consolidada."
     >
       <ReportFilterPanel
         description="Seleccioná curso, alumno, año y trimestre para generar el resumen académico consolidado."
@@ -824,7 +708,7 @@ export function StudentSummaryReportView() {
           </ReportExportSection>
         </>
       )}
-    </ReportPageShell>
+    </StudentReportHero>
   )
 }
 

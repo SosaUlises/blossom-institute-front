@@ -8,38 +8,116 @@ import { UserAvatar } from '@/components/shared/user-avatar'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+export type ReportType = 'course' | 'student' | 'institutional'
+
+type ReportPageShellVariant = 'default' | 'compact'
+
+interface ReportPageShellProps {
+  title: string
+  description: string
+  eyebrow?: string
+  context?: ReactNode
+  meta?: ReactNode
+  reportType?: ReportType
+  variant?: ReportPageShellVariant
+  children: ReactNode
+}
+
+interface ReportTypedHeroProps
+  extends Omit<ReportPageShellProps, 'reportType' | 'variant' | 'meta'> {}
+
+interface ReportHeroContextItem {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value?: ReactNode
+  helper?: string
+  tone?: 'default' | 'highlight'
+  visible?: boolean
+}
+
+const EMPTY_HERO_CONTEXT_VALUES = new Set([
+  'sin curso seleccionado',
+  'sin tarea seleccionada',
+  'sin período seleccionado',
+  'sin periodo seleccionado',
+])
+
+function hasHeroContextValue(value: ReactNode) {
+  if (value === null || value === undefined || value === false) {
+    return false
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    return normalized !== '' && !EMPTY_HERO_CONTEXT_VALUES.has(normalized)
+  }
+
+  return true
+}
+
+function getReportShellVariant(reportType: ReportType, variant?: ReportPageShellVariant) {
+  if (variant) return variant
+  return reportType === 'student' ? 'compact' : 'default'
+}
+
 export function ReportPageShell({
   title,
   description,
   eyebrow = 'Centro de reportes',
+  context,
   meta,
+  reportType = 'course',
+  variant,
   children,
-}: {
-  title: string
-  description: string
-  eyebrow?: string
-  meta?: ReactNode
-  children: ReactNode
-}) {
+}: ReportPageShellProps) {
+  const shellVariant = getReportShellVariant(reportType, variant)
+  const isCompact = shellVariant === 'compact'
+  const heroContext = reportType === 'student' ? null : context ?? meta
+
   return (
-    <div className="space-y-7">
-      <section className="rounded-2xl border border-border/60 bg-card/95 px-5 py-5 shadow-sm sm:px-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+    <div className={cn(isCompact ? 'space-y-5' : 'space-y-7')}>
+      <section
+        className={cn(
+          'rounded-2xl border border-border/60 bg-card/95 shadow-sm',
+          isCompact ? 'px-4 py-3 sm:px-5 sm:py-4' : 'px-5 py-5 sm:px-6',
+        )}
+      >
+        <div
+          className={cn(
+            'flex flex-col lg:flex-row lg:justify-between',
+            isCompact ? 'gap-3 lg:items-center' : 'gap-5 lg:items-end',
+          )}
+        >
           <div className="max-w-3xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <p
+              className={cn(
+                'font-semibold uppercase text-muted-foreground',
+                isCompact ? 'text-[10px] tracking-[0.14em]' : 'text-[11px] tracking-[0.16em]',
+              )}
+            >
               {eyebrow}
             </p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            <h2
+              className={cn(
+                'font-semibold tracking-tight text-foreground',
+                isCompact ? 'mt-1.5 text-xl sm:text-2xl' : 'mt-3 text-2xl sm:text-3xl',
+              )}
+            >
               {title}
             </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
+            <p
+              className={cn(
+                'max-w-3xl text-sm text-muted-foreground',
+                isCompact ? 'mt-1.5 leading-5' : 'mt-3 leading-6',
+              )}
+            >
               {description}
             </p>
           </div>
 
-          {meta ? (
+          {heroContext ? (
             <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:w-[460px]">
-              {meta}
+              {heroContext}
             </div>
           ) : null}
         </div>
@@ -47,6 +125,97 @@ export function ReportPageShell({
 
       {children}
     </div>
+  )
+}
+
+export function ReportHeroContext({
+  items,
+}: {
+  items: ReportHeroContextItem[]
+}) {
+  const visibleItems = items.filter(
+    (item) => item.visible !== false && hasHeroContextValue(item.value)
+  )
+
+  if (visibleItems.length === 0) {
+    return null
+  }
+
+  return (
+    <>
+      {visibleItems.map((item) => {
+        const Icon = item.icon
+        const isHighlight = item.tone === 'highlight'
+
+        return (
+          <div
+            key={item.label}
+            className={cn(
+              'rounded-2xl border p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition duration-200 hover:-translate-y-[1px] hover:shadow-sm',
+              isHighlight
+                ? 'border-primary/15 bg-primary/5'
+                : 'border-border/60 bg-background/75',
+            )}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className={cn(
+                  'flex size-10 shrink-0 items-center justify-center rounded-2xl',
+                  isHighlight
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-background text-muted-foreground',
+                )}
+              >
+                <Icon className="size-4.5" />
+              </div>
+
+              <div className="min-w-0">
+                <p
+                  className={cn(
+                    'text-[11px] font-semibold uppercase tracking-[0.14em]',
+                    isHighlight ? 'text-primary/80' : 'text-muted-foreground',
+                  )}
+                >
+                  {item.label}
+                </p>
+                <div
+                  className={cn(
+                    'mt-2 text-sm font-semibold leading-6',
+                    isHighlight ? 'text-primary' : 'text-foreground',
+                  )}
+                >
+                  {item.value}
+                </div>
+                {item.helper ? (
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {item.helper}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
+export function CourseReportHero({ context, ...props }: ReportTypedHeroProps) {
+  return <ReportPageShell {...props} reportType="course" context={context} />
+}
+
+export function StudentReportHero(props: ReportTypedHeroProps) {
+  return <ReportPageShell {...props} reportType="student" />
+}
+
+export function InstitutionalReportHero({ context, ...props }: ReportTypedHeroProps) {
+  return (
+    <ReportPageShell
+      {...props}
+      reportType="institutional"
+      context={context}
+      eyebrow={props.eyebrow ?? 'Centro institucional'}
+    />
   )
 }
 
@@ -446,4 +615,19 @@ export function buildReportFilename(
     .join('-')
 
   return `${base || 'reporte'}.${extension}`
+}
+
+export function buildStudentAvatarLookup(
+  students?: Array<{
+    alumnoId: number
+    alumnoAvatarUrl?: string | null
+    avatarUrl?: string | null
+  }>
+) {
+  return new Map(
+    (students ?? []).map((student) => [
+      student.alumnoId,
+      student.alumnoAvatarUrl ?? student.avatarUrl ?? null,
+    ])
+  )
 }
