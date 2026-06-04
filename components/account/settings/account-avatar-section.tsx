@@ -7,9 +7,9 @@ import { UserAvatar } from '@/components/shared/user-avatar'
 import { Button } from '@/components/ui/button'
 import { emitCurrentUserAvatarUpdated } from '@/lib/auth/client-events'
 import {
-  deleteMyAvatar,
-  getMyAccountSettings,
-  updateMyAvatar,
+  deleteMyAvatar as defaultDeleteMyAvatar,
+  getMyAccountSettings as defaultGetMyAccountSettings,
+  updateMyAvatar as defaultUpdateMyAvatar,
 } from '@/lib/account/settings/api'
 import type { MyAccountSettings } from '@/lib/account/settings/types'
 
@@ -20,9 +20,17 @@ const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024
 export function AccountAvatarSection({
   account,
   onUpdated,
+  showCopy = true,
+  getAccountSettings = defaultGetMyAccountSettings,
+  updateAvatar = defaultUpdateMyAvatar,
+  deleteAvatar = defaultDeleteMyAvatar,
 }: {
   account: MyAccountSettings
   onUpdated: (updated: MyAccountSettings) => void
+  showCopy?: boolean
+  getAccountSettings?: () => Promise<MyAccountSettings>
+  updateAvatar?: (file: File) => Promise<unknown>
+  deleteAvatar?: () => Promise<void>
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -58,7 +66,7 @@ export function AccountAvatarSection({
   }
 
   const refreshAccount = async () => {
-    const updated = await getMyAccountSettings()
+    const updated = await getAccountSettings()
     onUpdated(updated)
     emitCurrentUserAvatarUpdated(updated.avatarUrl ?? null)
   }
@@ -77,7 +85,7 @@ export function AccountAvatarSection({
       setPreviewUrl(localPreviewUrl)
       setUploading(true)
 
-      await updateMyAvatar(file)
+      await updateAvatar(file)
       await refreshAccount()
       URL.revokeObjectURL(localPreviewUrl)
       setPreviewUrl(null)
@@ -103,7 +111,7 @@ export function AccountAvatarSection({
       setSuccess(null)
       setRemoving(true)
 
-      await deleteMyAvatar()
+      await deleteAvatar()
       setPreviewUrl(null)
       await refreshAccount()
       setSuccess('Foto de perfil eliminada.')
@@ -128,14 +136,16 @@ export function AccountAvatarSection({
             fallbackClassName="bg-primary/10 text-primary dark:bg-primary/15"
           />
 
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-foreground">
-              Foto de perfil
-            </h3>
-            <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
-              Usá una imagen cuadrada. JPG, PNG o WEBP.
-            </p>
-          </div>
+          {showCopy ? (
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-foreground">
+                Foto de perfil
+              </h3>
+              <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
+                Usá una imagen cuadrada. JPG, PNG o WEBP.
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">

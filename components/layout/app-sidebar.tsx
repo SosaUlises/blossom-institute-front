@@ -16,6 +16,7 @@ import {
   Moon,
   PanelLeft,
   Sun,
+  UserCircle,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
@@ -103,44 +104,6 @@ function SidebarCollapseButton() {
       )}
     >
       <PanelLeft className={cn('size-4 transition-transform duration-200', isCollapsed && 'rotate-180')} />
-    </button>
-  )
-}
-
-function AppearanceToggle({
-  isDark,
-  mounted,
-  onToggle,
-}: {
-  isDark: boolean
-  mounted: boolean
-  onToggle: () => void
-}) {
-  const Icon = isDark ? Moon : Sun
-  const label = isDark ? 'Modo oscuro' : 'Modo claro'
-  const nextLabel = isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'
-
-  return (
-    <button
-      type="button"
-      disabled={!mounted}
-      aria-label={nextLabel}
-      title={nextLabel}
-      onClick={onToggle}
-      className="group flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-background/55 px-3 py-2.5 text-left shadow-[0_1px_1px_rgba(15,23,42,0.025)] transition-colors duration-200 hover:border-primary/15 hover:bg-sidebar-accent/55 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-70 dark:bg-background/25 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:shadow-none"
-    >
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card/80 text-muted-foreground transition-colors duration-200 group-hover:text-primary group-data-[collapsible=icon]:border-border/50 group-data-[collapsible=icon]:bg-background/65">
-        <Icon className="size-4" />
-      </span>
-
-      <span className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-        <span className="block truncate text-sm font-semibold leading-tight text-foreground">
-          Apariencia
-        </span>
-        <span className="mt-1 block truncate text-[11px] leading-none text-muted-foreground">
-          {mounted ? label : 'Cargando preferencia'}
-        </span>
-      </span>
     </button>
   )
 }
@@ -257,6 +220,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   const fullName = `${user.nombre} ${user.apellido}`.trim()
   const isDark = mounted && resolvedTheme === 'dark'
+  const ThemeIcon = isDark ? Moon : Sun
+  const themeLabel = isDark ? 'Modo oscuro' : 'Modo claro'
+  const themeActionLabel = isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'
 
   const handleThemeToggle = () => {
     setTheme(isDark ? 'light' : 'dark')
@@ -325,19 +291,13 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </SidebarGroup>
           </div>
 
-          <div className="w-full space-y-2 pt-5 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:pt-3">
-            <AppearanceToggle
-              isDark={isDark}
-              mounted={mounted}
-              onToggle={handleThemeToggle}
-            />
-
+          <div className="w-full pt-3 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:pt-2">
             {!mounted ? (
-              <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/80 px-3 py-3 shadow-[0_1px_1px_rgba(15,23,42,0.03)] group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:shadow-none">
+              <div className="flex w-full items-center gap-2.5 rounded-xl border border-sidebar-border/60 bg-background/45 px-2 py-2 shadow-[0_1px_1px_rgba(15,23,42,0.025)] dark:bg-background/20 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:shadow-none">
                 <UserAvatar
                   name={fullName}
                   avatarUrl={avatarUrl}
-                  size={38}
+                  size={34}
                   fallbackClassName="bg-primary/10 text-primary"
                 />
 
@@ -357,12 +317,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     type="button"
                     aria-label="Abrir menú de usuario"
                     title="Usuario"
-                    className="group flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/80 px-3 py-3 text-left shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 hover:border-primary/15 hover:bg-sidebar-accent/60 active:scale-[0.99] group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:shadow-none"
+                    className="group flex w-full items-center gap-2.5 rounded-xl border border-sidebar-border/60 bg-background/45 px-2 py-2 text-left shadow-[0_1px_1px_rgba(15,23,42,0.025)] transition-colors duration-200 hover:border-primary/15 hover:bg-sidebar-accent/55 active:scale-[0.99] dark:bg-background/20 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:shadow-none"
                   >
                     <UserAvatar
                       name={fullName}
                       avatarUrl={avatarUrl}
-                      size={38}
+                      size={34}
                       className="transition-transform duration-200 group-hover:scale-[1.02]"
                       fallbackClassName="bg-primary/10 text-primary"
                     />
@@ -383,21 +343,37 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 <DropdownMenuContent
                   align="start"
                   side="top"
-                  className="w-64 rounded-2xl border border-border/70 bg-popover/95 p-2 shadow-[0_1px_2px_rgba(15,23,42,0.035)] backdrop-blur-xl"
+                  className="w-56 rounded-2xl border border-border/70 bg-popover/95 p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] backdrop-blur-xl"
                 >
-                  <div className="mb-2 rounded-xl border border-border/60 bg-muted/25 px-3 py-3">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {fullName}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {user.email}
-                    </p>
-                    <p className="mt-2 inline-flex rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
-                      {user.roles.join(', ')}
-                    </p>
-                  </div>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      router.push('/admin/dashboard/settings')
+                    }}
+                    className="rounded-xl px-3 py-2 text-sm"
+                  >
+                    <UserCircle className="mr-2 size-4" />
+                    Mi cuenta
+                  </DropdownMenuItem>
 
-                  <DropdownMenuSeparator className="my-2 bg-border" />
+                  <DropdownMenuItem
+                    disabled={!mounted}
+                    onSelect={(event) => {
+                      event.preventDefault()
+                      handleThemeToggle()
+                    }}
+                    className="rounded-xl px-3 py-2 text-sm"
+                  >
+                    <ThemeIcon className="mr-2 size-4" />
+                    <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                      <span>Apariencia</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {mounted ? themeLabel : 'Cargando'}
+                      </span>
+                    </span>
+                    <span className="sr-only">{themeActionLabel}</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="my-1.5 bg-border" />
 
                   <DropdownMenuItem
                     onClick={handleLogout}

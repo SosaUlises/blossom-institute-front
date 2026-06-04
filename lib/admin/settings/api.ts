@@ -1,6 +1,7 @@
 import type {
   ChangeMyPasswordDTO,
   MyAccountSettings,
+  UpdateAvatarResponse,
   UpdateMyAccountSettingsDTO,
 } from './types'
 
@@ -51,7 +52,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
 
   if (!response.ok) {
     throw new Error(
-      extractErrorMessage(result, 'Ocurrió un error en la solicitud.')
+      extractErrorMessage(result, 'Ocurrió un error en la solicitud.'),
     )
   }
 
@@ -69,7 +70,7 @@ export async function getMyAccountSettings(): Promise<MyAccountSettings> {
 }
 
 export async function updateMyAccountSettings(
-  payload: UpdateMyAccountSettingsDTO
+  payload: UpdateMyAccountSettingsDTO,
 ): Promise<MyAccountSettings> {
   const response = await fetch('/api/admin/settings/account', {
     method: 'PUT',
@@ -84,7 +85,7 @@ export async function updateMyAccountSettings(
 }
 
 export async function changeMyPassword(
-  payload: ChangeMyPasswordDTO
+  payload: ChangeMyPasswordDTO,
 ): Promise<string> {
   const response = await fetch('/api/admin/settings/account/change-password', {
     method: 'PATCH',
@@ -99,9 +100,37 @@ export async function changeMyPassword(
 
   if (!response.ok) {
     throw new Error(
-      extractErrorMessage(result, 'No se pudo actualizar la contraseña.')
+      extractErrorMessage(result, 'No se pudo actualizar la contraseña.'),
     )
   }
 
   return result?.data || result?.message || 'La contraseña fue actualizada correctamente.'
+}
+
+export async function updateMyAvatar(file: File): Promise<UpdateAvatarResponse> {
+  const formData = new FormData()
+  formData.append('File', file)
+
+  const response = await fetch('/api/admin/settings/account/avatar', {
+    method: 'PUT',
+    credentials: 'include',
+    body: formData,
+  })
+
+  return parseResponse<UpdateAvatarResponse>(response)
+}
+
+export async function deleteMyAvatar(): Promise<void> {
+  const response = await fetch('/api/admin/settings/account/avatar', {
+    method: 'DELETE',
+    credentials: 'include',
+  })
+
+  const result = await safeJson(response)
+
+  if (!response.ok) {
+    throw new Error(
+      extractErrorMessage(result, 'No pudimos eliminar tu foto.'),
+    )
+  }
 }

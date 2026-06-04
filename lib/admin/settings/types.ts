@@ -23,3 +23,7 @@ export interface ChangeMyPasswordDTO {
   newPassword: string
   confirmNewPassword: string
 }
+
+export interface UpdateAvatarResponse {
+  avatarUrl?: string | null
+}

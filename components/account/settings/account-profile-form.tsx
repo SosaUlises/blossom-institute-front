@@ -8,7 +8,7 @@ import { RoleChipList } from '@/components/account/settings/role-chip-list'
 import { SettingsSection } from '@/components/account/settings/settings-section'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { updateMyAccountSettings } from '@/lib/account/settings/api'
+import { updateMyAccountSettings as defaultUpdateMyAccountSettings } from '@/lib/account/settings/api'
 import type {
   MyAccountSettings,
   UpdateMyAccountSettingsDTO,
@@ -17,11 +17,28 @@ import type {
 interface AccountProfileFormProps {
   account: MyAccountSettings
   onUpdated: (updated: MyAccountSettings) => void
+  updateAccount?: (
+    payload: UpdateMyAccountSettingsDTO,
+  ) => Promise<MyAccountSettings>
+  title?: string
+  description?: string
+  showAvatar?: boolean
+  showRoles?: boolean
+  avatarProps?: Omit<
+    Parameters<typeof AccountAvatarSection>[0],
+    'account' | 'onUpdated'
+  >
 }
 
 export function AccountProfileForm({
   account,
   onUpdated,
+  updateAccount = defaultUpdateMyAccountSettings,
+  title = 'Perfil',
+  description = 'Datos personales.',
+  showAvatar = true,
+  showRoles = true,
+  avatarProps,
 }: AccountProfileFormProps) {
   const formId = useId()
   const [formData, setFormData] = useState<UpdateMyAccountSettingsDTO>({
@@ -63,7 +80,7 @@ export function AccountProfileForm({
     setIsSubmitting(true)
 
     try {
-      const updated = await updateMyAccountSettings({
+      const updated = await updateAccount({
         ...formData,
         telefono: formData.telefono?.trim() ? formData.telefono : null,
       })
@@ -80,11 +97,17 @@ export function AccountProfileForm({
   return (
     <SettingsSection
       icon={UserRound}
-      title="Perfil"
-      description="Datos personales."
+      title={title}
+      description={description}
     >
       <form onSubmit={handleSubmit} className="space-y-3">
-        <AccountAvatarSection account={account} onUpdated={onUpdated} />
+        {showAvatar ? (
+          <AccountAvatarSection
+            account={account}
+            onUpdated={onUpdated}
+            {...avatarProps}
+          />
+        ) : null}
 
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-1.5">
@@ -155,7 +178,13 @@ export function AccountProfileForm({
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-[180px_minmax(0,1fr)]">
+        <div
+          className={
+            showRoles
+              ? 'grid gap-3 md:grid-cols-[180px_minmax(0,1fr)]'
+              : 'grid gap-3 md:grid-cols-[180px]'
+          }
+        >
           <div className="space-y-1.5">
             <label
               htmlFor={`${formId}-dni`}
@@ -173,12 +202,14 @@ export function AccountProfileForm({
             />
           </div>
 
-          <div className="min-w-0 space-y-1.5">
-            <p className="text-sm font-medium text-foreground">Roles</p>
-            <div className="flex min-h-10 flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-background/75 px-3 py-1.5 dark:bg-background/35">
-              <RoleChipList roles={account.roles} />
+          {showRoles ? (
+            <div className="min-w-0 space-y-1.5">
+              <p className="text-sm font-medium text-foreground">Roles</p>
+              <div className="flex min-h-10 flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-background/75 px-3 py-1.5 dark:bg-background/35">
+                <RoleChipList roles={account.roles} />
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
 
         {error && (
@@ -197,7 +228,7 @@ export function AccountProfileForm({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="h-10 w-full rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            className="h-10 w-full rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-[background-color,transform] duration-200 hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {isSubmitting ? (
               <>
