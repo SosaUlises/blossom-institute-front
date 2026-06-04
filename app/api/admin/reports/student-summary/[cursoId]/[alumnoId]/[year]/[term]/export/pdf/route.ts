@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { proxyFile } from '@/lib/auth/api-guards'
 import { getSession, hasRole } from '@/lib/auth/session'
 
@@ -31,16 +31,16 @@ export async function GET(_: NextRequest, context: RouteContext) {
     const termNumber = Number(term)
 
     if (!Number.isFinite(cursoIdNumber) || cursoIdNumber <= 0) {
-      return new NextResponse('Curso inválido.', { status: 400 })
+      return new NextResponse('Curso invÃ¡lido.', { status: 400 })
     }
     if (!Number.isFinite(alumnoIdNumber) || alumnoIdNumber <= 0) {
-      return new NextResponse('Alumno inválido.', { status: 400 })
+      return new NextResponse('Alumno invÃ¡lido.', { status: 400 })
     }
     if (!Number.isFinite(yearNumber) || yearNumber <= 0) {
-      return new NextResponse('Año inválido.', { status: 400 })
+      return new NextResponse('AÃ±o invÃ¡lido.', { status: 400 })
     }
     if (!Number.isFinite(termNumber) || termNumber <= 0) {
-      return new NextResponse('Term inválido.', { status: 400 })
+      return new NextResponse('Term invÃ¡lido.', { status: 400 })
     }
 
     const url = `${BASE}/api/v1/reportes/cursos/${cursoIdNumber}/alumnos/${alumnoIdNumber}/years/${yearNumber}/terms/${termNumber}/summary/export/pdf`
@@ -52,7 +52,11 @@ export async function GET(_: NextRequest, context: RouteContext) {
       },
     })
 
-    return proxyFile(response, 'application/pdf', 'student-summary.pdf')
+    return proxyFile(
+      response,
+      'application/pdf',
+      `student-summary-curso-${cursoIdNumber}-alumno-${alumnoIdNumber}-${yearNumber}-t${termNumber}.pdf`
+    )
   } catch (error) {
     console.error('Student summary export pdf route error:', error)
     return new NextResponse('Error exportando PDF.', { status: 500 })

@@ -69,7 +69,7 @@ export default function SettingsPage() {
         const data = await getMyAccountSettings()
         setAccount(data)
       } catch (err: any) {
-        setError(err?.message || 'No se pudo cargar la configuraciÃ³n.')
+        setError(err?.message || 'No se pudo cargar la configuración.')
       } finally {
         setLoading(false)
       }
@@ -80,17 +80,17 @@ export default function SettingsPage() {
 
   return (
     <>
-      <AppHeader title="Settings" />
+      <AppHeader title="Configuración" />
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-6xl space-y-5">
           <WorkspaceHeader
-            title="Configuracion de cuenta y seguridad"
+            title="Configuración de cuenta y seguridad"
             description="Gestiona datos personales, roles visibles y acceso."
             metadata={
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-primary" />
-                <span className="font-medium text-foreground">Modulo Settings</span>
+                <span className="font-medium text-foreground">Módulo configuración</span>
               </div>
             }
           />
@@ -99,7 +99,7 @@ export default function SettingsPage() {
               <CardContent className="flex min-h-[240px] items-center justify-center">
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <Loader2 className="size-4 animate-spin" />
-                  Cargando configuraciÃ³n...
+                  Cargando configuración...
                 </div>
               </CardContent>
             </Card>

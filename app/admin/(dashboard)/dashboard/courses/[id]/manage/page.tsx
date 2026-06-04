@@ -66,17 +66,17 @@ export default function ManageCoursePage() {
 
   return (
     <>
-      <AppHeader title="Manage course" />
+      <AppHeader title="Gestionar curso" />
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-7xl space-y-5">
           <WorkspaceHeader
             title="Ver curso"
-            description="Administra alumnos y profesores asignados al curso."
+            description="Administrá alumnos y profesores asignados al curso."
             metadata={
               <div className="flex items-center gap-2">
                 <Settings2 className="size-4 text-primary" />
-                <span className="font-medium text-foreground">Gestion del curso</span>
+                <span className="font-medium text-foreground">Gestión del curso</span>
               </div>
             }
           />
@@ -124,12 +124,12 @@ export default function ManageCoursePage() {
                       {course.nombre}
                     </h3>
                     <p className="text-sm leading-6 text-muted-foreground">
-                      AdministrÃ¡ la composiciÃ³n del curso y sus asignaciones activas.
+                      Administrá la composición del curso y sus asignaciones activas.
                     </p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    <MetaInfoCard icon={BookOpen} label="AÃ±o" value={String(course.anio)} />
+                    <MetaInfoCard icon={BookOpen} label="Año" value={String(course.anio)} />
                     <MetaInfoCard
                       icon={Users}
                       label="Alumnos"
@@ -159,7 +159,7 @@ export default function ManageCoursePage() {
                   </h4>
 
                   <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                    No se pudo cargar la informaciÃ³n del curso seleccionado.
+                    No se pudo cargar la información del curso seleccionado.
                   </p>
                 </div>
               </CardContent>

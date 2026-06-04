@@ -45,6 +45,26 @@ const courseFilters: Array<{ key: CourseFilterKey; label: string }> = [
   { key: 'archived', label: 'Archivados' },
 ]
 
+function normalizeCopy(value?: string | null) {
+  if (!value) return ''
+
+  return value
+    .replace(/Ã¡/g, 'á')
+    .replace(/Ã©/g, 'é')
+    .replace(/Ã­/g, 'í')
+    .replace(/Ã³/g, 'ó')
+    .replace(/Ãº/g, 'ú')
+    .replace(/Ã±/g, 'ñ')
+    .replace(/Ã/g, 'Á')
+    .replace(/Ã‰/g, 'É')
+    .replace(/Ã/g, 'Í')
+    .replace(/Ã“/g, 'Ó')
+    .replace(/Ãš/g, 'Ú')
+    .replace(/Ã‘/g, 'Ñ')
+    .replace(/Âº/g, 'º')
+    .replace(/Â·/g, '·')
+}
+
 function CoursesToolbar({
   search,
   setSearch,
@@ -117,10 +137,10 @@ function normalizeCourseHealth(health?: CursoHealthStatus | null): CourseHealth 
 
   return {
     level,
-    label: health?.label || NORMAL_COURSE_HEALTH.label,
+    label: normalizeCopy(health?.label) || NORMAL_COURSE_HEALTH.label,
     reasons:
       health?.reasons && health.reasons.length > 0
-        ? health.reasons
+        ? health.reasons.map(normalizeCopy)
         : NORMAL_COURSE_HEALTH.reasons,
     color,
   }
@@ -234,7 +254,7 @@ function CourseTeachers({ course }: { course: CursoListItem }) {
       </div>
 
       <span className="truncate text-sm font-medium text-foreground">
-        {names.slice(0, 2).join(', ')}
+        {names.slice(0, 2).map(normalizeCopy).join(', ')}
         {names.length > 2 ? ` y ${names.length - 2} más` : ''}
       </span>
     </div>
@@ -299,8 +319,8 @@ function CourseAlertBlocks({ course }: { course: CursoListItem }) {
             </p>
             <p className="mt-1 line-clamp-2 leading-5">
               {hasPendingFollowUp
-                ? pendingPreview?.description ||
-                  pendingPreview?.reason ||
+                ? normalizeCopy(pendingPreview?.description) ||
+                  normalizeCopy(pendingPreview?.reason) ||
                   'Con seguimiento pendiente del trimestre anterior'
                 : 'Sin seguimiento pendiente'}
             </p>
@@ -341,7 +361,7 @@ function CourseRow({ course }: { course: CursoListItem }) {
   const studentsCount = course.studentsCount ?? course.cantidadAlumnos
   const attendanceAverage = getCourseCurrentAttendance(course)
   const academicAverage = getCourseCurrentAverage(course)
-  const description = course.descripcion?.trim() || 'Sin descripción cargada.'
+  const description = normalizeCopy(course.descripcion?.trim()) || 'Sin descripción cargada.'
   const health = getCourseHealth(course)
   const requiresAttention = courseRequiresAttention(course)
 
@@ -363,7 +383,7 @@ function CourseRow({ course }: { course: CursoListItem }) {
 
             <div className="min-w-0">
               <h3 className="truncate text-base font-semibold tracking-tight text-foreground">
-                {course.nombre}
+                {normalizeCopy(course.nombre)}
               </h3>
               <p className="mt-1 line-clamp-2 max-w-2xl text-sm leading-6 text-muted-foreground">
                 {description}
