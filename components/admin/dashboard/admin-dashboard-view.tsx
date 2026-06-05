@@ -3,15 +3,19 @@ import type { ComponentType, ReactNode } from 'react'
 import {
   ArrowRight,
   BarChart3,
+  BookOpen,
   CalendarDays,
   CheckCircle2,
+  ClipboardCheck,
   GraduationCap,
   Inbox,
   Minus,
   Plus,
+  Users,
   TrendingDown,
   TrendingUp,
   UserPlus,
+  UserRoundCheck,
 } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -101,11 +105,32 @@ type TeacherOperationalItem = {
   avatarUrl?: string | null
   studentsCount: number
   pendingCorrectionsCount: number
+  pendingCorrectionsThreshold: number
+  hasRelevantPendingCorrections: boolean
   unloadedAttendanceCount: number
   coursesAtRiskCount: number
   mainSignal: string
   reasons: string[]
   severity: SignalSeverity
+}
+
+type DailyQueueKind = 'student' | 'course'
+
+type DailyQueueItem = {
+  id: string
+  kind: DailyQueueKind
+  label: string
+  title: string
+  context?: string | null
+  reason: string
+  href: string
+  ctaLabel: string
+  severity: SignalSeverity
+  statusLabel: string
+  avatarUrl?: string | null
+  secondaryHref?: string
+  secondaryLabel?: string
+  rank: number
 }
 
 type StudentGradeAlert = {
@@ -152,9 +177,9 @@ type InstitutionalTrendItem = {
 }
 
 const quickActions = [
-  { label: 'Nuevo alumno', href: '/admin/dashboard/students/new', icon: UserPlus, priority: 'primary' },
-  { label: 'Nuevo docente', href: '/admin/dashboard/teachers/new', icon: GraduationCap, priority: 'secondary' },
-  { label: 'Nuevo curso', href: '/admin/dashboard/courses/new', icon: Plus, priority: 'secondary' },
+  { label: 'Crear alumno', href: '/admin/dashboard/students/new', icon: UserPlus, priority: 'primary' },
+  { label: 'Crear docente', href: '/admin/dashboard/teachers/new', icon: GraduationCap, priority: 'secondary' },
+  { label: 'Crear curso', href: '/admin/dashboard/courses/new', icon: Plus, priority: 'secondary' },
   { label: 'Reportes', href: '/admin/dashboard/reports', icon: BarChart3, priority: 'tertiary' },
 ] as const
 
@@ -244,6 +269,60 @@ function formatAgendaDateLabel(date: Date) {
     day: '2-digit',
     month: 'short',
   }).format(date)
+}
+
+function formatAgendaDayLabel(date: Date) {
+  const value = new Intl.DateTimeFormat('es-AR', {
+    weekday: 'long',
+  }).format(date)
+
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function buildAgendaItems({
+  classes,
+  assignments,
+  limit = 5,
+}: {
+  classes: DashboardUpcomingClass[]
+  assignments: DashboardUpcomingAssignment[]
+  limit?: number
+}): AgendaItem[] {
+  const classItems = classes.map((item) => {
+    const date = buildClassDateTime(item)
+
+    return {
+      id: `class-${item.cursoId}-${item.proximaClase}`,
+      date,
+      group: getAgendaGroup(date),
+      timeLabel: formatAgendaTime(date),
+      dateLabel: item.diaSemana || formatAgendaDayLabel(date),
+      courseName: item.cursoNombre,
+      courseDescription: item.cursoDescripcion,
+      detail: item.profesorNombre,
+      href: `/admin/dashboard/courses/${item.cursoId}/profile`,
+    } satisfies AgendaItem
+  })
+
+  const assignmentItems = assignments.map((item) => {
+    const date = buildAssignmentDateTime(item)
+
+    return {
+      id: `assignment-${item.tareaId}`,
+      date,
+      group: getAgendaGroup(date),
+      timeLabel: formatAgendaTime(date),
+      dateLabel: formatAgendaDayLabel(date),
+      courseName: item.cursoNombre,
+      courseDescription: item.cursoDescripcion,
+      detail: item.titulo,
+      href: `/admin/dashboard/courses/${item.cursoId}/manage`,
+    } satisfies AgendaItem
+  })
+
+  return [...classItems, ...assignmentItems]
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(0, limit)
 }
 
 function formatPeriodLabel(dashboard: AdminDashboardResponse) {
@@ -598,10 +677,17 @@ function getTeacherInitials(name: string) {
     .toUpperCase()
 }
 
+function getTeacherPendingCorrectionsThreshold(studentsCount: number | null | undefined) {
+  if (typeof studentsCount !== 'number' || studentsCount <= 0) return 3
+
+  return Math.max(3, Math.ceil(studentsCount * 0.5))
+}
+
 function getTeacherOperationalReasons(teacher: Profesor) {
   const reasons: string[] = []
   const coursesAtRiskCount = teacher.coursesAtRiskCount ?? 0
   const pendingCorrectionsCount = teacher.pendingCorrectionsCount ?? 0
+  const pendingCorrectionsThreshold = getTeacherPendingCorrectionsThreshold(teacher.studentsCount)
   const unloadedAttendanceCount = teacher.unloadedAttendanceCount ?? 0
 
   if (coursesAtRiskCount > 0) {
@@ -612,11 +698,11 @@ function getTeacherOperationalReasons(teacher: Profesor) {
     )
   }
 
-  if (pendingCorrectionsCount > 0) {
+  if (pendingCorrectionsCount >= pendingCorrectionsThreshold) {
     reasons.push(
       pendingCorrectionsCount === 1
-        ? '1 corrección pendiente'
-        : `${pendingCorrectionsCount} correcciones pendientes`,
+        ? '1 corrección acumulada'
+        : `${pendingCorrectionsCount} correcciones acumuladas`,
     )
   }
 
@@ -637,6 +723,9 @@ function buildTeacherOperationalItems(teachers: Profesor[]): TeacherOperationalI
       const reasons = getTeacherOperationalReasons(teacher)
       const coursesAtRiskCount = teacher.coursesAtRiskCount ?? 0
       const pendingCorrectionsCount = teacher.pendingCorrectionsCount ?? 0
+      const pendingCorrectionsThreshold = getTeacherPendingCorrectionsThreshold(teacher.studentsCount)
+      const hasRelevantPendingCorrections =
+        pendingCorrectionsCount >= pendingCorrectionsThreshold
       const unloadedAttendanceCount = teacher.unloadedAttendanceCount ?? 0
       const severity: SignalSeverity = coursesAtRiskCount > 0 ? 'critical' : 'attention'
 
@@ -647,9 +736,11 @@ function buildTeacherOperationalItems(teachers: Profesor[]): TeacherOperationalI
         avatarUrl: teacher.avatarUrl,
         studentsCount: teacher.studentsCount ?? 0,
         pendingCorrectionsCount,
+        pendingCorrectionsThreshold,
+        hasRelevantPendingCorrections,
         unloadedAttendanceCount,
         coursesAtRiskCount,
-        mainSignal: teacher.mainSignal || reasons[0] || 'Sin señales pendientes',
+        mainSignal: reasons[0] || teacher.mainSignal || 'Sin señales pendientes',
         reasons,
         severity,
       }
@@ -660,10 +751,16 @@ function buildTeacherOperationalItems(teachers: Profesor[]): TeacherOperationalI
       const severityDiff = severityWeight[a.severity] - severityWeight[b.severity]
       if (severityDiff !== 0) return severityDiff
 
+      const aPendingCorrections = a.hasRelevantPendingCorrections
+        ? a.pendingCorrectionsCount
+        : 0
+      const bPendingCorrections = b.hasRelevantPendingCorrections
+        ? b.pendingCorrectionsCount
+        : 0
       const aSignals =
-        a.coursesAtRiskCount + a.pendingCorrectionsCount + a.unloadedAttendanceCount
+        a.coursesAtRiskCount + aPendingCorrections + a.unloadedAttendanceCount
       const bSignals =
-        b.coursesAtRiskCount + b.pendingCorrectionsCount + b.unloadedAttendanceCount
+        b.coursesAtRiskCount + bPendingCorrections + b.unloadedAttendanceCount
 
       return bSignals - aSignals || a.fullName.localeCompare(b.fullName)
     })
@@ -1199,6 +1296,99 @@ function buildCourseTrendItems(dashboard: AdminDashboardResponse): CourseHealthI
     .slice(0, 8)
 }
 
+function cleanQueueReason(value: string | null | undefined) {
+  const cleanValue = value?.trim()
+  if (!cleanValue) return 'Revisar el seguimiento disponible.'
+
+  return cleanValue
+    .replace(/^Riesgo actual:\s*/i, '')
+    .replace(/^Tendencia:\s*/i, '')
+    .replace(/\s+/g, ' ')
+}
+
+function getQueueStatusLabel(severity: SignalSeverity, fallback = 'Seguimiento') {
+  if (severity === 'critical') return 'Alta prioridad'
+  if (severity === 'attention') return fallback
+  return 'Para revisar'
+}
+
+function buildDailyQueueItems({
+  students,
+  currentCourses,
+  pendingCourses,
+}: {
+  students: StudentFollowUpItem[]
+  currentCourses: CourseHealthItem[]
+  pendingCourses: CourseHealthItem[]
+}): DailyQueueItem[] {
+  const queue: DailyQueueItem[] = []
+
+  for (const student of students) {
+    queue.push({
+      id: `student-${student.id}`,
+      kind: 'student',
+      label: 'Alumno',
+      title: student.alumnoNombre,
+      context: student.cursoDescripcion
+        ? `${student.cursoNombre}, ${student.cursoDescripcion}`
+        : student.cursoNombre,
+      reason: cleanQueueReason(student.reasons[0]),
+      href: `/admin/dashboard/students/${student.alumnoId}/profile`,
+      ctaLabel: 'Ver caso',
+      severity: student.severity,
+      statusLabel: getQueueStatusLabel(student.severity),
+      avatarUrl: student.alumnoAvatarUrl,
+      secondaryHref: `/admin/dashboard/courses/${student.cursoId}/profile`,
+      secondaryLabel: 'Ver curso',
+      rank: 10,
+    })
+  }
+
+  for (const course of currentCourses) {
+    queue.push({
+      id: `course-current-${course.cursoId}`,
+      kind: 'course',
+      label: 'Curso',
+      title: course.cursoNombre,
+      context: course.cursoDescripcion,
+      reason: cleanQueueReason(course.reasons[0] ?? course.health.reasons[0]),
+      href: `/admin/dashboard/courses/${course.cursoId}/profile`,
+      ctaLabel: 'Ver curso',
+      severity: course.severity,
+      statusLabel: getQueueStatusLabel(course.severity),
+      rank: 20,
+    })
+  }
+
+  for (const course of pendingCourses) {
+    queue.push({
+      id: `course-pending-${course.cursoId}`,
+      kind: 'course',
+      label: 'Curso',
+      title: course.cursoNombre,
+      context: course.periodLabel || course.cursoDescripcion,
+      reason: cleanQueueReason(course.reasons[0]),
+      href: `/admin/dashboard/courses/${course.cursoId}/profile`,
+      ctaLabel: 'Ver seguimiento',
+      severity: course.severity,
+      statusLabel: 'Pendiente',
+      rank: 30,
+    })
+  }
+
+  const severityWeight: Record<SignalSeverity, number> = {
+    critical: 0,
+    attention: 1,
+    healthy: 2,
+  }
+
+  return queue.sort((a, b) => (
+    severityWeight[a.severity] - severityWeight[b.severity] ||
+    a.rank - b.rank ||
+    a.title.localeCompare(b.title)
+  ))
+}
+
 function buildAcademicSummaryItems(
   dashboard: AdminDashboardResponse,
   students: StudentFollowUpItem[],
@@ -1384,10 +1574,10 @@ function buildCourseDeclineSummary(dashboard: AdminDashboardResponse) {
 
 function getAcademicAlertSummary(alertCount: number) {
   if (alertCount === 0) {
-    return 'Sin alertas en el trimestre actual ni seguimiento pendiente prioritario.'
+    return 'Sin casos prioritarios en el trimestre actual ni seguimiento pendiente.'
   }
 
-  return 'Casos separados por riesgo actual, seguimiento pendiente y tendencias.'
+  return 'Casos agrupados por prioridad, seguimiento pendiente y cambios recientes.'
 }
 
 function SectionHeader({
@@ -1484,14 +1674,18 @@ function QuickActionsToolbar() {
 }
 
 function AdminDashboardHeader({
-  alertCount,
+  queueCount,
   periodLabel,
+  healthSummary,
 }: {
-  alertCount: number
+  queueCount: number
   periodLabel: string
+  healthSummary: ReturnType<typeof getDashboardHealthSummary>
 }) {
-  const hasAlerts = alertCount > 0
-  const summary = getAcademicAlertSummary(alertCount)
+  const hasQueue = queueCount > 0
+  const summary = hasQueue
+    ? `${queueCount} ${pluralize(queueCount, 'caso requiere', 'casos requieren')} atención hoy.`
+    : 'No hay casos prioritarios para revisar hoy.'
 
   return (
     <header className="flex flex-col gap-4 border-b border-border/45 pb-4 lg:flex-row lg:items-center lg:justify-between">
@@ -1501,13 +1695,9 @@ function AdminDashboardHeader({
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Gestión institucional
+            Hoy en Blossom
           </h1>
-          <span className={cn('text-sm font-medium', hasAlerts ? toneStyles.amber.text : toneStyles.emerald.text)}>
-            {hasAlerts
-              ? `${alertCount} ${pluralize(alertCount, 'situación para revisar', 'situaciones para revisar')}`
-              : 'Sin alertas prioritarias'}
-          </span>
+          <SubtleState tone={healthSummary.tone}>{healthSummary.label}</SubtleState>
         </div>
         <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
           {summary}
@@ -1519,823 +1709,106 @@ function AdminDashboardHeader({
   )
 }
 
-function AcademicExecutiveSummary({ items }: { items: AcademicSummaryItem[] }) {
-  return (
-    <div className="border-b border-border/35 pb-4">
-      <p className="text-sm font-semibold leading-5 text-foreground">
-        Resumen de señales
-      </p>
-      {items.length === 0 ? (
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          No hay alumnos ni cursos marcados para seguimiento inmediato.
-        </p>
-      ) : (
-        <ul className="mt-2 grid gap-1 text-sm leading-6 text-muted-foreground">
-          {items.map((item) => (
-            <li key={item.id} className="flex min-w-0 items-start gap-2">
-              <span className={cn('mt-2 size-1.5 shrink-0 rounded-full', toneStyles[item.tone].icon)} />
-              <span className="min-w-0">{item.text}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
+function DailyQueueAvatar({ item }: { item: DailyQueueItem }) {
+  if (item.kind === 'student') {
+    return <StudentPhoto name={item.title} avatarUrl={item.avatarUrl} />
+  }
 
-function DetailMetric({
-  label,
-  value,
-  context,
-  tone = 'neutral',
-}: {
-  label: string
-  value: string
-  context?: string | null
-  tone?: Tone
-}) {
   return (
-    <div className="rounded-xl bg-muted/15 px-3 py-2.5 dark:bg-muted/10">
-      <p className="text-[11px] font-medium leading-4 text-muted-foreground">{label}</p>
-      <p className={cn('mt-1 text-base font-semibold tabular-nums text-foreground', toneStyles[tone].text)}>
-        {value}
-      </p>
-      {context ? (
-        <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{context}</p>
-      ) : null}
-    </div>
-  )
-}
-
-function DetailList({
-  title,
-  items,
-  empty,
-}: {
-  title: string
-  items: string[]
-  empty: string
-}) {
-  return (
-    <section>
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-      {items.length === 0 ? (
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">{empty}</p>
-      ) : (
-        <ul className="mt-2 space-y-1.5 text-sm leading-6 text-muted-foreground">
-          {items.map((item) => (
-            <li key={item} className="flex gap-2">
-              <CheckCircle2 className="mt-1 size-3.5 shrink-0 text-primary" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  )
-}
-
-function SignalPill({
-  children,
-  tone = 'neutral',
-}: {
-  children: ReactNode
-  tone?: Tone
-}) {
-  return (
-    <span className={cn('inline-flex h-7 items-center whitespace-nowrap rounded-lg px-2 text-xs font-semibold', toneStyles[tone].surface)}>
-      {children}
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/45 bg-muted/20 text-muted-foreground">
+      <GraduationCap className="size-4" />
     </span>
   )
 }
 
-function CourseSignalMetric({
-  label,
-  value,
-  detail,
-  tone,
-}: {
-  label: string
-  value: string
-  detail?: string | null
-  tone: Tone
-}) {
-  return (
-    <div className="min-w-0 rounded-lg bg-muted/15 px-2.5 py-2 dark:bg-muted/10">
-      <p className="text-[11px] font-medium leading-4 text-muted-foreground">
-        {label}
-      </p>
-      <p className={cn('mt-1 text-sm font-semibold tabular-nums text-foreground', toneStyles[tone].text)}>
-        {value}
-      </p>
-      {detail ? (
-        <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-          {detail}
-        </p>
-      ) : null}
-    </div>
-  )
-}
-
-function StudentFollowUpRow({
-  item,
-  consecutiveWindowLabel,
-}: {
-  item: StudentFollowUpItem
-  consecutiveWindowLabel: string
-}) {
-  const attendanceLabel = metricValue(item.attendancePercentage, { percent: true })
-  const averageLabel = metricValue(item.averageGrade, { decimals: 0 })
-  const primaryReason = item.reasons[0] ?? 'Requiere seguimiento académico'
-  const consecutiveLabel =
-    typeof item.consecutiveAbsences === 'number'
-      ? `${item.consecutiveAbsences}`
-      : 'Sin registro'
-  const absenceContext =
-    typeof item.absences === 'number' && typeof item.classesTotal === 'number'
-      ? `${item.absences} ausencias sobre ${item.classesTotal} clases`
-      : null
-  const attendanceMetricLabel =
-    typeof item.absences === 'number' || typeof item.classesTotal === 'number'
-      ? 'Asistencia trimestral'
-      : `Asistencia ${consecutiveWindowLabel}`
-  const averageBadgeValue =
-    typeof item.averageGrade === 'number' && !item.recentGradeAlerts[0]
-      ? item.averageGrade
-      : null
-  const attendanceBadgeValue =
-    typeof item.attendancePercentage === 'number' && item.attendancePercentage < 85
-      ? item.attendancePercentage
-      : null
-
-  return (
-    <Sheet>
-      <article className="group rounded-xl border border-border/55 bg-background/45 px-3.5 py-3 transition-colors hover:bg-muted/15 dark:bg-background/25">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex min-w-0 flex-1 items-start gap-3">
-            <StudentPhoto name={item.alumnoNombre} avatarUrl={item.alumnoAvatarUrl} />
-            <div className="min-w-0 flex-1">
-              <p className="break-words text-sm font-semibold leading-5 text-foreground">
-                {item.alumnoNombre}
-              </p>
-              <p className="mt-0.5 break-words text-xs leading-5 text-muted-foreground">
-                <CourseNameWithDescription
-                  name={item.cursoNombre}
-                  description={item.cursoDescripcion}
-                />
-              </p>
-              <p className="mt-1 text-xs font-medium leading-5 text-foreground/80">
-                {primaryReason}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:max-w-[220px] sm:justify-end">
-            {item.recentGradeAlerts[0] ? (
-              <SignalPill tone={gradeTone(item.recentGradeAlerts[0].grade)}>
-                Nota {item.recentGradeAlerts[0].grade.toFixed(0)}
-              </SignalPill>
-            ) : null}
-            {averageBadgeValue !== null ? (
-              <SignalPill tone={gradeTone(averageBadgeValue)}>
-                Prom. {averageLabel}
-              </SignalPill>
-            ) : null}
-            {attendanceBadgeValue !== null ? (
-              <SignalPill tone={attendanceTone(attendanceBadgeValue)}>
-                Asistencia {attendanceLabel}
-              </SignalPill>
-            ) : null}
-            <Link
-              href={`/admin/dashboard/students/${item.alumnoId}/profile`}
-              className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
-            >
-              Ver seguimiento
-              <ArrowRight className="ml-1 size-3.5" />
-            </Link>
-          </div>
-        </div>
-      </article>
-
-      <SheetContent side="right" className="w-full gap-0 overflow-hidden p-0 sm:max-w-xl">
-        <ScrollArea className="h-full">
-          <SheetHeader className="border-b border-border/50 p-5 pr-12">
-            <div className="flex items-start gap-3">
-              <StudentPhoto name={item.alumnoNombre} avatarUrl={item.alumnoAvatarUrl} />
-              <div className="min-w-0">
-                <SheetTitle className="text-lg">{item.alumnoNombre}</SheetTitle>
-                <SheetDescription>
-                  {item.cursoNombre}
-                  {item.cursoDescripcion ? `, ${item.cursoDescripcion}` : ''}
-                </SheetDescription>
-              </div>
-            </div>
-          </SheetHeader>
-
-          <div className="space-y-6 p-5">
-            <div className="grid gap-2 sm:grid-cols-3">
-              {typeof item.attendancePercentage === 'number' ? (
-                <DetailMetric
-                  label={attendanceMetricLabel}
-                  value={attendanceLabel}
-                  context={absenceContext}
-                  tone={attendanceTone(item.attendancePercentage)}
-                />
-              ) : null}
-              {typeof item.averageGrade === 'number' ? (
-                <DetailMetric
-                  label="Promedio trimestral"
-                  value={averageLabel}
-                  context="Trimestre actual"
-                  tone={gradeTone(item.averageGrade)}
-                />
-              ) : null}
-              {typeof item.consecutiveAbsences === 'number' ? (
-                <DetailMetric
-                  label="Ausencias consecutivas"
-                  value={consecutiveLabel}
-                  context={formatShortDate(item.lastAbsenceDate) ? `${consecutiveWindowLabel} · última: ${formatShortDate(item.lastAbsenceDate)}` : consecutiveWindowLabel}
-                  tone="amber"
-                />
-              ) : null}
-            </div>
-
-            <DetailList
-              title="Por qué aparece acá"
-              items={item.reasons}
-              empty="No hay motivos adicionales en el resumen actual."
-            />
-
-            <section>
-              <h3 className="text-sm font-semibold text-foreground">Calificaciones con alerta</h3>
-              {item.recentGradeAlerts.length === 0 ? (
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  No hay calificaciones bajas individuales en este resumen.
-                </p>
-              ) : (
-                <div className="mt-2 space-y-1.5">
-                  {item.recentGradeAlerts.map((grade) => (
-                    <div
-                      key={grade.id}
-                      className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-xl bg-muted/15 px-3 py-2.5 text-sm dark:bg-muted/10"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate font-medium text-foreground">{grade.title}</span>
-                        <span className="text-xs text-muted-foreground">{formatShortDate(grade.date) ?? 'Sin fecha'}</span>
-                      </span>
-                      <span className={cn('font-semibold tabular-nums', toneStyles[gradeTone(grade.grade)].text)}>
-                        {grade.grade.toFixed(0)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <DetailList
-              title="Señales de riesgo"
-              items={item.riskSignals}
-              empty="No hay señales adicionales disponibles."
-            />
-
-            <DetailList
-              title="Acciones sugeridas"
-              items={item.suggestedActions}
-              empty="No hay acciones sugeridas para este caso."
-            />
-
-          </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-function CourseFollowUpRow({
-  item,
-  comparisonLabel,
-}: {
-  item: CourseHealthItem
-  comparisonLabel: string
-}) {
-  const categoryTone: Tone =
-    item.category === 'current'
-      ? severityTone(item.severity)
-      : item.category === 'pending'
-        ? 'amber'
-        : 'primary'
-  const categoryLabel =
-    item.category === 'current'
-      ? 'Riesgo actual'
-      : item.category === 'pending'
-        ? 'Seguimiento pendiente'
-        : 'Tendencia'
-  const categoryContext =
-    item.category === 'current'
-      ? 'Trimestre actual'
-      : item.category === 'pending'
-        ? 'Seguimiento pendiente del trimestre anterior'
-        : 'Historial reciente'
-  const averageLabel =
-    item.averageGrade !== undefined && item.averageGrade !== null
-      ? item.averageGrade.toFixed(0)
-      : null
-  const attendanceLabel =
-    item.attendancePercentage !== undefined && item.attendancePercentage !== null
-      ? `${item.attendancePercentage.toFixed(0)}%`
-      : null
-  const teacherLabel = item.profesoresNombres?.length
-    ? item.profesoresNombres.join(', ')
-    : 'Sin docente asignado'
-  const performanceTrend = formatTrendDetail(item.performanceDelta, 'pts', comparisonLabel)
-  const attendanceTrend = formatTrendDetail(item.attendanceDelta, 'pp', comparisonLabel)
-  const compactPerformanceTrend = formatCompactTrend(item.performanceDelta, 'pts', comparisonLabel)
-  const compactAttendanceTrend = formatCompactTrend(item.attendanceDelta, 'pp', comparisonLabel)
-  const averageTone = item.averageGrade == null ? 'neutral' : gradeTone(item.averageGrade)
-  const courseAttendanceTone = item.attendancePercentage == null ? 'neutral' : attendanceTone(item.attendancePercentage)
-  const affectedStudentsLabel = `${item.affectedStudentsCount} ${pluralize(
-    item.affectedStudentsCount,
-    'alumno',
-    'alumnos',
-  )}`
-  const pendingFollowUpLabel = `${item.pendingFollowUpCount ?? 0} ${pluralize(
-    item.pendingFollowUpCount ?? 0,
-    'pendiente',
-    'pendientes',
-  )}`
-  const reasonSummary = item.reasons.slice(0, 3).join(' · ')
-
-  return (
-    <Sheet>
-      <article className="rounded-xl border border-border/55 bg-background/45 px-3.5 py-3 transition-colors hover:bg-muted/15 dark:bg-background/25">
-        <div className="space-y-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 space-y-1">
-              <p className="min-w-0 text-sm font-semibold leading-5 text-foreground">
-                <CourseTitleLine
-                  name={item.cursoNombre}
-                  description={item.cursoDescripcion}
-                />
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <SubtleState tone={categoryTone}>{categoryLabel}</SubtleState>
-                <span className="text-xs font-medium text-muted-foreground">
-                  {categoryContext}
-                </span>
-              </div>
-            </div>
-            <Link
-              href={`/admin/dashboard/courses/${item.cursoId}/profile`}
-              className="inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 sm:justify-start"
-            >
-              Ver curso
-              <ArrowRight className="ml-1 size-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-3">
-            {averageLabel ? (
-              <CourseSignalMetric
-                label={item.category === 'trend' ? 'Promedio en historial reciente' : 'Promedio trimestre actual'}
-                value={averageLabel}
-                detail={compactPerformanceTrend}
-                tone={averageTone}
-              />
-            ) : null}
-            {attendanceLabel ? (
-              <CourseSignalMetric
-                label={item.category === 'trend' ? 'Asistencia en historial reciente' : 'Asistencia trimestre actual'}
-                value={attendanceLabel}
-                detail={compactAttendanceTrend}
-                tone={courseAttendanceTone}
-              />
-            ) : null}
-            {item.category === 'pending' ? (
-              <CourseSignalMetric
-                label="Seguimiento pendiente"
-                value={pendingFollowUpLabel}
-                detail="Con seguimiento pendiente"
-                tone={countTone(item.pendingFollowUpCount ?? 0, 2)}
-              />
-            ) : (
-              <CourseSignalMetric
-                label="Alumnos afectados"
-                value={affectedStudentsLabel}
-                detail={item.affectedStudentsCount > 0 ? 'Casos actuales asociados' : 'Sin alumnos actuales asociados'}
-                tone={countTone(item.affectedStudentsCount, 2)}
-              />
-            )}
-          </div>
-
-          {reasonSummary ? (
-            <p className="text-xs font-medium leading-5 text-muted-foreground">
-              {reasonSummary}
-            </p>
-          ) : null}
-        </div>
-      </article>
-
-      <SheetContent side="right" className="w-full gap-0 overflow-hidden p-0 sm:max-w-xl">
-        <ScrollArea className="h-full">
-          <SheetHeader className="border-b border-border/50 p-5 pr-12">
-            <SheetTitle className="text-lg">{item.cursoNombre}</SheetTitle>
-            <SheetDescription>
-              {[item.cursoDescripcion, teacherLabel].filter(Boolean).join(', ')}
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="space-y-6 p-5">
-            <div className="grid gap-2 sm:grid-cols-3">
-              {averageLabel ? (
-                <DetailMetric
-                  label="Promedio trimestral"
-                  value={averageLabel}
-                  context={performanceTrend ?? (item.previousAverageGrade == null ? `Sin comparación con ${comparisonLabel}` : `Anterior: ${item.previousAverageGrade.toFixed(0)}`)}
-                  tone={item.averageGrade == null ? 'neutral' : gradeTone(item.averageGrade)}
-                />
-              ) : null}
-              {attendanceLabel ? (
-                <DetailMetric
-                  label={item.category === 'trend' ? 'Asistencia historial reciente' : 'Asistencia trimestre actual'}
-                  value={attendanceLabel}
-                  context={attendanceTrend ?? (item.previousAttendancePercentage == null ? `Sin comparación con ${comparisonLabel}` : `Anterior: ${item.previousAttendancePercentage.toFixed(0)}%`)}
-                  tone={item.attendancePercentage == null ? 'neutral' : attendanceTone(item.attendancePercentage)}
-                />
-              ) : null}
-              {item.category === 'pending' ? (
-                <DetailMetric
-                  label="Seguimiento pendiente"
-                  value={String(item.pendingFollowUpCount ?? 0)}
-                  context="Seguimiento pendiente del trimestre anterior"
-                  tone={countTone(item.pendingFollowUpCount ?? 0, 2)}
-                />
-              ) : (
-                <DetailMetric
-                  label="Alumnos afectados"
-                  value={String(item.affectedStudentsCount)}
-                  context={item.category === 'current' ? 'Riesgo actual' : 'Historial reciente'}
-                  tone={countTone(item.affectedStudentsCount, 2)}
-                />
-              )}
-            </div>
-
-            <DetailList
-              title="Por qué aparece acá"
-              items={item.reasons}
-              empty="No hay motivos adicionales en el resumen actual."
-            />
-
-            <section>
-              <h3 className="text-sm font-semibold text-foreground">Docente</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{teacherLabel}</p>
-            </section>
-
-            <section>
-              <h3 className="text-sm font-semibold text-foreground">Alumnos afectados</h3>
-              {item.affectedStudents.length === 0 ? (
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  No hay alumnos individuales asociados a esta alerta en el resumen actual.
-                </p>
-              ) : (
-                <div className="mt-2 space-y-1.5">
-                  {item.affectedStudents.map((student) => (
-                    <Link
-                      key={student.id}
-                      href={`/admin/dashboard/students/${student.alumnoId}/profile`}
-                      className="flex items-start gap-2.5 rounded-xl bg-muted/15 px-3 py-2.5 transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 dark:bg-muted/10"
-                    >
-                      <StudentPhoto
-                        name={student.alumnoNombre}
-                        avatarUrl={student.alumnoAvatarUrl}
-                      />
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-foreground">
-                          {student.alumnoNombre}
-                        </span>
-                        <span className="mt-0.5 block line-clamp-2 text-xs leading-5 text-muted-foreground">
-                          {student.reasons.join(', ')}
-                        </span>
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </section>
-
-          </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-function TeacherOperationalRow({ item }: { item: TeacherOperationalItem }) {
+function DailyQueueRow({ item }: { item: DailyQueueItem }) {
   const tone = severityTone(item.severity)
 
   return (
-    <Link
-      href={`/admin/dashboard/teachers/${item.id}/profile`}
-      className="group block rounded-xl border border-border/55 bg-background/45 px-3.5 py-3 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 dark:bg-background/25"
-    >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 gap-3">
-          <TeacherPhoto name={item.fullName} avatarUrl={item.avatarUrl} />
-          <span className="min-w-0">
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate text-sm font-semibold leading-5 text-foreground">
-                {item.fullName}
-              </span>
-              <SubtleState tone={tone}>
-                {item.severity === 'critical' ? 'Crítico' : 'Seguimiento'}
-              </SubtleState>
-            </span>
-            <span className="mt-0.5 block truncate text-xs leading-5 text-muted-foreground">
-              {item.email}
-            </span>
-            <span className="mt-1 block text-xs font-medium leading-5 text-foreground/80">
-              {item.mainSignal}
-            </span>
-          </span>
+    <article className="grid gap-3 py-3 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <div className="flex min-w-0 gap-3">
+        <DailyQueueAvatar item={item} />
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">{item.label}</span>
+            <SubtleState tone={tone}>{item.statusLabel}</SubtleState>
+          </div>
+          <p className="mt-1 break-words text-sm font-semibold leading-5 text-foreground">
+            {item.title}
+          </p>
+          {item.context ? (
+            <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-muted-foreground">
+              {item.context}
+            </p>
+          ) : null}
+          <p className="mt-1 line-clamp-2 text-xs font-medium leading-5 text-foreground/80">
+            {item.reason}
+          </p>
         </div>
-
-        <span className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-          {item.coursesAtRiskCount > 0 ? (
-            <SignalPill tone="rose">
-              {item.coursesAtRiskCount} {pluralize(item.coursesAtRiskCount, 'curso', 'cursos')}
-            </SignalPill>
-          ) : null}
-          {item.pendingCorrectionsCount > 0 ? (
-            <SignalPill tone="amber">
-              {item.pendingCorrectionsCount} {pluralize(item.pendingCorrectionsCount, 'corrección', 'correcciones')}
-            </SignalPill>
-          ) : null}
-          {item.unloadedAttendanceCount > 0 ? (
-            <SignalPill tone="amber">
-              {item.unloadedAttendanceCount} {pluralize(item.unloadedAttendanceCount, 'asistencia', 'asistencias')}
-            </SignalPill>
-          ) : null}
-          <span className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors group-hover:bg-primary/10">
-            Ver seguimiento
-            <ArrowRight className="ml-1 size-3.5" />
-          </span>
-        </span>
       </div>
-    </Link>
+
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        {item.secondaryHref && item.secondaryLabel ? (
+          <Link
+            href={item.secondaryHref}
+            className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/45 hover:text-foreground active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+          >
+            {item.secondaryLabel}
+          </Link>
+        ) : null}
+        <Link
+          href={item.href}
+          className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+        >
+          {item.ctaLabel}
+          <ArrowRight className="ml-1 size-3.5" />
+        </Link>
+      </div>
+    </article>
   )
 }
 
-function TeacherOperationalPanel({ teachers }: { teachers: Profesor[] }) {
-  const teacherItems = buildTeacherOperationalItems(teachers)
-
-  if (teacherItems.length === 0) return null
-
-  return (
-    <section className="mt-5 min-w-0">
-      <SectionHeader
-        title="Seguimiento docente"
-        description="Señales operativas con acceso directo al perfil del docente."
-      />
-      <div className="mt-2 grid gap-2 xl:grid-cols-2">
-        {teacherItems.map((item) => (
-          <TeacherOperationalRow key={item.id} item={item} />
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function CourseRiskGroup({
-  title,
-  description,
-  emptyTitle,
-  emptyDescription,
-  items,
-  comparisonLabel,
-}: {
-  title: string
-  description: string
-  emptyTitle: string
-  emptyDescription: string
-  items: CourseHealthItem[]
-  comparisonLabel: string
-}) {
-  return (
-    <section className="min-w-0 rounded-xl border border-border/45 bg-background/35 p-3 dark:bg-background/20">
-      <SectionHeader title={title} description={description} />
-      <div className="mt-2 space-y-2">
-        {items.length === 0 ? (
-          <EmptyState
-            icon={CheckCircle2}
-            title={emptyTitle}
-            description={emptyDescription}
-          />
-        ) : (
-          items.map((item) => (
-            <CourseFollowUpRow
-              key={item.id}
-              item={item}
-              comparisonLabel={comparisonLabel}
-            />
-          ))
-        )}
-      </div>
-    </section>
-  )
-}
-
-function AcademicAttentionPanel({
-  dashboard,
-  teacherSignals,
-}: {
-  dashboard: AdminDashboardResponse
-  teacherSignals: Profesor[]
-}) {
-  const studentsFollowUpItems = buildStudentsFollowUpItems(dashboard)
-  const currentCourseRiskItems = buildCurrentCourseRiskItems(dashboard, studentsFollowUpItems)
-  const pendingCourseFollowUpItems = buildCoursePendingFollowUpItems(dashboard)
-  const courseTrendItems = buildCourseTrendItems(dashboard)
-  const academicSummaryItems = buildAcademicSummaryItems(dashboard, studentsFollowUpItems)
-  const comparisonLabel = getTrendComparisonLabel(dashboard)
-  const consecutiveWindowLabel = getConsecutiveAbsencesWindowLabel(dashboard)
+function DailyWorkQueue({ items }: { items: DailyQueueItem[] }) {
+  const visibleItems = items.slice(0, 5)
+  const hiddenCount = Math.max(items.length - visibleItems.length, 0)
 
   return (
     <section className="rounded-2xl bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/60 dark:bg-card/80 sm:p-5">
-      <AcademicExecutiveSummary items={academicSummaryItems} />
-
-      <div className="mt-5 grid gap-5 xl:grid-cols-2">
-        <section className="min-w-0">
-          <SectionHeader
-            title="Alumnos que requieren seguimiento"
-            description="Riesgo actual del trimestre actual y señales de pérdida de continuidad."
-          />
-          <div className="mt-2 space-y-2">
-            {studentsFollowUpItems.length === 0 ? (
-              <EmptyState
-                icon={CheckCircle2}
-                title="No hay alumnos en seguimiento."
-                description="No hay alumnos con señales académicas en los datos actuales."
-              />
-            ) : (
-              studentsFollowUpItems.map((item) => (
-                <StudentFollowUpRow
-                  key={item.id}
-                  item={item}
-                  consecutiveWindowLabel={consecutiveWindowLabel}
-                />
-              ))
-            )}
-          </div>
-        </section>
-
-        <section className="min-w-0 space-y-3">
-          <SectionHeader
-            title="Cursos"
-            description="Riesgo actual, seguimiento pendiente y tendencias separados por contexto."
-          />
-          <CourseRiskGroup
-            title="Riesgo actual"
-            description="Cursos con alertas del trimestre actual."
-            emptyTitle="Sin alertas en el trimestre actual"
-            emptyDescription="No hay cursos con riesgo actual en el trimestre actual."
-            items={currentCourseRiskItems}
-            comparisonLabel={comparisonLabel}
-          />
-          <CourseRiskGroup
-            title="Seguimiento pendiente"
-            description="Seguimiento pendiente del trimestre anterior o historial reciente no resuelto."
-            emptyTitle="Sin seguimiento pendiente"
-            emptyDescription="No hay cursos con seguimiento pendiente del trimestre anterior."
-            items={pendingCourseFollowUpItems}
-            comparisonLabel={comparisonLabel}
-          />
-          <CourseRiskGroup
-            title="Tendencias"
-            description="Historial reciente comparado con el período anterior."
-            emptyTitle="Sin tendencias negativas"
-            emptyDescription="No hay cursos con caída relevante en historial reciente."
-            items={courseTrendItems}
-            comparisonLabel={comparisonLabel}
-          />
-        </section>
-      </div>
-
-      <TeacherOperationalPanel teachers={teacherSignals} />
-    </section>
-  )
-}
-
-function InstitutionalTrendRow({ item }: { item: InstitutionalTrendItem }) {
-  return (
-    <Link
-      href={item.href}
-      className="grid gap-3 rounded-xl bg-background/45 px-3 py-3 ring-1 ring-border/35 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 dark:bg-background/25 sm:grid-cols-[auto_minmax(0,1fr)]"
-    >
-      <span className={cn('text-xl font-semibold leading-none tabular-nums tracking-tight', toneStyles[item.tone].text)}>
-        {item.value}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-sm font-semibold leading-5 text-foreground">
-          {item.label}
-        </span>
-        <span className={cn('mt-0.5 block text-xs font-medium leading-5', toneStyles[item.tone].text)}>
-          {item.detail}
-        </span>
-      </span>
-    </Link>
-  )
-}
-
-function InstitutionalDirectionPanel({ dashboard }: { dashboard: AdminDashboardResponse }) {
-  const items = buildInstitutionalTrendItems(dashboard)
-  const declineSummary = buildCourseDeclineSummary(dashboard)
-
-  return (
-    <section className="rounded-2xl bg-card/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/35 dark:bg-card/65 sm:p-5">
       <SectionHeader
-        title="Evolución institucional"
-        description={`Lectura del trimestre comparada con el ${getTrendComparisonLabel(dashboard)}.`}
+        title="Para revisar hoy"
+        description="Prioridades académicas y operativas ordenadas para la jornada."
+        action={hiddenCount > 0 ? (
+          <Link
+            href="/admin/dashboard/reports"
+            className="inline-flex h-8 items-center rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+          >
+            Ver reportes
+          </Link>
+        ) : null}
       />
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        {items.map((item) => (
-          <InstitutionalTrendRow key={item.id} item={item} />
-        ))}
-      </div>
-      <div className={cn('mt-3 rounded-xl px-3 py-2.5 text-sm leading-6', toneStyles[declineSummary.tone].surface)}>
-        {declineSummary.lines.map((line) => (
-          <p key={line}>{line}</p>
-        ))}
-      </div>
-    </section>
-  )
-}
 
-function HealthSnapshotMetric({
-  label,
-  value,
-  href,
-  tone,
-  trend,
-}: {
-  label: string
-  value: string
-  href: string
-  tone: Tone
-  trend?: {
-    label: string
-    tone: Tone
-    icon: ComponentType<{ className?: string }>
-    title: string
-  }
-}) {
-  const TrendIcon = trend?.icon
-  return (
-    <Link
-      href={href}
-      className="block rounded-xl bg-background/45 p-3 ring-1 ring-border/35 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 dark:bg-background/25"
-    >
-      <p className="text-xs font-medium leading-5 text-muted-foreground">{label}</p>
-      <p className={cn('mt-2 text-2xl font-semibold leading-none tabular-nums tracking-tight text-foreground', toneStyles[tone].text)}>
-        {value}
-      </p>
-      {trend && TrendIcon ? (
-        <span
-          title={trend.title}
-          className={cn('mt-2 inline-flex items-center gap-1 text-xs font-medium leading-5', toneStyles[trend.tone].text)}
-        >
-          <TrendIcon className="size-3.5 shrink-0" />
-          {trend.label}
-        </span>
+      {visibleItems.length === 0 ? (
+        <div className="mt-4">
+          <EmptyState
+            icon={CheckCircle2}
+            title="No hay casos urgentes para revisar hoy"
+            description="No se detectaron alumnos, cursos o seguimientos relevantes con los datos actuales."
+          />
+        </div>
+      ) : (
+        <div className="mt-4 divide-y divide-border/45">
+          {visibleItems.map((item) => (
+            <DailyQueueRow key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+
+      {hiddenCount > 0 ? (
+        <p className="mt-3 text-xs leading-5 text-muted-foreground">
+          Hay {hiddenCount} {pluralize(hiddenCount, 'caso más', 'casos más')} disponible en reportes.
+        </p>
       ) : null}
-    </Link>
-  )
-}
-
-function HealthSupportMetric({
-  label,
-  value,
-  context,
-  href,
-  tone,
-}: {
-  label: string
-  value: string
-  context: string
-  href: string
-  tone: Tone
-}) {
-  return (
-    <Link
-      href={href}
-      className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
-    >
-      <span className="min-w-0">
-        <span className="block text-sm font-semibold leading-5 text-foreground">{label}</span>
-        <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{context}</span>
-      </span>
-      <span className={cn('text-sm font-semibold tabular-nums', toneStyles[tone].text)}>
-        {value}
-      </span>
-    </Link>
+    </section>
   )
 }
 
@@ -2375,12 +1848,11 @@ function getInstitutionSummary({
   return {
     label: 'Salud estable',
     tone: 'emerald' as Tone,
-    description: 'Los indicadores principales no muestran alertas prioritarias.',
+    description: 'Los indicadores principales no muestran casos prioritarios.',
   }
 }
 
-function InstitutionHealthPanel({ dashboard }: { dashboard: AdminDashboardResponse }) {
-  const periodLabel = formatPeriodLabel(dashboard)
+function getDashboardHealthSummary(dashboard: AdminDashboardResponse) {
   const averageTone =
     typeof dashboard.currentPeriodAverage === 'number'
       ? gradeTone(dashboard.currentPeriodAverage)
@@ -2389,10 +1861,6 @@ function InstitutionHealthPanel({ dashboard }: { dashboard: AdminDashboardRespon
     typeof dashboard.institutionalAttendanceAverage === 'number'
       ? attendanceTone(dashboard.institutionalAttendanceAverage)
       : 'neutral'
-  const pendingCorrectionsTone = countTone(
-    dashboard.institutionalHomeworkPendingCorrectionCount,
-    5,
-  )
   const criticalCoursesTone = countTone(dashboard.criticalCourses?.length ?? 0, 1)
   const summary = getInstitutionSummary({
     averageTone,
@@ -2400,127 +1868,27 @@ function InstitutionHealthPanel({ dashboard }: { dashboard: AdminDashboardRespon
     criticalCoursesTone,
   })
 
-  return (
-    <section className="rounded-2xl bg-card/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/35 dark:bg-card/65">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight text-foreground">
-            Salud institucional
-          </h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{periodLabel}</p>
-        </div>
-        <SubtleState tone={summary.tone}>{summary.label}</SubtleState>
-      </div>
+  if (summary.tone === 'rose') {
+    return {
+      label: 'Riesgo institucional',
+      tone: 'rose' as Tone,
+      description: summary.description,
+    }
+  }
 
-      <p className="mt-3 text-sm leading-6 text-muted-foreground">
-        {summary.description}
-      </p>
+  if (summary.tone === 'amber') {
+    return {
+      label: 'Atención moderada',
+      tone: 'amber' as Tone,
+      description: summary.description,
+    }
+  }
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-        <HealthSnapshotMetric
-          label="Promedio institucional trimestral"
-          value={
-            typeof dashboard.currentPeriodAverage === 'number'
-              ? dashboard.currentPeriodAverage.toFixed(0)
-              : 'Sin datos'
-          }
-          href="/admin/dashboard/reports/marks"
-          tone={averageTone}
-          trend={trendInfo(dashboard, 'average-grade', 'pts')}
-        />
-        <HealthSnapshotMetric
-          label="Asistencia promedio trimestral"
-          value={
-            typeof dashboard.institutionalAttendanceAverage === 'number'
-              ? `${dashboard.institutionalAttendanceAverage.toFixed(0)}%`
-              : 'Sin datos'
-          }
-          href="/admin/dashboard/reports/attendance"
-          tone={attendanceHealthTone}
-          trend={trendInfo(dashboard, 'attendance', 'pp')}
-        />
-      </div>
-
-      <div className="mt-4 space-y-1 border-t border-border/35 pt-3">
-        <HealthSupportMetric
-          label="Alumnos matriculados"
-          value={dashboard.overview.studentsCount.toLocaleString()}
-          context="Matrícula activa"
-          href="/admin/dashboard/students"
-          tone={dashboard.overview.studentsCount > 0 ? 'emerald' : 'amber'}
-        />
-        <HealthSupportMetric
-          label="Cursos activos"
-          value={dashboard.overview.activeCoursesCount.toLocaleString()}
-          context="En cursada"
-          href="/admin/dashboard/courses"
-          tone={dashboard.overview.activeCoursesCount > 0 ? 'emerald' : 'amber'}
-        />
-        <HealthSupportMetric
-          label="Tareas por corregir"
-          value={dashboard.institutionalHomeworkPendingCorrectionCount.toLocaleString()}
-          context="Revisión pendiente"
-          href="/admin/dashboard/reports/homework"
-          tone={pendingCorrectionsTone}
-        />
-        <HealthSupportMetric
-          label="Cursos con riesgo actual"
-          value={(dashboard.criticalCourses?.length ?? 0).toLocaleString()}
-          context="Trimestre actual"
-          href="/admin/dashboard/courses"
-          tone={criticalCoursesTone}
-        />
-      </div>
-    </section>
-  )
-}
-
-function buildAgendaItems({
-  classes,
-  assignments,
-}: {
-  classes: DashboardUpcomingClass[]
-  assignments: DashboardUpcomingAssignment[]
-}) {
-  const now = new Date()
-  const classItems: AgendaItem[] = [...classes]
-    .filter((item) => buildClassDateTime(item).getTime() >= now.getTime())
-    .map((item, index) => {
-      const date = buildClassDateTime(item)
-
-      return {
-        id: `class-${item.cursoId}-${item.proximaClase}-${item.horaInicio}-${index}`,
-        date,
-        group: getAgendaGroup(date),
-        timeLabel: formatAgendaTime(date),
-        dateLabel: item.diaSemana,
-        courseName: item.cursoNombre,
-        courseDescription: item.cursoDescripcion,
-        href: `/admin/dashboard/courses/${item.cursoId}/profile`,
-      }
-    })
-
-  const assignmentItems: AgendaItem[] = [...assignments]
-    .filter((item) => buildAssignmentDateTime(item).getTime() >= now.getTime())
-    .map((item) => {
-      const date = buildAssignmentDateTime(item)
-
-      return {
-        id: `assignment-${item.tareaId}`,
-        date,
-        group: getAgendaGroup(date),
-        timeLabel: formatAgendaTime(date),
-        dateLabel: formatAgendaDateLabel(date),
-        courseName: item.cursoNombre,
-        courseDescription: item.cursoDescripcion,
-        detail: item.titulo,
-        href: `/admin/dashboard/courses/${item.cursoId}/profile`,
-      }
-    })
-
-  return [...classItems, ...assignmentItems]
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .slice(0, 8)
+  return {
+    label: 'Salud estable',
+    tone: 'emerald' as Tone,
+    description: summary.description,
+  }
 }
 
 function ImmediateAgenda({
@@ -2530,7 +1898,7 @@ function ImmediateAgenda({
   classes: DashboardUpcomingClass[]
   assignments: DashboardUpcomingAssignment[]
 }) {
-  const visibleItems = buildAgendaItems({ classes, assignments })
+  const visibleItems = buildAgendaItems({ classes, assignments, limit: 5 })
   const groupedItems = (['Hoy', 'Mañana', 'Próximamente'] as const)
     .map((group) => ({
       group,
@@ -2594,46 +1962,225 @@ function ImmediateAgenda({
   )
 }
 
+type InstitutionalSnapshotMetric = {
+  id: string
+  label: string
+  value: string
+  tone: Tone
+  icon: ComponentType<{ className?: string }>
+  href?: string
+}
+
+function buildInstitutionalSnapshotMetrics({
+  dashboard,
+  pendingCourses,
+}: {
+  dashboard: AdminDashboardResponse
+  pendingCourses: CourseHealthItem[]
+}) {
+  const pendingCourseCount = pendingCourses.length
+  const criticalCourseCount = dashboard.criticalCourses?.length ?? 0
+  const metrics: InstitutionalSnapshotMetric[] = [
+    {
+      id: 'active-students',
+      label: 'Alumnos activos',
+      value: dashboard.overview.studentsCount.toLocaleString(),
+      tone: dashboard.overview.studentsCount > 0 ? 'emerald' : 'neutral',
+      icon: Users,
+      href: '/admin/dashboard/students',
+    },
+    {
+      id: 'active-teachers',
+      label: 'Docentes activos',
+      value: dashboard.overview.teachersCount.toLocaleString(),
+      tone: dashboard.overview.teachersCount > 0 ? 'emerald' : 'neutral',
+      icon: UserRoundCheck,
+      href: '/admin/dashboard/teachers',
+    },
+    {
+      id: 'active-courses',
+      label: 'Cursos activos',
+      value: dashboard.overview.activeCoursesCount.toLocaleString(),
+      tone: dashboard.overview.activeCoursesCount > 0 ? 'emerald' : 'neutral',
+      icon: BookOpen,
+      href: '/admin/dashboard/courses',
+    },
+    {
+      id: 'pending-follow-ups',
+      label: 'Seguimientos pendientes',
+      value: pendingCourseCount.toLocaleString(),
+      tone: pendingCourseCount > 0 ? 'amber' : 'emerald',
+      icon: ClipboardCheck,
+      href: '/admin/dashboard/courses',
+    },
+    {
+      id: 'critical-courses',
+      label: 'Cursos en riesgo',
+      value: criticalCourseCount.toLocaleString(),
+      tone: criticalCourseCount > 0 ? 'rose' : 'emerald',
+      icon: BarChart3,
+      href: '/admin/dashboard/courses',
+    },
+  ]
+
+  if (typeof dashboard.institutionalAttendanceAverage === 'number') {
+    metrics.push({
+      id: 'attendance-average',
+      label: 'Asistencia promedio',
+      value: `${dashboard.institutionalAttendanceAverage.toFixed(0)}%`,
+      tone: attendanceTone(dashboard.institutionalAttendanceAverage),
+      icon: CalendarDays,
+      href: '/admin/dashboard/reports/attendance',
+    })
+  }
+
+  if (typeof dashboard.currentPeriodAverage === 'number') {
+    metrics.push({
+      id: 'institutional-average',
+      label: 'Promedio institucional',
+      value: dashboard.currentPeriodAverage.toFixed(0),
+      tone: gradeTone(dashboard.currentPeriodAverage),
+      icon: GraduationCap,
+      href: '/admin/dashboard/reports/marks',
+    })
+  }
+
+  return metrics
+}
+
+function InstitutionalSnapshotMetricRow({ metric }: { metric: InstitutionalSnapshotMetric }) {
+  const Icon = metric.icon
+  const content = (
+    <>
+      <span className="flex min-w-0 items-center gap-2">
+        <span className={cn(
+          'flex size-7 shrink-0 items-center justify-center rounded-lg bg-background/70 ring-1 ring-border/35 dark:bg-background/30',
+          toneStyles[metric.tone].text,
+        )}>
+          <Icon className="size-3.5" />
+        </span>
+        <span className="block min-w-0 truncate text-sm font-medium text-foreground">
+          {metric.label}
+        </span>
+      </span>
+      <span className={cn(
+        'shrink-0 text-right text-sm font-semibold tabular-nums',
+        toneStyles[metric.tone].text,
+      )}>
+        {metric.value}
+      </span>
+    </>
+  )
+
+  const className = 'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl bg-background/45 px-3 py-2 ring-1 ring-border/30 dark:bg-background/25'
+
+  if (!metric.href) {
+    return <div className={className}>{content}</div>
+  }
+
+  return (
+    <Link
+      href={metric.href}
+      className={cn(
+        className,
+        'transition-colors hover:bg-muted/15 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35',
+      )}
+    >
+      {content}
+    </Link>
+  )
+}
+
+function InstitutionalSnapshotSection({
+  dashboard,
+  pendingCourses,
+}: {
+  dashboard: AdminDashboardResponse
+  pendingCourses: CourseHealthItem[]
+}) {
+  const metrics = buildInstitutionalSnapshotMetrics({
+    dashboard,
+    pendingCourses,
+  })
+
+  return (
+    <section id="snapshot-institucional" className="scroll-mt-6 border-t border-border/45 pt-5">
+      <div className="rounded-2xl bg-card/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/45 dark:bg-card/65">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold tracking-tight text-foreground">
+              Snapshot institucional
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Contexto institucional breve. La cola diaria sigue siendo la prioridad.
+            </p>
+          </div>
+          <Link
+            href="/admin/dashboard/reports"
+            className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+          >
+            Ver análisis completo
+            <ArrowRight className="ml-1 size-3.5" />
+          </Link>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          {metrics.map((metric) => (
+            <InstitutionalSnapshotMetricRow key={metric.id} metric={metric} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function AdminDashboardView({
   dashboard,
-  teacherSignals,
+  teacherSignals: _teacherSignals,
 }: {
   dashboard: AdminDashboardResponse
   teacherSignals?: Profesor[]
 }) {
   const studentsFollowUpItems = buildStudentsFollowUpItems(dashboard)
-  const teacherOperationalItems = buildTeacherOperationalItems(teacherSignals ?? [])
-  const academicAlertCount = buildAcademicSummaryItems(
+  const currentCourseRiskItems = buildCurrentCourseRiskItems(
     dashboard,
     studentsFollowUpItems,
-  ).length + teacherOperationalItems.length
+  )
+  const pendingCourseFollowUpItems = buildCoursePendingFollowUpItems(dashboard)
+  const dailyQueueItems = buildDailyQueueItems({
+    students: studentsFollowUpItems,
+    currentCourses: currentCourseRiskItems,
+    pendingCourses: pendingCourseFollowUpItems,
+  })
   const periodLabel = formatPeriodLabel(dashboard)
+  const healthSummary = getDashboardHealthSummary(dashboard)
 
   return (
     <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
       <div className="mx-auto max-w-7xl space-y-5">
         <AdminDashboardHeader
-          alertCount={academicAlertCount}
+          queueCount={dailyQueueItems.length}
           periodLabel={periodLabel}
+          healthSummary={healthSummary}
         />
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] xl:items-start">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.22fr)_minmax(300px,0.78fr)] xl:items-start">
           <div className="space-y-5">
-            <AcademicAttentionPanel
-              dashboard={dashboard}
-              teacherSignals={teacherSignals ?? []}
-            />
-            <InstitutionalDirectionPanel dashboard={dashboard} />
+            <DailyWorkQueue items={dailyQueueItems} />
           </div>
 
           <aside className="space-y-5 xl:sticky xl:top-5">
-            <InstitutionHealthPanel dashboard={dashboard} />
             <ImmediateAgenda
               classes={dashboard.upcomingClasses ?? []}
               assignments={dashboard.upcomingAssignments ?? []}
             />
           </aside>
         </div>
+
+        <InstitutionalSnapshotSection
+          dashboard={dashboard}
+          pendingCourses={pendingCourseFollowUpItems}
+        />
       </div>
     </main>
   )
