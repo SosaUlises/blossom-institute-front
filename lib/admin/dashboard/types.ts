@@ -180,6 +180,27 @@ export interface DashboardPendingFollowUp {
   description?: string | null
 }
 
+export interface DashboardOpenFollowUp {
+  id: string
+  entityType: 'student' | 'course' | string
+  entityId: number
+  alumnoId?: number | null
+  alumnoNombre?: string | null
+  alumnoAvatarUrl?: string | null
+  cursoId?: number | null
+  cursoNombre?: string | null
+  cursoDescripcion?: string | null
+  periodLabel: string
+  quarterNumber: number
+  year: number
+  reason: string
+  source: string
+  level: 'normal' | 'follow-up' | 'critical' | string
+  averageGrade?: number | null
+  attendancePercentage?: number | null
+  href: string
+}
+
 export interface DashboardUpcomingAssignment {
   tareaId: number
   titulo: string
@@ -229,6 +250,7 @@ export interface AdminDashboardResponse {
   pendingFollowUp?: DashboardPendingFollowUp[]
   coursesPendingFollowUp?: DashboardPendingFollowUp[]
   coursesWithPendingFollowUp?: DashboardPendingFollowUp[]
+  openFollowUps?: DashboardOpenFollowUp[]
   pendingFollowUpCount?: number
   coursesPendingFollowUpCount?: number
   academicTrends: DashboardAcademicTrend[]

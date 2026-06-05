@@ -28,11 +28,13 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { OpenFollowUpsSection } from '@/components/admin/dashboard/open-follow-ups-section'
 import type {
   AdminDashboardResponse,
   DashboardAverageGradeByCourse,
   DashboardCriticalCourse,
   DashboardCourseTrendRisk,
+  DashboardOpenFollowUp,
   DashboardPendingFollowUp,
   DashboardUpcomingAssignment,
   DashboardUpcomingClass,
@@ -282,7 +284,7 @@ function formatAgendaDayLabel(date: Date) {
 function buildAgendaItems({
   classes,
   assignments,
-  limit = 5,
+  limit = 3,
 }: {
   classes: DashboardUpcomingClass[]
   assignments: DashboardUpcomingAssignment[]
@@ -1248,6 +1250,71 @@ function buildCoursePendingFollowUpItems(dashboard: AdminDashboardResponse): Cou
     .slice(0, 8)
 }
 
+function buildOpenFollowUpFallback(items: CourseHealthItem[]): DashboardOpenFollowUp[] {
+  return items.flatMap((item) => {
+    const pendingItems = item.pendingFollowUp?.length
+      ? item.pendingFollowUp
+      : [
+          {
+            cursoId: item.cursoId,
+            cursoNombre: item.cursoNombre,
+            cursoDescripcion: item.cursoDescripcion,
+            periodLabel: item.periodLabel || 'trimestre anterior',
+            quarterNumber: undefined,
+            year: undefined,
+            level: item.health.level,
+            reason: item.reasons[0] || 'Seguimiento académico pendiente',
+          } satisfies DashboardPendingFollowUp,
+        ]
+
+    return pendingItems.map((pending, index) => ({
+      id: `course-fallback-${pending.cursoId}-${pending.periodLabel}-${index}`,
+      entityType: 'course',
+      entityId: pending.cursoId,
+      cursoId: pending.cursoId,
+      cursoNombre: pending.cursoNombre,
+      cursoDescripcion: pending.cursoDescripcion,
+      periodLabel: pending.periodLabel || 'trimestre anterior',
+      quarterNumber: pending.quarterNumber ?? 0,
+      year: pending.year ?? 0,
+      reason: formatPendingFollowUpReason(pending),
+      source: 'course-pending-follow-up',
+      level: pending.level,
+      averageGrade: pending.averageValue ?? item.averageGrade ?? null,
+      attendancePercentage: pending.attendanceValue ?? item.attendancePercentage ?? null,
+      href: `/admin/dashboard/courses/${pending.cursoId}/profile`,
+    }))
+  })
+}
+
+function filterOpenFollowUpsAgainstDailyQueue(
+  items: DashboardOpenFollowUp[],
+  dailyQueueItems: DailyQueueItem[],
+) {
+  const activeStudentKeys = new Set(
+    dailyQueueItems
+      .filter((item) => item.kind === 'student')
+      .map((item) => item.id.replace(/^student-/, '')),
+  )
+  const activeCourseIds = new Set(
+    dailyQueueItems
+      .filter((item) => item.kind === 'course')
+      .map((item) => Number(item.id.replace(/^course-current-/, ''))),
+  )
+
+  return items.filter((item) => {
+    if (item.entityType === 'student' && item.alumnoId && item.cursoId) {
+      return !activeStudentKeys.has(`${item.alumnoId}-${item.cursoId}`)
+    }
+
+    if (item.entityType === 'course' && item.cursoId) {
+      return !activeCourseIds.has(item.cursoId)
+    }
+
+    return true
+  })
+}
+
 function buildCourseTrendItems(dashboard: AdminDashboardResponse): CourseHealthItem[] {
   const items = new Map<number, CourseHealthItem>()
 
@@ -1315,11 +1382,9 @@ function getQueueStatusLabel(severity: SignalSeverity, fallback = 'Seguimiento')
 function buildDailyQueueItems({
   students,
   currentCourses,
-  pendingCourses,
 }: {
   students: StudentFollowUpItem[]
   currentCourses: CourseHealthItem[]
-  pendingCourses: CourseHealthItem[]
 }): DailyQueueItem[] {
   const queue: DailyQueueItem[] = []
 
@@ -1360,22 +1425,6 @@ function buildDailyQueueItems({
     })
   }
 
-  for (const course of pendingCourses) {
-    queue.push({
-      id: `course-pending-${course.cursoId}`,
-      kind: 'course',
-      label: 'Curso',
-      title: course.cursoNombre,
-      context: course.periodLabel || course.cursoDescripcion,
-      reason: cleanQueueReason(course.reasons[0]),
-      href: `/admin/dashboard/courses/${course.cursoId}/profile`,
-      ctaLabel: 'Ver seguimiento',
-      severity: course.severity,
-      statusLabel: 'Pendiente',
-      rank: 30,
-    })
-  }
-
   const severityWeight: Record<SignalSeverity, number> = {
     critical: 0,
     attention: 1,
@@ -1383,8 +1432,8 @@ function buildDailyQueueItems({
   }
 
   return queue.sort((a, b) => (
-    severityWeight[a.severity] - severityWeight[b.severity] ||
     a.rank - b.rank ||
+    severityWeight[a.severity] - severityWeight[b.severity] ||
     a.title.localeCompare(b.title)
   ))
 }
@@ -1688,7 +1737,7 @@ function AdminDashboardHeader({
     : 'No hay casos prioritarios para revisar hoy.'
 
   return (
-    <header className="flex flex-col gap-4 border-b border-border/45 pb-4 lg:flex-row lg:items-center lg:justify-between">
+    <header className="flex flex-col gap-3 border-b border-border/45 pb-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="min-w-0">
         <p className="text-xs font-medium capitalize text-muted-foreground">
           {formatTodayLabel()} · {periodLabel}
@@ -1723,15 +1772,18 @@ function DailyQueueAvatar({ item }: { item: DailyQueueItem }) {
 
 function DailyQueueRow({ item }: { item: DailyQueueItem }) {
   const tone = severityTone(item.severity)
+  const showSeverity = item.severity === 'critical'
 
   return (
-    <article className="grid gap-3 py-3 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-      <div className="flex min-w-0 gap-3">
+    <article className="grid gap-2.5 py-2.5 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <div className="flex min-w-0 gap-2.5">
         <DailyQueueAvatar item={item} />
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">{item.label}</span>
-            <SubtleState tone={tone}>{item.statusLabel}</SubtleState>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="rounded-md bg-muted/30 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {item.label}
+            </span>
+            {showSeverity ? <SubtleState tone={tone}>{item.statusLabel}</SubtleState> : null}
           </div>
           <p className="mt-1 break-words text-sm font-semibold leading-5 text-foreground">
             {item.title}
@@ -1741,7 +1793,7 @@ function DailyQueueRow({ item }: { item: DailyQueueItem }) {
               {item.context}
             </p>
           ) : null}
-          <p className="mt-1 line-clamp-2 text-xs font-medium leading-5 text-foreground/80">
+          <p className="mt-1 line-clamp-1 text-xs font-medium leading-5 text-foreground/80">
             {item.reason}
           </p>
         </div>
@@ -1768,44 +1820,69 @@ function DailyQueueRow({ item }: { item: DailyQueueItem }) {
   )
 }
 
-function DailyWorkQueue({ items }: { items: DailyQueueItem[] }) {
-  const visibleItems = items.slice(0, 5)
-  const hiddenCount = Math.max(items.length - visibleItems.length, 0)
+function DailyQueueGroup({
+  title,
+  items,
+}: {
+  title: string
+  items: DailyQueueItem[]
+}) {
+  if (items.length === 0) return null
 
   return (
-    <section className="rounded-2xl bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/60 dark:bg-card/80 sm:p-5">
+    <div>
+      <p className="mb-1.5 text-xs font-semibold text-muted-foreground">
+        {title}
+      </p>
+      <div className="divide-y divide-border/45">
+        {items.map((item) => (
+          <DailyQueueRow key={item.id} item={item} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function DailyWorkQueue({ items }: { items: DailyQueueItem[] }) {
+  const visibleStudents = items.filter((item) => item.kind === 'student').slice(0, 3)
+  const visibleCourses = items.filter((item) => item.kind === 'course').slice(0, 3)
+  const visibleCount = visibleStudents.length + visibleCourses.length
+  const hiddenCount = Math.max(items.length - visibleCount, 0)
+  const hasVisibleItems = visibleCount > 0
+
+  return (
+    <section className="rounded-2xl bg-card/95 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/60 dark:bg-card/80 sm:p-4">
       <SectionHeader
         title="Para revisar hoy"
-        description="Prioridades académicas y operativas ordenadas para la jornada."
+        description="Riesgos actuales ordenados por impacto académico."
         action={hiddenCount > 0 ? (
           <Link
             href="/admin/dashboard/reports"
             className="inline-flex h-8 items-center rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
           >
-            Ver reportes
+            Ver todos los casos
           </Link>
         ) : null}
       />
 
-      {visibleItems.length === 0 ? (
-        <div className="mt-4">
+      {!hasVisibleItems ? (
+        <div className="mt-3">
           <EmptyState
             icon={CheckCircle2}
             title="No hay casos urgentes para revisar hoy"
-            description="No se detectaron alumnos, cursos o seguimientos relevantes con los datos actuales."
+            description="No se detectaron alumnos o cursos con riesgo actual en los datos disponibles."
           />
         </div>
       ) : (
-        <div className="mt-4 divide-y divide-border/45">
-          {visibleItems.map((item) => (
-            <DailyQueueRow key={item.id} item={item} />
-          ))}
+        <div className="mt-3 space-y-3.5">
+          <DailyQueueGroup title="Alumnos en riesgo" items={visibleStudents} />
+          <DailyQueueGroup title="Cursos en riesgo" items={visibleCourses} />
         </div>
       )}
 
       {hiddenCount > 0 ? (
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
-          Hay {hiddenCount} {pluralize(hiddenCount, 'caso más', 'casos más')} disponible en reportes.
+          Hay {hiddenCount} {pluralize(hiddenCount, 'caso más', 'casos más')} para revisar en reportes.
         </p>
       ) : null}
     </section>
@@ -1898,7 +1975,9 @@ function ImmediateAgenda({
   classes: DashboardUpcomingClass[]
   assignments: DashboardUpcomingAssignment[]
 }) {
-  const visibleItems = buildAgendaItems({ classes, assignments, limit: 5 })
+  const allItems = buildAgendaItems({ classes, assignments, limit: Number.MAX_SAFE_INTEGER })
+  const visibleItems = allItems.slice(0, 3)
+  const hiddenCount = Math.max(allItems.length - visibleItems.length, 0)
   const groupedItems = (['Hoy', 'Mañana', 'Próximamente'] as const)
     .map((group) => ({
       group,
@@ -1907,25 +1986,32 @@ function ImmediateAgenda({
     .filter(({ items }) => items.length > 0)
 
   return (
-    <section className="rounded-2xl bg-card/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/35 dark:bg-card/65">
+    <section className="rounded-2xl bg-card/80 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/35 dark:bg-card/65 sm:p-3.5">
       <SectionHeader
         title="Agenda inmediata"
-        description="Clases y vencimientos ordenados por fecha."
+        action={hiddenCount > 0 ? (
+          <Link
+            href="/admin/dashboard/courses"
+            className="inline-flex h-8 items-center rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+          >
+            Ver agenda completa
+          </Link>
+        ) : null}
       />
 
       {visibleItems.length === 0 ? (
-        <div className="mt-4">
+        <div className="mt-3">
           <EmptyState
             icon={CalendarDays}
-            title="Sin agenda inmediata"
-            description="No hay clases ni vencimientos próximos registrados."
+            title="Sin clases próximas registradas."
+            description="No hay vencimientos cercanos."
           />
         </div>
       ) : (
-        <div className="mt-4 space-y-5">
+        <div className="mt-3 space-y-3.5">
           {groupedItems.map(({ group, items }) => (
             <div key={group}>
-              <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+              <p className="mb-1 text-xs font-medium text-muted-foreground">
                 {group}
               </p>
               <div className="space-y-1">
@@ -1933,7 +2019,7 @@ function ImmediateAgenda({
                   <Link
                     key={item.id}
                     href={item.href}
-                    className="group grid min-w-0 grid-cols-[58px_minmax(0,1fr)] gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+                    className="group grid min-w-0 grid-cols-[50px_minmax(0,1fr)] gap-2.5 rounded-xl px-2 py-2 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
                   >
                     <span className="min-w-0 pt-0.5">
                       <span className="block text-xs font-semibold tabular-nums text-foreground">
@@ -1973,12 +2059,11 @@ type InstitutionalSnapshotMetric = {
 
 function buildInstitutionalSnapshotMetrics({
   dashboard,
-  pendingCourses,
+  openFollowUpsCount,
 }: {
   dashboard: AdminDashboardResponse
-  pendingCourses: CourseHealthItem[]
+  openFollowUpsCount: number
 }) {
-  const pendingCourseCount = pendingCourses.length
   const criticalCourseCount = dashboard.criticalCourses?.length ?? 0
   const metrics: InstitutionalSnapshotMetric[] = [
     {
@@ -2007,9 +2092,9 @@ function buildInstitutionalSnapshotMetrics({
     },
     {
       id: 'pending-follow-ups',
-      label: 'Seguimientos pendientes',
-      value: pendingCourseCount.toLocaleString(),
-      tone: pendingCourseCount > 0 ? 'amber' : 'emerald',
+      label: 'Seguimientos abiertos',
+      value: openFollowUpsCount.toLocaleString(),
+      tone: openFollowUpsCount > 0 ? 'amber' : 'emerald',
       icon: ClipboardCheck,
       href: '/admin/dashboard/courses',
     },
@@ -2054,7 +2139,7 @@ function InstitutionalSnapshotMetricRow({ metric }: { metric: InstitutionalSnaps
     <>
       <span className="flex min-w-0 items-center gap-2">
         <span className={cn(
-          'flex size-7 shrink-0 items-center justify-center rounded-lg bg-background/70 ring-1 ring-border/35 dark:bg-background/30',
+          'flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted/25 dark:bg-muted/15',
           toneStyles[metric.tone].text,
         )}>
           <Icon className="size-3.5" />
@@ -2072,7 +2157,7 @@ function InstitutionalSnapshotMetricRow({ metric }: { metric: InstitutionalSnaps
     </>
   )
 
-  const className = 'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl bg-background/45 px-3 py-2 ring-1 ring-border/30 dark:bg-background/25'
+  const className = 'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-1.5'
 
   if (!metric.href) {
     return <div className={className}>{content}</div>
@@ -2093,38 +2178,35 @@ function InstitutionalSnapshotMetricRow({ metric }: { metric: InstitutionalSnaps
 
 function InstitutionalSnapshotSection({
   dashboard,
-  pendingCourses,
+  openFollowUpsCount,
 }: {
   dashboard: AdminDashboardResponse
-  pendingCourses: CourseHealthItem[]
+  openFollowUpsCount: number
 }) {
   const metrics = buildInstitutionalSnapshotMetrics({
     dashboard,
-    pendingCourses,
+    openFollowUpsCount,
   })
 
   return (
-    <section id="snapshot-institucional" className="scroll-mt-6 border-t border-border/45 pt-5">
-      <div className="rounded-2xl bg-card/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/45 dark:bg-card/65">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <section id="snapshot-institucional" className="scroll-mt-6 border-t border-border/45 pt-4">
+      <div className="rounded-2xl bg-card/75 px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] ring-1 ring-border/35 dark:bg-card/60 sm:px-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <h2 className="text-base font-semibold tracking-tight text-foreground">
               Snapshot institucional
             </h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Contexto institucional breve. La cola diaria sigue siendo la prioridad.
-            </p>
           </div>
           <Link
             href="/admin/dashboard/reports"
             className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
           >
-            Ver análisis completo
+            Ver reportes
             <ArrowRight className="ml-1 size-3.5" />
           </Link>
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-2.5 grid gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {metrics.map((metric) => (
             <InstitutionalSnapshotMetricRow key={metric.id} metric={metric} />
           ))}
@@ -2146,30 +2228,36 @@ export function AdminDashboardView({
     dashboard,
     studentsFollowUpItems,
   )
-  const pendingCourseFollowUpItems = buildCoursePendingFollowUpItems(dashboard)
   const dailyQueueItems = buildDailyQueueItems({
     students: studentsFollowUpItems,
     currentCourses: currentCourseRiskItems,
-    pendingCourses: pendingCourseFollowUpItems,
   })
+  const pendingCourseFollowUpItems = buildCoursePendingFollowUpItems(dashboard)
+  const rawOpenFollowUpItems = dashboard.openFollowUps?.length
+    ? dashboard.openFollowUps
+    : buildOpenFollowUpFallback(pendingCourseFollowUpItems)
+  const openFollowUpItems = filterOpenFollowUpsAgainstDailyQueue(
+    rawOpenFollowUpItems,
+    dailyQueueItems,
+  )
   const periodLabel = formatPeriodLabel(dashboard)
   const healthSummary = getDashboardHealthSummary(dashboard)
 
   return (
-    <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
-      <div className="mx-auto max-w-7xl space-y-5">
+    <main className="flex-1 overflow-auto px-5 py-4 lg:px-8 lg:py-5">
+      <div className="mx-auto max-w-7xl space-y-4">
         <AdminDashboardHeader
           queueCount={dailyQueueItems.length}
           periodLabel={periodLabel}
           healthSummary={healthSummary}
         />
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.22fr)_minmax(300px,0.78fr)] xl:items-start">
-          <div className="space-y-5">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.22fr)_minmax(300px,0.78fr)] xl:items-start">
+          <div className="space-y-4">
             <DailyWorkQueue items={dailyQueueItems} />
           </div>
 
-          <aside className="space-y-5 xl:sticky xl:top-5">
+          <aside className="space-y-4 xl:sticky xl:top-4">
             <ImmediateAgenda
               classes={dashboard.upcomingClasses ?? []}
               assignments={dashboard.upcomingAssignments ?? []}
@@ -2177,9 +2265,11 @@ export function AdminDashboardView({
           </aside>
         </div>
 
+        <OpenFollowUpsSection items={openFollowUpItems} />
+
         <InstitutionalSnapshotSection
           dashboard={dashboard}
-          pendingCourses={pendingCourseFollowUpItems}
+          openFollowUpsCount={openFollowUpItems.length}
         />
       </div>
     </main>
