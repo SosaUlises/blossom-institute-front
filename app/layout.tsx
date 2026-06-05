@@ -17,6 +17,16 @@ export const metadata: Metadata = {
     template: '%s | Blossom Institute',
   },
   description: 'Educational management system for Blossom Institute',
+  icons: {
+    icon: [
+      {
+        url: '/blossom-bridge-isotype.png',
+        type: 'image/png',
+      },
+    ],
+    shortcut: '/blossom-bridge-isotype.png',
+    apple: '/blossom-bridge-isotype.png',
+  },
 }
 
 export const viewport: Viewport = {

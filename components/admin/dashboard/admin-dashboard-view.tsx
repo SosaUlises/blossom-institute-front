@@ -20,6 +20,14 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -161,6 +169,7 @@ type AgendaItem = {
   id: string
   date: Date
   group: 'Hoy' | 'Mañana' | 'Próximamente'
+  type: 'Clase' | 'Vencimiento'
   timeLabel: string
   dateLabel: string
   courseName: string
@@ -281,6 +290,10 @@ function formatAgendaDayLabel(date: Date) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
+function formatAgendaFullDateLabel(date: Date) {
+  return `${formatAgendaDayLabel(date)} ${formatAgendaDateLabel(date)}`
+}
+
 function buildAgendaItems({
   classes,
   assignments,
@@ -297,6 +310,7 @@ function buildAgendaItems({
       id: `class-${item.cursoId}-${item.proximaClase}`,
       date,
       group: getAgendaGroup(date),
+      type: 'Clase',
       timeLabel: formatAgendaTime(date),
       dateLabel: item.diaSemana || formatAgendaDayLabel(date),
       courseName: item.cursoNombre,
@@ -313,6 +327,7 @@ function buildAgendaItems({
       id: `assignment-${item.tareaId}`,
       date,
       group: getAgendaGroup(date),
+      type: 'Vencimiento',
       timeLabel: formatAgendaTime(date),
       dateLabel: formatAgendaDayLabel(date),
       courseName: item.cursoNombre,
@@ -1968,6 +1983,89 @@ function getDashboardHealthSummary(dashboard: AdminDashboardResponse) {
   }
 }
 
+function AgendaDialogRow({ item }: { item: AgendaItem }) {
+  const secondaryText = [item.courseDescription, item.detail].filter(Boolean).join(' · ')
+
+  return (
+    <Link
+      href={item.href}
+      className="group grid min-w-0 gap-2 px-4 py-3 transition-colors hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 sm:grid-cols-[92px_minmax(0,1fr)_auto] sm:items-center"
+    >
+      <span className="grid min-w-0 grid-cols-[48px_minmax(0,1fr)] items-start gap-2 sm:block">
+        <span className="block text-sm font-semibold tabular-nums text-foreground">
+          {item.timeLabel}
+        </span>
+        <span className="block text-xs leading-5 text-muted-foreground sm:mt-0.5">
+          {formatAgendaFullDateLabel(item.date)}
+        </span>
+      </span>
+
+      <span className="min-w-0">
+        <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <span className="truncate text-sm font-semibold leading-5 text-foreground group-hover:text-primary">
+            {item.courseName}
+          </span>
+          <span className="rounded-md bg-muted/35 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+            {item.type}
+          </span>
+        </span>
+        {secondaryText ? (
+          <span className="mt-0.5 block break-words text-xs leading-5 text-muted-foreground">
+            {secondaryText}
+          </span>
+        ) : null}
+      </span>
+
+      <span className="hidden text-xs font-semibold text-primary sm:inline-flex">
+        Ver
+      </span>
+    </Link>
+  )
+}
+
+function AgendaDialog({ items }: { items: AgendaItem[] }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex h-8 items-center rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+        >
+          Ver agenda completa
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[calc(100vh-2rem)] gap-0 overflow-hidden rounded-2xl border-border/60 bg-card p-0 shadow-lg sm:max-w-2xl">
+        <DialogHeader className="gap-1 px-4 pb-3 pt-4 pr-12">
+          <DialogTitle className="text-base">Agenda completa</DialogTitle>
+          <DialogDescription>
+            Clases y vencimientos próximos ordenados por fecha.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="border-t border-border/50">
+          {items.length === 0 ? (
+            <div className="p-4">
+              <EmptyState
+                icon={CalendarDays}
+                title="No hay clases o vencimientos próximos registrados."
+                description="Cuando haya actividad cercana, va a aparecer en esta agenda."
+              />
+            </div>
+          ) : (
+            <ScrollArea className="max-h-[min(460px,calc(100vh-13rem))]">
+              <div className="divide-y divide-border/45">
+                {items.map((item) => (
+                  <AgendaDialogRow key={item.id} item={item} />
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function ImmediateAgenda({
   classes,
   assignments,
@@ -1977,7 +2075,6 @@ function ImmediateAgenda({
 }) {
   const allItems = buildAgendaItems({ classes, assignments, limit: Number.MAX_SAFE_INTEGER })
   const visibleItems = allItems.slice(0, 3)
-  const hiddenCount = Math.max(allItems.length - visibleItems.length, 0)
   const groupedItems = (['Hoy', 'Mañana', 'Próximamente'] as const)
     .map((group) => ({
       group,
@@ -1989,14 +2086,7 @@ function ImmediateAgenda({
     <section className="rounded-2xl bg-card/80 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/35 dark:bg-card/65 sm:p-3.5">
       <SectionHeader
         title="Agenda inmediata"
-        action={hiddenCount > 0 ? (
-          <Link
-            href="/admin/dashboard/courses"
-            className="inline-flex h-8 items-center rounded-lg px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
-          >
-            Ver agenda completa
-          </Link>
-        ) : null}
+        action={<AgendaDialog items={allItems} />}
       />
 
       {visibleItems.length === 0 ? (

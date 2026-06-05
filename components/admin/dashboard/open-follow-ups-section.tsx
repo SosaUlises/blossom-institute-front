@@ -1,13 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   ArrowRight,
   BookOpen,
   ChevronDown,
   ChevronRight,
-  UserRound,
 } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -19,8 +18,9 @@ import {
 import type { DashboardOpenFollowUp } from '@/lib/admin/dashboard/types'
 import { cn } from '@/lib/utils'
 
-const STORAGE_KEY = 'admin-dashboard-open-follow-ups-expanded'
 const VISIBLE_LIMIT = 8
+
+type BadgeTone = 'amber' | 'rose' | 'neutral'
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -62,14 +62,153 @@ function getActionLabel(item: DashboardOpenFollowUp) {
   return item.entityType === 'student' ? 'Ver alumno' : 'Ver curso'
 }
 
-function cleanReason(item: DashboardOpenFollowUp) {
+function formatMetricValue(value: number) {
+  return Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1)
+}
+
+function getSignalBadges(item: DashboardOpenFollowUp) {
+  const badges: Array<{ label: string; tone: BadgeTone }> = []
+  const source = item.source?.toLowerCase() ?? ''
+  const hasAverage = typeof item.averageGrade === 'number'
+  const hasAttendance = typeof item.attendancePercentage === 'number'
+
+  if (hasAverage && hasAttendance) {
+    badges.push({ label: 'Riesgo combinado', tone: 'rose' })
+  } else if (source.includes('average') || hasAverage) {
+    badges.push({ label: 'Promedio bajo', tone: 'amber' })
+  } else if (source.includes('attendance') || hasAttendance) {
+    badges.push({ label: 'Baja asistencia', tone: 'amber' })
+  } else {
+    badges.push({ label: 'Seguimiento', tone: 'neutral' })
+  }
+
+  if (item.entityType === 'course') {
+    badges.push({ label: 'Curso', tone: 'neutral' })
+  }
+
+  return badges
+}
+
+function getMetricChips(item: DashboardOpenFollowUp) {
+  const chips: Array<{ label: string; value: string; tone: 'amber' | 'rose' }> = []
+
+  if (typeof item.averageGrade === 'number') {
+    chips.push({
+      label: item.entityType === 'course' ? 'Promedio grupal' : 'Promedio',
+      value: formatMetricValue(item.averageGrade),
+      tone: item.averageGrade < 60 ? 'rose' : 'amber',
+    })
+  }
+
+  if (typeof item.attendancePercentage === 'number') {
+    const isCritical = item.attendancePercentage < 70
+
+    chips.push({
+      label: item.entityType === 'course'
+        ? 'Baja asistencia grupal'
+        : isCritical
+          ? 'Asistencia crítica'
+          : 'Asistencia',
+      value: `${formatMetricValue(item.attendancePercentage)}%`,
+      tone: isCritical ? 'rose' : 'amber',
+    })
+  }
+
+  return chips
+}
+
+function getReasonLabel(item: DashboardOpenFollowUp) {
   const reason = item.reason?.trim()
 
-  if (!reason) return 'Seguimiento pendiente'
+  if (!reason) return 'Seguimiento académico pendiente'
 
   return reason
     .replace(new RegExp(`\\s+en\\s+${item.periodLabel}$`, 'i'), '')
+    .replace(/\s+/g, ' ')
     .trim()
+}
+
+function normalizeReason(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+function getDisplayReasonLabel(item: DashboardOpenFollowUp) {
+  const reason = getReasonLabel(item)
+  const normalizedReason = normalizeReason(reason)
+  const hasAverageMetric = typeof item.averageGrade === 'number'
+  const hasAttendanceMetric = typeof item.attendancePercentage === 'number'
+  const duplicatesAverageChip =
+    hasAverageMetric &&
+    (normalizedReason.startsWith('promedio ') ||
+      normalizedReason.startsWith('promedio grupal '))
+  const duplicatesAttendanceChip =
+    hasAttendanceMetric &&
+    (normalizedReason.startsWith('asistencia ') ||
+      normalizedReason.startsWith('asistencia critica ') ||
+      normalizedReason.startsWith('baja asistencia '))
+
+  if (duplicatesAverageChip || duplicatesAttendanceChip) return null
+
+  return reason
+}
+
+function getPeriodLabel(item: DashboardOpenFollowUp) {
+  if (item.quarterNumber > 0) return `Trimestre ${item.quarterNumber}`
+  return item.periodLabel || 'Trimestre anterior'
+}
+
+function getBadgeClass(tone: BadgeTone) {
+  if (tone === 'rose') {
+    return 'bg-rose-500/10 text-rose-700 ring-rose-500/15 dark:text-rose-300'
+  }
+
+  if (tone === 'amber') {
+    return 'bg-amber-500/10 text-amber-800 ring-amber-500/15 dark:text-amber-300'
+  }
+
+  return 'bg-muted/30 text-muted-foreground ring-border/35'
+}
+
+function SignalBadge({
+  label,
+  tone,
+}: {
+  label: string
+  tone: BadgeTone
+}) {
+  return (
+    <span className={cn(
+      'rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1',
+      getBadgeClass(tone),
+    )}>
+      {label}
+    </span>
+  )
+}
+
+function MetricChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: string
+  tone: 'amber' | 'rose'
+}) {
+  return (
+    <span className={cn(
+      'inline-flex items-baseline gap-1 rounded-lg px-2 py-1 text-xs ring-1',
+      tone === 'rose'
+        ? 'bg-rose-500/10 text-rose-700 ring-rose-500/15 dark:text-rose-300'
+        : 'bg-amber-500/10 text-amber-800 ring-amber-500/15 dark:text-amber-300',
+    )}>
+      <span className="font-medium">{label}</span>
+      <span className="font-semibold tabular-nums">{value}</span>
+    </span>
+  )
 }
 
 function FollowUpAvatar({ item }: { item: DashboardOpenFollowUp }) {
@@ -99,6 +238,9 @@ function FollowUpAvatar({ item }: { item: DashboardOpenFollowUp }) {
 function FollowUpRow({ item }: { item: DashboardOpenFollowUp }) {
   const href = getHref(item)
   const entityName = getEntityName(item)
+  const badges = getSignalBadges(item)
+  const metricChips = getMetricChips(item)
+  const reasonLabel = getDisplayReasonLabel(item)
   const courseContext =
     item.entityType === 'student'
       ? [item.cursoNombre, item.cursoDescripcion].filter(Boolean).join(' · ')
@@ -107,20 +249,18 @@ function FollowUpRow({ item }: { item: DashboardOpenFollowUp }) {
   return (
     <Link
       href={href}
-      className="group grid min-w-0 gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+      className="group grid min-w-0 gap-2 rounded-xl px-2 py-2.5 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
     >
       <span className="flex min-w-0 gap-2.5">
         <FollowUpAvatar item={item} />
         <span className="min-w-0">
           <span className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-md bg-muted/25 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <span className="rounded-md bg-muted/30 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border/35">
               {getEntityLabel(item)}
             </span>
-            {item.level === 'critical' ? (
-              <span className="rounded-md bg-muted/25 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                Monitoreo
-              </span>
-            ) : null}
+            {badges.map((badge) => (
+              <SignalBadge key={`${item.id}-${badge.label}`} {...badge} />
+            ))}
           </span>
           <span className="mt-1 block truncate text-sm font-semibold leading-5 text-foreground group-hover:text-primary">
             {entityName}
@@ -130,9 +270,18 @@ function FollowUpRow({ item }: { item: DashboardOpenFollowUp }) {
               {courseContext}
             </span>
           ) : null}
-          <span className="mt-0.5 block truncate text-xs font-medium leading-5 text-foreground/80">
-            {cleanReason(item)}
-          </span>
+          {metricChips.length > 0 ? (
+            <span className="mt-1 flex flex-wrap gap-1.5">
+              {metricChips.map((chip) => (
+                <MetricChip key={`${item.id}-${chip.label}`} {...chip} />
+              ))}
+            </span>
+          ) : null}
+          {reasonLabel ? (
+            <span className="mt-1 block truncate text-xs leading-5 text-muted-foreground">
+              {reasonLabel}
+            </span>
+          ) : null}
         </span>
       </span>
       <span className="inline-flex h-7 items-center justify-self-start rounded-lg px-2 text-xs font-semibold text-muted-foreground transition-colors group-hover:bg-muted/35 group-hover:text-foreground sm:justify-self-end">
@@ -145,7 +294,8 @@ function FollowUpRow({ item }: { item: DashboardOpenFollowUp }) {
 function groupItems(items: DashboardOpenFollowUp[]) {
   return items.reduce<Array<{ key: string; label: string; items: DashboardOpenFollowUp[] }>>(
     (groups, item) => {
-      const key = `${item.year}-${item.quarterNumber}-${item.periodLabel}`
+      const label = getPeriodLabel(item)
+      const key = `${item.year}-${item.quarterNumber}-${label}`
       const existing = groups.find((group) => group.key === key)
 
       if (existing) {
@@ -153,7 +303,7 @@ function groupItems(items: DashboardOpenFollowUp[]) {
       } else {
         groups.push({
           key,
-          label: item.periodLabel || `${item.quarterNumber}º trimestre`,
+          label,
           items: [item],
         })
       }
@@ -169,28 +319,15 @@ export function OpenFollowUpsSection({
 }: {
   items: DashboardOpenFollowUp[]
 }) {
-  const [expanded, setExpanded] = useState(items.length > 0)
-  const visibleItems = items.slice(0, VISIBLE_LIMIT)
+  const [expanded, setExpanded] = useState(false)
+  const visibleItems = useMemo(() => items.slice(0, VISIBLE_LIMIT), [items])
   const hiddenCount = Math.max(items.length - visibleItems.length, 0)
   const groups = useMemo(() => groupItems(visibleItems), [visibleItems])
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-
-    if (stored === 'true' || stored === 'false') {
-      setExpanded(stored === 'true')
-    }
-  }, [])
-
-  function handleOpenChange(value: boolean) {
-    setExpanded(value)
-    window.localStorage.setItem(STORAGE_KEY, String(value))
-  }
 
   if (items.length === 0) return null
 
   return (
-    <Collapsible open={expanded} onOpenChange={handleOpenChange} asChild>
+    <Collapsible open={expanded} onOpenChange={setExpanded} asChild>
       <section className="rounded-2xl bg-card/65 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.025)] ring-1 ring-border/35 dark:bg-card/45 sm:p-3.5">
         <div className="flex items-start justify-between gap-3">
           <CollapsibleTrigger className="group flex min-w-0 flex-1 items-start gap-2 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35">
@@ -203,30 +340,25 @@ export function OpenFollowUpsSection({
             </span>
             <span className="min-w-0">
               <span className="block text-base font-semibold tracking-tight text-foreground">
-                Seguimientos abiertos
+                Casos a monitorear · {items.length}
               </span>
               <span className="mt-1 block max-w-2xl text-sm leading-6 text-muted-foreground">
-                Casos históricos que conviene monitorear sin mezclarlos con la cola de hoy.
+               Situaciones de alumnos y cursos que tuvieron alertas importantes durante el ciclo lectivo.
               </span>
             </span>
           </CollapsibleTrigger>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden rounded-md bg-muted/25 px-1.5 py-0.5 text-xs font-medium text-muted-foreground sm:inline-flex">
-              {items.length}
-            </span>
-            <Link
-              href="/admin/dashboard/reports"
-              className="inline-flex h-8 items-center rounded-lg px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/35 hover:text-foreground active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
-            >
-              Ver reportes
-              <ArrowRight className="ml-1 size-3.5" />
-            </Link>
-          </div>
+          <Link
+            href="/admin/dashboard/reports"
+            className="inline-flex h-8 shrink-0 items-center rounded-lg px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/35 hover:text-foreground active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+          >
+            Abrir reportes
+            <ArrowRight className="ml-1 size-3.5" />
+          </Link>
         </div>
 
         <CollapsibleContent>
-          <div className="mt-2.5 space-y-3">
+          <div className="mt-3 space-y-3">
             {groups.map((group) => (
               <div key={group.key} className="grid gap-2 sm:grid-cols-[104px_minmax(0,1fr)]">
                 <div className="pt-2 text-xs font-semibold text-muted-foreground">
