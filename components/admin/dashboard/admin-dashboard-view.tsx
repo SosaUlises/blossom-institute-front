@@ -363,6 +363,21 @@ function formatPeriodLabel(dashboard: AdminDashboardResponse) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
+function formatHeaderPeriodLabel(value: string) {
+  const normalized = value
+    .replace(/(\d)°/g, '$1º')
+    .replace(/\bTrimestre\b/gi, 'trimestre')
+  const rangeMarker = ' a '
+  const rangeIndex = normalized.indexOf(rangeMarker)
+
+  if (rangeIndex === -1) return normalized
+
+  const rangeEndIndex = rangeIndex + rangeMarker.length
+  return `${normalized.slice(0, rangeEndIndex)}${normalized
+    .charAt(rangeEndIndex)
+    .toLocaleLowerCase('es-AR')}${normalized.slice(rangeEndIndex + 1)}`
+}
+
 function getTrendComparisonLabel(dashboard: AdminDashboardResponse) {
   return dashboard.trendComparison?.label?.trim() || 'trimestre anterior'
 }
@@ -1747,28 +1762,32 @@ function AdminDashboardHeader({
   healthSummary: ReturnType<typeof getDashboardHealthSummary>
 }) {
   const hasQueue = queueCount > 0
-  const summary = hasQueue
-    ? `${queueCount} ${pluralize(queueCount, 'caso requiere', 'casos requieren')} atención hoy.`
-    : 'No hay casos prioritarios para revisar hoy.'
+  const summary =
+    healthSummary.tone === 'rose'
+      ? 'Hay situaciones académicas que requieren seguimiento.'
+      : hasQueue
+        ? `${queueCount} ${pluralize(queueCount, 'caso requiere', 'casos requieren')} atención hoy.`
+        : 'No hay casos prioritarios para revisar hoy.'
+  const metadata = `${formatTodayLabel()} · ${formatHeaderPeriodLabel(periodLabel)}`
 
   return (
-    <header className="flex flex-col gap-3 border-b border-border/45 pb-3 lg:flex-row lg:items-center lg:justify-between">
+    <header className="flex flex-col gap-4 border-b border-border/45 pb-5 lg:flex-row lg:items-start lg:justify-between">
       <div className="min-w-0">
-        <p className="text-xs font-medium capitalize text-muted-foreground">
-          {formatTodayLabel()} · {periodLabel}
-        </p>
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Hoy en Blossom
-          </h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Hoy en Blossom
+        </h1>
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <SubtleState tone={healthSummary.tone}>{healthSummary.label}</SubtleState>
+          <p className="text-sm leading-6 text-muted-foreground">{summary}</p>
         </div>
-        <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-          {summary}
+        <p className="mt-2.5 text-xs font-medium text-muted-foreground">
+          {metadata}
         </p>
       </div>
 
-      <QuickActionsToolbar />
+      <div className="lg:pt-0.5">
+        <QuickActionsToolbar />
+      </div>
     </header>
   )
 }
@@ -1885,7 +1904,7 @@ function DailyWorkQueue({ items }: { items: DailyQueueItem[] }) {
           <EmptyState
             icon={CheckCircle2}
             title="No hay casos urgentes para revisar hoy"
-            description="No se detectaron alumnos o cursos con riesgo actual en los datos disponibles."
+            description="Alumnos y cursos no presentan riesgos actuales."
           />
         </div>
       ) : (
@@ -2038,7 +2057,7 @@ function AgendaDialog({ items }: { items: AgendaItem[] }) {
         <DialogHeader className="gap-1 px-4 pb-3 pt-4 pr-12">
           <DialogTitle className="text-base">Agenda completa</DialogTitle>
           <DialogDescription>
-            Clases y vencimientos próximos ordenados por fecha.
+            Clases próximas ordenadas por fecha.
           </DialogDescription>
         </DialogHeader>
 
@@ -2047,8 +2066,8 @@ function AgendaDialog({ items }: { items: AgendaItem[] }) {
             <div className="p-4">
               <EmptyState
                 icon={CalendarDays}
-                title="No hay clases o vencimientos próximos registrados."
-                description="Cuando haya actividad cercana, va a aparecer en esta agenda."
+                title="No hay clases ni vencimientos próximos"
+                description="La agenda está despejada por ahora."
               />
             </div>
           ) : (
@@ -2083,22 +2102,22 @@ function ImmediateAgenda({
     .filter(({ items }) => items.length > 0)
 
   return (
-    <section className="rounded-2xl bg-card/80 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/35 dark:bg-card/65 sm:p-3.5">
+    <section className="rounded-2xl bg-card/80 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] ring-1 ring-border/35 dark:bg-card/65">
       <SectionHeader
         title="Agenda inmediata"
         action={<AgendaDialog items={allItems} />}
       />
 
       {visibleItems.length === 0 ? (
-        <div className="mt-3">
+        <div className="mt-2.5">
           <EmptyState
             icon={CalendarDays}
-            title="Sin clases próximas registradas."
-            description="No hay vencimientos cercanos."
+            title="Sin clases ni vencimientos próximos"
+            description="La agenda está despejada por ahora."
           />
         </div>
       ) : (
-        <div className="mt-3 space-y-3.5">
+        <div className="mt-2.5 space-y-2.5">
           {groupedItems.map(({ group, items }) => (
             <div key={group}>
               <p className="mb-1 text-xs font-medium text-muted-foreground">
@@ -2109,7 +2128,7 @@ function ImmediateAgenda({
                   <Link
                     key={item.id}
                     href={item.href}
-                    className="group grid min-w-0 grid-cols-[50px_minmax(0,1fr)] gap-2.5 rounded-xl px-2 py-2 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+                    className="group grid min-w-0 grid-cols-[50px_minmax(0,1fr)] gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-muted/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
                   >
                     <span className="min-w-0 pt-0.5">
                       <span className="block text-xs font-semibold tabular-nums text-foreground">
@@ -2280,7 +2299,7 @@ function InstitutionalSnapshotSection({
 
   return (
     <section id="snapshot-institucional" className="scroll-mt-6 border-t border-border/45 pt-4">
-      <div className="rounded-2xl bg-card/75 px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] ring-1 ring-border/35 dark:bg-card/60 sm:px-4">
+      <div className="rounded-2xl bg-card/60 px-3 py-3 ring-1 ring-border/30 dark:bg-card/45 sm:px-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <h2 className="text-base font-semibold tracking-tight text-foreground">
@@ -2296,7 +2315,7 @@ function InstitutionalSnapshotSection({
           </Link>
         </div>
 
-        <div className="mt-2.5 grid gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="mt-2.5 grid gap-x-2 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
           {metrics.map((metric) => (
             <InstitutionalSnapshotMetricRow key={metric.id} metric={metric} />
           ))}
@@ -2334,8 +2353,8 @@ export function AdminDashboardView({
   const healthSummary = getDashboardHealthSummary(dashboard)
 
   return (
-    <main className="flex-1 overflow-auto px-5 py-4 lg:px-8 lg:py-5">
-      <div className="mx-auto max-w-7xl space-y-4">
+    <main className="flex-1 overflow-auto px-5 pb-4 pt-7 lg:px-8 lg:pb-5 lg:pt-8">
+      <div className="mx-auto max-w-7xl space-y-5">
         <AdminDashboardHeader
           queueCount={dailyQueueItems.length}
           periodLabel={periodLabel}

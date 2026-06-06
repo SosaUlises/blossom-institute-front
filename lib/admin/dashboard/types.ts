@@ -198,7 +198,16 @@ export interface DashboardOpenFollowUp {
   level: 'normal' | 'follow-up' | 'critical' | string
   averageGrade?: number | null
   attendancePercentage?: number | null
+  gradeAlerts?: DashboardOpenFollowUpGradeAlert[]
   href: string
+}
+
+export interface DashboardOpenFollowUpGradeAlert {
+  calificacionId: number
+  titulo: string
+  tipo: number | string
+  nota: number
+  fecha: string
 }
 
 export interface DashboardUpcomingAssignment {

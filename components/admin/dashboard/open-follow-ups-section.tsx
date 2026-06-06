@@ -71,6 +71,7 @@ function getSignalBadges(item: DashboardOpenFollowUp) {
   const source = item.source?.toLowerCase() ?? ''
   const hasAverage = typeof item.averageGrade === 'number'
   const hasAttendance = typeof item.attendancePercentage === 'number'
+  const hasGradeAlerts = (item.gradeAlerts?.length ?? 0) > 0
 
   if (hasAverage && hasAttendance) {
     badges.push({ label: 'Riesgo combinado', tone: 'rose' })
@@ -78,6 +79,9 @@ function getSignalBadges(item: DashboardOpenFollowUp) {
     badges.push({ label: 'Promedio bajo', tone: 'amber' })
   } else if (source.includes('attendance') || hasAttendance) {
     badges.push({ label: 'Baja asistencia', tone: 'amber' })
+  } else if (source.includes('manual-grade') || hasGradeAlerts) {
+    const hasCriticalGrade = item.gradeAlerts?.some((alert) => alert.nota < 50)
+    badges.push({ label: 'Calificación baja', tone: hasCriticalGrade ? 'rose' : 'amber' })
   } else {
     badges.push({ label: 'Seguimiento', tone: 'neutral' })
   }
@@ -117,6 +121,21 @@ function getMetricChips(item: DashboardOpenFollowUp) {
   return chips
 }
 
+function getGradeTypeLabel(tipo: number | string) {
+  const normalizedType = Number(tipo)
+
+  if (normalizedType === 2 || tipo === 'Quiz') return 'Quiz'
+  if (normalizedType === 3 || tipo === 'Test') return 'Test'
+  if (normalizedType === 4 || tipo === 'Participation') return 'Participación'
+  if (normalizedType === 5 || tipo === 'Behaviour') return 'Comportamiento'
+
+  return 'Evaluación'
+}
+
+function getGradeAlertTone(nota: number): 'amber' | 'rose' {
+  return nota < 50 ? 'rose' : 'amber'
+}
+
 function getReasonLabel(item: DashboardOpenFollowUp) {
   const reason = item.reason?.trim()
 
@@ -140,6 +159,7 @@ function getDisplayReasonLabel(item: DashboardOpenFollowUp) {
   const normalizedReason = normalizeReason(reason)
   const hasAverageMetric = typeof item.averageGrade === 'number'
   const hasAttendanceMetric = typeof item.attendancePercentage === 'number'
+  const hasGradeAlerts = (item.gradeAlerts?.length ?? 0) > 0
   const duplicatesAverageChip =
     hasAverageMetric &&
     (normalizedReason.startsWith('promedio ') ||
@@ -150,6 +170,7 @@ function getDisplayReasonLabel(item: DashboardOpenFollowUp) {
       normalizedReason.startsWith('asistencia critica ') ||
       normalizedReason.startsWith('baja asistencia '))
 
+  if (hasGradeAlerts && item.source?.toLowerCase().includes('manual-grade')) return null
   if (duplicatesAverageChip || duplicatesAttendanceChip) return null
 
   return reason
@@ -211,6 +232,34 @@ function MetricChip({
   )
 }
 
+function GradeAlertItem({
+  title,
+  typeLabel,
+  grade,
+}: {
+  title: string
+  typeLabel: string
+  grade: number
+}) {
+  const tone = getGradeAlertTone(grade)
+
+  return (
+    <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-muted/15 px-2 py-1.5 ring-1 ring-border/30">
+      <span className="min-w-0 truncate text-xs font-medium text-foreground/85">
+        {typeLabel} · {title}
+      </span>
+      <span className={cn(
+        'shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ring-1',
+        tone === 'rose'
+          ? 'bg-rose-500/10 text-rose-700 ring-rose-500/15 dark:text-rose-300'
+          : 'bg-amber-500/10 text-amber-800 ring-amber-500/15 dark:text-amber-300',
+      )}>
+        Calificación {formatMetricValue(grade)}
+      </span>
+    </span>
+  )
+}
+
 function FollowUpAvatar({ item }: { item: DashboardOpenFollowUp }) {
   if (item.entityType === 'student') {
     const name = getEntityName(item)
@@ -241,6 +290,7 @@ function FollowUpRow({ item }: { item: DashboardOpenFollowUp }) {
   const badges = getSignalBadges(item)
   const metricChips = getMetricChips(item)
   const reasonLabel = getDisplayReasonLabel(item)
+  const gradeAlerts = item.gradeAlerts ?? []
   const courseContext =
     item.entityType === 'student'
       ? [item.cursoNombre, item.cursoDescripcion].filter(Boolean).join(' · ')
@@ -275,6 +325,23 @@ function FollowUpRow({ item }: { item: DashboardOpenFollowUp }) {
               {metricChips.map((chip) => (
                 <MetricChip key={`${item.id}-${chip.label}`} {...chip} />
               ))}
+            </span>
+          ) : null}
+          {gradeAlerts.length > 0 ? (
+            <span className="mt-1.5 flex flex-col gap-1">
+              {gradeAlerts.slice(0, 2).map((alert) => (
+                <GradeAlertItem
+                  key={`${item.id}-${alert.calificacionId}`}
+                  title={alert.titulo}
+                  typeLabel={getGradeTypeLabel(alert.tipo)}
+                  grade={alert.nota}
+                />
+              ))}
+              {gradeAlerts.length > 2 ? (
+                <span className="px-2 text-[11px] font-medium text-muted-foreground">
+                  +{gradeAlerts.length - 2} evaluaciones bajas más
+                </span>
+              ) : null}
             </span>
           ) : null}
           {reasonLabel ? (
@@ -328,10 +395,10 @@ export function OpenFollowUpsSection({
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded} asChild>
-      <section className="rounded-2xl bg-card/65 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.025)] ring-1 ring-border/35 dark:bg-card/45 sm:p-3.5">
-        <div className="flex items-start justify-between gap-3">
+      <section className="rounded-2xl bg-muted/10 p-3.5 ring-1 ring-border/40 dark:bg-muted/[0.06] sm:p-4">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
           <CollapsibleTrigger className="group flex min-w-0 flex-1 items-start gap-2 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35">
-            <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-muted/25 text-muted-foreground transition-colors group-hover:bg-muted/35 group-hover:text-foreground">
+            <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-background/70 text-muted-foreground ring-1 ring-border/30 transition-colors group-hover:bg-background group-hover:text-foreground">
               {expanded ? (
                 <ChevronDown className="size-3.5" />
               ) : (
@@ -339,18 +406,23 @@ export function OpenFollowUpsSection({
               )}
             </span>
             <span className="min-w-0">
-              <span className="block text-base font-semibold tracking-tight text-foreground">
-                Casos a monitorear · {items.length}
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="text-[17px] font-semibold tracking-tight text-foreground">
+                  Casos a seguir
+                </span>
+                <span className="rounded-md bg-background/75 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-muted-foreground ring-1 ring-border/35">
+                  {items.length}
+                </span>
               </span>
               <span className="mt-1 block max-w-2xl text-sm leading-6 text-muted-foreground">
-               Situaciones de alumnos y cursos que tuvieron alertas importantes durante el ciclo lectivo.
+                Situaciones académicas con alertas relevantes durante el ciclo lectivo.
               </span>
             </span>
           </CollapsibleTrigger>
 
           <Link
             href="/admin/dashboard/reports"
-            className="inline-flex h-8 shrink-0 items-center rounded-lg px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/35 hover:text-foreground active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+            className="inline-flex h-8 shrink-0 self-start items-center rounded-lg px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/35 hover:text-foreground active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
           >
             Abrir reportes
             <ArrowRight className="ml-1 size-3.5" />
