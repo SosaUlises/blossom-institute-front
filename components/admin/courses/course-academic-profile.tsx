@@ -12,7 +12,6 @@ import {
   BookOpen,
   CheckCircle2,
   ClipboardCheck,
-  GraduationCap,
   Inbox,
   Pencil,
   Percent,
@@ -38,32 +37,6 @@ import { cn } from '@/lib/utils'
 
 type HealthLevel = 'normal' | 'follow-up' | 'critical'
 type MetricTone = 'neutral' | 'healthy' | 'attention' | 'critical'
-
-const STATUS_OPTIONS: Array<{
-  level: HealthLevel
-  label: string
-  fallbackReasons: string[]
-  icon: ComponentType<{ className?: string }>
-}> = [
-  {
-    level: 'normal',
-    label: 'Normal',
-    fallbackReasons: ['Sin señales académicas prioritarias.'],
-    icon: CheckCircle2,
-  },
-  {
-    level: 'follow-up',
-    label: 'Seguimiento',
-    fallbackReasons: ['Asistencia, promedio o correcciones requieren monitoreo.'],
-    icon: AlertCircle,
-  },
-  {
-    level: 'critical',
-    label: 'Crítico',
-    fallbackReasons: ['Riesgo académico alto o acumulación de señales urgentes.'],
-    icon: ShieldAlert,
-  },
-]
 
 const NORMAL_COURSE_HEALTH: CourseHealth = {
   level: 'normal',
@@ -123,7 +96,7 @@ function formatNumber(value?: number | null, fallback = '0') {
   }).format(value)
 }
 
-function formatDecimal(value?: number | null, fallback = 'Sin datos') {
+function formatDecimal(value?: number | null, fallback = 'Aún no disponible') {
   if (value === null || value === undefined || Number.isNaN(value)) return fallback
 
   return new Intl.NumberFormat('es-AR', {
@@ -131,7 +104,7 @@ function formatDecimal(value?: number | null, fallback = 'Sin datos') {
   }).format(value)
 }
 
-function formatPercent(value?: number | null, fallback = 'Sin datos') {
+function formatPercent(value?: number | null, fallback = 'Aún no disponible') {
   if (value === null || value === undefined || Number.isNaN(value)) return fallback
 
   return `${formatDecimal(value)}%`
@@ -166,13 +139,6 @@ function getMetricTone(kind: 'average' | 'attendance' | 'count', value?: number 
   return value > 0 ? 'attention' : 'healthy'
 }
 
-function getHealthTone(level: HealthLevel): MetricTone {
-  if (level === 'critical') return 'critical'
-  if (level === 'follow-up') return 'attention'
-
-  return 'healthy'
-}
-
 function getSeverityTone(severity?: string | null): MetricTone {
   if (severity === 'critical') return 'critical'
   if (severity === 'attention') return 'attention'
@@ -187,8 +153,23 @@ function severityWeight(signal: CourseAcademicProfileSignal) {
   return 2
 }
 
-function HealthBadge({ health }: { health: CourseHealth }) {
+function HealthBadge({
+  health,
+  hasAcademicData = true,
+}: {
+  health: CourseHealth
+  hasAcademicData?: boolean
+}) {
   const level = normalizeHealthLevel(health.level)
+
+  if (!hasAcademicData && level === 'normal') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/25 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+        <BookOpen className="size-3.5" />
+        Sin actividad académica
+      </span>
+    )
+  }
 
   if (level === 'critical') {
     return (
@@ -226,14 +207,14 @@ function EmptyPanel({
   description: string
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-6 text-center dark:bg-background/25">
-      <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+    <div className="flex items-start gap-3 rounded-xl border border-border/50 bg-background/45 px-3 py-3.5 dark:bg-background/20">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/35 text-muted-foreground">
         <Icon className="size-5" />
       </div>
-      <h3 className="mt-3 text-sm font-semibold text-foreground">{title}</h3>
-      <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground">
-        {description}
-      </p>
+      <div className="min-w-0">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <p className="mt-0.5 text-sm leading-5 text-muted-foreground">{description}</p>
+      </div>
     </div>
   )
 }
@@ -299,50 +280,73 @@ function InlineMetric({
   )
 }
 
-function StatusCard({
-  option,
-  active,
+function CurrentHealthSummary({
   health,
+  hasAcademicData,
 }: {
-  option: (typeof STATUS_OPTIONS)[number]
-  active: boolean
   health: CourseHealth
+  hasAcademicData: boolean
 }) {
-  const Icon = option.icon
-  const tone = active ? getHealthTone(option.level) : 'neutral'
-  const reasons = active && health.reasons.length > 0 ? health.reasons : option.fallbackReasons
+  const level = normalizeHealthLevel(health.level)
+  const Icon =
+    !hasAcademicData && level === 'normal'
+      ? BookOpen
+      : level === 'critical'
+        ? ShieldAlert
+        : level === 'follow-up'
+          ? AlertTriangle
+          : CheckCircle2
+  const reasons =
+    !hasAcademicData && level === 'normal'
+      ? ['Todavía no hay asistencias o calificaciones suficientes para evaluar el curso.']
+      : health.reasons
 
   return (
-    <article
+    <div
       className={cn(
-        'rounded-xl border bg-background/60 p-3 dark:bg-background/25',
-        tone === 'healthy' && 'border-emerald-500/20 bg-emerald-500/5',
-        tone === 'attention' && 'border-amber-500/20 bg-amber-500/5',
-        tone === 'critical' && 'border-rose-500/20 bg-rose-500/5',
-        tone === 'neutral' && 'border-border/60',
+        'flex items-start gap-3 rounded-xl border px-3 py-3.5',
+        level === 'critical' && 'border-rose-500/25 bg-rose-500/[0.05]',
+        level === 'follow-up' && 'border-amber-500/25 bg-amber-500/[0.05]',
+        level === 'normal' &&
+          hasAcademicData &&
+          'border-emerald-500/20 bg-emerald-500/[0.04]',
+        level === 'normal' &&
+          !hasAcademicData &&
+          'border-border/50 bg-background/45 dark:bg-background/20',
       )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-card/80 text-muted-foreground ring-1 ring-border/50">
-            <Icon className="size-4" />
-          </div>
-          <h4 className="text-sm font-semibold text-foreground">{option.label}</h4>
-        </div>
-        {active ? (
-          <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            Actual
-          </span>
-        ) : null}
+      <div
+        className={cn(
+          'flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted/35 text-muted-foreground',
+          level === 'critical' && 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+          level === 'follow-up' && 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+          level === 'normal' &&
+            hasAcademicData &&
+            'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+        )}
+      >
+        <Icon className="size-4.5" />
       </div>
-      <div className="mt-3 space-y-2">
-        {reasons.map((reason) => (
-          <p key={reason} className="text-sm leading-5 text-muted-foreground">
-            {normalizeCopy(reason)}
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-semibold text-foreground">
+            {!hasAcademicData && level === 'normal'
+              ? 'Aún sin actividad académica'
+              : normalizeCopy(health.label)}
           </p>
-        ))}
+          <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            Trimestre actual
+          </span>
+        </div>
+        <div className="mt-1 space-y-0.5">
+          {reasons.map((reason) => (
+            <p key={reason} className="text-sm leading-5 text-muted-foreground">
+              {normalizeCopy(reason)}
+            </p>
+          ))}
+        </div>
       </div>
-    </article>
+    </div>
   )
 }
 
@@ -430,18 +434,24 @@ function StudentFollowUpRow({
             <p className="mt-1 text-sm leading-5 text-muted-foreground">
               {normalizeCopy(student.reason)}
             </p>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-              <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5">
-                Asistencia {formatPercent(student.attendancePercentage)}
-              </span>
-              <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5">
-                Promedio {formatDecimal(student.averageGrade)}
-              </span>
-            </div>
+            {hasNumber(student.attendancePercentage) || hasNumber(student.averageGrade) ? (
+              <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                {hasNumber(student.attendancePercentage) ? (
+                  <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5">
+                    Asistencia {formatPercent(student.attendancePercentage)}
+                  </span>
+                ) : null}
+                {hasNumber(student.averageGrade) ? (
+                  <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5">
+                    Promedio {formatDecimal(student.averageGrade)}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 
-        <Button asChild className="h-9 shrink-0 rounded-xl px-3 text-sm shadow-none transition-[transform,background-color] duration-200 ease-out active:scale-[0.98]">
+        <Button asChild variant="outline" className="h-9 shrink-0 rounded-xl border-border/70 bg-background/70 px-3 text-sm shadow-none transition-[transform,background-color,border-color] duration-200 ease-out hover:bg-muted/35 active:scale-[0.98]">
           <Link href={`/admin/dashboard/students/${student.id}/profile`}>
             Ver alumno
             <ArrowUpRight className="ml-2 size-4" />
@@ -463,7 +473,7 @@ function PendingFollowUpRow({
   const periodLabel = item.periodLabel || `${item.quarterNumber}º trimestre`
 
   return (
-    <article className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
+    <article className="rounded-xl border border-orange-500/25 bg-orange-500/[0.06] p-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 gap-3">
           <UserAvatar
@@ -471,7 +481,7 @@ function PendingFollowUpRow({
             avatarUrl={item.avatarUrl}
             size={40}
             className="shrink-0"
-            fallbackClassName="bg-amber-500/10 text-amber-700 dark:text-amber-300 text-sm"
+            fallbackClassName="bg-orange-500/10 text-orange-700 dark:text-orange-300 text-sm"
           />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -484,7 +494,7 @@ function PendingFollowUpRow({
                   level === 'critical' &&
                     'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300',
                   level === 'follow-up' &&
-                    'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+                    'border-orange-500/25 bg-orange-500/10 text-orange-800 dark:text-orange-300',
                   level === 'normal' && 'border-border/60 bg-card/80 text-muted-foreground',
                 )}
               >
@@ -498,19 +508,25 @@ function PendingFollowUpRow({
             <p className="mt-1 text-sm leading-5 text-muted-foreground">
               {normalizeCopy(item.description || item.reason)}
             </p>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-              <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5">
-                Promedio {formatDecimal(item.averageValue)}
-              </span>
-              <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5">
-                Asistencia {formatPercent(item.attendanceValue)}
-              </span>
-            </div>
+            {hasNumber(item.averageValue) || hasNumber(item.attendanceValue) ? (
+              <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                {hasNumber(item.averageValue) ? (
+                  <span className="rounded-full border border-orange-500/20 bg-card/80 px-2 py-0.5 text-orange-800 dark:text-orange-300">
+                    Promedio {formatDecimal(item.averageValue)}
+                  </span>
+                ) : null}
+                {hasNumber(item.attendanceValue) ? (
+                  <span className="rounded-full border border-orange-500/20 bg-card/80 px-2 py-0.5 text-orange-800 dark:text-orange-300">
+                    Asistencia {formatPercent(item.attendanceValue)}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 
         {item.alumnoId ? (
-          <Button asChild className="h-9 shrink-0 rounded-xl px-3 text-sm shadow-none transition-[transform,background-color] duration-200 ease-out active:scale-[0.98]">
+          <Button asChild variant="outline" className="h-9 shrink-0 rounded-xl border-orange-500/25 bg-card/70 px-3 text-sm text-orange-800 shadow-none transition-[transform,background-color,border-color] duration-200 ease-out hover:bg-orange-500/10 hover:text-orange-900 active:scale-[0.98] dark:text-orange-300 dark:hover:text-orange-200">
             <Link href={`/admin/dashboard/students/${item.alumnoId}/profile`}>
               Ver alumno
               <ArrowUpRight className="ml-2 size-4" />
@@ -598,7 +614,7 @@ function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData 
   const pendingCorrectionsCount =
     metrics.pendingCorrectionsCount ?? profile.academicMetrics.pendingCorrectionsCount
   const health = normalizeCourseHealth(profile.academicStatusCurrent ?? profile.health)
-  const healthLevel = normalizeHealthLevel(health.level)
+  const hasAcademicData = hasNumber(attendanceAverage) || hasNumber(academicAverage)
   const studentsCount = profile.students.studentsCount
   const teachersCount = profile.teachers.length
   const affectedStudentsCurrent =
@@ -623,7 +639,7 @@ function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData 
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground">
                   {profile.course.name}
                 </h1>
-                <HealthBadge health={health} />
+                <HealthBadge health={health} hasAcademicData={hasAcademicData} />
               </div>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
                 {profile.course.description?.trim() || 'Sin descripción cargada.'}
@@ -643,16 +659,10 @@ function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData 
           </div>
 
           <div className="flex shrink-0 flex-wrap gap-2">
-            <Button asChild variant="outline" className="h-10 rounded-xl shadow-none active:scale-[0.98]">
-              <Link href="/admin/dashboard/courses">
-                <ArrowLeft className="mr-2 size-4" />
-                Volver al listado
-              </Link>
-            </Button>
-            <Button asChild className="h-10 rounded-xl shadow-none transition-[transform,background-color] duration-200 ease-out active:scale-[0.98]">
+            <Button asChild variant="outline" className="h-10 rounded-xl border-border/70 bg-background/70 shadow-none transition-[transform,background-color,border-color] duration-200 ease-out hover:bg-muted/35 active:scale-[0.98]">
               <Link href={`/admin/dashboard/courses/${profile.course.id}`}>
                 <Pencil className="mr-2 size-4" />
-                Ajustes
+                Editar datos
               </Link>
             </Button>
           </div>
@@ -663,15 +673,15 @@ function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData 
         <InlineMetric
           icon={Percent}
           label="Asistencia"
-          value={formatPercent(attendanceAverage)}
-          detail="Trimestre actual"
+          value={formatPercent(attendanceAverage, 'Aún no disponible')}
+          detail={hasNumber(attendanceAverage) ? 'Trimestre actual' : 'Sin asistencias registradas'}
           tone={getMetricTone('attendance', attendanceAverage)}
         />
         <InlineMetric
           icon={TrendingUp}
           label="Promedio académico"
-          value={formatDecimal(academicAverage)}
-          detail="Trimestre actual"
+          value={formatDecimal(academicAverage, 'Aún no disponible')}
+          detail={hasNumber(academicAverage) ? 'Trimestre actual' : 'Sin calificaciones registradas'}
           tone={getMetricTone('average', academicAverage)}
         />
         <InlineMetric
@@ -713,83 +723,62 @@ function CourseProfileContent({ profile }: { profile: CourseAcademicProfileData 
             title="Alertas del trimestre actual"
             description="Lectura operacional calculada solo con datos del trimestre actual."
           >
-            <div className="grid gap-3 md:grid-cols-3">
-              {STATUS_OPTIONS.map((option) => (
-                <StatusCard
-                  key={option.level}
-                  option={option}
-                  active={option.level === healthLevel}
-                  health={health}
-                />
-              ))}
-            </div>
+            <CurrentHealthSummary health={health} hasAcademicData={hasAcademicData} />
           </SectionPanel>
 
-          <SectionPanel
-            title="Señales del trimestre actual"
-            description="Alertas académicas actuales ordenadas por prioridad."
-          >
-            {sortedSignals.length > 0 ? (
+          {sortedSignals.length > 0 ? (
+            <SectionPanel
+              title="Señales del trimestre actual"
+              description="Alertas académicas actuales ordenadas por prioridad."
+            >
               <div className="space-y-2">
                 {sortedSignals.map((signal, index) => (
                   <SignalRow key={`${signal.type}-${signal.title}-${index}`} signal={signal} />
                 ))}
               </div>
-            ) : (
-              <EmptyPanel
-                icon={CheckCircle2}
-                title="Sin alertas en el trimestre actual"
-                description="No hay señales académicas actuales para este curso."
-              />
-            )}
-          </SectionPanel>
+            </SectionPanel>
+          ) : null}
         </div>
 
         <div className="space-y-5">
-          <SectionPanel
-            title="Alumnos afectados actuales"
-            description="Alumnos con alertas del trimestre actual."
-          >
-            {affectedStudentsCurrent.length > 0 ? (
+          {affectedStudentsCurrent.length > 0 ? (
+            <SectionPanel
+              title="Alumnos afectados actuales"
+              description="Alumnos con alertas del trimestre actual."
+            >
               <div className="space-y-2">
                 {affectedStudentsCurrent.map((student) => (
                   <StudentFollowUpRow key={student.id} student={student} />
                 ))}
               </div>
-            ) : (
-              <EmptyPanel
-                icon={GraduationCap}
-                title="Sin alertas en el trimestre actual"
-                description="No hay alumnos marcados para intervención actual en este curso."
-              />
-            )}
-          </SectionPanel>
+            </SectionPanel>
+          ) : null}
 
           <SectionPanel
-            title="Seguimiento pendiente"
-            description="Señales heredadas de trimestres anteriores, separadas del estado actual."
+            title={`Seguimiento pendiente${pendingFollowUpCount > 0 ? ` · ${pendingFollowUpCount}` : ''}`}
+            description="Situaciones de períodos anteriores que todavía conviene monitorear."
           >
             {pendingFollowUpCount > 0 ? (
-              <div className="space-y-3">
-                <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-800 dark:text-amber-200">
-                  Con seguimiento pendiente del trimestre anterior
+              pendingFollowUp.length > 0 ? (
+                <div className="space-y-2">
+                  {pendingFollowUp.map((item, index) => (
+                    <PendingFollowUpRow
+                      key={`${item.alumnoId ?? 'alumno'}-${item.periodLabel}-${index}`}
+                      item={item}
+                    />
+                  ))}
                 </div>
-                {pendingFollowUp.length > 0 ? (
-                  <div className="space-y-2">
-                    {pendingFollowUp.map((item, index) => (
-                      <PendingFollowUpRow
-                        key={`${item.alumnoId ?? 'alumno'}-${item.periodLabel}-${index}`}
-                        item={item}
-                      />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
+              ) : (
+                <div className="flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500/[0.05] px-3 py-3 text-sm text-orange-800 dark:text-orange-300">
+                  <AlertTriangle className="size-4 shrink-0" />
+                  Hay seguimientos pendientes de períodos anteriores.
+                </div>
+              )
             ) : (
               <EmptyPanel
                 icon={CheckCircle2}
                 title="Sin seguimiento pendiente"
-                description="No hay señales heredadas de trimestres anteriores para este curso."
+                description="No hay situaciones anteriores que requieran monitoreo."
               />
             )}
           </SectionPanel>

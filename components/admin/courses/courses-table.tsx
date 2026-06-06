@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ArrowUpRight,
   BookOpen,
+  CheckCircle2,
   GraduationCap,
   Pencil,
   Search,
@@ -185,7 +186,21 @@ function courseRequiresAttention(course: CursoListItem) {
   )
 }
 
-function HealthBadge({ health }: { health: CourseHealth }) {
+function HealthBadge({
+  health,
+  hasAcademicData = true,
+}: {
+  health: CourseHealth
+  hasAcademicData?: boolean
+}) {
+  if (!hasAcademicData && health.level === 'normal') {
+    return (
+      <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/25 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+        Sin actividad
+      </span>
+    )
+  }
+
   return (
     <span
       className={cn(
@@ -263,8 +278,13 @@ function CourseTeachers({ course }: { course: CursoListItem }) {
 
 function CourseAlertBlocks({ course }: { course: CursoListItem }) {
   const health = getCourseHealth(course)
+  const attendanceAverage = getCourseCurrentAttendance(course)
+  const academicAverage = getCourseCurrentAverage(course)
+  const hasAcademicData = hasNumber(attendanceAverage) || hasNumber(academicAverage)
   const currentReasons =
-    health.level !== 'normal' ? health.reasons : ['Sin alertas en el trimestre actual']
+    health.level !== 'normal'
+      ? health.reasons
+      : [hasAcademicData ? 'Sin alertas actuales' : 'Aún sin registros académicos']
   const pendingFollowUpCount = getCoursePendingFollowUpCount(course)
   const pendingPreview = course.pendingFollowUp?.[0]
   const hasPendingFollowUp = pendingFollowUpCount > 0
@@ -273,27 +293,29 @@ function CourseAlertBlocks({ course }: { course: CursoListItem }) {
     <div className="grid gap-2 sm:grid-cols-2">
       <div
         className={cn(
-          'rounded-xl border px-3 py-2 text-sm',
+          'rounded-xl border px-3 py-2.5 text-sm',
           health.level === 'critical' &&
-            'border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-200',
+            'border-rose-500/20 bg-rose-500/[0.06] text-rose-800 dark:text-rose-200',
           health.level === 'follow-up' &&
-            'border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-200',
+            'border-amber-500/20 bg-amber-500/[0.06] text-amber-800 dark:text-amber-200',
           health.level === 'normal' &&
-            'border-border/60 bg-muted/20 text-muted-foreground',
+            'border-border/50 bg-background/45 text-muted-foreground dark:bg-background/20',
         )}
       >
         <div className="flex items-start gap-2">
           {health.level === 'normal' ? (
-            <BookOpen className="mt-0.5 size-4 shrink-0" />
+            hasAcademicData ? (
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <BookOpen className="mt-0.5 size-4 shrink-0" />
+            )
           ) : (
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           )}
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide">
-              Alertas del trimestre actual
-            </p>
+            <p className="text-xs font-medium text-muted-foreground">Estado actual</p>
             <p className="mt-1 line-clamp-2 leading-5">
-              {currentReasons[0] || 'Sin alertas en el trimestre actual'}
+              {currentReasons[0] || 'Sin alertas actuales'}
             </p>
           </div>
         </div>
@@ -301,27 +323,25 @@ function CourseAlertBlocks({ course }: { course: CursoListItem }) {
 
       <div
         className={cn(
-          'rounded-xl border px-3 py-2 text-sm',
+          'rounded-xl border px-3 py-2.5 text-sm',
           hasPendingFollowUp
-            ? 'border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-200'
-            : 'border-border/60 bg-muted/20 text-muted-foreground',
+            ? 'border-orange-500/25 bg-orange-500/[0.07] text-orange-800 dark:text-orange-200'
+            : 'border-border/50 bg-background/45 text-muted-foreground dark:bg-background/20',
         )}
       >
         <div className="flex items-start gap-2">
           {hasPendingFollowUp ? (
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-orange-600 dark:text-orange-300" />
           ) : (
-            <BookOpen className="mt-0.5 size-4 shrink-0" />
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
           )}
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide">
-              Seguimiento pendiente
-            </p>
+            <p className="text-xs font-medium text-muted-foreground">Seguimiento pendiente</p>
             <p className="mt-1 line-clamp-2 leading-5">
               {hasPendingFollowUp
                 ? normalizeCopy(pendingPreview?.description) ||
                   normalizeCopy(pendingPreview?.reason) ||
-                  'Con seguimiento pendiente del trimestre anterior'
+                  `${pendingFollowUpCount} seguimiento${pendingFollowUpCount === 1 ? '' : 's'} de períodos anteriores`
                 : 'Sin seguimiento pendiente'}
             </p>
           </div>
@@ -363,13 +383,14 @@ function CourseRow({ course }: { course: CursoListItem }) {
   const academicAverage = getCourseCurrentAverage(course)
   const description = normalizeCopy(course.descripcion?.trim()) || 'Sin descripción cargada.'
   const health = getCourseHealth(course)
-  const requiresAttention = courseRequiresAttention(course)
+  const hasCurrentAlert = health.level !== 'normal'
+  const hasAcademicData = hasNumber(attendanceAverage) || hasNumber(academicAverage)
 
   return (
     <article
       className={cn(
         'rounded-2xl border bg-card/95 p-4 shadow-sm transition-[border-color,background-color] duration-200 ease-out sm:p-5',
-        requiresAttention
+        hasCurrentAlert
           ? 'border-amber-500/25'
           : 'border-border/60 hover:border-border/80',
       )}
@@ -416,40 +437,45 @@ function CourseRow({ course }: { course: CursoListItem }) {
           <div className="grid grid-cols-3 gap-3">
             <RosterMetric
               label="Asistencia"
-              value={formatPercent(attendanceAverage)}
+              value={formatPercent(attendanceAverage, 'Sin registros')}
               tone={getAttendanceTone(attendanceAverage)}
             />
             <RosterMetric
               label="Promedio"
-              value={formatDecimal(academicAverage)}
+              value={formatDecimal(academicAverage, 'Sin registros')}
               tone={getAverageTone(academicAverage)}
             />
             <div className="min-w-0">
               <p className="text-xs font-medium text-muted-foreground">Salud</p>
               <div className="mt-1">
-                <HealthBadge health={health} />
+                <HealthBadge health={health} hasAcademicData={hasAcademicData} />
               </div>
             </div>
           </div>
 
           <div className="flex flex-wrap justify-start gap-2 xl:justify-end">
-            <Link href={`/admin/dashboard/courses/${course.id}/profile`}>
-              <Button className="h-9 rounded-xl px-3 text-sm transition-[transform,background-color] duration-200 ease-out active:scale-[0.98]">
+            <Button
+              asChild
+              variant="outline"
+              className="h-9 rounded-xl border-border/70 bg-background/70 px-3 text-sm shadow-none transition-[transform,background-color,border-color] duration-200 ease-out hover:bg-muted/35 active:scale-[0.98]"
+            >
+              <Link href={`/admin/dashboard/courses/${course.id}/profile`}>
                 Ver seguimiento
                 <ArrowUpRight className="ml-2 size-4" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
 
-            <Link href={`/admin/dashboard/courses/${course.id}`}>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-9 rounded-xl border-border/70 bg-background/70 px-3 text-sm transition-[transform,background-color,border-color,color] duration-200 ease-out hover:bg-muted/35 active:scale-[0.98]"
-              >
+            <Button
+              asChild
+              size="sm"
+              variant="ghost"
+              className="h-9 rounded-xl px-3 text-sm text-muted-foreground shadow-none transition-[transform,background-color,color] duration-200 ease-out hover:bg-muted/35 hover:text-foreground active:scale-[0.98]"
+            >
+              <Link href={`/admin/dashboard/courses/${course.id}`}>
                 <Pencil className="mr-2 size-4" />
                 Ajustes
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -743,7 +769,7 @@ function formatNumber(value?: number | null, fallback = '0') {
   }).format(value)
 }
 
-function formatDecimal(value?: number | null, fallback = 'Sin datos') {
+function formatDecimal(value?: number | null, fallback = 'Sin registros') {
   if (value === null || value === undefined || Number.isNaN(value)) return fallback
 
   return new Intl.NumberFormat('es-AR', {
@@ -751,7 +777,7 @@ function formatDecimal(value?: number | null, fallback = 'Sin datos') {
   }).format(value)
 }
 
-function formatPercent(value?: number | null, fallback = 'Sin datos') {
+function formatPercent(value?: number | null, fallback = 'Sin registros') {
   if (value === null || value === undefined || Number.isNaN(value)) return fallback
 
   return `${formatDecimal(value)}%`
