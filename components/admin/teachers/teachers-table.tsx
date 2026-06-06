@@ -39,6 +39,10 @@ import {
   deactivateTeacher,
   getTeachers,
 } from '@/lib/admin/teachers/api'
+import {
+  hasRelevantTeacherPendingCorrections,
+  requiresTeacherOperationalFollowUp,
+} from '@/lib/admin/teachers/follow-up'
 import type { Profesor } from '@/lib/admin/teachers/types'
 import { cn } from '@/lib/utils'
 
@@ -57,7 +61,7 @@ const filters: Array<{ value: RosterFilter; label: string }> = [
   { value: 'active', label: 'Activos' },
   { value: 'without-courses', label: 'Sin cursos asignados' },
   { value: 'critical-courses', label: 'Con cursos críticos' },
-  { value: 'pending-corrections', label: 'Correcciones pendientes' },
+  { value: 'pending-corrections', label: 'Correcciones acumuladas' },
   { value: 'inactive', label: 'Inactivos' },
 ]
 
@@ -90,9 +94,16 @@ function getMainCourseLabel(teacher: Profesor) {
 
 function getSignalTone(teacher: Profesor) {
   if ((teacher.coursesAtRiskCount ?? 0) > 0) return 'critical'
-  if ((teacher.pendingCorrectionsCount ?? 0) > 0) return 'attention'
   if ((teacher.unloadedAttendanceCount ?? 0) > 0) return 'attention'
-  if (getCoursesCount(teacher) === 0) return 'attention'
+  if (
+    hasRelevantTeacherPendingCorrections({
+      pendingCorrectionsCount: teacher.pendingCorrectionsCount,
+      studentsCount: teacher.studentsCount,
+    })
+  ) {
+    return 'attention'
+  }
+
   return 'healthy'
 }
 
@@ -228,6 +239,12 @@ function TeacherRosterRow({
   const fullName = getFullName(teacher)
   const coursesCount = getCoursesCount(teacher)
   const studentsCount = teacher.studentsCount ?? 0
+  const requiresFollowUp = requiresTeacherOperationalFollowUp({
+    pendingCorrectionsCount: teacher.pendingCorrectionsCount,
+    studentsCount,
+    coursesAtRiskCount: teacher.coursesAtRiskCount,
+    unloadedAttendanceCount: teacher.unloadedAttendanceCount,
+  })
 
   return (
     <article className="rounded-2xl border border-border/60 bg-card/95 px-4 py-4 shadow-sm transition-colors hover:border-primary/20 sm:px-5">
@@ -259,7 +276,7 @@ function TeacherRosterRow({
             <MetricPill
               label="Cursos"
               value={coursesCount === 1 ? '1 asignado' : `${coursesCount} asignados`}
-              tone={coursesCount === 0 ? 'attention' : 'muted'}
+              tone="muted"
             />
             <MetricPill
               label="Alumnos"
@@ -281,7 +298,7 @@ function TeacherRosterRow({
           </div>
           <p className="text-sm leading-5 text-muted-foreground">
             <span className="font-medium text-foreground">Seguimiento:</span>{' '}
-            {teacher.requiresFollowUp ? 'requiere revisión' : 'sin acciones pendientes'}
+            {requiresFollowUp ? 'requiere revisión' : 'sin acciones pendientes'}
           </p>
         </div>
 
@@ -512,7 +529,12 @@ export function TeachersTable() {
       if (activeFilter === 'inactive') return !item.activo
       if (activeFilter === 'without-courses') return getCoursesCount(item) === 0
       if (activeFilter === 'critical-courses') return (item.coursesAtRiskCount ?? 0) > 0
-      if (activeFilter === 'pending-corrections') return (item.pendingCorrectionsCount ?? 0) > 0
+      if (activeFilter === 'pending-corrections') {
+        return hasRelevantTeacherPendingCorrections({
+          pendingCorrectionsCount: item.pendingCorrectionsCount,
+          studentsCount: item.studentsCount,
+        })
+      }
 
       return true
     })

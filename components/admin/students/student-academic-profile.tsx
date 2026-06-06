@@ -299,49 +299,59 @@ function getPendingFollowUpValue(item: StudentPendingFollowUp) {
   }
 
   return {
-    label: 'Valor',
-    value: 'Sin datos',
+    label: null,
+    value: null,
   }
+}
+
+function getPendingFollowUpReason(
+  item: StudentPendingFollowUp,
+  metric: ReturnType<typeof getPendingFollowUpValue>,
+) {
+  const reason = normalizeCopy(item.reason || item.description || 'Seguimiento académico pendiente')
+
+  if (!metric.label || !metric.value) return reason
+
+  const normalizedReason = reason.toLocaleLowerCase('es-AR')
+  const normalizedMetric = metric.label.toLocaleLowerCase('es-AR')
+
+  if (normalizedReason.startsWith(normalizedMetric)) {
+    const description = normalizeCopy(item.description)
+    return description && description !== reason ? description : null
+  }
+
+  return reason
 }
 
 function PendingFollowUpItem({ item }: { item: StudentPendingFollowUp }) {
   const metric = getPendingFollowUpValue(item)
   const periodLabel = item.periodLabel || (item.quarterNumber ? `${item.quarterNumber}º trimestre` : 'Trimestre anterior')
-  const title =
-    metric.value === 'Sin datos'
-      ? normalizeCopy(item.description || item.reason)
-      : `${metric.label} ${metric.value} en ${periodLabel}`
+  const reason = getPendingFollowUpReason(item, metric)
 
   return (
-    <article className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <article className="grid gap-2.5 rounded-xl bg-amber-500/[0.055] px-3 py-2.5 ring-1 ring-amber-500/25 transition-colors hover:bg-amber-500/[0.08] dark:bg-amber-500/[0.07] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <div className="flex min-w-0 gap-2.5">
+        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-800 ring-1 ring-amber-500/20 dark:text-amber-300">
+          <AlertCircle className="size-3.5" />
+        </span>
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
-              {periodLabel}
-            </span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-xs font-semibold text-foreground">{periodLabel}</span>
             {item.courseName ? (
-              <span className="rounded-full border border-border/60 bg-card/80 px-2 py-0.5 text-xs text-muted-foreground">
-                {item.courseName}
-              </span>
+              <span className="text-xs text-muted-foreground">{item.courseName}</span>
             ) : null}
           </div>
-          <h4 className="mt-2 text-sm font-semibold text-foreground">{title}</h4>
-          <p className="mt-1 text-sm leading-5 text-muted-foreground">
-            {normalizeCopy(item.reason || item.description)}
-          </p>
-        </div>
-        <div className="grid min-w-28 grid-cols-2 gap-2 text-xs sm:text-right">
-          <div className="rounded-lg border border-border/60 bg-card/80 px-2 py-1">
-            <p className="text-muted-foreground">Motivo</p>
-            <p className="mt-0.5 font-medium text-foreground">{metric.label}</p>
-          </div>
-          <div className="rounded-lg border border-border/60 bg-card/80 px-2 py-1">
-            <p className="text-muted-foreground">Valor</p>
-            <p className="mt-0.5 font-medium text-foreground">{metric.value}</p>
-          </div>
+          {reason ? (
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">{reason}</p>
+          ) : null}
         </div>
       </div>
+      {metric.label && metric.value ? (
+        <span className="inline-flex w-fit items-baseline gap-1.5 rounded-lg bg-amber-500/10 px-2 py-1 text-xs text-amber-800 ring-1 ring-amber-500/15 dark:text-amber-300">
+          <span className="font-medium">{metric.label}</span>
+          <span className="font-semibold tabular-nums">{metric.value}</span>
+        </span>
+      ) : null}
     </article>
   )
 }
@@ -513,12 +523,6 @@ function AcademicProfileContent({ summary }: { summary: StudentAcademicSummary }
 
           <div className="flex shrink-0 flex-wrap gap-2">
             <Button asChild variant="outline" className="h-10 rounded-xl shadow-none active:scale-[0.98]">
-              <Link href="/admin/dashboard/students">
-                <ArrowLeft className="mr-2 size-4" />
-                Volver al listado
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-10 rounded-xl shadow-none active:scale-[0.98]">
               <Link href={`/admin/dashboard/students/${summary.student.id}`}>
                 <Edit3 className="mr-2 size-4" />
                 Editar datos
@@ -529,7 +533,7 @@ function AcademicProfileContent({ summary }: { summary: StudentAcademicSummary }
       </section>
 
       <Tabs defaultValue="summary" className="space-y-3">
-        <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-xl border border-border/50 bg-background/60 p-1 dark:bg-background/25 sm:w-fit">
+        <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-xl border border-border/50 bg-background/60 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:bg-background/25 sm:w-fit">
           {tabs.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value} className="rounded-lg px-3">
               {tab.label}
@@ -590,17 +594,40 @@ function AcademicProfileContent({ summary }: { summary: StudentAcademicSummary }
               </div>
             ) : null}
 
-            <div className="mt-4 rounded-xl border border-border/60 bg-background/60 p-3 dark:bg-background/25">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground">Seguimiento pendiente</h4>
-                  <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                    Señales heredadas de trimestres anteriores, separadas del estado actual.
-                  </p>
+            <div
+              className={cn(
+                'mt-5 rounded-xl p-3.5 ring-1 sm:p-4',
+                pendingFollowUpCount > 0
+                  ? 'bg-amber-500/[0.02] ring-amber-500/10 dark:bg-amber-500/[0.025]'
+                  : 'bg-muted/10 ring-border/35 dark:bg-muted/[0.06]',
+              )}
+            >
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 gap-2.5">
+                  <span
+                    className={cn(
+                      'flex size-8 shrink-0 items-center justify-center rounded-lg ring-1',
+                      pendingFollowUpCount > 0
+                        ? 'bg-amber-500/[0.07] text-amber-700 ring-amber-500/10 dark:text-amber-300'
+                        : 'bg-background/70 text-muted-foreground ring-border/30 dark:bg-background/25',
+                    )}
+                  >
+                    {pendingFollowUpCount > 0 ? (
+                      <ShieldAlert className="size-4" />
+                    ) : (
+                      <CheckCircle2 className="size-4" />
+                    )}
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground">Seguimiento pendiente</h4>
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                      Situaciones de períodos anteriores que conviene mantener visibles.
+                    </p>
+                  </div>
                 </div>
                 {pendingFollowUpCount > 0 ? (
-                  <span className="w-fit rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
-                    Seguimiento pendiente del trimestre anterior
+                  <span className="w-fit rounded-md bg-amber-500/10 px-2 py-1 text-xs font-semibold tabular-nums text-amber-800 ring-1 ring-amber-500/15 dark:text-amber-300">
+                    {pendingFollowUpCount} {pendingFollowUpCount === 1 ? 'caso anterior' : 'casos anteriores'}
                   </span>
                 ) : null}
               </div>
@@ -616,14 +643,16 @@ function AcademicProfileContent({ summary }: { summary: StudentAcademicSummary }
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    Hay seguimiento pendiente registrado, pero no se recibieron detalles para mostrar.
-                  </p>
+                  <div className="mt-3 flex items-center gap-2 rounded-xl bg-muted/15 px-3 py-2.5 text-sm text-muted-foreground">
+                    <AlertCircle className="size-4 shrink-0" />
+                    Hay seguimiento registrado, pero no hay detalles disponibles.
+                  </div>
                 )
               ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Sin seguimiento pendiente de trimestres anteriores.
-                </p>
+                <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  No hay seguimientos pendientes de períodos anteriores.
+                </div>
               )}
             </div>
 

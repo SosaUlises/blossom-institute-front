@@ -32,6 +32,11 @@ import {
   getTeacherAcademicProfile,
   getTeacherAcademicSummary,
 } from '@/lib/admin/teachers/api'
+import {
+  getTeacherPendingCorrectionsThreshold,
+  hasRelevantTeacherPendingCorrections,
+  requiresTeacherOperationalFollowUp,
+} from '@/lib/admin/teachers/follow-up'
 import type {
   Profesor,
   TeacherAcademicCourse,
@@ -212,7 +217,16 @@ function getFallbackOperationalStatus(teacher: Profesor): OperationalStatus {
   const coursesAtRisk = teacher.coursesAtRiskCount ?? 0
   const pendingCorrections = teacher.pendingCorrectionsCount ?? 0
   const unloadedAttendance = teacher.unloadedAttendanceCount ?? 0
-  const coursesCount = getCoursesCount(teacher)
+  const hasRelevantPendingCorrections = hasRelevantTeacherPendingCorrections({
+    pendingCorrectionsCount: pendingCorrections,
+    studentsCount: teacher.studentsCount,
+  })
+  const requiresFollowUp = requiresTeacherOperationalFollowUp({
+    pendingCorrectionsCount: pendingCorrections,
+    studentsCount: teacher.studentsCount,
+    coursesAtRiskCount: coursesAtRisk,
+    unloadedAttendanceCount: unloadedAttendance,
+  })
 
   if (coursesAtRisk > 0) {
     const reason =
@@ -228,18 +242,10 @@ function getFallbackOperationalStatus(teacher: Profesor): OperationalStatus {
     }
   }
 
-  if (
-    teacher.requiresFollowUp ||
-    pendingCorrections > 0 ||
-    unloadedAttendance > 0 ||
-    coursesCount === 0 ||
-    !teacher.activo
-  ) {
+  if (requiresFollowUp) {
     const reason =
       teacher.mainSignal ||
-      (coursesCount === 0
-        ? 'Docente sin cursos asignados'
-        : 'Hay señales pendientes de seguimiento')
+      'Hay señales pendientes de seguimiento'
 
     return {
       level: 'follow-up',
@@ -653,10 +659,15 @@ function ActivityPagination({
   if (total <= pageSize) return null
 
   return (
-    <div className="flex flex-col gap-2 border-t border-border/50 pt-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-      <p>
-        {from}-{to} de {formatNumber(total)}
-      </p>
+    <div className="flex flex-col gap-3 border-t border-border/50 pt-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="font-medium text-foreground">
+          Página {page} de {totalPages}
+        </p>
+        <p className="mt-0.5 text-xs">
+          Mostrando {from}-{to} de {formatNumber(total)} actividades
+        </p>
+      </div>
       <div className="flex items-center gap-2">
         <Button
           type="button"
@@ -669,9 +680,6 @@ function ActivityPagination({
           <ChevronLeft className="mr-1 size-4" />
           Anterior
         </Button>
-        <span className="min-w-16 text-center text-xs font-medium">
-          {page} / {totalPages}
-        </span>
         <Button
           type="button"
           variant="outline"
@@ -747,6 +755,11 @@ function TeacherProfileContent({
   const coursesCount = getCoursesCount(teacher, summary)
   const studentsCount = summary?.studentsCount ?? teacher.studentsCount ?? 0
   const pendingCorrections = summary?.pendingCorrectionsCount ?? teacher.pendingCorrectionsCount ?? 0
+  const pendingCorrectionsThreshold = getTeacherPendingCorrectionsThreshold(studentsCount)
+  const hasRelevantPendingCorrections = hasRelevantTeacherPendingCorrections({
+    pendingCorrectionsCount: pendingCorrections,
+    studentsCount,
+  })
   const coursesAtAttention =
     summary?.assignedCourses?.filter((course) => course.requiresAttention).length ??
     teacher.coursesAtRiskCount ??
@@ -815,12 +828,6 @@ function TeacherProfileContent({
 
           <div className="flex shrink-0 flex-wrap gap-2">
             <Button asChild variant="outline" className="h-10 rounded-xl shadow-none active:scale-[0.98]">
-              <Link href="/admin/dashboard/teachers">
-                <ArrowLeft className="mr-2 size-4" />
-                Volver al listado
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-10 rounded-xl shadow-none active:scale-[0.98]">
               <Link href={`/admin/dashboard/teachers/${teacher.id}`}>
                 <Edit3 className="mr-2 size-4" />
                 Editar datos
@@ -882,7 +889,7 @@ function TeacherProfileContent({
               label="Cursos asignados"
               value={formatNumber(coursesCount)}
               detail={getMainCourseLabel(teacher, summary)}
-              tone={coursesCount === 0 ? 'attention' : 'neutral'}
+              tone="neutral"
             />
             <InlineMetric
               icon={Users}
@@ -894,8 +901,14 @@ function TeacherProfileContent({
               icon={NotebookText}
               label="Correcciones pendientes"
               value={formatNumber(pendingCorrections)}
-              detail={pendingCorrections > 0 ? 'Pendientes de revisión' : 'Sin pendientes'}
-              tone={pendingCorrections > 0 ? 'attention' : 'healthy'}
+              detail={
+                hasRelevantPendingCorrections
+                  ? `Carga relevante, umbral ${formatNumber(pendingCorrectionsThreshold)}`
+                  : pendingCorrections > 0
+                    ? 'Carga habitual de corrección'
+                    : 'Sin pendientes'
+              }
+              tone={hasRelevantPendingCorrections ? 'attention' : 'healthy'}
             />
             <InlineMetric
               icon={ShieldAlert}

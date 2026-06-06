@@ -49,6 +49,7 @@ import type {
 } from '@/lib/admin/dashboard/types'
 import { calculateCourseHealth } from '@/lib/admin/courses/course-health'
 import type { Profesor } from '@/lib/admin/teachers/types'
+import { getTeacherPendingCorrectionsThreshold } from '@/lib/admin/teachers/follow-up'
 import { cn } from '@/lib/utils'
 
 type Tone = 'neutral' | 'amber' | 'rose' | 'emerald' | 'primary'
@@ -707,12 +708,6 @@ function getTeacherInitials(name: string) {
     .map((part) => part.charAt(0))
     .join('')
     .toUpperCase()
-}
-
-function getTeacherPendingCorrectionsThreshold(studentsCount: number | null | undefined) {
-  if (typeof studentsCount !== 'number' || studentsCount <= 0) return 3
-
-  return Math.max(3, Math.ceil(studentsCount * 0.5))
 }
 
 function getTeacherOperationalReasons(teacher: Profesor) {
@@ -2353,7 +2348,7 @@ export function AdminDashboardView({
   const healthSummary = getDashboardHealthSummary(dashboard)
 
   return (
-    <main className="flex-1 overflow-auto px-5 pb-4 pt-7 lg:px-8 lg:pb-5 lg:pt-8">
+    <main className="flex-1 overflow-auto px-5 pb-4 pt-8 lg:px-8 lg:pb-5 lg:pt-10">
       <div className="mx-auto max-w-7xl space-y-5">
         <AdminDashboardHeader
           queueCount={dailyQueueItems.length}
