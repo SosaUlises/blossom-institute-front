@@ -305,7 +305,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <p className="truncate text-sm font-semibold leading-none text-foreground">
                     {fullName}
                   </p>
-                  <p className="mt-1 truncate text-xs leading-none text-muted-foreground">
+                  <p className="mt-1 break-all text-[11px] leading-4 text-muted-foreground">
                     {user.email}
                   </p>
                 </div>
@@ -331,7 +331,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       <p className="truncate text-sm font-semibold leading-none text-foreground">
                         {fullName}
                       </p>
-                      <p className="mt-1 truncate text-xs leading-none text-muted-foreground">
+                      <p className="mt-1 break-all text-[11px] leading-4 text-muted-foreground">
                         {user.email}
                       </p>
                     </div>

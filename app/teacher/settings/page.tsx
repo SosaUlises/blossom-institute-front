@@ -33,14 +33,14 @@ export default function TeacherSettingsPage() {
 
   return (
     <>
-      <AppHeader title="Configuración" />
+      <AppHeader title="Mi cuenta" />
 
       <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-6xl space-y-4">
           <header className="space-y-1 border-b border-border/60 pb-4">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-              Configuración de cuenta
-            </h2>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              Mi cuenta
+            </h1>
             <p className="text-sm text-muted-foreground">
               Actualizá tus datos personales y la seguridad de acceso.
             </p>
