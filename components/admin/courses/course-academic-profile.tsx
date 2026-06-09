@@ -88,6 +88,20 @@ function normalizeCopy(value?: string | null) {
     .replace(/Intervencion/g, 'Intervención')
 }
 
+function getPendingFollowUpReason(value: string) {
+  const normalizedValue = normalizeCopy(value).trim()
+
+  return (
+    normalizedValue
+      .replace(
+        /^(Crítico|Critico|Seguimiento(?: pendiente)?)\s+en\s+[^:–—-]+(?:[:–—-]\s*)/i,
+        '',
+      )
+      .replace(/^(Crítico|Critico|Seguimiento(?: pendiente)?)\s*:\s*/i, '')
+      .trim() || 'Requiere seguimiento académico.'
+  )
+}
+
 function formatNumber(value?: number | null, fallback = '0') {
   if (value === null || value === undefined || Number.isNaN(value)) return fallback
 
@@ -471,53 +485,69 @@ function PendingFollowUpRow({
   const studentName = fullName || 'Alumno en seguimiento'
   const level = normalizeHealthLevel(item.level)
   const periodLabel = item.periodLabel || `${item.quarterNumber}º trimestre`
+  const reason = getPendingFollowUpReason(item.description || item.reason)
 
   return (
-    <article className="rounded-xl border border-orange-500/25 bg-orange-500/[0.06] p-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <article className="rounded-xl bg-background/50 p-3.5 ring-1 ring-border/50 transition-[background-color,box-shadow] duration-200 ease-out hover:bg-background/75 hover:ring-orange-500/20 dark:bg-background/20 dark:hover:bg-background/30">
+      <div className="flex flex-col gap-3.5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 gap-3">
           <UserAvatar
             name={studentName}
             avatarUrl={item.avatarUrl}
             size={40}
             className="shrink-0"
-            fallbackClassName="bg-orange-500/10 text-orange-700 dark:text-orange-300 text-sm"
+            fallbackClassName="bg-muted/50 text-foreground/75 text-sm"
           />
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <h4 className="truncate text-sm font-semibold text-foreground">
                 {studentName}
               </h4>
               <span
                 className={cn(
-                  'rounded-full border px-2 py-0.5 text-xs font-medium',
+                  'rounded-md px-1.5 py-0.5 text-[11px] font-semibold ring-1',
                   level === 'critical' &&
-                    'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300',
+                    'bg-rose-500/10 text-rose-700 ring-rose-500/15 dark:text-rose-300',
                   level === 'follow-up' &&
-                    'border-orange-500/25 bg-orange-500/10 text-orange-800 dark:text-orange-300',
-                  level === 'normal' && 'border-border/60 bg-card/80 text-muted-foreground',
+                    'bg-orange-500/10 text-orange-800 ring-orange-500/15 dark:text-orange-300',
+                  level === 'normal' && 'bg-muted/30 text-muted-foreground ring-border/35',
                 )}
               >
-                {level === 'critical'
-                  ? `Crítico en ${periodLabel}`
-                  : level === 'follow-up'
-                    ? `Seguimiento en ${periodLabel}`
-                    : periodLabel}
+                {level === 'critical' ? 'Crítico' : level === 'follow-up' ? 'Seguimiento' : 'Anterior'}
+              </span>
+              <span className="text-xs font-medium text-muted-foreground">
+                {periodLabel}
               </span>
             </div>
-            <p className="mt-1 text-sm leading-5 text-muted-foreground">
-              {normalizeCopy(item.description || item.reason)}
+            <p className="mt-1.5 text-sm leading-5 text-foreground/80">
+              {reason}
             </p>
             {hasNumber(item.averageValue) || hasNumber(item.attendanceValue) ? (
-              <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <div className="mt-2.5 flex flex-wrap gap-1.5 text-xs">
                 {hasNumber(item.averageValue) ? (
-                  <span className="rounded-full border border-orange-500/20 bg-card/80 px-2 py-0.5 text-orange-800 dark:text-orange-300">
-                    Promedio {formatDecimal(item.averageValue)}
+                  <span
+                    className={cn(
+                      'inline-flex items-baseline gap-1 rounded-lg px-2 py-1 ring-1',
+                      item.averageValue < 60
+                        ? 'bg-rose-500/10 text-rose-700 ring-rose-500/15 dark:text-rose-300'
+                        : 'bg-orange-500/10 text-orange-800 ring-orange-500/15 dark:text-orange-300',
+                    )}
+                  >
+                    <span className="font-medium">Promedio</span>
+                    <span className="font-semibold tabular-nums">{formatDecimal(item.averageValue)}</span>
                   </span>
                 ) : null}
                 {hasNumber(item.attendanceValue) ? (
-                  <span className="rounded-full border border-orange-500/20 bg-card/80 px-2 py-0.5 text-orange-800 dark:text-orange-300">
-                    Asistencia {formatPercent(item.attendanceValue)}
+                  <span
+                    className={cn(
+                      'inline-flex items-baseline gap-1 rounded-lg px-2 py-1 ring-1',
+                      item.attendanceValue < 70
+                        ? 'bg-rose-500/10 text-rose-700 ring-rose-500/15 dark:text-rose-300'
+                        : 'bg-orange-500/10 text-orange-800 ring-orange-500/15 dark:text-orange-300',
+                    )}
+                  >
+                    <span className="font-medium">Asistencia</span>
+                    <span className="font-semibold tabular-nums">{formatPercent(item.attendanceValue)}</span>
                   </span>
                 ) : null}
               </div>
@@ -526,7 +556,7 @@ function PendingFollowUpRow({
         </div>
 
         {item.alumnoId ? (
-          <Button asChild variant="outline" className="h-9 shrink-0 rounded-xl border-orange-500/25 bg-card/70 px-3 text-sm text-orange-800 shadow-none transition-[transform,background-color,border-color] duration-200 ease-out hover:bg-orange-500/10 hover:text-orange-900 active:scale-[0.98] dark:text-orange-300 dark:hover:text-orange-200">
+          <Button asChild variant="ghost" className="h-9 shrink-0 rounded-xl px-3 text-sm text-muted-foreground shadow-none transition-[transform,background-color,color] duration-200 ease-out hover:bg-muted/40 hover:text-foreground active:scale-[0.98]">
             <Link href={`/admin/dashboard/students/${item.alumnoId}/profile`}>
               Ver alumno
               <ArrowUpRight className="ml-2 size-4" />

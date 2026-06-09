@@ -337,7 +337,7 @@ function CourseAlertBlocks({ course }: { course: CursoListItem }) {
           )}
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">Seguimiento pendiente</p>
-            <p className="mt-1 line-clamp-2 leading-5">
+            <p className="mt-1 whitespace-normal break-words leading-5">
               {hasPendingFollowUp
                 ? normalizeCopy(pendingPreview?.description) ||
                   normalizeCopy(pendingPreview?.reason) ||
