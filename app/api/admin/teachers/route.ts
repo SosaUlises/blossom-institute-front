@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     return proxyJson(response)
   } catch {
     return NextResponse.json(
-      { success: false, message: 'No se pudieron obtener los profesores.' },
+      { success: false, message: 'No se pudieron obtener los docentes.' },
       { status: 500 }
     )
   }
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     return proxyJson(response)
   } catch {
     return NextResponse.json(
-      { success: false, message: 'No se pudo crear el profesor.' },
+      { success: false, message: 'No se pudo crear el docente.' },
       { status: 500 }
     )
   }

@@ -6,7 +6,7 @@ import { Eye, EyeOff, KeyRound, Loader2, ShieldCheck } from 'lucide-react'
 import { SettingsSection } from '@/components/account/settings/settings-section'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { changeMyPassword } from '@/lib/account/settings/api'
+import { changeMyPassword as defaultChangeMyPassword } from '@/lib/account/settings/api'
 
 type PasswordFieldProps = {
   id: string
@@ -60,7 +60,17 @@ function PasswordField({
   )
 }
 
-export function ChangePasswordForm() {
+type ChangePasswordFormProps = {
+  changePassword?: typeof defaultChangeMyPassword
+  description?: string
+  submitLabel?: string
+}
+
+export function ChangePasswordForm({
+  changePassword = defaultChangeMyPassword,
+  description = 'Actualizá tu contraseña para mantener tu cuenta protegida.',
+  submitLabel = 'Actualizar contraseña',
+}: ChangePasswordFormProps) {
   const formId = 'account-password'
   const [formData, setFormData] = useState({
     currentPassword: '',
@@ -83,7 +93,7 @@ export function ChangePasswordForm() {
     setIsSubmitting(true)
 
     try {
-      const message = await changeMyPassword(formData)
+      const message = await changePassword(formData)
 
       setSuccess(message)
       setFormData({
@@ -102,7 +112,7 @@ export function ChangePasswordForm() {
     <SettingsSection
       icon={ShieldCheck}
       title="Seguridad"
-      description="Actualizá tu contraseña para mantener tu cuenta protegida."
+      description={description}
     >
       <form onSubmit={handleSubmit} className="space-y-3">
         <PasswordField
@@ -157,7 +167,7 @@ export function ChangePasswordForm() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="h-10 w-full rounded-xl px-4 shadow-none transition-colors duration-200 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            className="h-10 w-full rounded-xl px-4 shadow-none transition-[background-color,transform] duration-200 hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {isSubmitting ? (
               <>
@@ -167,7 +177,7 @@ export function ChangePasswordForm() {
             ) : (
               <>
                 <KeyRound className="mr-2 size-4" />
-                Actualizar contraseña
+                {submitLabel}
               </>
             )}
           </Button>

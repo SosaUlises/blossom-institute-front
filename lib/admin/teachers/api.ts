@@ -1,6 +1,7 @@
 import type {
   Profesor,
   CreateProfesorDTO,
+  TeacherAcademicSummary,
   UpdateProfesorDTO,
   TeachersListResponse,
 } from './types'
@@ -73,6 +74,41 @@ export async function getTeacherById(id: number): Promise<Profesor> {
   })
 
   return parseResponse<Profesor>(response)
+}
+
+export async function getTeacherAcademicProfile(id: number): Promise<Profesor> {
+  const teacher = await getTeacherById(id)
+  const search = teacher.email || `${teacher.nombre} ${teacher.apellido}`.trim()
+
+  try {
+    const list = await getTeachers({
+      pageNumber: 1,
+      pageSize: 100,
+      search,
+    })
+    const academicTeacher = list.items.find((item) => item.id === id)
+
+    if (academicTeacher) {
+      return {
+        ...teacher,
+        ...academicTeacher,
+      }
+    }
+  } catch {
+    return teacher
+  }
+
+  return teacher
+}
+
+export async function getTeacherAcademicSummary(id: number): Promise<TeacherAcademicSummary> {
+  const response = await fetch(`/api/admin/teachers/${id}/academic-summary`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  })
+
+  return parseResponse<TeacherAcademicSummary>(response)
 }
 
 export async function createTeacher(payload: CreateProfesorDTO): Promise<void> {

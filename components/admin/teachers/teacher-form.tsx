@@ -10,12 +10,12 @@ import {
   User,
   ShieldCheck,
   LockKeyhole,
-  Sparkles,
   KeyRound,
   BadgeCheck,
   GraduationCap,
 } from 'lucide-react'
 
+import { UserAvatar } from '@/components/shared/user-avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -32,70 +32,75 @@ interface TeacherFormProps {
   onSubmit: (payload: CreateProfesorDTO | UpdateProfesorDTO) => Promise<void>
 }
 
-function FormMetaCard({
-  icon: Icon,
-  label,
-  value,
-  helper,
-  tone = 'default',
+function TeacherIdentityPanel({
+  fullName,
+  email,
+  isEdit,
 }: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  helper?: string
-  tone?: 'default' | 'highlight'
+  fullName: string
+  email: string
+  isEdit: boolean
 }) {
-  const containerClass =
-    tone === 'highlight'
-      ? 'rounded-[24px] border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/[0.07] hover:shadow-md'
-      : 'rounded-[24px] border border-border/60 bg-background/75 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md'
-
-  const iconWrapClass =
-    tone === 'highlight'
-      ? 'bg-primary/10 text-primary'
-      : 'bg-background text-muted-foreground'
-
-  const labelClass = tone === 'highlight' ? 'text-primary/80' : 'text-muted-foreground'
-  const valueClass = tone === 'highlight' ? 'text-primary' : 'text-foreground'
-
   return (
-    <div className={containerClass}>
-      <div className="flex items-center gap-2">
-        <div className={`flex size-10 items-center justify-center rounded-2xl ${iconWrapClass}`}>
-          <Icon className="size-4.5" />
+    <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <UserAvatar
+            name={fullName}
+            avatarUrl={null}
+            size={48}
+            className="shrink-0"
+            fallbackClassName="bg-primary/10 text-primary"
+          />
+          <div className="min-w-0">
+            <h2 className="truncate text-base font-semibold text-foreground">{fullName}</h2>
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">
+              {email || 'Correo institucional pendiente'}
+            </p>
+          </div>
         </div>
-        <span className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${labelClass}`}>
-          {label}
-        </span>
+
+        <div className="grid gap-2 text-sm sm:grid-cols-2">
+          <div className="rounded-xl border border-border/60 bg-background/60 px-3 py-2 dark:bg-background/25">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <GraduationCap className="size-4" />
+              <span>Registro</span>
+            </div>
+            <p className="mt-1 font-medium text-foreground">
+              {isEdit ? 'Edición de docente' : 'Alta de docente'}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border/60 bg-background/60 px-3 py-2 dark:bg-background/25">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <KeyRound className="size-4" />
+              <span>Acceso</span>
+            </div>
+            <p className="mt-1 font-medium text-foreground">
+              {isEdit ? 'Contraseña opcional' : 'Contraseña obligatoria'}
+            </p>
+          </div>
+        </div>
       </div>
-
-      <p className={`mt-3 text-sm font-semibold leading-6 ${valueClass}`}>{value}</p>
-
-      {helper ? (
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p>
-      ) : null}
-    </div>
+    </section>
   )
 }
 
 function SectionCard({
-  eyebrow,
   title,
+  description,
   children,
 }: {
-  eyebrow: string
   title: string
+  description: string
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
+    <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-sm sm:p-5">
       <div className="mb-5 space-y-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          {eyebrow}
-        </p>
         <h3 className="text-lg font-semibold tracking-tight text-foreground">
           {title}
         </h3>
+        <p className="text-sm leading-5 text-muted-foreground">{description}</p>
       </div>
 
       {children}
@@ -121,7 +126,7 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
   const [showPassword, setShowPassword] = useState(false)
 
   const fullName = useMemo(() => {
-    return `${form.nombre} ${form.apellido}`.trim() || 'Profesor'
+    return `${form.nombre} ${form.apellido}`.trim() || 'Nuevo docente'
   }, [form.nombre, form.apellido])
 
   const handleChange = (field: keyof typeof form, value: string) => {
@@ -158,7 +163,7 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
         }
 
         await onSubmit(payload)
-        setSuccess('Profesor actualizado correctamente.')
+        setSuccess('Docente actualizado correctamente.')
       } else {
         if (!form.password.trim()) {
           throw new Error('La contraseña es obligatoria.')
@@ -170,10 +175,10 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
         }
 
         await onSubmit(payload)
-        setSuccess('Profesor creado correctamente.')
+        setSuccess('Docente creado correctamente.')
       }
     } catch (err: any) {
-      setError(err?.message || 'No se pudo guardar el profesor.')
+      setError(err?.message || 'No se pudo guardar el docente.')
     } finally {
       setIsLoading(false)
     }
@@ -181,39 +186,12 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <FormMetaCard
-          icon={GraduationCap}
-          label="Profesor"
-          value={fullName}
-          helper="Identidad principal del registro."
-          tone="highlight"
-        />
+      <TeacherIdentityPanel fullName={fullName} email={form.email} isEdit={isEdit} />
 
-        <FormMetaCard
-          icon={Sparkles}
-          label="Modo"
-          value={isEdit ? 'Edición de profesor' : 'Alta de profesor'}
-          helper={
-            isEdit
-              ? 'Actualización de datos existentes.'
-              : 'Creación de una nueva cuenta.'
-          }
-        />
-
-        <FormMetaCard
-          icon={KeyRound}
-          label="Acceso"
-          value={isEdit ? 'Contraseña opcional' : 'Contraseña obligatoria'}
-          helper={
-            isEdit
-              ? 'Solo se actualiza si ingresás una nueva.'
-              : 'Se utilizará para el primer acceso.'
-          }
-        />
-      </div>
-
-      <SectionCard eyebrow="Identidad" title="Datos personales">
+      <SectionCard
+        title="Datos personales"
+        description="Identificación básica del docente dentro del equipo académico."
+      >
         <FieldGroup className="grid gap-5 md:grid-cols-2">
           <Field>
             <FieldLabel
@@ -229,7 +207,7 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
                 value={form.nombre}
                 onChange={(e) => handleChange('nombre', e.target.value)}
                 placeholder="Nombre"
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-xl border-border/70 bg-background/80 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/70 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 required
                 disabled={isLoading}
               />
@@ -250,7 +228,7 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
                 value={form.apellido}
                 onChange={(e) => handleChange('apellido', e.target.value)}
                 placeholder="Apellido"
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-xl border-border/70 bg-background/80 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/70 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 required
                 disabled={isLoading}
               />
@@ -271,7 +249,7 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
                 value={form.dni}
                 onChange={(e) => handleChange('dni', e.target.value)}
                 placeholder="12345678"
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-xl border-border/70 bg-background/80 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/70 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 required
                 disabled={isLoading}
               />
@@ -280,14 +258,17 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
         </FieldGroup>
       </SectionCard>
 
-      <SectionCard eyebrow="Contacto" title="Datos de contacto">
+      <SectionCard
+        title="Datos de contacto"
+        description="Canales institucionales para coordinación académica."
+      >
         <FieldGroup className="grid gap-5 md:grid-cols-2">
           <Field>
             <FieldLabel
               htmlFor="email"
               className="mb-2.5 text-sm font-semibold text-foreground"
             >
-              Email
+              Correo electrónico
             </FieldLabel>
             <div className="relative">
               <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -296,8 +277,8 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
                 type="email"
                 value={form.email}
                 onChange={(e) => handleChange('email', e.target.value)}
-                placeholder="profesor@email.com"
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                placeholder="docente@correo.com"
+                className="h-11 rounded-xl border-border/70 bg-background/80 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/70 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 required
                 disabled={isLoading}
               />
@@ -318,7 +299,7 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
                 value={form.telefono}
                 onChange={(e) => handleChange('telefono', e.target.value)}
                 placeholder="341..."
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-xl border-border/70 bg-background/80 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/70 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 disabled={isLoading}
               />
             </div>
@@ -326,7 +307,10 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
         </FieldGroup>
       </SectionCard>
 
-      <SectionCard eyebrow="Acceso" title="Credenciales">
+      <SectionCard
+        title="Credenciales"
+        description="Acceso de la cuenta docente. La contraseña solo se actualiza si corresponde."
+      >
         <FieldGroup className="space-y-5">
           <Field>
             <FieldLabel
@@ -345,7 +329,7 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
                 value={form.password}
                 onChange={(e) => handleChange('password', e.target.value)}
                 placeholder={isEdit ? 'Solo si querés cambiarla' : 'Ingresá una contraseña'}
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-12 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-11 rounded-xl border-border/70 bg-background/80 pl-11 pr-12 text-[15px] shadow-none placeholder:text-muted-foreground/70 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 required={!isEdit}
                 disabled={isLoading}
               />
@@ -365,7 +349,7 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
             <p className="mt-2 text-sm text-muted-foreground">
               {isEdit
                 ? 'Dejá este campo vacío si no querés modificar la contraseña actual.'
-                : 'Definí una contraseña inicial para el acceso del profesor a la plataforma.'}
+                : 'Definí una contraseña inicial para el acceso del docente a la plataforma.'}
             </p>
           </Field>
         </FieldGroup>
@@ -389,7 +373,7 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
       <div className="flex justify-end pt-2">
         <Button
           type="submit"
-          className="min-w-44 rounded-2xl bg-primary px-5 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+          className="min-w-44 rounded-xl bg-primary px-5 text-[15px] font-semibold text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90 active:scale-[0.98]"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -400,7 +384,7 @@ export function TeacherForm({ mode, initialData, onSubmit }: TeacherFormProps) {
           ) : isEdit ? (
             'Guardar cambios'
           ) : (
-            'Crear profesor'
+            'Crear docente'
           )}
         </Button>
       </div>

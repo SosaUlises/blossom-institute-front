@@ -39,7 +39,7 @@ const titleLabels: Record<string, string> = {
   'Edit student': 'Editar alumno',
   'Edit teacher': 'Editar docente',
   'Homework report': 'Reporte de tareas',
-  'Manage course': 'Gestionar curso',
+  'Manage course': 'Ver curso',
   'Marks report': 'Reporte de notas',
   'New course': 'Nuevo curso',
   'New student': 'Nuevo alumno',
@@ -59,7 +59,7 @@ const titleLabels: Record<string, string> = {
 
 function getHeaderSubtitle(pathname: string) {
   if (pathname.startsWith('/admin')) {
-    return 'Blossom Institute · Administración'
+    return 'Control académico'
   }
 
   if (pathname.startsWith('/teacher')) {
@@ -73,7 +73,39 @@ function getHeaderSubtitle(pathname: string) {
   return 'Blossom Institute'
 }
 
-export function AppHeader({ title, subtitle }: AppHeaderProps) {
+function AdminMobileAppBar({ title, subtitle }: AppHeaderProps) {
+  const { toggleSidebar } = useSidebar()
+  const pathname = usePathname()
+  const displayTitle = titleLabels[title] ?? title
+  const displaySubtitle = subtitle ?? getHeaderSubtitle(pathname)
+
+  return (
+    <header className="sticky top-0 z-30 border-b border-border/70 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85 lg:hidden">
+      <div className="flex items-center gap-3 px-4 py-2.5 sm:px-5">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={toggleSidebar}
+          aria-label="Abrir navegación"
+          className="size-10 shrink-0 rounded-xl border-border/70 bg-background/85 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors hover:bg-muted active:scale-[0.98] dark:bg-background/35"
+        >
+          <PanelLeft className="size-4.5" />
+        </Button>
+
+        <div className="min-w-0">
+          <h1 className="truncate text-base font-semibold tracking-tight text-foreground sm:text-lg">
+            {displayTitle}
+          </h1>
+          <p className="truncate text-xs text-muted-foreground">
+            {displaySubtitle}
+          </p>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function WorkspaceAppHeader({ title, subtitle }: AppHeaderProps) {
   const { state, isMobile, openMobile, toggleSidebar } = useSidebar()
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
@@ -168,7 +200,7 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
             variant="outline"
             size="icon"
             onClick={toggleSidebar}
-            aria-label="Abrir o cerrar navegacion"
+            aria-label="Abrir o cerrar navegación"
             className={cn(
               'size-11 shrink-0 rounded-2xl border-border/70 bg-background/85 shadow-sm hover:bg-muted hover:text-foreground',
               isWorkspace && 'rounded-xl shadow-[0_1px_1px_rgba(15,23,42,0.03)] dark:bg-background/35',
@@ -218,4 +250,14 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
       </div>
     </header>
   )
+}
+
+export function AppHeader(props: AppHeaderProps) {
+  const pathname = usePathname()
+
+  if (pathname.startsWith('/admin')) {
+    return <AdminMobileAppBar {...props} />
+  }
+
+  return <WorkspaceAppHeader {...props} />
 }

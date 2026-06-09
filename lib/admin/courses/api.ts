@@ -1,4 +1,5 @@
 import type {
+  CourseAcademicProfile,
   CreateCursoDTO,
   CursoById,
   CoursesListResponse,
@@ -85,6 +86,16 @@ export async function getCourseById(id: number): Promise<CursoById> {
   })
 
   return parseResponse<CursoById>(response)
+}
+
+export async function getCourseAcademicProfile(id: number): Promise<CourseAcademicProfile> {
+  const response = await fetch(`/api/admin/courses/${id}/academic-profile`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  })
+
+  return parseResponse<CourseAcademicProfile>(response)
 }
 
 export async function createCourse(payload: CreateCursoDTO): Promise<void> {

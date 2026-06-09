@@ -1,56 +1,183 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, ShieldCheck, Sparkles, UserCog, BadgeCheck } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle2,
+  Info,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
+import { AccountProfileForm } from '@/components/account/settings/account-profile-form'
+import { ChangePasswordForm } from '@/components/account/settings/change-password-form'
+import { RoleChipList } from '@/components/account/settings/role-chip-list'
+import { UserAvatar } from '@/components/shared/user-avatar'
+import { WorkspaceHeader } from '@/components/shared/workspace-header'
 import { Card, CardContent } from '@/components/ui/card'
-import { AccountProfileForm } from '@/components/admin/settings/account-profile-form'
-import { ChangePasswordForm } from '@/components/admin/settings/change-password-form'
-import { getMyAccountSettings } from '@/lib/admin/settings/api'
+import {
+  deleteMyAvatar,
+  changeMyPassword,
+  getMyAccountSettings,
+  updateMyAccountSettings,
+  updateMyAvatar,
+} from '@/lib/admin/settings/api'
 import type { MyAccountSettings } from '@/lib/admin/settings/types'
 
-function SummaryCard({
-  title,
-  value,
-  subvalue,
-  icon: Icon,
-  accent = 'blue',
-}: {
-  title: string
-  value: string | number
-  subvalue?: string
-  icon: React.ComponentType<{ className?: string }>
-  accent?: 'blue' | 'emerald' | 'violet' | 'amber'
-}) {
-  const accentStyles =
-    accent === 'emerald'
-      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-      : accent === 'violet'
-        ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
-        : accent === 'amber'
-          ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-          : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+function ProfileIdentityHeader({ account }: { account: MyAccountSettings }) {
+  const fullName = `${account.nombre} ${account.apellido}`.trim()
 
   return (
-    <Card className="rounded-[24px] border border-border/60 bg-card/95 shadow-[0_14px_34px_-22px_rgba(15,23,42,0.14)]">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              {title}
-            </p>
-            <p className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-              {value}
-            </p>
-            {subvalue && (
-              <p className="mt-1 text-sm text-muted-foreground">{subvalue}</p>
-            )}
-          </div>
+    <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-4">
+          <UserAvatar
+            name={fullName}
+            avatarUrl={account.avatarUrl}
+            size={64}
+            className="shrink-0"
+            fallbackClassName="bg-primary/10 text-primary dark:bg-primary/15"
+          />
 
-          <div className={`flex size-11 items-center justify-center rounded-2xl ${accentStyles}`}>
-            <Icon className="size-5" />
+          <div className="min-w-0">
+            <p className="truncate text-lg font-semibold tracking-tight text-foreground">
+              {fullName}
+            </p>
+            <p className="mt-1 truncate text-sm text-muted-foreground">
+              {account.email}
+            </p>
+            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
+              <RoleChipList roles={account.roles} />
+            </div>
           </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2 rounded-xl border border-border/60 bg-background/75 px-3 py-2 text-sm dark:bg-background/35">
+          <CheckCircle2
+            className={
+              account.activo
+                ? 'size-4 text-emerald-600 dark:text-emerald-400'
+                : 'size-4 text-muted-foreground'
+            }
+          />
+          <span className="font-medium text-foreground">
+            {account.activo ? 'Cuenta activa' : 'Cuenta inactiva'}
+          </span>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SettingsSkeleton() {
+  return (
+    <div className="space-y-5">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="size-16 animate-pulse rounded-full bg-muted/45" />
+            <div className="space-y-2">
+              <div className="h-5 w-44 animate-pulse rounded-md bg-muted/50" />
+              <div className="h-4 w-56 animate-pulse rounded-md bg-muted/35" />
+              <div className="flex gap-2 pt-1">
+                <div className="h-6 w-20 animate-pulse rounded-full bg-muted/35" />
+                <div className="h-6 w-24 animate-pulse rounded-full bg-muted/35" />
+              </div>
+            </div>
+          </div>
+          <div className="h-9 w-32 animate-pulse rounded-xl bg-muted/35" />
+        </div>
+      </section>
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,390px)]">
+        <section className="rounded-xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
+          <div className="mb-5 flex items-start gap-2.5">
+            <div className="size-9 animate-pulse rounded-xl bg-muted/45" />
+            <div className="space-y-2">
+              <div className="h-5 w-24 animate-pulse rounded-md bg-muted/50" />
+              <div className="h-4 w-44 animate-pulse rounded-md bg-muted/35" />
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="space-y-2">
+                <div className="h-4 w-20 animate-pulse rounded-md bg-muted/35" />
+                <div className="h-10 animate-pulse rounded-xl bg-muted/35" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="space-y-4">
+          <section className="rounded-xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
+            <div className="mb-4 flex items-start gap-2.5">
+              <div className="size-9 animate-pulse rounded-xl bg-muted/45" />
+              <div className="space-y-2">
+                <div className="h-5 w-28 animate-pulse rounded-md bg-muted/50" />
+                <div className="h-4 w-48 animate-pulse rounded-md bg-muted/35" />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="h-10 animate-pulse rounded-xl bg-muted/35" />
+              <div className="h-10 animate-pulse rounded-xl bg-muted/25" />
+              <div className="h-10 animate-pulse rounded-xl bg-muted/20" />
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CompactState({
+  icon: Icon,
+  title,
+  description,
+  tone = 'neutral',
+}: {
+  icon: LucideIcon
+  title: string
+  description: string
+  tone?: 'neutral' | 'danger'
+}) {
+  return (
+    <Card
+      className={
+        tone === 'danger'
+          ? 'rounded-2xl border border-destructive/20 bg-destructive/5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-destructive/10'
+          : 'rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90'
+      }
+    >
+      <CardContent className="flex items-start gap-3 p-4 sm:p-5">
+        <div
+          className={
+            tone === 'danger'
+              ? 'flex size-9 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive'
+              : 'flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary'
+          }
+        >
+          <Icon className="size-4" />
+        </div>
+
+        <div className="min-w-0 space-y-1">
+          <p
+            className={
+              tone === 'danger'
+                ? 'text-sm font-semibold text-destructive'
+                : 'text-sm font-semibold text-foreground'
+            }
+          >
+            {title}
+          </p>
+          <p
+            className={
+              tone === 'danger'
+                ? 'text-sm leading-5 text-destructive/85 dark:text-destructive'
+                : 'text-sm leading-5 text-muted-foreground'
+            }
+          >
+            {description}
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -79,125 +206,56 @@ export default function SettingsPage() {
 
   return (
     <>
-      <AppHeader title="Settings" />
+      <AppHeader title="Mi cuenta" />
 
-      <div className="flex-1 overflow-auto px-6 py-8 lg:px-8">
-        <div className="mx-auto max-w-6xl space-y-8">
-          <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.05),transparent_24%)]" />
-
-            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <div className="mb-5 h-[3px] w-12 rounded-full bg-primary" />
-
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
-                  Account settings
-                </p>
-
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-[2.45rem]">
-                  Configuración de cuenta y seguridad
-                </h2>
-
-                <p className="mt-4 max-w-3xl text-[15px] leading-7 text-muted-foreground">
-                  Gestioná tus datos personales, tus roles visibles y la seguridad de acceso desde un único espacio.
-                </p>
-              </div>
-
-              <div className="group inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.16)] transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_40px_-22px_rgba(15,23,42,0.22)]">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Sparkles className="size-5" />
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Módulo
-                  </p>
-                  <p className="text-sm font-semibold text-foreground">
-                    Settings
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
+      <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
+        <div className="mx-auto max-w-5xl space-y-5">
+          <WorkspaceHeader
+            title="Mi cuenta"
+            description="Gestioná tu identidad de administrador y la seguridad de acceso."
+          />
           {loading ? (
-            <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-              <CardContent className="flex min-h-[240px] items-center justify-center">
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <Loader2 className="size-4 animate-spin" />
-                  Cargando configuración...
-                </div>
-              </CardContent>
-            </Card>
+            <SettingsSkeleton />
           ) : error ? (
-            <Card className="rounded-[28px] border border-destructive/20 bg-destructive/5 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.10)]">
-              <CardContent className="p-6 text-sm text-destructive">
-                {error}
-              </CardContent>
-            </Card>
+            <CompactState
+              icon={AlertCircle}
+              title="No se pudo cargar tu configuración"
+              description={error}
+              tone="danger"
+            />
           ) : account ? (
             <>
-              <div className="grid gap-4 md:grid-cols-3">
-                <SummaryCard
-                  title="Usuario"
-                  value={`${account.nombre} ${account.apellido}`}
-                  subvalue={account.email}
-                  icon={UserCog}
-                  accent="blue"
-                />
+              <ProfileIdentityHeader account={account} />
 
-                <SummaryCard
-                  title="Estado"
-                  value={account.activo ? 'Activo' : 'Inactivo'}
-                  subvalue="Estado actual de la cuenta"
-                  icon={ShieldCheck}
-                  accent="emerald"
-                />
-
-                <Card className="rounded-[24px] border border-border/60 bg-card/95 shadow-[0_14px_34px_-22px_rgba(15,23,42,0.14)]">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                          Roles
-                        </p>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {account.roles.map((role) => (
-                            <span
-                              key={role}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-                            >
-                              <BadgeCheck className="size-3.5" />
-                              {role}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex size-11 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                        <BadgeCheck className="size-5" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,390px)] xl:items-start">
                 <AccountProfileForm
                   account={account}
                   onUpdated={(updated) => setAccount(updated)}
+                  updateAccount={updateMyAccountSettings}
+                  description="Foto de perfil y datos visibles de tu cuenta administrativa."
+                  showRoles={false}
+                  avatarProps={{
+                    getAccountSettings: getMyAccountSettings,
+                    updateAvatar: updateMyAvatar,
+                    deleteAvatar: deleteMyAvatar,
+                  }}
                 />
 
-                <ChangePasswordForm />
+                <div className="space-y-4">
+                  <ChangePasswordForm
+                    changePassword={changeMyPassword}
+                    description="Cambiá tu contraseña cuando necesites reforzar el acceso."
+                    submitLabel="Cambiar contraseña"
+                  />
+                </div>
               </div>
             </>
           ) : (
-            <Card className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-              <CardContent className="p-6 text-sm text-muted-foreground">
-                No se encontraron datos de cuenta.
-              </CardContent>
-            </Card>
+            <CompactState
+              icon={Info}
+              title="Sin datos de cuenta"
+              description="No encontramos información disponible para este administrador."
+            />
           )}
         </div>
       </div>

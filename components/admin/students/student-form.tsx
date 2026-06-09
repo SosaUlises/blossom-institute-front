@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import {
   Eye,
@@ -10,14 +11,11 @@ import {
   User,
   ShieldCheck,
   LockKeyhole,
-  Sparkles,
-  KeyRound,
   BadgeCheck,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import type {
@@ -25,78 +23,32 @@ import type {
   CreateAlumnoDTO,
   UpdateAlumnoDTO,
 } from '@/lib/admin/students/types'
-import { cn } from '@/lib/utils'
 
 interface StudentFormProps {
   mode: 'create' | 'edit'
   initialData?: Alumno
   onSubmit: (payload: CreateAlumnoDTO | UpdateAlumnoDTO) => Promise<void>
-}
-
-function FormMetaCard({
-  icon: Icon,
-  label,
-  value,
-  helper,
-  tone = 'default',
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  helper?: string
-  tone?: 'default' | 'highlight'
-}) {
-  const containerClass =
-    tone === 'highlight'
-      ? 'rounded-[24px] border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-primary/[0.07] hover:shadow-md'
-      : 'rounded-[24px] border border-border/60 bg-background/75 px-4 py-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-background hover:shadow-md'
-
-  const iconWrapClass =
-    tone === 'highlight'
-      ? 'bg-primary/10 text-primary'
-      : 'bg-background text-muted-foreground'
-
-  const labelClass = tone === 'highlight' ? 'text-primary/80' : 'text-muted-foreground'
-  const valueClass = tone === 'highlight' ? 'text-primary' : 'text-foreground'
-
-  return (
-    <div className={containerClass}>
-      <div className="flex items-center gap-2">
-        <div className={`flex size-10 items-center justify-center rounded-2xl ${iconWrapClass}`}>
-          <Icon className="size-4.5" />
-        </div>
-        <span className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${labelClass}`}>
-          {label}
-        </span>
-      </div>
-
-      <p className={`mt-3 text-sm font-semibold leading-6 ${valueClass}`}>{value}</p>
-
-      {helper ? (
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p>
-      ) : null}
-    </div>
-  )
+  cancelHref: string
 }
 
 function SectionCard({
-  eyebrow,
   title,
+  description,
   children,
 }: {
-  eyebrow: string
   title: string
+  description?: string
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-      <div className="mb-5 space-y-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          {eyebrow}
-        </p>
+    <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-sm sm:p-5">
+      <div className="mb-4 space-y-1">
         <h3 className="text-lg font-semibold tracking-tight text-foreground">
           {title}
         </h3>
+        {description ? (
+          <p className="text-sm leading-5 text-muted-foreground">{description}</p>
+        ) : null}
       </div>
 
       {children}
@@ -104,7 +56,7 @@ function SectionCard({
   )
 }
 
-export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
+export function StudentForm({ mode, initialData, onSubmit, cancelHref }: StudentFormProps) {
   const isEdit = mode === 'edit'
 
   const [form, setForm] = useState({
@@ -181,56 +133,33 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <FormMetaCard
-          icon={User}
-          label="Alumno"
-          value={fullName}
-          helper="Identidad principal del registro."
-          tone="highlight"
-        />
-
-        <FormMetaCard
-          icon={Sparkles}
-          label="Modo"
-          value={isEdit ? 'Edición de alumno' : 'Alta de alumno'}
-          helper={
-            isEdit
-              ? 'Actualización de datos existentes.'
-              : 'Creación de una nueva cuenta.'
-          }
-        />
-
-        <FormMetaCard
-          icon={KeyRound}
-          label="Acceso"
-          value={isEdit ? 'Contraseña opcional' : 'Contraseña obligatoria'}
-          helper={
-            isEdit
-              ? 'Solo se actualiza si ingresás una nueva.'
-              : 'Se utilizará para el primer acceso.'
-          }
-        />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="rounded-2xl border border-border/60 bg-card/95 px-4 py-3 text-sm text-muted-foreground shadow-sm">
+        <span className="font-medium text-foreground">{fullName}</span>
+        <span className="mx-2 text-border">|</span>
+        Los campos marcados con * son obligatorios.
       </div>
 
-      <SectionCard eyebrow="Identidad" title="Datos personales">
-        <FieldGroup className="grid gap-5 md:grid-cols-2">
+      <SectionCard
+        title="Datos personales"
+        description="Identificación básica del alumno para el registro institucional."
+      >
+        <FieldGroup className="grid gap-4 md:grid-cols-2">
           <Field>
             <FieldLabel
               htmlFor="nombre"
-              className="mb-2.5 text-sm font-semibold text-foreground"
+              className="mb-2 text-sm font-semibold text-foreground"
             >
-              Nombre
+              Nombre *
             </FieldLabel>
             <div className="relative">
-              <User className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="nombre"
                 value={form.nombre}
                 onChange={(e) => handleChange('nombre', e.target.value)}
                 placeholder="Nombre"
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-10 rounded-xl border-border/70 bg-background/75 pl-10 pr-3 text-sm shadow-none placeholder:text-muted-foreground/75 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 required
                 disabled={isLoading}
               />
@@ -240,18 +169,18 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
           <Field>
             <FieldLabel
               htmlFor="apellido"
-              className="mb-2.5 text-sm font-semibold text-foreground"
+              className="mb-2 text-sm font-semibold text-foreground"
             >
-              Apellido
+              Apellido *
             </FieldLabel>
             <div className="relative">
-              <User className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="apellido"
                 value={form.apellido}
                 onChange={(e) => handleChange('apellido', e.target.value)}
                 placeholder="Apellido"
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-10 rounded-xl border-border/70 bg-background/75 pl-10 pr-3 text-sm shadow-none placeholder:text-muted-foreground/75 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 required
                 disabled={isLoading}
               />
@@ -261,18 +190,18 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
           <Field className="md:col-span-2">
             <FieldLabel
               htmlFor="dni"
-              className="mb-2.5 text-sm font-semibold text-foreground"
+              className="mb-2 text-sm font-semibold text-foreground"
             >
-              DNI
+              DNI *
             </FieldLabel>
             <div className="relative max-w-sm">
-              <ShieldCheck className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="dni"
                 value={form.dni}
                 onChange={(e) => handleChange('dni', e.target.value)}
                 placeholder="12345678"
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-10 rounded-xl border-border/70 bg-background/75 pl-10 pr-3 text-sm shadow-none placeholder:text-muted-foreground/75 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 required
                 disabled={isLoading}
               />
@@ -281,24 +210,24 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
         </FieldGroup>
       </SectionCard>
 
-      <SectionCard eyebrow="Contacto" title="Datos de contacto">
-        <FieldGroup className="grid gap-5 md:grid-cols-2">
+      <SectionCard title="Datos de contacto">
+        <FieldGroup className="grid gap-4 md:grid-cols-2">
           <Field>
             <FieldLabel
               htmlFor="email"
-              className="mb-2.5 text-sm font-semibold text-foreground"
+              className="mb-2 text-sm font-semibold text-foreground"
             >
-              Email
+              Email *
             </FieldLabel>
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
                 value={form.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="alumno@email.com"
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-10 rounded-xl border-border/70 bg-background/75 pl-10 pr-3 text-sm shadow-none placeholder:text-muted-foreground/75 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 required
                 disabled={isLoading}
               />
@@ -308,18 +237,18 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
           <Field>
             <FieldLabel
               htmlFor="telefono"
-              className="mb-2.5 text-sm font-semibold text-foreground"
+              className="mb-2 text-sm font-semibold text-foreground"
             >
               Teléfono
             </FieldLabel>
             <div className="relative">
-              <Phone className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="telefono"
                 value={form.telefono}
                 onChange={(e) => handleChange('telefono', e.target.value)}
                 placeholder="341..."
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-4 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-10 rounded-xl border-border/70 bg-background/75 pl-10 pr-3 text-sm shadow-none placeholder:text-muted-foreground/75 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 disabled={isLoading}
               />
             </div>
@@ -327,18 +256,21 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
         </FieldGroup>
       </SectionCard>
 
-      <SectionCard eyebrow="Acceso" title="Credenciales">
-        <FieldGroup className="space-y-5">
+      <SectionCard
+        title="Credenciales"
+        description={isEdit ? 'La contraseña se modifica solo si completás este campo.' : 'Definí el acceso inicial del alumno.'}
+      >
+        <FieldGroup className="space-y-4">
           <Field>
             <FieldLabel
               htmlFor="password"
-              className="mb-2.5 text-sm font-semibold text-foreground"
+              className="mb-2 text-sm font-semibold text-foreground"
             >
-              {isEdit ? 'Nueva contraseña (opcional)' : 'Contraseña'}
+              {isEdit ? 'Nueva contraseña' : 'Contraseña *'}
             </FieldLabel>
 
             <div className="relative max-w-xl">
-              <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
               <Input
                 id="password"
@@ -346,7 +278,7 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
                 value={form.password}
                 onChange={(e) => handleChange('password', e.target.value)}
                 placeholder={isEdit ? 'Solo si querés cambiarla' : 'Ingresá una contraseña'}
-                className="h-12 rounded-2xl border-border/80 bg-background/90 pl-11 pr-12 text-[15px] shadow-none placeholder:text-muted-foreground/80 transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="h-10 rounded-xl border-border/70 bg-background/75 pl-10 pr-12 text-sm shadow-none placeholder:text-muted-foreground/75 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
                 required={!isEdit}
                 disabled={isLoading}
               />
@@ -355,7 +287,7 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute right-1.5 top-1.5 h-9 w-9 rounded-xl text-muted-foreground transition-all duration-200 hover:bg-primary/8 hover:text-primary"
+                className="absolute right-0.5 top-0.5 h-9 w-9 rounded-xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:scale-[0.98]"
                 onClick={() => setShowPassword((prev) => !prev)}
                 disabled={isLoading}
               >
@@ -387,10 +319,17 @@ export function StudentForm({ mode, initialData, onSubmit }: StudentFormProps) {
         </div>
       )}
 
-      <div className="flex justify-end pt-2">
+      <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+        <Button
+          asChild
+          variant="outline"
+          className="h-10 rounded-xl border-border/70 bg-background/70 px-4 shadow-none active:scale-[0.98]"
+        >
+          <Link href={cancelHref}>Cancelar</Link>
+        </Button>
         <Button
           type="submit"
-          className="min-w-44 rounded-2xl bg-primary px-5 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
+          className="h-10 min-w-40 rounded-xl px-4 text-sm font-semibold shadow-none active:scale-[0.98]"
           disabled={isLoading}
         >
           {isLoading ? (

@@ -27,7 +27,7 @@ export async function GET(_: NextRequest, context: RouteContext) {
     return proxyJson(response)
   } catch {
     return NextResponse.json(
-      { success: false, message: 'No se pudo obtener el profesor.' },
+      { success: false, message: 'No se pudo obtener el docente.' },
       { status: 500 }
     )
   }
@@ -54,7 +54,7 @@ export async function PUT(request: Request, context: RouteContext) {
     return proxyJson(response)
   } catch {
     return NextResponse.json(
-      { success: false, message: 'No se pudo actualizar el profesor.' },
+      { success: false, message: 'No se pudo actualizar el docente.' },
       { status: 500 }
     )
   }

@@ -19,6 +19,8 @@ export interface ReporteMarksItem {
   alumnoId: number
   alumnoNombre: string
   alumnoApellido: string
+  alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
   alumnoDni: number
   alumnoEmail?: string | null
   quizCount: number
@@ -62,6 +64,8 @@ export interface ReporteAttendanceItem {
   alumnoId: number
   alumnoNombre: string
   alumnoApellido: string
+  alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
   alumnoDni: number
   alumnoEmail?: string | null
   clasesTotales: number
@@ -99,6 +103,8 @@ export interface ReporteHomeworkItem {
   alumnoId: number
   alumnoNombre: string
   alumnoApellido: string
+  alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
   alumnoDni: number
   alumnoEmail?: string | null
   homeworkTotal: number
@@ -158,6 +164,7 @@ export interface ReporteStudentSummaryResponse {
   alumnoId: number
   alumnoNombre: string
   alumnoApellido: string
+  alumnoAvatarUrl?: string | null
   alumnoDni: number
   alumnoEmail?: string | null
   year: number
@@ -174,6 +181,8 @@ export interface AsistenciaRangeItem {
   alumnoId: number
   nombre: string
   apellido: string
+  alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
   presentes: number
   ausentes: number
   totalRegistradas: number
@@ -207,6 +216,8 @@ export interface DeliveriesByTaskItem {
   alumnoId: number
   alumnoNombre: string
   alumnoApellido: string
+  alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
   alumnoDni: number
   estado: EstadoEntregaReporte
   entregaId?: number | null
@@ -248,6 +259,7 @@ export interface ReporteStudentAssessmentDetailResponse {
   alumnoId: number
   alumnoNombre: string
   alumnoApellido: string
+  alumnoAvatarUrl?: string | null
   alumnoDni: number
   alumnoEmail?: string | null
   year: number

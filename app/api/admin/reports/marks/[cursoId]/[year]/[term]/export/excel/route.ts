@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { proxyFile } from '@/lib/auth/api-guards'
 import { getSession, hasRole } from '@/lib/auth/session'
 
@@ -28,13 +28,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const yearNumber = Number(year)
     const termNumber = Number(term)
     if (!Number.isFinite(cursoIdNumber) || cursoIdNumber <= 0) {
-      return new NextResponse('Curso inválido.', { status: 400 })
+      return new NextResponse('Curso invÃ¡lido.', { status: 400 })
     }
     if (!Number.isFinite(yearNumber) || yearNumber <= 0) {
-      return new NextResponse('Año inválido.', { status: 400 })
+      return new NextResponse('AÃ±o invÃ¡lido.', { status: 400 })
     }
     if (!Number.isFinite(termNumber) || termNumber <= 0) {
-      return new NextResponse('Term inválido.', { status: 400 })
+      return new NextResponse('Term invÃ¡lido.', { status: 400 })
     }
     const search = request.nextUrl.searchParams.get('search') ?? ''
 
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     return proxyFile(
       response,
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'marks-report.xlsx'
+      `marks-curso-${cursoIdNumber}-${yearNumber}-t${termNumber}.xlsx`
     )
   } catch {
     return new NextResponse('Error exportando Excel.', { status: 500 })

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -13,13 +13,10 @@ import {
   GraduationCap,
   ListChecks,
   Sparkles,
-  CalendarRange,
   Filter,
-  UserRound,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { getCourses } from '@/lib/admin/courses/api'
 import { getCursoAlumnos } from '@/lib/admin/courses/people-api'
@@ -33,27 +30,44 @@ import type {
   ReporteStudentAssessmentDetailResponse,
 } from '@/lib/admin/reports/types'
 import { cn } from '@/lib/utils'
+import {
+  buildReportFilename,
+  getCourseProfileHref,
+  getStudentProfileHref,
+  ReportEntityLink,
+  ReportEmptyState,
+  ReportExportButton,
+  ReportExportSection,
+  ReportFilterPanel,
+  ReportLoadingState,
+  ReportPersonLink,
+  ReportResultsSection,
+  ReportSummarySection,
+  StudentReportHero,
+} from './report-sections'
 
 interface CursoAlumnoOption {
   alumnoId: number
   nombre: string
   apellido: string
   email: string
+  alumnoAvatarUrl?: string | null
+  avatarUrl?: string | null
   dni: number
 }
 
 function getTipoCardClass(tipo: number) {
   switch (tipo) {
     case 1:
-      return 'border-blue-200/60 bg-[linear-gradient(180deg,rgba(59,88,170,0.05)_0%,rgba(255,255,255,0)_100%)] dark:border-blue-900/40 dark:bg-[linear-gradient(180deg,rgba(59,88,170,0.10)_0%,rgba(255,255,255,0)_100%)]'
+      return 'border-blue-200/60 bg-blue-500/[0.03] dark:border-blue-900/40 dark:bg-blue-500/[0.06]'
     case 2:
-      return 'border-violet-200/60 bg-[linear-gradient(180deg,rgba(139,92,246,0.05)_0%,rgba(255,255,255,0)_100%)] dark:border-violet-900/40 dark:bg-[linear-gradient(180deg,rgba(139,92,246,0.10)_0%,rgba(255,255,255,0)_100%)]'
+      return 'border-violet-200/60 bg-violet-500/[0.03] dark:border-violet-900/40 dark:bg-violet-500/[0.06]'
     case 3:
-      return 'border-emerald-200/60 bg-[linear-gradient(180deg,rgba(16,185,129,0.05)_0%,rgba(255,255,255,0)_100%)] dark:border-emerald-900/40 dark:bg-[linear-gradient(180deg,rgba(16,185,129,0.10)_0%,rgba(255,255,255,0)_100%)]'
+      return 'border-emerald-200/60 bg-emerald-500/[0.03] dark:border-emerald-900/40 dark:bg-emerald-500/[0.06]'
     case 4:
-      return 'border-amber-200/60 bg-[linear-gradient(180deg,rgba(245,158,11,0.05)_0%,rgba(255,255,255,0)_100%)] dark:border-amber-900/40 dark:bg-[linear-gradient(180deg,rgba(245,158,11,0.10)_0%,rgba(255,255,255,0)_100%)]'
+      return 'border-amber-200/60 bg-amber-500/[0.03] dark:border-amber-900/40 dark:bg-amber-500/[0.06]'
     case 5:
-      return 'border-rose-200/60 bg-[linear-gradient(180deg,rgba(244,63,94,0.05)_0%,rgba(255,255,255,0)_100%)] dark:border-rose-900/40 dark:bg-[linear-gradient(180deg,rgba(244,63,94,0.10)_0%,rgba(255,255,255,0)_100%)]'
+      return 'border-rose-200/60 bg-rose-500/[0.03] dark:border-rose-900/40 dark:bg-rose-500/[0.06]'
     default:
       return 'border-border/60 bg-card/95'
   }
@@ -152,7 +166,7 @@ function SummaryCard({
   subvalue,
 }: {
   title: string
-  value: string | number
+  value: React.ReactNode
   icon: React.ComponentType<{ className?: string }>
   accent?: 'blue' | 'emerald' | 'violet' | 'amber'
   subvalue?: string
@@ -185,7 +199,7 @@ function SummaryCard({
   return (
     <div
       className={cn(
-        'rounded-[24px] border p-5 shadow-[0_14px_34px_-22px_rgba(15,23,42,0.14)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_18px_38px_-24px_rgba(15,23,42,0.18)]',
+        'rounded-2xl border p-5 shadow-[0_14px_34px_-22px_rgba(15,23,42,0.14)] transition duration-200 hover:-translate-y-[1px] hover:shadow-[0_18px_38px_-24px_rgba(15,23,42,0.18)]',
         accentStyles.card,
       )}
     >
@@ -202,64 +216,6 @@ function SummaryCard({
 
         <div className={cn('flex size-11 items-center justify-center rounded-2xl', accentStyles.icon)}>
           <Icon className="size-5" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ReportMetaCard({
-  icon: Icon,
-  label,
-  value,
-  helper,
-  tone = 'default',
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  helper?: string
-  tone?: 'default' | 'highlight'
-}) {
-  return (
-    <div
-      className={cn(
-        'rounded-[24px] border p-4 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md',
-        tone === 'highlight'
-          ? 'border-primary/15 bg-primary/5'
-          : 'border-border/60 bg-background/75',
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            'flex size-10 items-center justify-center rounded-2xl',
-            tone === 'highlight'
-              ? 'bg-primary/10 text-primary'
-              : 'bg-background text-muted-foreground',
-          )}
-        >
-          <Icon className="size-4.5" />
-        </div>
-
-        <div className="min-w-0">
-          <p
-            className={cn(
-              'text-[11px] font-semibold uppercase tracking-[0.14em]',
-              tone === 'highlight' ? 'text-primary/80' : 'text-muted-foreground',
-            )}
-          >
-            {label}
-          </p>
-          <p
-            className={cn(
-              'mt-2 text-sm font-semibold leading-6',
-              tone === 'highlight' ? 'text-primary' : 'text-foreground',
-            )}
-          >
-            {value}
-          </p>
-          {helper ? <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p> : null}
         </div>
       </div>
     </div>
@@ -327,7 +283,7 @@ function ItemCard({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-[24px] border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-22px_rgba(15,23,42,0.18)]',
+        'overflow-hidden rounded-2xl border transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-22px_rgba(15,23,42,0.18)]',
         getTipoCardClass(item.tipo),
       )}
     >
@@ -353,7 +309,7 @@ function ItemCard({
 
             {item.tipo === 1 && (
               <>
-                <span className="text-xs text-muted-foreground">•</span>
+                <span className="text-xs text-muted-foreground">·</span>
                 <span className="text-xs text-muted-foreground">Desde homework</span>
               </>
             )}
@@ -518,19 +474,6 @@ export function StudentAssessmentsDetailReportView() {
     [students, alumnoId]
   )
 
-  const selectedCourseName =
-    courses.find((course) => String(course.id) === cursoId)?.nombre ?? 'Sin curso seleccionado'
-
-  const selectedStudentName = selectedStudent
-    ? `${selectedStudent.nombre} ${selectedStudent.apellido}`
-    : 'Sin alumno seleccionado'
-
-  const termLabel = useMemo(() => {
-    if (term === '1') return 'Trimestre 1'
-    if (term === '2') return 'Trimestre 2'
-    return 'Trimestre 3'
-  }, [term])
-
   const handleLoad = async () => {
     setError(null)
     setLoadingReport(true)
@@ -576,216 +519,154 @@ export function StudentAssessmentsDetailReportView() {
     report?.items.filter((x) => x.skills.length > 0).length ?? 0
 
   return (
-    <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-card/90 px-6 py-7 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-7 sm:py-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(36,59,123,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.05),transparent_24%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(72,99,180,0.12),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(198,61,79,0.08),transparent_26%)]" />
-
-        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="mb-5 h-[3px] w-12 rounded-full bg-primary" />
-
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
-              Centro de reportes
-            </p>
-
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-[2.45rem]">
-              Detalle de evaluaciones del alumno
-            </h2>
-
-            <p className="mt-4 max-w-3xl text-[15px] leading-7 text-muted-foreground">
-              Consultá el detalle cronológico de evaluaciones por alumno, incluyendo homework, quiz, test y skills por calificación.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:w-[440px]">
-            <ReportMetaCard
-              icon={UserRound}
-              label="Alumno"
-              value={selectedStudentName}
-              helper="Se actualiza según la selección."
-              tone="highlight"
-            />
-            <ReportMetaCard
-              icon={CalendarRange}
-              label="Período"
-              value={`${year || '—'} · ${termLabel}`}
-              helper="Año y trimestre del reporte."
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-[28px] border border-border/60 bg-card/95 p-6 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.16)]">
-        <div className="flex flex-col gap-6">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Configuración
-            </p>
-            <h3 className="text-xl font-semibold tracking-tight text-foreground">
-              Generar reporte
-            </h3>
-            <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-              Seleccioná curso, alumno, año, trimestre y tipo para generar el detalle cronológico de evaluaciones.
-            </p>
-          </div>
-
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <FilterField label="Curso">
-                <select
-                  value={cursoId}
-                  onChange={(e) => setCursoId(e.target.value)}
-                  disabled={loadingSources}
-                  className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
-                >
-                  <option value="">Seleccionar curso</option>
-                  {courses.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.nombre}
-                    </option>
-                  ))}
-                </select>
-              </FilterField>
-
-              <FilterField label="Alumno">
-                <select
-                  value={alumnoId}
-                  onChange={(e) => setAlumnoId(e.target.value)}
-                  disabled={!cursoId || loadingStudents}
-                  className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
-                >
-                  <option value="">
-                    {!cursoId
-                      ? 'Primero seleccioná un curso'
-                      : loadingStudents
-                        ? 'Cargando alumnos...'
-                        : 'Seleccionar alumno'}
-                  </option>
-
-                  {students.map((student) => (
-                    <option key={student.alumnoId} value={student.alumnoId}>
-                      {student.nombre} {student.apellido}
-                    </option>
-                  ))}
-                </select>
-              </FilterField>
-
-              <FilterField label="Año">
-                <Input
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  placeholder="2026"
-                  className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
-                />
-              </FilterField>
-
-              <FilterField label="Trimestre">
-                <select
-                  value={term}
-                  onChange={(e) => setTerm(e.target.value)}
-                  className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
-                >
-                  <option value="1">Trimestre 1</option>
-                  <option value="2">Trimestre 2</option>
-                  <option value="3">Trimestre 3</option>
-                </select>
-              </FilterField>
-
-              <FilterField label="Tipo">
-                <select
-                  value={tipo}
-                  onChange={(e) => setTipo(e.target.value)}
-                  className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
-                >
-                  <option value="">Todos</option>
-                  <option value="1">Homework</option>
-                  <option value="2">Quiz</option>
-                  <option value="3">Test</option>
-                  <option value="4">Participación</option>
-                  <option value="5">Comportamiento</option>
-                </select>
-              </FilterField>
-            </div>
-
-            <div className="rounded-[24px] border border-primary/15 bg-primary/5 p-5 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.10)]">
-              <div className="mb-4 flex items-start gap-3">
-                <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Filter className="size-4.5" />
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
-                    Acción disponible
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-primary">
-                    Generar y exportar reporte
-                  </p>
-                </div>
+    <StudentReportHero
+      title="Evaluaciones del estudiante"
+      description="Seleccioná curso, alumno, período y tipo para generar el detalle cronológico."
+    >
+      <ReportFilterPanel
+        description="Seleccioná curso, alumno, año, trimestre y tipo para generar el detalle cronológico de evaluaciones."
+        error={error}
+        action={
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Filter className="size-4.5" />
               </div>
 
-              <div className="space-y-3">
-                <Button
-                  onClick={handleLoad}
-                  disabled={loadingReport}
-                  className="h-11 w-full rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:shadow-md"
-                >
-                  {loadingReport ? 'Cargando...' : 'Generar reporte'}
-                </Button>
-
-                {report && cursoId && alumnoId && (
-                  <a
-                    href={getStudentAssessmentDetailExportPdfUrl({
-                      cursoId: Number(cursoId),
-                      alumnoId: Number(alumnoId),
-                      year: Number(year),
-                      term: Number(term),
-                      tipo: tipo !== '' ? Number(tipo) : undefined,
-                    })}
-                  >
-                    <Button
-                      variant="outline"
-                      className="h-11 w-full rounded-2xl border-border/70 bg-background/75 text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-card hover:text-foreground hover:shadow-md"
-                    >
-                      <FileText className="mr-2 size-4" />
-                      Exportar PDF
-                    </Button>
-                  </a>
-                )}
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
+                  Acción disponible
+                </p>
+                <p className="mt-1 text-sm font-semibold text-primary">
+                  Generar reporte
+                </p>
               </div>
             </div>
+
+            <Button
+              onClick={handleLoad}
+              disabled={loadingReport}
+              className="h-11 w-full rounded-2xl bg-primary px-5 text-primary-foreground shadow-sm transition duration-150 hover:bg-primary/90 active:scale-[0.98] disabled:opacity-60"
+            >
+              {loadingReport ? (
+                'Generando...'
+              ) : (
+                <>
+                  <Sparkles className="mr-2 size-4" />
+                  Generar reporte
+                </>
+              )}
+            </Button>
           </div>
+        }
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <FilterField label="Curso">
+            <select
+              value={cursoId}
+              onChange={(e) => setCursoId(e.target.value)}
+              disabled={loadingSources}
+              className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
+            >
+              <option value="">Seleccionar curso</option>
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.nombre}
+                </option>
+              ))}
+            </select>
+          </FilterField>
 
-          {error && (
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
-              {error}
-            </div>
-          )}
+          <FilterField label="Alumno">
+            <select
+              value={alumnoId}
+              onChange={(e) => setAlumnoId(e.target.value)}
+              disabled={!cursoId || loadingStudents}
+              className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
+            >
+              <option value="">
+                {!cursoId
+                  ? 'Primero seleccioná un curso'
+                  : loadingStudents
+                    ? 'Cargando alumnos...'
+                    : 'Seleccionar alumno'}
+              </option>
+
+              {students.map((student) => (
+                <option key={student.alumnoId} value={student.alumnoId}>
+                  {student.nombre} {student.apellido}
+                </option>
+              ))}
+            </select>
+          </FilterField>
+
+          <FilterField label="Año">
+            <Input
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              placeholder="2026"
+              className="h-11 rounded-2xl border-border/70 bg-card/85 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition duration-200 focus-visible:ring-4 focus-visible:ring-primary/15"
+            />
+          </FilterField>
+
+          <FilterField label="Trimestre">
+            <select
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
+            >
+              <option value="1">Trimestre 1</option>
+              <option value="2">Trimestre 2</option>
+              <option value="3">Trimestre 3</option>
+            </select>
+          </FilterField>
+
+          <FilterField label="Tipo">
+            <select
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
+              className="flex h-11 w-full rounded-2xl border border-border/70 bg-card/85 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_rgba(15,23,42,0.14)] transition duration-200 focus:outline-none focus:ring-4 focus:ring-primary/15"
+            >
+              <option value="">Todos</option>
+              <option value="1">Homework</option>
+              <option value="2">Quiz</option>
+              <option value="3">Test</option>
+              <option value="4">Participación</option>
+              <option value="5">Comportamiento</option>
+            </select>
+          </FilterField>
         </div>
-      </section>
-
+      </ReportFilterPanel>
+      {loadingReport && !report ? <ReportLoadingState /> : null}
       {report && (
         <>
-          <section className="space-y-4">
-            <div className="space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Resumen ejecutivo
-              </p>
-              <h3 className="text-xl font-semibold tracking-tight text-foreground">
-                Contexto del reporte
-              </h3>
-            </div>
-
+          <ReportSummarySection description="Contexto del reporte generado.">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <SummaryCard
                 title="Alumno"
-                value={`${report.alumnoNombre} ${report.alumnoApellido}`}
+                value={
+                  <ReportPersonLink
+                    href={getStudentProfileHref(report.alumnoId)}
+                    name={`${report.alumnoNombre} ${report.alumnoApellido}`}
+                    avatarUrl={
+                      report.alumnoAvatarUrl ??
+                      selectedStudent?.alumnoAvatarUrl ??
+                      selectedStudent?.avatarUrl
+                    }
+                  />
+                }
                 subvalue={selectedStudent?.email ?? report.alumnoEmail ?? '-'}
                 icon={GraduationCap}
                 accent="blue"
               />
               <SummaryCard
                 title="Curso"
-                value={report.cursoNombre}
+                value={
+                  <ReportEntityLink
+                    href={getCourseProfileHref(report.cursoId)}
+                    label={report.cursoNombre}
+                  />
+                }
                 subvalue={`Trimestre ${report.term} · ${report.year}`}
                 icon={BookOpen}
                 accent="violet"
@@ -803,28 +684,19 @@ export function StudentAssessmentsDetailReportView() {
                 accent="amber"
               />
             </div>
-          </section>
+          </ReportSummarySection>
 
-          <section className="rounded-[28px] border border-border/60 bg-card/95 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.16)]">
-            <div className="border-b border-border/60 px-6 py-5">
-              <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Historial
-                </p>
-                <h3 className="text-xl font-semibold tracking-tight text-foreground">
-                  Evaluaciones cronológicas
-                </h3>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  Expandí cada evaluación para ver el detalle de skills y su composición interna.
-                </p>
-              </div>
-            </div>
+          <ReportResultsSection
+            title="Evaluaciones cronológicas"
+            description="Expandí cada evaluación para ver el detalle de skills y su composición interna."
+          >
 
             <div className="space-y-4 p-6">
               {report.items.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
-                  No hay evaluaciones para mostrar en ese filtro.
-                </div>
+                <ReportEmptyState
+                  title="Sin evaluaciones"
+                  description="No encontramos evaluaciones para el alumno y los filtros seleccionados."
+                />
               ) : (
                 report.items.map((item) => (
                   <ItemCard
@@ -836,9 +708,51 @@ export function StudentAssessmentsDetailReportView() {
                 ))
               )}
             </div>
-          </section>
+          </ReportResultsSection>
+
+          <ReportExportSection
+            description="Este reporte individual está disponible en PDF para conservar el detalle cronológico y las habilidades."
+            details={[
+              { label: 'Curso', value: report.cursoNombre },
+              { label: 'Período', value: `${report.year} · Trimestre ${report.term}` },
+              { label: 'Registros', value: report.items.length },
+            ]}
+          >
+            <div className="w-full sm:min-w-[220px]">
+              <ReportExportButton
+                label="Exportar PDF"
+                icon={<FileText className="mr-2 size-4" />}
+                filename={buildReportFilename(
+                  [
+                    'evaluaciones-alumno',
+                    report.alumnoNombre,
+                    report.alumnoApellido,
+                    report.cursoNombre,
+                    report.year,
+                    `t${report.term}`,
+                  ],
+                  'pdf'
+                )}
+              href={
+                report && cursoId && alumnoId
+                  ? getStudentAssessmentDetailExportPdfUrl({
+                      cursoId: Number(cursoId),
+                      alumnoId: Number(alumnoId),
+                      year: Number(year),
+                      term: Number(term),
+                      tipo: tipo !== '' ? Number(tipo) : undefined,
+                    })
+                  : undefined
+              }
+                disabled={!report || !cursoId || !alumnoId}
+              />
+            </div>
+          </ReportExportSection>
         </>
       )}
-    </div>
+    </StudentReportHero>
   )
 }
+
+
+
