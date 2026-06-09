@@ -8,15 +8,32 @@ import {
   CalendarClock,
   ClipboardList,
   Clock3,
-  Eye,
   Inbox,
   Megaphone,
+  MoreHorizontal,
   Pencil,
   Plus,
   Search,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -84,31 +101,21 @@ function MetaBadge({
   children: React.ReactNode
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground dark:bg-background/30">
+    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
       <Icon className="size-3" />
       {children}
     </span>
   )
 }
 
-function getPreview(task: TeacherTaskListItem) {
-  if (task.esAnuncio) {
-    return 'Comunicacion publicada para el curso.'
-  }
-
-  return task.fechaEntregaUtc
-    ? 'Actividad con fecha de entrega definida.'
-    : 'Actividad sin fecha de entrega definida.'
-}
-
 function FeedPost({
   task,
   courseId,
-  onArchive,
+  onRequestArchive,
 }: {
   task: TeacherTaskListItem
   courseId: number
-  onArchive: (taskId: number) => void
+  onRequestArchive: (task: TeacherTaskListItem) => void
 }) {
   const estadoConfig = getEstadoTareaConfig(task.estado)
   const Icon = task.esAnuncio ? Megaphone : ClipboardList
@@ -142,14 +149,7 @@ function FeedPost({
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
-                <span
-                  className={cn(
-                    'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                    task.esAnuncio
-                      ? 'border-violet-200/70 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300'
-                      : 'border-primary/15 bg-primary/5 text-primary',
-                  )}
-                >
+                <span className="text-xs font-medium text-muted-foreground">
                   {task.esAnuncio ? 'Anuncio' : 'Tarea'}
                 </span>
                 <span
@@ -167,11 +167,7 @@ function FeedPost({
               {task.titulo}
             </h3>
 
-            <p className="mt-0.5 line-clamp-2 text-sm leading-5 text-muted-foreground">
-              {getPreview(task)}
-            </p>
-
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
               {!task.esAnuncio ? (
                 <MetaBadge icon={CalendarClock}>
                   {task.fechaEntregaUtc
@@ -185,42 +181,49 @@ function FeedPost({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 border-t border-border/55 pt-2 md:min-w-32 md:flex-col md:items-stretch md:border-t-0 md:pt-0">
+          <div className="flex items-center gap-1.5 border-t border-border/55 pt-2 md:border-t-0 md:pt-0">
             <Button
               asChild
-              variant="outline"
-              className="h-8 justify-start rounded-lg border-border/70 bg-background/70 px-2.5 text-xs font-semibold text-foreground shadow-none transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary md:w-full md:justify-center"
+              className="h-9 rounded-lg px-3 text-sm font-semibold shadow-none"
             >
               <Link href={`/teacher/courses/${courseId}/tasks/${task.id}`}>
-                <Eye className="mr-1.5 size-3.5" />
-                {task.esAnuncio ? 'Ver detalles' : 'Ver entregas'}
+                {task.esAnuncio ? 'Abrir publicación' : 'Revisar entregas'}
               </Link>
             </Button>
 
-            <Button
-              asChild
-              variant="outline"
-              className="h-8 justify-start rounded-lg border-border/70 bg-background/70 px-2.5 text-xs font-semibold text-muted-foreground shadow-none transition-colors duration-200 hover:border-border hover:bg-muted/40 hover:text-foreground md:w-full md:justify-center"
-            >
-              <Link href={`/teacher/courses/${courseId}/tasks/${task.id}/edit`}>
-                <Pencil className="mr-1.5 size-3.5" />
-                Editar
-              </Link>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onArchive(task.id)}
-              className={cn(
-                'h-8 justify-start rounded-lg border-border/70 bg-background/70 px-2.5 text-xs font-semibold text-muted-foreground shadow-none transition-colors duration-200 hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 md:w-full md:justify-center',
-                task.estado === EstadoTarea.Archivada && 'opacity-60',
-              )}
-              disabled={task.estado === EstadoTarea.Archivada}
-            >
-              <Archive className="mr-1.5 size-3.5" />
-              Archivar
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-9 rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  aria-label={`Más acciones para ${task.titulo}`}
+                >
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44 rounded-xl">
+                <DropdownMenuItem asChild>
+                  <Link href={`/teacher/courses/${courseId}/tasks/${task.id}/edit`}>
+                    <Pencil className="size-4" />
+                    Editar
+                  </Link>
+                </DropdownMenuItem>
+                {task.estado !== EstadoTarea.Archivada ? (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-amber-700 focus:text-amber-700 dark:text-amber-400 dark:focus:text-amber-400"
+                      onSelect={() => onRequestArchive(task)}
+                    >
+                      <Archive className="size-4" />
+                      Archivar
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -238,6 +241,10 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   const [estado, setEstado] = useState(SELECT_ALL)
   const [pageNumber, setPageNumber] = useState(1)
   const [total, setTotal] = useState(0)
+  const [taskToArchive, setTaskToArchive] = useState<TeacherTaskListItem | null>(
+    null,
+  )
+  const [archiving, setArchiving] = useState(false)
 
   const pageSize = 10
 
@@ -274,7 +281,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
         setData(result.data?.items ?? [])
         setTotal(result.data?.total ?? 0)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ocurrio un error.')
+        setError(err instanceof Error ? err.message : 'Ocurrió un error.')
       } finally {
         setLoading(false)
       }
@@ -283,21 +290,25 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
     load()
   }, [courseId, debouncedSearch, estado, pageNumber])
 
-  const handleArchive = async (taskId: number) => {
-    const confirmed = window.confirm('Queres archivar esta publicacion?')
-    if (!confirmed) return
-
+  const handleArchive = async () => {
+    if (!taskToArchive) return
     try {
+      setArchiving(true)
       setError(null)
-      await archiveTeacherTask(courseId, taskId)
+      await archiveTeacherTask(courseId, taskToArchive.id)
 
       setData((prev) =>
         prev.map((item) =>
-          item.id === taskId ? { ...item, estado: EstadoTarea.Archivada } : item,
+          item.id === taskToArchive.id
+            ? { ...item, estado: EstadoTarea.Archivada }
+            : item,
         ),
       )
+      setTaskToArchive(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ocurrio un error.')
+      setError(err instanceof Error ? err.message : 'Ocurrió un error.')
+    } finally {
+      setArchiving(false)
     }
   }
 
@@ -306,7 +317,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
   const pageLabel = useMemo(() => {
     if (total === 0) return 'Sin publicaciones'
-    return `Pagina ${pageNumber} de ${totalPages} - ${total} publicaciones`
+    return `Página ${pageNumber} de ${totalPages} · ${total} publicaciones`
   }, [pageNumber, totalPages, total])
 
   return (
@@ -382,7 +393,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
                 <EmptyDescription>
                   {hasActiveFilters
                     ? 'No se encontraron publicaciones con esos filtros.'
-                    : 'Todavia no hay tareas ni anuncios en este curso.'}
+                    : 'Todavía no hay tareas ni anuncios en este curso.'}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -395,7 +406,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
               key={task.id}
               task={task}
               courseId={courseId}
-              onArchive={handleArchive}
+              onRequestArchive={setTaskToArchive}
             />
           ))}
         </div>
@@ -424,6 +435,37 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
           </Button>
         </div>
       </div>
+
+      <AlertDialog
+        open={taskToArchive !== null}
+        onOpenChange={(open) => {
+          if (!open && !archiving) setTaskToArchive(null)
+        }}
+      >
+        <AlertDialogContent className="rounded-2xl border-border/60">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archivar publicación</AlertDialogTitle>
+            <AlertDialogDescription>
+              {taskToArchive
+                ? `“${taskToArchive.titulo}” dejará de aparecer como publicación activa.`
+                : 'La publicación dejará de aparecer como activa.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={archiving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={archiving}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleArchive()
+              }}
+              className="bg-amber-600 text-white hover:bg-amber-700"
+            >
+              {archiving ? 'Archivando...' : 'Archivar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -18,8 +18,18 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { UserAvatar } from '@/components/shared/user-avatar'
+import { PersonAvatar } from '@/components/teacher/course-detail/course-people-ui'
 import { RowActions } from '@/components/ui/row-actions'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   Empty,
   EmptyDescription,
@@ -449,6 +459,8 @@ export function TeacherStudentGrades({
   const [studentContext, setStudentContext] = useState<GradeListItem | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [gradeToArchive, setGradeToArchive] = useState<GradeListItem | null>(null)
+  const [archiving, setArchiving] = useState(false)
 
   const [pageNumber, setPageNumber] = useState(1)
   const [total, setTotal] = useState(0)
@@ -509,18 +521,20 @@ export function TeacherStudentGrades({
     loadGrades()
   }, [courseId, alumnoId, pageNumber])
 
-  const handleArchive = async (gradeId: number) => {
-    const confirmed = window.confirm('¿Querés archivar esta calificación?')
-    if (!confirmed) return
-
+  const handleArchive = async () => {
+    if (!gradeToArchive) return
     try {
+      setArchiving(true)
       setError(null)
-      await archiveTeacherGrade(courseId, alumnoId, gradeId)
+      await archiveTeacherGrade(courseId, alumnoId, gradeToArchive.id)
 
-      setData((prev) => prev.filter((item) => item.id !== gradeId))
+      setData((prev) => prev.filter((item) => item.id !== gradeToArchive.id))
       setTotal((prev) => Math.max(0, prev - 1))
+      setGradeToArchive(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ocurrió un error.')
+    } finally {
+      setArchiving(false)
     }
   }
 
@@ -556,12 +570,10 @@ export function TeacherStudentGrades({
           </Button>
 
           <div className="flex min-w-0 items-center gap-3">
-            <UserAvatar
+            <PersonAvatar
               name={alumnoFullName}
               avatarUrl={alumnoContext.avatarUrl}
-              size={40}
-              className="shrink-0"
-              fallbackClassName="bg-primary/10 text-primary"
+              tone="student"
             />
             <div className="min-w-0">
               <h1 className="truncate text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
@@ -611,7 +623,11 @@ export function TeacherStudentGrades({
               grade={grade}
               courseId={courseId}
               alumnoId={alumnoId}
-              onArchive={handleArchive}
+              onArchive={(gradeId) =>
+                setGradeToArchive(
+                  data.find((item) => item.id === gradeId) ?? null,
+                )
+              }
             />
           ))}
         </div>
@@ -640,6 +656,37 @@ export function TeacherStudentGrades({
           </Button>
         </div>
       </div>
+
+      <AlertDialog
+        open={gradeToArchive !== null}
+        onOpenChange={(open) => {
+          if (!open && !archiving) setGradeToArchive(null)
+        }}
+      >
+        <AlertDialogContent className="rounded-2xl border-border/60">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archivar calificación</AlertDialogTitle>
+            <AlertDialogDescription>
+              {gradeToArchive
+                ? `“${gradeToArchive.titulo}” dejará de aparecer entre las calificaciones activas.`
+                : 'La calificación dejará de aparecer como activa.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={archiving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={archiving}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleArchive()
+              }}
+              className="bg-amber-600 text-white hover:bg-amber-700"
+            >
+              {archiving ? 'Archivando...' : 'Archivar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

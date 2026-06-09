@@ -31,7 +31,7 @@ import {
 import { UserAvatar } from '@/components/shared/user-avatar'
 import { cn } from '@/lib/utils'
 
-type Tone = 'default' | 'primary' | 'amber' | 'emerald' | 'rose' | 'sky'
+type Tone = 'default' | 'primary' | 'emerald' | 'rose' | 'sky'
 
 const toneStyles: Record<Tone, { badge: string; icon: string; card: string }> = {
   default: {
@@ -43,11 +43,6 @@ const toneStyles: Record<Tone, { badge: string; icon: string; card: string }> = 
     badge: 'border-primary/15 bg-primary/10 text-primary',
     icon: 'bg-primary/10 text-primary',
     card: 'border-primary/15 bg-primary/[0.045] dark:bg-primary/10',
-  },
-  amber: {
-    badge: 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400',
-    icon: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-    card: 'border-amber-500/20 bg-amber-500/[0.055]',
   },
   emerald: {
     badge: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
@@ -117,10 +112,6 @@ function getFutureClasses(items: ProfesorDashboardProximaClaseItem[]) {
     )
 }
 
-function getTodayClasses(items: ProfesorDashboardProximaClaseItem[]) {
-  return getFutureClasses(items).filter((item) => isToday(parseLocalDate(item.fecha)))
-}
-
 function getPendingDeliveries(items: ProfesorDashboardUltimaEntregaItem[]) {
   return [...items]
     .filter((item) => !item.tieneFeedbackVigente)
@@ -182,46 +173,40 @@ function EmptyState({
   )
 }
 
-function DashboardHero({
-  name,
+function DayHeader({
+  hasNextClass,
   pendingCount,
 }: {
-  name: string
+  hasNextClass: boolean
   pendingCount: number
 }) {
-  const hasPending = pendingCount > 0
+  const summary =
+    hasNextClass && pendingCount > 0
+      ? `Tenés una clase próxima y ${pendingCount} ${
+          pendingCount === 1 ? 'entrega' : 'entregas'
+        } para revisar.`
+      : hasNextClass
+        ? 'Tenés una clase próxima y ninguna entrega para revisar.'
+        : pendingCount > 0
+          ? `No tenés clases próximas. Hay ${pendingCount} ${
+              pendingCount === 1 ? 'entrega' : 'entregas'
+            } para revisar.`
+          : 'No tenés clases próximas ni entregas para revisar.'
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border/90 bg-gradient-to-br from-card via-card to-secondary px-5 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.07),0_10px_26px_-22px_rgba(15,23,42,0.28)] dark:border-border/60 dark:bg-none dark:bg-card/80 dark:shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:px-6 sm:py-5">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_92%_10%,rgba(14,165,233,0.16),transparent_34%)] dark:bg-[radial-gradient(circle_at_92%_10%,rgba(56,189,248,0.08),transparent_32%)]" />
-      <div className="absolute inset-0 ring-1 ring-inset ring-white/80 dark:ring-0" />
-      <div className="absolute inset-0 opacity-[0.025] [background-image:linear-gradient(to_right,rgba(15,23,42,0.9)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.9)_1px,transparent_1px)] [background-size:28px_28px] dark:opacity-[0.045] dark:[background-image:linear-gradient(to_right,rgba(226,232,240,0.9)_1px,transparent_1px),linear-gradient(to_bottom,rgba(226,232,240,0.9)_1px,transparent_1px)]" />
-
-      <div className="relative z-10 max-w-3xl">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-xs font-medium capitalize text-muted-foreground">
-            {formatTodayLabel()}
-          </p>
-          <span
-            className={cn(
-              'inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold',
-              hasPending ? toneStyles.amber.badge : toneStyles.emerald.badge,
-            )}
-          >
-            {hasPending ? 'Revision pendiente' : 'Jornada al dia'}
-          </span>
-        </div>
-
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          Hola, {name}
+    <header className="border-b border-border/60 pb-5 pt-1">
+      <div className="max-w-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          Hoy en tus clases
         </h1>
-        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-[15px]">
-          {hasPending
-            ? `Tenes ${pendingCount} ${pendingCount === 1 ? 'entrega' : 'entregas'} para revisar.`
-            : 'Todo listo para hoy. Podes revisar agenda, cursos y actividad reciente.'}
+        <p className="mt-2 text-sm leading-6 text-foreground/80 sm:text-[15px]">
+          {summary}
+        </p>
+        <p className="mt-1 text-sm capitalize text-muted-foreground">
+          {formatTodayLabel()}
         </p>
       </div>
-    </section>
+    </header>
   )
 }
 
@@ -256,7 +241,7 @@ function TodayClassCard({ item }: { item: ProfesorDashboardProximaClaseItem }) {
             {item.cursoNombre}
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            {today ? 'Clase de hoy' : 'Proxima clase programada'}
+            {today ? 'Clase de hoy' : 'Próxima clase programada'}
           </p>
         </div>
 
@@ -290,57 +275,21 @@ function TodayClassCard({ item }: { item: ProfesorDashboardProximaClaseItem }) {
   )
 }
 
-function TodayWork({
-  classes,
-  pendingCount,
-  activeTasksCount,
-}: {
-  classes: ProfesorDashboardProximaClaseItem[]
-  pendingCount: number
-  activeTasksCount: number
-}) {
-  const todayClasses = getTodayClasses(classes)
-  const nextClass = getFutureClasses(classes).find(
-    (item) => !todayClasses.some((today) => today.cursoId === item.cursoId && today.fecha === item.fecha),
-  )
-  const visibleClasses = todayClasses.length > 0 ? todayClasses.slice(0, 3) : nextClass ? [nextClass] : []
-
+function NextClass({ item }: { item?: ProfesorDashboardProximaClaseItem }) {
   return (
     <section className="space-y-4 rounded-2xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-5">
       <SectionHeader
-        title="Hoy"
-        description="Lo mas importante para arrancar la jornada."
+        title="Próxima clase"
+        description="El siguiente espacio de tu jornada docente."
       />
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <div className={cn('rounded-xl border px-4 py-3', toneStyles.primary.card)}>
-          <p className="text-xs font-medium text-muted-foreground">Clases de hoy</p>
-          <p className="mt-1 text-2xl font-semibold leading-none">{todayClasses.length}</p>
-        </div>
-        <div className={cn('rounded-xl border px-4 py-3', pendingCount > 0 ? toneStyles.amber.card : toneStyles.emerald.card)}>
-          <p className="text-xs font-medium text-muted-foreground">Entregas por revisar</p>
-          <p className="mt-1 text-2xl font-semibold leading-none">{pendingCount}</p>
-        </div>
-        <div className={cn('rounded-xl border px-4 py-3', toneStyles.default.card)}>
-          <p className="text-xs font-medium text-muted-foreground">Publicaciones activas</p>
-          <p className="mt-1 text-2xl font-semibold leading-none">{activeTasksCount}</p>
-        </div>
-      </div>
-
-      {visibleClasses.length > 0 ? (
-        <div className="space-y-3">
-          {visibleClasses.map((item, index) => (
-            <TodayClassCard
-              key={`${item.cursoId}-${item.fecha}-${item.horaInicio}-${index}`}
-              item={item}
-            />
-          ))}
-        </div>
+      {item ? (
+        <TodayClassCard item={item} />
       ) : (
         <EmptyState
           icon={CalendarCheck2}
-          title="Sin clases proximas"
-          description="No hay clases futuras registradas en tu agenda inmediata."
+          title="Sin clases próximas"
+          description="No hay clases futuras registradas en este momento."
         />
       )}
     </section>
@@ -357,15 +306,15 @@ function PendingReviews({
   return (
     <section id="entregas" className="space-y-4 rounded-2xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-5">
       <SectionHeader
-        title="Pendientes de revision"
-        description="Entregas sin feedback, ordenadas por urgencia."
+        title="Para corregir"
+        description="Entregas que todavía no tienen devolución."
       />
 
       {pending.length === 0 ? (
         <EmptyState
           icon={CheckCircle2}
           title="Sin correcciones pendientes"
-          description="No hay entregas esperando revision en este momento."
+          description="No hay entregas esperando revisión en este momento."
         />
       ) : (
         <div className="space-y-3">
@@ -378,7 +327,7 @@ function PendingReviews({
                 key={item.entregaId}
                 className={cn(
                   'rounded-xl border px-4 py-4 transition-colors hover:bg-card',
-                  late ? toneStyles.rose.card : toneStyles.amber.card,
+                  late ? toneStyles.rose.card : toneStyles.default.card,
                 )}
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -388,7 +337,7 @@ function PendingReviews({
                       avatarUrl={item.alumnoAvatarUrl}
                       size={40}
                       className="shrink-0"
-                      fallbackClassName={late ? toneStyles.rose.icon : toneStyles.amber.icon}
+                      fallbackClassName={late ? toneStyles.rose.icon : toneStyles.default.icon}
                     />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -398,10 +347,10 @@ function PendingReviews({
                         <span
                           className={cn(
                             'inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold',
-                            late ? toneStyles.rose.badge : toneStyles.amber.badge,
+                            late ? toneStyles.rose.badge : toneStyles.default.badge,
                           )}
                         >
-                          {late ? 'Fuera de termino' : 'Sin corregir'}
+                          {late ? 'Fuera de término' : 'Pendiente'}
                         </span>
                       </div>
                       <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
@@ -440,10 +389,10 @@ function ActiveCourses({
   const nextClasses = getFutureClasses(classes)
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4 rounded-2xl border border-border/70 bg-card/80 p-4 dark:bg-card/70 sm:p-5">
       <SectionHeader
         title="Cursos activos"
-        description="Accesos rapidos a tus espacios de trabajo."
+        description="Accesos rápidos a tus espacios de trabajo."
         action={
           <Link
             href="/teacher/courses"
@@ -458,59 +407,39 @@ function ActiveCourses({
         <EmptyState
           icon={BookOpen}
           title="Sin cursos asignados"
-          description="Cuando tengas cursos asignados, van a aparecer aca."
+          description="Cuando tengas cursos asignados, van a aparecer acá."
         />
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid gap-2">
           {items.slice(0, 4).map((item) => {
             const nextClass = nextClasses.find((classItem) => classItem.cursoId === item.cursoId)
-            const pending = item.entregasPendientesCorreccion > 0
-
             return (
               <Link
                 key={item.cursoId}
                 href={`/teacher/courses/${item.cursoId}`}
-                className="group rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors hover:border-primary/20 hover:bg-card dark:bg-card/90"
+                className="group flex min-w-0 items-center gap-3 rounded-xl border border-border/60 bg-background/55 px-3 py-3 transition-colors hover:border-primary/20 hover:bg-primary/[0.035] dark:bg-background/25"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="truncate text-lg font-semibold tracking-tight text-foreground">
-                      {item.cursoNombre}
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {item.cantidadAlumnos} alumnos
-                    </p>
-                  </div>
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <BookOpen className="size-4" />
-                  </span>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span
-                    className={cn(
-                      'inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold',
-                      pending ? toneStyles.amber.badge : toneStyles.emerald.badge,
-                    )}
-                  >
-                    {pending
-                      ? `${item.entregasPendientesCorreccion} pendientes`
-                      : 'Sin pendientes'}
-                  </span>
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <BookOpen className="size-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-sm font-semibold text-foreground">
+                    {item.cursoNombre}
+                  </h3>
+                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                    {item.cantidadAlumnos} alumnos
+                    {item.entregasPendientesCorreccion > 0
+                      ? ` · ${item.entregasPendientesCorreccion} por corregir`
+                      : ''}
+                  </p>
                   {nextClass ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground dark:bg-background/35">
+                    <span className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Clock3 className="size-3.5" />
                       {formatClassDate(nextClass.fecha)} {nextClass.horaInicio.slice(0, 5)}
                     </span>
                   ) : null}
                 </div>
-
-                <div className="mt-4 flex items-center justify-between rounded-lg border border-border/60 bg-muted/[0.12] px-3 py-2.5 transition-colors group-hover:border-primary/20 group-hover:bg-primary/[0.05]">
-                  <span className="text-sm font-semibold text-foreground">
-                    Abrir curso
-                  </span>
-                  <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                </div>
+                <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
               </Link>
             )
           })}
@@ -527,19 +456,21 @@ function buildActivity({
   deliveries: ProfesorDashboardUltimaEntregaItem[]
   classes: ProfesorDashboardUltimaClaseItem[]
 }) {
-  const deliveryItems = deliveries.map((item) => ({
+  const deliveryItems = deliveries
+    .filter((item) => item.tieneFeedbackVigente)
+    .map((item) => ({
     key: `delivery-${item.entregaId}`,
-    title: item.tieneFeedbackVigente ? 'Entrega con feedback' : 'Entrega recibida',
+    title: 'Entrega con devolución',
     description: `${item.alumnoApellido}, ${item.alumnoNombre} - ${item.tituloTarea}`,
     meta: `${item.cursoNombre} - ${formatRelative(item.fechaEntregaUtc)}`,
     href: `/teacher/courses/${item.cursoId}/tasks/${item.tareaId}/submissions/${item.alumnoId}`,
     sortTime: new Date(item.fechaEntregaUtc).getTime(),
     icon: FileCheck2,
-    tone: item.tieneFeedbackVigente ? ('emerald' as const) : ('amber' as const),
+    tone: 'emerald' as const,
     actorType: 'student' as const,
     actorName: `${item.alumnoNombre} ${item.alumnoApellido}`.trim() || 'Alumno',
     actorAvatarUrl: item.alumnoAvatarUrl,
-  }))
+    }))
 
   const classItems = classes.map((item) => ({
     key: `class-${item.claseId}`,
@@ -555,7 +486,7 @@ function buildActivity({
 
   return [...deliveryItems, ...classItems]
     .sort((a, b) => b.sortTime - a.sortTime)
-    .slice(0, 6)
+    .slice(0, 4)
 }
 
 function ActivityFeed({
@@ -568,17 +499,17 @@ function ActivityFeed({
   const items = buildActivity({ deliveries, classes })
 
   return (
-    <section className="space-y-4 rounded-2xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-5">
+    <section className="space-y-3 border-t border-border/60 pt-5">
       <SectionHeader
-        title="Actividad reciente"
-        description="Ultimos movimientos relevantes de tus cursos."
+        title="Contexto reciente"
+        description="Clases registradas y devoluciones ya realizadas."
       />
 
       {items.length === 0 ? (
         <EmptyState
           icon={MessageSquareText}
           title="Sin actividad reciente"
-          description="Las entregas y clases registradas van a aparecer aca."
+          description="Las clases registradas y devoluciones realizadas aparecerán acá."
         />
       ) : (
         <div className="divide-y divide-border/60 border-y border-border/70 bg-background/35 dark:bg-background/20">
@@ -636,21 +567,18 @@ export function TeacherDashboardView({
   dashboard: ProfesorDashboardResponse
 }) {
   const pendingDeliveries = getPendingDeliveries(dashboard.ultimasEntregas)
+  const nextClass = getFutureClasses(dashboard.proximasClases)[0]
 
   return (
-    <div className="space-y-4">
-      <DashboardHero
-        name={dashboard.nombre}
+    <div className="space-y-5">
+      <DayHeader
+        hasNextClass={Boolean(nextClass)}
         pendingCount={dashboard.entregasPendientesCorreccionCount}
       />
 
-      <TodayWork
-        classes={dashboard.proximasClases}
-        pendingCount={dashboard.entregasPendientesCorreccionCount}
-        activeTasksCount={dashboard.tareasPublicadasCount}
-      />
+      <NextClass item={nextClass} />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] xl:items-start">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)] xl:items-start">
         <PendingReviews items={dashboard.ultimasEntregas} />
 
         <div className="space-y-5">
@@ -662,9 +590,9 @@ export function TeacherDashboardView({
           {pendingDeliveries.length > 5 ? (
             <Link
               href="#entregas"
-              className="inline-flex h-9 items-center rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-500/15 dark:text-amber-400"
+              className="inline-flex h-9 items-center rounded-lg border border-border/70 bg-background/70 px-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
             >
-              {pendingDeliveries.length - 5} pendientes mas en la cola
+              {pendingDeliveries.length - 5} pendientes más en la cola
             </Link>
           ) : null}
         </div>

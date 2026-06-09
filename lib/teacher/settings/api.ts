@@ -28,7 +28,7 @@ export async function getMyAccountSettings(): Promise<MyAccountSettings> {
 
   if (!response.ok) {
     throw new Error(
-      parseApiMessage(result, 'No se pudo obtener la configuracion de la cuenta.'),
+      parseApiMessage(result, 'No se pudo obtener la configuración de la cuenta.'),
     )
   }
 
@@ -50,7 +50,7 @@ export async function updateMyAccountSettings(
 
   if (!response.ok) {
     throw new Error(
-      parseApiMessage(result, 'No se pudo actualizar la informacion de la cuenta.'),
+      parseApiMessage(result, 'No se pudo actualizar la información de la cuenta.'),
     )
   }
 
@@ -72,11 +72,11 @@ export async function changeMyPassword(
 
   if (!response.ok) {
     throw new Error(
-      parseApiMessage(result, 'No se pudo actualizar la contrasena.'),
+      parseApiMessage(result, 'No se pudo actualizar la contraseña.'),
     )
   }
 
-  return parseApiMessage(result, 'Contrasena actualizada correctamente.')
+  return parseApiMessage(result, 'Contraseña actualizada correctamente.')
 }
 
 export async function updateMyAvatar(file: File): Promise<UpdateAvatarResponse> {

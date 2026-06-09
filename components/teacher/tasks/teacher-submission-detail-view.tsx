@@ -16,7 +16,7 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { UserAvatar } from '@/components/shared/user-avatar'
+import { PersonAvatar } from '@/components/teacher/course-detail/course-people-ui'
 import {
   Empty,
   EmptyDescription,
@@ -254,7 +254,7 @@ function FeedbackTimelineItem({
           </InlineMetaChip>
         </div>
 
-        <div className="rounded-xl border border-border/50 bg-background/70 p-3">
+        <div className="border-l-2 border-border/60 pl-3">
           <div className="mb-2 flex items-center gap-2 text-muted-foreground">
             <MessageSquare className="size-4" />
             <span className="text-xs font-medium">Comentario</span>
@@ -270,46 +270,17 @@ function FeedbackTimelineItem({
 
 function SubmissionDetailSkeleton() {
   return (
-    <div className="space-y-6">
-      <section className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
-        <div className="space-y-5">
-          <div className="flex items-center justify-between gap-4">
-            <div className="h-10 w-40 animate-pulse rounded-2xl bg-muted/35" />
-            <div className="flex gap-2">
-              <div className="h-7 w-24 animate-pulse rounded-full bg-muted/35" />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="h-4 w-28 animate-pulse rounded-lg bg-muted/30" />
-            <div className="h-9 w-2/5 animate-pulse rounded-xl bg-muted/40" />
-            <div className="h-4 w-4/5 animate-pulse rounded-lg bg-muted/30" />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
-          </div>
+    <div className="space-y-5">
+      <header className="space-y-3 border-b border-border/60 pb-4">
+        <div className="h-8 w-36 animate-pulse rounded-lg bg-muted/35" />
+        <div className="flex items-center gap-3">
+          <div className="size-10 animate-pulse rounded-full bg-muted/40" />
+          <div className="h-8 w-48 animate-pulse rounded-lg bg-muted/40" />
         </div>
-      </section>
-
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-        <section className="rounded-2xl border border-border/60 bg-card/95 p-6">
-          <div className="space-y-4">
-            <div className="h-4 w-24 animate-pulse rounded bg-muted/30" />
-            <div className="h-7 w-48 animate-pulse rounded-lg bg-muted/35" />
-            <div className="h-40 animate-pulse rounded-2xl bg-muted/30" />
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-border/60 bg-card/95 p-6">
-          <div className="space-y-4">
-            <div className="h-4 w-24 animate-pulse rounded bg-muted/30" />
-            <div className="h-7 w-48 animate-pulse rounded-lg bg-muted/35" />
-            <div className="h-11 w-full animate-pulse rounded-2xl bg-muted/30" />
-          </div>
-        </section>
+      </header>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="h-44 animate-pulse rounded-xl border border-border/60 bg-muted/20" />
+        <div className="h-64 animate-pulse rounded-xl border border-border/60 bg-muted/20" />
       </div>
     </div>
   )
@@ -399,6 +370,7 @@ export function TeacherSubmissionDetailView({
 
   const entregaEstado = getEstadoEntregaConfig(detail.estadoEntrega)
   const feedbackEstado = getEstadoCorreccionConfig(detail.feedbackVigente?.estado)
+  const hasFeedback = Boolean(detail.feedbackVigente)
   const alumnoName = `${detail.alumnoNombre ?? ''} ${detail.alumnoApellido ?? ''}`.trim() || 'Alumno'
   return (
     <div className="space-y-5">
@@ -414,25 +386,27 @@ export function TeacherSubmissionDetailView({
 
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${entregaEstado.className}`}
-            >
+            <span className="text-xs font-medium text-muted-foreground">
               {entregaEstado.label}
             </span>
-            <span
-              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${feedbackEstado.className}`}
-            >
-              {feedbackEstado.label}
-            </span>
+            {hasFeedback ? (
+              <span
+                className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${feedbackEstado.className}`}
+              >
+                {feedbackEstado.label}
+              </span>
+            ) : (
+              <span className="text-xs font-medium text-primary">
+                Pendiente de feedback
+              </span>
+            )}
           </div>
 
           <div className="flex min-w-0 items-start gap-3">
-            <UserAvatar
+            <PersonAvatar
               name={alumnoName}
               avatarUrl={detail.alumnoAvatarUrl}
-              size={40}
-              className="mt-1 shrink-0"
-              fallbackClassName="bg-primary/10 text-primary"
+              tone="student"
             />
             <div className="min-w-0">
               <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
@@ -478,7 +452,7 @@ export function TeacherSubmissionDetailView({
             <div className="space-y-5">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Texto enviado</p>
-                <div className="rounded-xl border border-border/60 bg-background/65 p-4 dark:bg-background/35 sm:p-5">
+                <div className="border-l-2 border-border/60 pl-4">
                   {detail.texto?.trim() ? (
                     <p className="max-w-3xl whitespace-pre-wrap text-[15px] leading-7 text-foreground/90">
                       {detail.texto}

@@ -25,33 +25,23 @@ const tabStyles: Record<
   {
     label: string
     icon: React.ComponentType<{ className?: string }>
-    panelTitle: string
-    panelDescription: string
   }
 > = {
   tasks: {
     label: 'Tablón',
     icon: ClipboardList,
-    panelTitle: 'Tablón docente',
-    panelDescription: 'Tareas y anuncios del curso.',
   },
   classes: {
     label: 'Clases',
     icon: CalendarDays,
-    panelTitle: 'Clases y asistencia',
-    panelDescription: 'Registro de clases y asistencia.',
   },
   students: {
     label: 'Alumnos',
     icon: Users,
-    panelTitle: 'Alumnos del curso',
-    panelDescription: 'Listado y gestion de estudiantes asignados al curso.',
   },
   teachers: {
-    label: 'Profesores',
+    label: 'Docentes',
     icon: GraduationCap,
-    panelTitle: 'Profesores del curso',
-    panelDescription: 'Equipo docente asignado y vinculado al curso.',
   },
 }
 
@@ -62,7 +52,8 @@ export function TeacherCourseTabs({ course }: Props) {
     <div className="space-y-2">
       <nav
         aria-label="Secciones del curso"
-        className="flex max-w-full gap-3 overflow-x-auto border-b border-border/60 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="tablist"
+        className="grid grid-cols-4 border-b border-border/60"
       >
         {(Object.keys(tabStyles) as Tab[]).map((key) => {
           const tabConfig = tabStyles[key]
@@ -74,26 +65,33 @@ export function TeacherCourseTabs({ course }: Props) {
               key={key}
               type="button"
               onClick={() => setTab(key)}
-              className={`group -mb-px inline-flex min-h-9 shrink-0 items-center gap-1.5 border-b-2 px-0.5 py-1.5 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:px-1 ${
+              role="tab"
+              aria-selected={active}
+              aria-controls={`course-panel-${key}`}
+              id={`course-tab-${key}`}
+              className={`group -mb-px inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 border-b-2 px-1 py-2 text-xs font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:text-sm ${
                 active
                   ? 'border-foreground text-foreground'
                   : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
               }`}
             >
-              <Icon className="size-3.5 transition-colors duration-200 ease-out" />
-              <span>{tabConfig.label}</span>
+              <Icon className="hidden size-3.5 shrink-0 transition-colors duration-200 ease-out sm:block" />
+              <span className="truncate">{tabConfig.label}</span>
             </button>
           )
         })}
       </nav>
 
-      <section className="space-y-2">
-        <div>
-          {tab === 'tasks' && <TeacherCourseTasks courseId={course.id} />}
-          {tab === 'classes' && <TeacherCourseClasses courseId={course.id} />}
-          {tab === 'students' && <TeacherCourseStudents courseId={course.id} />}
-          {tab === 'teachers' && <TeacherCourseTeachers courseId={course.id} />}
-        </div>
+      <section
+        id={`course-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`course-tab-${tab}`}
+        className="pt-1"
+      >
+        {tab === 'tasks' && <TeacherCourseTasks courseId={course.id} />}
+        {tab === 'classes' && <TeacherCourseClasses courseId={course.id} />}
+        {tab === 'students' && <TeacherCourseStudents courseId={course.id} />}
+        {tab === 'teachers' && <TeacherCourseTeachers courseId={course.id} />}
       </section>
     </div>
   )

@@ -17,12 +17,30 @@ import {
   MessageSquareText,
   ChevronRight,
   Inbox,
+  MoreHorizontal,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { UserAvatar } from '@/components/shared/user-avatar'
+import { PersonAvatar } from '@/components/teacher/course-detail/course-people-ui'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Empty,
   EmptyDescription,
@@ -52,50 +70,6 @@ type Props = {
 type Envelope<T> = {
   message?: string
   data?: T
-}
-
-function DetailMetaCard({
-  icon: Icon,
-  label,
-  value,
-  tone = 'default',
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  tone?: 'default' | 'highlight'
-}) {
-  const containerClass =
-    tone === 'highlight'
-      ? 'rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
-      : 'rounded-2xl border border-border/60 bg-background/75 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]'
-
-  const iconWrapClass =
-    tone === 'highlight'
-      ? 'bg-primary/10 text-primary'
-      : 'bg-background text-muted-foreground'
-
-  const labelClass = tone === 'highlight' ? 'text-primary/80' : 'text-muted-foreground'
-  const valueClass = tone === 'highlight' ? 'text-primary' : 'text-foreground'
-
-  return (
-    <div className={containerClass}>
-      <div className="flex items-center gap-2">
-        <div
-          className={`flex size-9 items-center justify-center rounded-2xl ${iconWrapClass}`}
-        >
-          <Icon className="size-4" />
-        </div>
-        <span
-          className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${labelClass}`}
-        >
-          {label}
-        </span>
-      </div>
-
-      <p className={`mt-3 text-sm font-semibold leading-6 ${valueClass}`}>{value}</p>
-    </div>
-  )
 }
 
 function InlineMetaChip({
@@ -206,25 +180,26 @@ function SubmissionRow({
     <article className="min-w-0 rounded-xl border border-border/60 bg-background/60 px-3 py-3 transition-colors duration-200 hover:border-primary/20 hover:bg-card dark:bg-background/35 sm:px-4">
       <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.45fr)_minmax(0,0.65fr)_108px] xl:items-center">
         <div className="order-1 flex min-w-0 items-center gap-3 xl:order-none">
-          <UserAvatar
+          <PersonAvatar
             name={alumnoName}
             avatarUrl={submission.alumnoAvatarUrl}
-            size={36}
-            className="shrink-0"
-            fallbackClassName="bg-primary/10 text-primary"
+            tone="student"
           />
           <h3 className="truncate text-sm font-semibold text-foreground">
             {alumnoName}
           </h3>
         </div>
 
-        <div className="order-3 min-w-0 space-y-1 xl:order-none xl:space-y-0">
+        <div className="order-3 min-w-0 space-y-1 text-sm xl:order-none xl:space-y-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground xl:hidden">
             Entrega
           </p>
-          <span
-            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${entregaEstado.className}`}
-          >
+          <span className={cn(
+            'font-medium',
+            submission.estadoEntrega === EstadoEntrega.FueraDeTermino
+              ? 'text-amber-700 dark:text-amber-400'
+              : 'text-muted-foreground',
+          )}>
             {entregaEstado.label}
           </span>
         </div>
@@ -274,7 +249,7 @@ function SubmissionRow({
           )}
           onClick={onView}
         >
-          {hasFeedback ? 'Ver entrega' : 'Corregir'}
+          Revisar entrega
         </Button>
       </div>
     </article>
@@ -283,40 +258,20 @@ function SubmissionRow({
 
 function TaskDetailSkeleton() {
   return (
-    <div className="space-y-6">
-      <section className="rounded-2xl border border-border/70 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)] md:p-8">
-        <div className="space-y-5">
-          <div className="flex items-center justify-between gap-4">
-            <div className="h-10 w-40 animate-pulse rounded-2xl bg-muted/35" />
-            <div className="flex gap-2">
-              <div className="h-7 w-20 animate-pulse rounded-full bg-muted/35" />
-              <div className="h-7 w-24 animate-pulse rounded-full bg-muted/35" />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="h-4 w-24 animate-pulse rounded-lg bg-muted/30" />
-            <div className="h-9 w-3/5 animate-pulse rounded-xl bg-muted/40" />
-            <div className="h-4 w-4/5 animate-pulse rounded-lg bg-muted/30" />
-            <div className="h-4 w-2/3 animate-pulse rounded-lg bg-muted/25" />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
-          </div>
+    <div className="mx-auto max-w-5xl space-y-4">
+      <header className="space-y-3 border-b border-border/60 pb-4">
+        <div className="h-8 w-32 animate-pulse rounded-lg bg-muted/35" />
+        <div className="h-8 w-3/5 animate-pulse rounded-lg bg-muted/40" />
+        <div className="flex gap-3">
+          <div className="h-4 w-32 animate-pulse rounded bg-muted/30" />
+          <div className="h-4 w-40 animate-pulse rounded bg-muted/30" />
         </div>
-      </section>
-
-      <section className="rounded-2xl border border-border/70 bg-card/95 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-        <div className="space-y-4">
-          <div className="h-4 w-24 animate-pulse rounded bg-muted/30" />
-          <div className="h-7 w-48 animate-pulse rounded-lg bg-muted/35" />
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
-            <div className="h-24 animate-pulse rounded-2xl bg-muted/30" />
-          </div>
+      </header>
+      <section className="rounded-xl border border-border/60 bg-card/95 p-5">
+        <div className="space-y-3">
+          <div className="h-5 w-28 animate-pulse rounded bg-muted/35" />
+          <div className="h-4 w-full animate-pulse rounded bg-muted/25" />
+          <div className="h-4 w-4/5 animate-pulse rounded bg-muted/25" />
         </div>
       </section>
     </div>
@@ -332,6 +287,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<'publish' | 'archive' | null>(null)
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false)
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -461,9 +417,6 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
   const handleArchive = async () => {
     if (!task) return
 
-    const confirmed = window.confirm('¿Querés archivar esta publicación?')
-    if (!confirmed) return
-
     try {
       setActionLoading('archive')
       setActionError(null)
@@ -471,6 +424,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
       setTask((current) =>
         current ? { ...current, estado: EstadoTarea.Archivada } : current,
       )
+      setArchiveDialogOpen(false)
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'No se pudo archivar.')
     } finally {
@@ -587,18 +541,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
               Volver al curso
             </Button>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                className="h-9 rounded-lg border-border/70 bg-background/70 px-3"
-                onClick={() =>
-                  router.push(`/teacher/courses/${courseId}/tasks/${taskId}/edit`)
-                }
-              >
-                <Pencil className="mr-2 size-4" />
-                Editar
-              </Button>
-
+            <div className="flex items-center gap-2">
               {task.estado === EstadoTarea.Borrador ? (
                 <Button
                   className="h-9 rounded-lg px-3 shadow-none"
@@ -609,30 +552,47 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                 </Button>
               ) : null}
 
-              {task.estado !== EstadoTarea.Archivada ? (
-                <Button
-                  variant="outline"
-                  className="h-9 rounded-lg border-border/70 bg-background/70 px-3 text-muted-foreground hover:border-amber-500/25 hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-300"
-                  disabled={actionLoading === 'archive'}
-                  onClick={() => void handleArchive()}
-                >
-                  <Archive className="mr-2 size-4" />
-                  {actionLoading === 'archive' ? 'Archivando...' : 'Archivar'}
-                </Button>
-              ) : null}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-9 rounded-lg border-border/70 bg-background/70 text-muted-foreground shadow-none"
+                    aria-label="Más acciones"
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44 rounded-xl">
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      router.push(`/teacher/courses/${courseId}/tasks/${taskId}/edit`)
+                    }
+                  >
+                    <Pencil className="size-4" />
+                    Editar
+                  </DropdownMenuItem>
+                  {task.estado !== EstadoTarea.Archivada ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-amber-700 focus:text-amber-700 dark:text-amber-400 dark:focus:text-amber-400"
+                        onSelect={() => setArchiveDialogOpen(true)}
+                      >
+                        <Archive className="size-4" />
+                        Archivar
+                      </DropdownMenuItem>
+                    </>
+                  ) : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
-                  task.esAnuncio
-                    ? 'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300'
-                    : 'border-primary/15 bg-primary/5 text-primary',
-                )}
-              >
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                 {task.esAnuncio ? (
                   <Megaphone className="size-3.5" />
                 ) : (
@@ -785,27 +745,25 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
           </div>
 
           {filteredSubmissions.length === 0 ? (
-            <Card className="rounded-2xl border border-border/60 bg-background/50 shadow-none">
-              <CardContent className="px-5 py-8">
-                <Empty className="border-0 p-0">
-                  <EmptyMedia variant="icon">
-                    <MessageSquareText />
-                  </EmptyMedia>
-                  <EmptyHeader>
-                    <EmptyTitle>
-                      {submissions.length === 0
-                        ? 'Sin entregas todavía'
-                        : 'Sin resultados'}
-                    </EmptyTitle>
-                    <EmptyDescription>
-                      {submissions.length === 0
-                        ? 'Cuando los alumnos entreguen, las vas a ver acá.'
-                        : 'No hay entregas que coincidan con la búsqueda o el filtro.'}
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              </CardContent>
-            </Card>
+            <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 px-5 py-7">
+              <Empty className="border-0 p-0">
+                <EmptyMedia variant="icon">
+                  <MessageSquareText />
+                </EmptyMedia>
+                <EmptyHeader>
+                  <EmptyTitle>
+                    {submissions.length === 0
+                      ? 'Sin entregas todavía'
+                      : 'Sin resultados'}
+                  </EmptyTitle>
+                  <EmptyDescription>
+                    {submissions.length === 0
+                      ? 'Las entregas aparecerán acá cuando los alumnos las envíen.'
+                      : 'No hay entregas que coincidan con la búsqueda o el filtro.'}
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            </div>
           ) : (
             <div className="space-y-2">
               <div className="hidden min-w-0 grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.45fr)_minmax(0,0.65fr)_108px] gap-3 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground xl:grid">
@@ -859,6 +817,32 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
           </div>
         </section>
       )}
+
+      <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
+        <AlertDialogContent className="rounded-2xl border-border/60">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archivar publicación</AlertDialogTitle>
+            <AlertDialogDescription>
+              “{task.titulo}” dejará de aparecer como publicación activa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading === 'archive'}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={actionLoading === 'archive'}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleArchive()
+              }}
+              className="bg-amber-600 text-white hover:bg-amber-700"
+            >
+              {actionLoading === 'archive' ? 'Archivando...' : 'Archivar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
