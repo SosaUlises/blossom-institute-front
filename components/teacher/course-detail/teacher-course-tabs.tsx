@@ -1,24 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
-  Users,
-  GraduationCap,
-  ClipboardList,
   CalendarDays,
+  ClipboardList,
+  GraduationCap,
+  Users,
 } from 'lucide-react'
 
 import type { TeacherCourseDetail } from '@/lib/teacher/course-detail/types'
-import { TeacherCourseStudents } from './teacher-course-students'
-import { TeacherCourseTeachers } from './teacher-course-teachers'
 import { TeacherCourseClasses } from './teacher-course-classes'
+import { TeacherCourseStudents } from './teacher-course-students'
 import { TeacherCourseTasks } from './teacher-course-tasks'
+import { TeacherCourseTeachers } from './teacher-course-teachers'
 
 type Props = {
   course: TeacherCourseDetail
 }
 
-type Tab = 'tasks' | 'classes' | 'students' | 'teachers'
+type Tab = 'tablon' | 'clases' | 'alumnos' | 'docentes'
+
+const tabs: Tab[] = ['tablon', 'clases', 'alumnos', 'docentes']
+
+function isSupportedTab(value: string | null): value is Tab {
+  return value !== null && tabs.includes(value as Tab)
+}
 
 const tabStyles: Record<
   Tab,
@@ -27,26 +33,43 @@ const tabStyles: Record<
     icon: React.ComponentType<{ className?: string }>
   }
 > = {
-  tasks: {
+  tablon: {
     label: 'Tablón',
     icon: ClipboardList,
   },
-  classes: {
+  clases: {
     label: 'Clases',
     icon: CalendarDays,
   },
-  students: {
+  alumnos: {
     label: 'Alumnos',
     icon: Users,
   },
-  teachers: {
+  docentes: {
     label: 'Docentes',
     icon: GraduationCap,
   },
 }
 
 export function TeacherCourseTabs({ course }: Props) {
-  const [tab, setTab] = useState<Tab>('tasks')
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const requestedTab = searchParams.get('tab')
+  const tab: Tab = isSupportedTab(requestedTab) ? requestedTab : 'tablon'
+
+  const selectTab = (nextTab: Tab) => {
+    const nextSearchParams = new URLSearchParams(searchParams.toString())
+
+    if (nextTab === 'tablon') {
+      nextSearchParams.delete('tab')
+    } else {
+      nextSearchParams.set('tab', nextTab)
+    }
+
+    const query = nextSearchParams.toString()
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }
 
   return (
     <div className="space-y-2">
@@ -55,7 +78,7 @@ export function TeacherCourseTabs({ course }: Props) {
         role="tablist"
         className="grid grid-cols-4 border-b border-border/60"
       >
-        {(Object.keys(tabStyles) as Tab[]).map((key) => {
+        {tabs.map((key) => {
           const tabConfig = tabStyles[key]
           const Icon = tabConfig.icon
           const active = tab === key
@@ -64,7 +87,7 @@ export function TeacherCourseTabs({ course }: Props) {
             <button
               key={key}
               type="button"
-              onClick={() => setTab(key)}
+              onClick={() => selectTab(key)}
               role="tab"
               aria-selected={active}
               aria-controls={`course-panel-${key}`}
@@ -88,10 +111,10 @@ export function TeacherCourseTabs({ course }: Props) {
         aria-labelledby={`course-tab-${tab}`}
         className="pt-1"
       >
-        {tab === 'tasks' && <TeacherCourseTasks courseId={course.id} />}
-        {tab === 'classes' && <TeacherCourseClasses courseId={course.id} />}
-        {tab === 'students' && <TeacherCourseStudents courseId={course.id} />}
-        {tab === 'teachers' && <TeacherCourseTeachers courseId={course.id} />}
+        {tab === 'tablon' && <TeacherCourseTasks courseId={course.id} />}
+        {tab === 'clases' && <TeacherCourseClasses courseId={course.id} />}
+        {tab === 'alumnos' && <TeacherCourseStudents courseId={course.id} />}
+        {tab === 'docentes' && <TeacherCourseTeachers courseId={course.id} />}
       </section>
     </div>
   )

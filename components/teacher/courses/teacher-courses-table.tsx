@@ -4,25 +4,13 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowRight,
-  BookOpen,
   CalendarClock,
-  CalendarRange,
   ClipboardCheck,
   Inbox,
   Search,
   Users,
 } from 'lucide-react'
 
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Empty,
@@ -31,6 +19,14 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { getTeacherCourses } from '@/lib/teacher/courses/api'
 import type { TeacherCourseListItem } from '@/lib/teacher/courses/types'
 import { EstadoCurso } from '@/lib/teacher/courses/types'
@@ -47,52 +43,8 @@ const ESTADO_OPTIONS = [
   { value: String(EstadoCurso.Archivado), label: 'Archivado' },
 ] as const
 
-const ESTADO_CONFIG: Record<
-  EstadoCurso,
-  { label: string; dot: string; pill: string }
-> = {
-  [EstadoCurso.Activo]: {
-    label: 'Activo',
-    dot: 'bg-emerald-500',
-    pill:
-      'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-  },
-  [EstadoCurso.Inactivo]: {
-    label: 'Inactivo',
-    dot: 'bg-amber-500',
-    pill:
-      'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400',
-  },
-  [EstadoCurso.Archivado]: {
-    label: 'Archivado',
-    dot: 'bg-slate-400',
-    pill:
-      'border-slate-400/20 bg-slate-500/10 text-slate-600 dark:text-slate-400',
-  },
-}
-
 type DashboardEnvelope = {
   data?: ProfesorDashboardResponse
-}
-
-function EstadoBadge({ estado }: { estado: EstadoCurso }) {
-  const config = ESTADO_CONFIG[estado] ?? {
-    label: 'Desconocido',
-    dot: 'bg-muted-foreground',
-    pill: 'border-border/60 bg-muted/40 text-muted-foreground',
-  }
-
-  return (
-    <span
-      className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
-        config.pill,
-      )}
-    >
-      <span className={cn('size-1.5 rounded-full', config.dot)} />
-      {config.label}
-    </span>
-  )
 }
 
 function parseClassDate(item: ProfesorDashboardProximaClaseItem) {
@@ -125,23 +77,24 @@ function formatNextClass(item: ProfesorDashboardProximaClaseItem) {
   return `${dayLabel} · ${item.horaInicio.slice(0, 5)}`
 }
 
-function CourseRowSkeleton() {
+function CourseCardSkeleton() {
   return (
-    <li className="rounded-xl border border-border/60 bg-card/90 px-4 py-4">
-      <div className="flex items-center gap-4">
-        <div className="size-10 animate-pulse rounded-lg bg-muted/50" />
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="h-5 w-44 animate-pulse rounded-md bg-muted/50" />
-          <div className="h-4 w-3/5 animate-pulse rounded-md bg-muted/35" />
-          <div className="h-4 w-72 max-w-full animate-pulse rounded-md bg-muted/30" />
+    <li className="min-h-36 rounded-2xl border border-border/60 bg-card/90 p-4">
+      <div className="flex h-full flex-col">
+        <div className="space-y-2">
+          <div className="h-5 w-36 animate-pulse rounded-md bg-muted/50" />
+          <div className="h-4 w-48 max-w-full animate-pulse rounded-md bg-muted/35" />
         </div>
-        <div className="hidden h-9 w-28 animate-pulse rounded-lg bg-muted/40 sm:block" />
+        <div className="mt-auto space-y-2 pt-4">
+          <div className="h-4 w-40 animate-pulse rounded-md bg-muted/35" />
+          <div className="h-4 w-28 animate-pulse rounded-md bg-muted/30" />
+        </div>
       </div>
     </li>
   )
 }
 
-function CourseRow({
+function CourseCard({
   course,
   dashboard,
 }: {
@@ -162,69 +115,64 @@ function CourseRow({
 
   return (
     <li>
-      <article className="group rounded-xl border border-border/60 bg-card/95 px-4 py-4 transition-colors duration-200 hover:border-primary/20 hover:bg-card dark:bg-card/90">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/8 text-primary">
-              <BookOpen className="size-4.5" />
-            </span>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  href={`/teacher/courses/${course.id}`}
-                  className="truncate text-base font-semibold tracking-tight text-foreground transition-colors hover:text-primary"
-                >
-                  {course.nombre}
-                </Link>
-                <EstadoBadge estado={course.estado} />
-              </div>
-
-              {description ? (
-                <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
-                  {description}
-                </p>
-              ) : null}
-
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-                {nextClass ? (
-                  <span className="inline-flex items-center gap-1.5 font-medium text-foreground/80">
-                    <CalendarClock className="size-3.5 text-primary" />
-                    {formatNextClass(nextClass)}
-                  </span>
-                ) : null}
-                {summary ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Users className="size-3.5" />
-                    {summary.cantidadAlumnos} alumnos
-                  </span>
-                ) : null}
-                {summary?.entregasPendientesCorreccion ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <ClipboardCheck className="size-3.5" />
-                    {summary.entregasPendientesCorreccion} por corregir
-                  </span>
-                ) : null}
-                <span className="inline-flex items-center gap-1.5">
-                  <CalendarRange className="size-3.5" />
-                  {course.anio}
-                </span>
-              </div>
-            </div>
+      <Link
+        href={`/teacher/courses/${course.id}`}
+        aria-label={`Abrir curso ${course.nombre}`}
+        className="group block h-full rounded-2xl outline-none transition-transform duration-200 ease-out active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        <article className="flex h-full min-h-36 flex-col rounded-2xl border border-border/60 bg-card/95 p-4 transition-[border-color,background-color,box-shadow] duration-200 ease-out group-hover:border-primary/30 group-hover:bg-card group-hover:shadow-[0_6px_18px_rgba(15,23,42,0.05)] dark:bg-card/90 dark:group-hover:shadow-none">
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-semibold text-foreground transition-colors group-hover:text-primary">
+              {course.nombre}
+            </h2>
+            {description ? (
+              <p className="mt-0.5 line-clamp-1 text-sm leading-5 text-muted-foreground">
+                {description}
+              </p>
+            ) : null}
           </div>
 
-          <Button
-            asChild
-            variant="outline"
-            className="h-9 w-full shrink-0 rounded-lg border-border/70 bg-background/70 px-3 text-sm font-semibold shadow-none transition-colors hover:border-primary/25 hover:bg-primary/5 hover:text-primary sm:w-auto"
-          >
-            <Link href={`/teacher/courses/${course.id}`}>
-              Abrir curso
-              <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </Button>
-        </div>
-      </article>
+          <div className="mt-auto flex flex-col gap-2.5 pt-4 text-sm">
+            {nextClass ? (
+              <div className="flex items-center gap-2 font-medium text-foreground">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+                  <CalendarClock className="size-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="mr-1.5 text-xs font-normal text-muted-foreground">
+                    Próxima clase
+                  </span>
+                  {formatNextClass(nextClass)}
+                </span>
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {summary ? (
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <Users className="size-4" />
+                  {summary.cantidadAlumnos}{' '}
+                  {summary.cantidadAlumnos === 1 ? 'alumno' : 'alumnos'}
+                </span>
+              ) : null}
+
+              {summary?.entregasPendientesCorreccion ? (
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/8 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                  <ClipboardCheck className="size-3.5" />
+                  {summary.entregasPendientesCorreccion}{' '}
+                  {summary.entregasPendientesCorreccion === 1
+                    ? 'entrega pendiente'
+                    : 'entregas pendientes'}
+                </span>
+              ) : null}
+
+              <span className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background/70 text-muted-foreground transition-[border-color,background-color,color,transform] duration-200 group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/8 group-hover:text-primary">
+                <ArrowRight className="size-4" />
+              </span>
+            </div>
+          </div>
+        </article>
+      </Link>
     </li>
   )
 }
@@ -296,7 +244,10 @@ export function TeacherCoursesTable() {
 
   const hasActiveFilters = !!debouncedSearch || !!anio || estado !== SELECT_ALL
   const visibleCountLabel = useMemo(
-    () => `${items.length} ${items.length === 1 ? 'curso' : 'cursos'}`,
+    () =>
+      `${items.length} ${
+        items.length === 1 ? 'espacio de clase' : 'espacios de clase'
+      }`,
     [items.length],
   )
 
@@ -347,9 +298,9 @@ export function TeacherCoursesTable() {
       ) : null}
 
       {loading ? (
-        <ul className="space-y-2.5">
+        <ul className="grid gap-3 md:grid-cols-2">
           {Array.from({ length: 4 }).map((_, index) => (
-            <CourseRowSkeleton key={index} />
+            <CourseCardSkeleton key={index} />
           ))}
         </ul>
       ) : items.length === 0 ? (
@@ -383,9 +334,9 @@ export function TeacherCoursesTable() {
             ) : null}
           </div>
 
-          <ul className="space-y-2.5">
+          <ul className="grid gap-3 md:grid-cols-2">
             {items.map((course) => (
-              <CourseRow key={course.id} course={course} dashboard={dashboard} />
+              <CourseCard key={course.id} course={course} dashboard={dashboard} />
             ))}
           </ul>
         </div>

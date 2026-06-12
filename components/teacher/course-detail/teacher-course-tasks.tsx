@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import {
   Archive,
   CalendarClock,
+  ChevronDown,
   ClipboardList,
   Clock3,
   Inbox,
@@ -13,7 +13,6 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
-  Search,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -34,7 +33,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -42,14 +40,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty'
 import { formatDateTime } from '@/lib/teacher/course-detail/formatters'
 import type {
   TeacherTaskListItem,
@@ -59,6 +49,14 @@ import { EstadoTarea } from '@/lib/teacher/tasks/types'
 import { getEstadoTareaConfig } from '@/lib/teacher/tasks/utils'
 import { archiveTeacherTask } from '@/lib/teacher/tasks/task-api'
 import { cn } from '@/lib/utils'
+import {
+  CourseTabEmptyState,
+  CourseTabErrorState,
+  CourseTabPagination,
+  CourseTabSearchField,
+  CourseTabSkeletonList,
+  CourseTabToolbar,
+} from './course-tab-ui'
 
 type Envelope<T> = {
   message?: string
@@ -66,27 +64,21 @@ type Envelope<T> = {
 }
 
 const SELECT_ALL = 'all'
+const DEFAULT_ESTADO = String(EstadoTarea.Publicada)
 
 function FeedSkeleton() {
   return (
-    <article className="rounded-xl border border-border/70 bg-card/95 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-3.5">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="size-9 animate-pulse rounded-lg bg-muted/40" />
-          <div className="h-5 w-16 animate-pulse rounded-full bg-muted/35" />
-          <div className="h-5 w-20 animate-pulse rounded-full bg-muted/35" />
+    <article className="rounded-xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="h-4 w-20 animate-pulse rounded-md bg-muted/35" />
+          <div className="h-4 w-32 animate-pulse rounded-md bg-muted/30" />
         </div>
-        <div className="space-y-2">
-          <div className="h-6 w-2/3 animate-pulse rounded-lg bg-muted/40" />
-          <div className="h-4 w-4/5 animate-pulse rounded-lg bg-muted/30" />
-          <div className="flex gap-2">
-            <div className="h-5 w-28 animate-pulse rounded-full bg-muted/30" />
-            <div className="h-5 w-32 animate-pulse rounded-full bg-muted/30" />
-          </div>
-          <div className="flex gap-2 border-t border-border/50 pt-2">
-            <div className="h-8 w-24 animate-pulse rounded-lg bg-muted/30" />
-            <div className="h-8 w-20 animate-pulse rounded-lg bg-muted/30" />
-          </div>
+        <div className="h-6 w-2/3 animate-pulse rounded-md bg-muted/45" />
+        <div className="h-4 w-40 animate-pulse rounded-md bg-muted/25" />
+        <div className="flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+          <div className="h-8 w-28 animate-pulse rounded-lg bg-muted/30" />
+          <div className="size-8 animate-pulse rounded-lg bg-muted/25" />
         </div>
       </div>
     </article>
@@ -119,72 +111,74 @@ function FeedPost({
 }) {
   const estadoConfig = getEstadoTareaConfig(task.estado)
   const Icon = task.esAnuncio ? Megaphone : ClipboardList
+  const showEstado = task.estado !== EstadoTarea.Publicada
 
   return (
-    <article
-      className={cn(
-        'group relative overflow-hidden rounded-xl border bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 hover:bg-card dark:bg-card/90',
-        task.esAnuncio
-          ? 'border-violet-200/70 hover:border-violet-300/70 dark:border-violet-500/15 dark:hover:border-violet-500/25'
-          : 'border-border/70 hover:border-primary/20',
-      )}
-    >
-      {!task.esAnuncio ? (
-        <div className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-primary/70" />
-      ) : null}
-
-      <div className={cn('p-3 sm:p-3.5', !task.esAnuncio && 'pl-5 sm:pl-6')}>
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+    <article className="group rounded-xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.025)] transition-[border-color,background-color] duration-200 ease-out hover:border-border hover:bg-card dark:bg-card/90">
+      <div className="p-4 sm:p-5">
+        <div className="grid gap-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <div
-                className={cn(
-                  'flex size-9 shrink-0 items-center justify-center rounded-lg border',
-                  task.esAnuncio
-                    ? 'border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300'
-                    : 'border-primary/15 bg-primary/10 text-primary',
-                )}
-              >
-                <Icon className="size-4" />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Icon
+                  className={cn(
+                    'size-3.5 shrink-0',
+                    task.esAnuncio ? 'text-muted-foreground' : 'text-primary',
+                  )}
+                />
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span
+                    className={cn(
+                      'text-xs font-semibold',
+                      task.esAnuncio ? 'text-muted-foreground' : 'text-primary',
+                    )}
+                  >
+                    {task.esAnuncio ? 'Anuncio' : 'Tarea'}
+                  </span>
+                  {showEstado ? (
+                    <span
+                      className={cn(
+                        'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+                        estadoConfig.className,
+                      )}
+                    >
+                      {estadoConfig.label}
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs font-medium text-muted-foreground">
-                  {task.esAnuncio ? 'Anuncio' : 'Tarea'}
+              {!task.esAnuncio ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground/80">
+                  <CalendarClock className="size-3.5 text-primary" />
+                  {task.fechaEntregaUtc
+                    ? `Entrega ${formatDateTime(task.fechaEntregaUtc)}`
+                    : 'Sin fecha de entrega'}
                 </span>
-                <span
-                  className={cn(
-                    'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                    estadoConfig.className,
-                  )}
-                >
-                  {estadoConfig.label}
-                </span>
-              </div>
+              ) : null}
             </div>
 
-            <h3 className="mt-1.5 line-clamp-2 text-base font-semibold leading-6 tracking-tight text-foreground sm:text-lg">
+            <h3 className="mt-3 line-clamp-2 text-lg font-semibold leading-6 text-foreground sm:text-xl sm:leading-7">
               {task.titulo}
             </h3>
 
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-              {!task.esAnuncio ? (
-                <MetaBadge icon={CalendarClock}>
-                  {task.fechaEntregaUtc
-                    ? `Entrega ${formatDateTime(task.fechaEntregaUtc)}`
-                    : 'Sin entrega definida'}
-                </MetaBadge>
-              ) : null}
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
               <MetaBadge icon={Clock3}>
                 Publicada {formatDateTime(task.createdAtUtc)}
               </MetaBadge>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 border-t border-border/55 pt-2 md:border-t-0 md:pt-0">
+          <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-3">
             <Button
               asChild
-              className="h-9 rounded-lg px-3 text-sm font-semibold shadow-none"
+              variant={task.esAnuncio ? 'outline' : 'default'}
+              className={cn(
+                'h-9 rounded-lg px-3 text-sm font-semibold shadow-none transition-transform duration-150 ease-out active:scale-[0.98]',
+                task.esAnuncio &&
+                  'border-border/70 bg-background/70 hover:border-primary/25 hover:bg-primary/5 hover:text-primary',
+              )}
             >
               <Link href={`/teacher/courses/${courseId}/tasks/${task.id}`}>
                 {task.esAnuncio ? 'Abrir publicación' : 'Revisar entregas'}
@@ -197,7 +191,7 @@ function FeedPost({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-9 rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  className="size-9 rounded-lg text-muted-foreground transition-transform duration-150 ease-out hover:bg-muted/50 hover:text-foreground active:scale-[0.96]"
                   aria-label={`Más acciones para ${task.titulo}`}
                 >
                   <MoreHorizontal className="size-4" />
@@ -232,13 +226,12 @@ function FeedPost({
 }
 
 export function TeacherCourseTasks({ courseId }: { courseId: number }) {
-  const router = useRouter()
   const [data, setData] = useState<TeacherTaskListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [estado, setEstado] = useState(SELECT_ALL)
+  const [estado, setEstado] = useState(DEFAULT_ESTADO)
   const [pageNumber, setPageNumber] = useState(1)
   const [total, setTotal] = useState(0)
   const [taskToArchive, setTaskToArchive] = useState<TeacherTaskListItem | null>(
@@ -297,13 +290,18 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
       setError(null)
       await archiveTeacherTask(courseId, taskToArchive.id)
 
-      setData((prev) =>
-        prev.map((item) =>
-          item.id === taskToArchive.id
-            ? { ...item, estado: EstadoTarea.Archivada }
-            : item,
-        ),
-      )
+      if (estado === DEFAULT_ESTADO) {
+        setData((prev) => prev.filter((item) => item.id !== taskToArchive.id))
+        setTotal((prev) => Math.max(0, prev - 1))
+      } else {
+        setData((prev) =>
+          prev.map((item) =>
+            item.id === taskToArchive.id
+              ? { ...item, estado: EstadoTarea.Archivada }
+              : item,
+          ),
+        )
+      }
       setTaskToArchive(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ocurrió un error.')
@@ -312,7 +310,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
     }
   }
 
-  const hasActiveFilters = !!debouncedSearch || estado !== SELECT_ALL
+  const hasActiveFilters = !!debouncedSearch || estado !== DEFAULT_ESTADO
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   const pageLabel = useMemo(() => {
@@ -322,21 +320,18 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
 
   return (
     <div className="space-y-3">
-      <section className="rounded-xl border border-border/70 bg-card/85 p-2 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+      <CourseTabToolbar className="mx-auto max-w-[900px]">
         <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
           <div className="grid gap-2.5 md:grid-cols-[minmax(260px,1fr)_180px]">
-            <div className="relative min-w-[260px]">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar en el tablon..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value)
-                  setPageNumber(1)
-                }}
-                className="h-10 rounded-xl border-border/60 bg-background/75 pl-10 text-sm shadow-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
-              />
-            </div>
+            <CourseTabSearchField
+              className="min-w-0"
+              placeholder="Buscar en el tablón..."
+              value={search}
+              onChange={(value) => {
+                setSearch(value)
+                setPageNumber(1)
+              }}
+            />
 
             <Select
               value={estado}
@@ -357,48 +352,78 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
             </Select>
           </div>
 
-          <Button
-            onClick={() => router.push(`/teacher/courses/${courseId}/tasks/create`)}
-            className="h-10 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
-          >
-            <Plus className="mr-2 size-4" />
-            Crear publicación
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="h-10 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-none transition-[background-color,transform] duration-150 ease-out hover:bg-primary/90 active:scale-[0.98]">
+                <Plus className="size-4" />
+                Crear publicación
+                <ChevronDown className="size-3.5 opacity-75" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-72 rounded-xl border-border/60 p-1.5"
+            >
+              <DropdownMenuItem asChild className="items-start gap-3 rounded-lg p-2.5">
+                <Link href={`/teacher/courses/${courseId}/tasks/create?type=task`}>
+                  <ClipboardList className="mt-0.5 size-4 text-primary" />
+                  <span className="min-w-0">
+                    <span className="block font-medium text-foreground">
+                      Crear tarea
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-4 text-muted-foreground">
+                      Para actividades con fecha de entrega.
+                    </span>
+                  </span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="items-start gap-3 rounded-lg p-2.5">
+                <Link
+                  href={`/teacher/courses/${courseId}/tasks/create?type=announcement`}
+                >
+                  <Megaphone className="mt-0.5 size-4 text-muted-foreground" />
+                  <span className="min-w-0">
+                    <span className="block font-medium text-foreground">
+                      Crear anuncio
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-4 text-muted-foreground">
+                      Para comunicar información sin entregas.
+                    </span>
+                  </span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </section>
+      </CourseTabToolbar>
 
       {error ? (
-        <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <CourseTabErrorState className="mx-auto max-w-[900px]">
           {error}
-        </div>
+        </CourseTabErrorState>
       ) : null}
 
       {loading ? (
-        <div className="mx-auto max-w-[900px] space-y-2.5">
+        <CourseTabSkeletonList className="mx-auto max-w-[900px]">
           {Array.from({ length: 3 }).map((_, index) => (
             <FeedSkeleton key={index} />
           ))}
-        </div>
+        </CourseTabSkeletonList>
       ) : data.length === 0 ? (
-        <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
-          <CardContent className="px-6 py-14">
-            <Empty className="border-0 p-0">
-              <EmptyMedia variant="icon">
-                <Inbox />
-              </EmptyMedia>
-              <EmptyHeader>
-                <EmptyTitle>
-                  {hasActiveFilters ? 'Sin resultados' : 'Sin publicaciones'}
-                </EmptyTitle>
-                <EmptyDescription>
-                  {hasActiveFilters
-                    ? 'No se encontraron publicaciones con esos filtros.'
-                    : 'Todavía no hay tareas ni anuncios en este curso.'}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </CardContent>
-        </Card>
+        <CourseTabEmptyState
+          className="mx-auto max-w-[900px]"
+          icon={Inbox}
+          title={
+            hasActiveFilters
+              ? 'No se encontraron publicaciones'
+              : 'Todavía no hay publicaciones activas'
+          }
+          description={
+            hasActiveFilters
+              ? 'Probá con otra búsqueda o cambiá el estado.'
+              : 'Las publicaciones del curso van a aparecer acá.'
+          }
+        />
       ) : (
         <div className="mx-auto max-w-[900px] space-y-2.5">
           {data.map((task) => (
@@ -412,29 +437,16 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <p className="text-sm text-muted-foreground">{pageLabel}</p>
-
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="rounded-lg border-border/70 bg-background/70 transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40"
-            disabled={pageNumber === 1}
-            onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
-          >
-            Anterior
-          </Button>
-
-          <Button
-            variant="outline"
-            className="rounded-lg border-border/70 bg-background/70 transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40"
-            disabled={pageNumber * pageSize >= total}
-            onClick={() => setPageNumber((prev) => prev + 1)}
-          >
-            Siguiente
-          </Button>
-        </div>
-      </div>
+      {total > 0 ? (
+        <CourseTabPagination
+          className="mx-auto max-w-[900px]"
+          label={pageLabel}
+          page={pageNumber}
+          totalPages={totalPages}
+          onPrevious={() => setPageNumber((prev) => Math.max(1, prev - 1))}
+          onNext={() => setPageNumber((prev) => prev + 1)}
+        />
+      ) : null}
 
       <AlertDialog
         open={taskToArchive !== null}

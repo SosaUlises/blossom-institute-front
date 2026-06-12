@@ -12,6 +12,7 @@ import {
   Inbox,
   FileCheck2,
   ChevronDown,
+  CalendarRange,
   Users,
   ShieldCheck,
 } from 'lucide-react'
@@ -44,6 +45,17 @@ import {
 } from '@/lib/teacher/grades/api'
 import type { GradeDetail, GradeListItem } from '@/lib/teacher/grades/types'
 import { getTipoCalificacionLabel } from '@/lib/teacher/grades/utils'
+import {
+  formatQuarterMonthRange,
+  getAttendanceTone,
+  getAverageTone,
+  getCurrentQuarterSummary,
+  getTeacherCourseStudents,
+  type AcademicMetricTone,
+  type TeacherCourseStudent,
+  type StudentQuarterSummary,
+} from '@/lib/teacher/course-detail/students'
+import { cn } from '@/lib/utils'
 
 type Props = {
   courseId: number
@@ -223,6 +235,129 @@ function GradeScore({ nota }: { nota: number }) {
         {Number.isFinite(nota) ? nota.toFixed(2) : '-'}
       </span>
     </div>
+  )
+}
+
+function getAcademicMetricClass(tone: AcademicMetricTone) {
+  return cn(
+    'inline-flex min-w-14 items-center justify-center rounded-md border px-2 py-1 text-sm font-semibold tabular-nums',
+    tone === 'neutral' &&
+      'border-border/50 bg-background/55 text-muted-foreground',
+    tone === 'healthy' &&
+      'border-emerald-500/15 bg-emerald-500/[0.07] text-emerald-700 dark:text-emerald-400',
+    tone === 'attention' &&
+      'border-amber-500/15 bg-amber-500/[0.08] text-amber-700 dark:text-amber-400',
+    tone === 'critical' &&
+      'border-rose-500/15 bg-rose-500/[0.08] text-rose-700 dark:text-rose-400',
+  )
+}
+
+function QuarterJourneyItem({
+  summary,
+  current,
+}: {
+  summary: StudentQuarterSummary
+  current: boolean
+}) {
+  const averageTone = getAverageTone(summary.promedio)
+  const attendanceTone = getAttendanceTone(summary.asistencia)
+  const monthRange = formatQuarterMonthRange(summary)
+
+  return (
+    <div
+      className={cn(
+        'min-w-0 px-3 py-3 sm:px-4',
+        current && 'bg-primary/[0.035] dark:bg-primary/[0.06]',
+      )}
+    >
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground">
+            {summary.label}
+          </h3>
+          {current ? (
+            <span className="rounded-md border border-primary/15 bg-primary/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-primary">
+              Actual
+            </span>
+          ) : null}
+        </div>
+        {monthRange ? (
+          <p className="text-[11px] text-muted-foreground">{monthRange}</p>
+        ) : null}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="mb-1 text-[11px] font-medium text-muted-foreground">
+            Promedio Quiz/Test
+          </p>
+          <span className={getAcademicMetricClass(averageTone)}>
+            {summary.promedio?.toFixed(1) ?? '—'}
+          </span>
+        </div>
+        <div>
+          <p className="mb-1 text-[11px] font-medium text-muted-foreground">
+            Asistencia
+          </p>
+          <span className={getAcademicMetricClass(attendanceTone)}>
+            {summary.asistencia != null
+              ? `${summary.asistencia.toFixed(1)}%`
+              : '—'}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AcademicJourney({
+  student,
+  loading,
+}: {
+  student: TeacherCourseStudent | null
+  loading: boolean
+}) {
+  if (loading) {
+    return (
+      <section className="rounded-xl border border-border/60 bg-background/45 p-3">
+        <div className="mb-3 h-5 w-44 animate-pulse rounded-md bg-muted/40" />
+        <div className="grid gap-2 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="h-24 animate-pulse rounded-lg bg-muted/30" />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  if (!student?.promediosTrimestrales?.length) return null
+
+  const currentQuarter = getCurrentQuarterSummary(student.promediosTrimestrales)
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-border/60 bg-background/45">
+      <div className="flex items-start gap-2.5 border-b border-border/50 px-3 py-3 sm:px-4">
+        <CalendarRange className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">
+            Recorrido académico
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Promedio de Quiz y Test, y asistencia por trimestre.
+          </p>
+        </div>
+      </div>
+
+      <div className="divide-y divide-border/50 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        {student.promediosTrimestrales.map((summary) => (
+          <QuarterJourneyItem
+            key={summary.quarter}
+            summary={summary}
+            current={summary.quarter === currentQuarter?.quarter}
+          />
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -457,6 +592,9 @@ export function TeacherStudentGrades({
 
   const [data, setData] = useState<GradeListItem[]>([])
   const [studentContext, setStudentContext] = useState<GradeListItem | null>(null)
+  const [academicSummary, setAcademicSummary] =
+    useState<TeacherCourseStudent | null>(null)
+  const [academicSummaryLoading, setAcademicSummaryLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [gradeToArchive, setGradeToArchive] = useState<GradeListItem | null>(null)
@@ -472,11 +610,23 @@ export function TeacherStudentGrades({
     const first = studentContext ?? data[0]
 
     return {
-      nombre: alumnoNombre || first?.alumnoNombre || '',
-      apellido: alumnoApellido || first?.alumnoApellido || '',
-      avatarUrl: alumnoAvatarUrl ?? first?.alumnoAvatarUrl ?? null,
+      nombre: alumnoNombre || academicSummary?.nombre || first?.alumnoNombre || '',
+      apellido:
+        alumnoApellido || academicSummary?.apellido || first?.alumnoApellido || '',
+      avatarUrl:
+        alumnoAvatarUrl ??
+        academicSummary?.avatarUrl ??
+        first?.alumnoAvatarUrl ??
+        null,
     }
-  }, [data, studentContext, alumnoNombre, alumnoApellido, alumnoAvatarUrl])
+  }, [
+    data,
+    studentContext,
+    academicSummary,
+    alumnoNombre,
+    alumnoApellido,
+    alumnoAvatarUrl,
+  ])
 
   const alumnoFullName =
     `${alumnoContext.nombre} ${alumnoContext.apellido}`.trim() || 'Alumno'
@@ -520,6 +670,33 @@ export function TeacherStudentGrades({
   useEffect(() => {
     loadGrades()
   }, [courseId, alumnoId, pageNumber])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadAcademicSummary() {
+      try {
+        setAcademicSummaryLoading(true)
+        const students = await getTeacherCourseStudents(courseId)
+
+        if (!cancelled) {
+          setAcademicSummary(
+            students.find((student) => student.alumnoId === alumnoId) ?? null,
+          )
+        }
+      } catch {
+        if (!cancelled) setAcademicSummary(null)
+      } finally {
+        if (!cancelled) setAcademicSummaryLoading(false)
+      }
+    }
+
+    loadAcademicSummary()
+
+    return () => {
+      cancelled = true
+    }
+  }, [courseId, alumnoId])
 
   const handleArchive = async () => {
     if (!gradeToArchive) return
@@ -598,6 +775,11 @@ export function TeacherStudentGrades({
           Crear calificación
         </Button>
       </section>
+
+      <AcademicJourney
+        student={academicSummary}
+        loading={academicSummaryLoading}
+      />
 
       {data.length === 0 ? (
         <Card className="rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70">

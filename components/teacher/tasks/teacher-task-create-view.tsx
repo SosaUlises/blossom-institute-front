@@ -13,11 +13,14 @@ import { createTeacherTask } from '@/lib/teacher/tasks/task-api'
 import { EstadoTarea, type TeacherTaskUpdatePayload } from '@/lib/teacher/tasks/types'
 import type { UploadedFileResult } from '@/lib/uploads/api'
 
+export type PublicationType = 'task' | 'announcement'
+
 type Props = {
   courseId: number
+  initialType: PublicationType
 }
 
-export function TeacherTaskCreateView({ courseId }: Props) {
+export function TeacherTaskCreateView({ courseId, initialType }: Props) {
   const router = useRouter()
 
   const [saving, setSaving] = useState(false)
@@ -26,6 +29,8 @@ export function TeacherTaskCreateView({ courseId }: Props) {
   const [titulo, setTitulo] = useState('')
   const [consigna, setConsigna] = useState('')
   const [fechaEntregaUtc, setFechaEntregaUtc] = useState('')
+  const [publicationType, setPublicationType] =
+    useState<PublicationType>(initialType)
   const [estado, setEstado] = useState(String(EstadoTarea.Publicada))
   const [recursos, setRecursos] = useState<ResourceDraft[]>([createEmptyResource()])
 
@@ -100,6 +105,10 @@ export function TeacherTaskCreateView({ courseId }: Props) {
         throw new Error('El título es obligatorio.')
       }
 
+      if (publicationType === 'task' && !fechaEntregaUtc) {
+        throw new Error('Elegí una fecha de entrega para crear la tarea.')
+      }
+
       const payload: TeacherTaskUpdatePayload = {
         titulo: titulo.trim(),
         consigna: consigna.trim() || null,
@@ -112,7 +121,11 @@ export function TeacherTaskCreateView({ courseId }: Props) {
 
       const created = await createTeacherTask(courseId, payload)
 
-      setSuccess('Publicación creada correctamente.')
+      setSuccess(
+        publicationType === 'task'
+          ? 'Tarea creada correctamente.'
+          : 'Anuncio creado correctamente.',
+      )
 
       setTimeout(() => {
         if (created?.id) {
@@ -132,6 +145,7 @@ export function TeacherTaskCreateView({ courseId }: Props) {
   return (
     <TeacherPublicationComposer
       mode="create"
+      publicationType={publicationType}
       titulo={titulo}
       consigna={consigna}
       fechaEntregaUtc={fechaEntregaUtc}
@@ -144,6 +158,10 @@ export function TeacherTaskCreateView({ courseId }: Props) {
       onTituloChange={setTitulo}
       onConsignaChange={setConsigna}
       onFechaEntregaChange={setFechaEntregaUtc}
+      onPublicationTypeChange={(value) => {
+        setPublicationType(value)
+        if (value === 'announcement') setFechaEntregaUtc('')
+      }}
       onEstadoChange={setEstado}
       onAddResource={handleAddResource}
       onRemoveResource={handleRemoveResource}

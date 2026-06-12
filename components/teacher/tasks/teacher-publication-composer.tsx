@@ -70,6 +70,7 @@ export function toTaskResourcesPayload(
 
 type Props = {
   mode: 'create' | 'edit'
+  publicationType?: 'task' | 'announcement'
   titulo: string
   consigna: string
   fechaEntregaUtc: string
@@ -82,6 +83,7 @@ type Props = {
   onTituloChange: (value: string) => void
   onConsignaChange: (value: string) => void
   onFechaEntregaChange: (value: string) => void
+  onPublicationTypeChange?: (value: 'task' | 'announcement') => void
   onEstadoChange: (value: string) => void
   onAddResource: () => void
   onRemoveResource: (id: string) => void
@@ -147,6 +149,7 @@ function ResourceTypeBadge({ tipo }: { tipo: string }) {
 
 export function TeacherPublicationComposer({
   mode,
+  publicationType,
   titulo,
   consigna,
   fechaEntregaUtc,
@@ -159,6 +162,7 @@ export function TeacherPublicationComposer({
   onTituloChange,
   onConsignaChange,
   onFechaEntregaChange,
+  onPublicationTypeChange,
   onEstadoChange,
   onAddResource,
   onRemoveResource,
@@ -169,7 +173,17 @@ export function TeacherPublicationComposer({
   onSaveDraft,
   onPublish,
 }: Props) {
-  const isTask = Boolean(fechaEntregaUtc)
+  const resolvedPublicationType =
+    mode === 'create' && publicationType
+      ? publicationType
+      : fechaEntregaUtc
+        ? 'task'
+        : 'announcement'
+  const isTask = resolvedPublicationType === 'task'
+  const creationTitle = isTask ? 'Crear tarea' : 'Crear anuncio'
+  const creationDescription = isTask
+    ? 'Prepará una actividad para que el alumnado la entregue.'
+    : 'Compartí información con el curso sin solicitar una entrega.'
 
   return (
     <div className="space-y-4 pb-24 lg:pb-4">
@@ -198,14 +212,43 @@ export function TeacherPublicationComposer({
 
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-              {mode === 'create' ? 'Crear publicación' : 'Editar publicación'}
+              {mode === 'create' ? creationTitle : 'Editar publicación'}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {isTask
-                ? 'Con fecha de entrega: admite entregas del alumnado.'
-                : 'Sin fecha de entrega: se publicará como anuncio.'}
+              {mode === 'create'
+                ? creationDescription
+                : isTask
+                  ? 'Esta tarea admite entregas del alumnado.'
+                  : 'Este anuncio comunica información sin solicitar entregas.'}
             </p>
           </div>
+
+          {mode === 'create' && onPublicationTypeChange ? (
+            <div className="flex w-fit items-center gap-1 rounded-xl border border-border/60 bg-muted/25 p-1">
+              <Button
+                type="button"
+                size="sm"
+                variant={isTask ? 'secondary' : 'ghost'}
+                aria-pressed={isTask}
+                onClick={() => onPublicationTypeChange('task')}
+                className="h-8 rounded-lg px-2.5 shadow-none transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98]"
+              >
+                <CalendarClock className="size-3.5" />
+                Tarea
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={!isTask ? 'secondary' : 'ghost'}
+                aria-pressed={!isTask}
+                onClick={() => onPublicationTypeChange('announcement')}
+                className="h-8 rounded-lg px-2.5 shadow-none transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98]"
+              >
+                <Megaphone className="size-3.5" />
+                Anuncio
+              </Button>
+            </div>
+          ) : null}
         </div>
       </header>
 
@@ -219,20 +262,24 @@ export function TeacherPublicationComposer({
                   value={titulo}
                   onChange={(event) => onTituloChange(event.target.value)}
                   className={fieldClassName}
-                  placeholder="Título de la publicación"
+                  placeholder={isTask ? 'Título de la tarea' : 'Título del anuncio'}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  Consigna o anuncio
+                  {isTask ? 'Consigna' : 'Contenido del anuncio'}
                 </label>
                 <textarea
                   value={consigna}
                   onChange={(event) => onConsignaChange(event.target.value)}
                   rows={8}
                   className="min-h-44 w-full rounded-xl border border-border/60 bg-background/75 px-3 py-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15"
-                  placeholder="Escribí la consigna de la tarea o el contenido del anuncio..."
+                  placeholder={
+                    isTask
+                      ? 'Escribí la consigna de la tarea...'
+                      : 'Escribí el contenido del anuncio...'
+                  }
                 />
               </div>
             </div>
@@ -377,39 +424,33 @@ export function TeacherPublicationComposer({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
-            <div className="space-y-3">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground">Fecha de entrega</h2>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Definí una fecha para convertir esta publicación en tarea.
-                </p>
-              </div>
+          {mode === 'edit' || isTask ? (
+            <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+              <div className="space-y-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">
+                    Fecha de entrega
+                  </h2>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {mode === 'create'
+                      ? 'Indicá cuándo debe entregar el alumnado.'
+                      : 'Agregar una fecha convierte la publicación en tarea.'}
+                  </p>
+                </div>
 
-              <div className="relative">
-                <CalendarClock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="datetime-local"
-                  value={fechaEntregaUtc}
-                  onChange={(event) => onFechaEntregaChange(event.target.value)}
-                  className={cn(fieldClassName, 'pl-10')}
-                />
+                <div className="relative">
+                  <CalendarClock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="datetime-local"
+                    value={fechaEntregaUtc}
+                    onChange={(event) => onFechaEntregaChange(event.target.value)}
+                    className={cn(fieldClassName, 'pl-10')}
+                    required={mode === 'create' && isTask}
+                  />
+                </div>
               </div>
-
-              <div
-                className={cn(
-                  'rounded-xl border px-3 py-2 text-xs leading-5',
-                  isTask
-                    ? 'border-primary/15 bg-primary/5 text-foreground/80'
-                    : 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
-                )}
-              >
-                {isTask
-                  ? 'Tarea: admite entregas y seguimiento.'
-                  : 'Anuncio: no admite entregas.'}
-              </div>
-            </div>
-          </section>
+            </section>
+          ) : null}
         </aside>
       </div>
 
