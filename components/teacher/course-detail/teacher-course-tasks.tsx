@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
@@ -115,6 +115,7 @@ function normalizePreviewText(value?: string | null) {
 
 function getTaskPreview(task: TeacherTaskListItem, fallback?: string | null) {
   const previewTask = task as TaskPreviewFields
+
   return (
     normalizePreviewText(previewTask.consigna) ||
     normalizePreviewText(previewTask.descripcion) ||
@@ -272,13 +273,116 @@ function formatDueDateMeta(value?: string | null) {
   return `${datePart} · ${timePart}`
 }
 
+function getPostResourceMetaLabel(meta: TaskResourceMeta) {
+  if (meta.total <= 0) return null
+
+  if (meta.links > 0 || meta.files > 0 || meta.pdfs > 0) {
+    const parts = []
+
+    if (meta.links > 0) {
+      parts.push(`${meta.links} ${meta.links === 1 ? 'enlace' : 'enlaces'}`)
+    }
+
+    if (meta.pdfs > 0) {
+      parts.push(`${meta.pdfs} ${meta.pdfs === 1 ? 'archivo PDF' : 'archivos PDF'}`)
+    }
+
+    const otherFiles = Math.max(0, meta.files - meta.pdfs)
+    if (otherFiles > 0) {
+      parts.push(`${otherFiles} ${otherFiles === 1 ? 'archivo' : 'archivos'}`)
+    }
+
+    if (parts.length > 0) return parts.join(' · ')
+  }
+
+  return getResourceCountLabel(meta.total)
+}
+
+function getPostActivityLabels(task: TeacherTaskListItem) {
+  const record = task as unknown as Record<string, unknown>
+  const receivedCount = getNumberField(record, [
+    'entregasRecibidasCount',
+    'entregasRecibidas',
+    'submissionsCount',
+    'totalEntregas',
+  ])
+  const pendingReviewCount = getNumberField(record, [
+    'entregasPendientesCorreccionCount',
+    'entregasPendientesCorreccion',
+    'pendientesCorreccionCount',
+    'pendingCorrectionsCount',
+  ])
+
+  return [
+    receivedCount > 0
+      ? `${receivedCount} ${receivedCount === 1 ? 'entrega recibida' : 'entregas recibidas'}`
+      : null,
+    pendingReviewCount > 0
+      ? `${pendingReviewCount} ${pendingReviewCount === 1 ? 'pendiente de corrección' : 'pendientes de corrección'}`
+      : null,
+  ].filter(Boolean) as string[]
+}
+
+function formatPostDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return formatDateTime(value)
+
+  const diffMs = Date.now() - date.getTime()
+  const minuteMs = 60 * 1000
+  const hourMs = 60 * minuteMs
+  const dayMs = 24 * hourMs
+
+  if (diffMs >= 0 && diffMs < 7 * dayMs) {
+    if (diffMs < minuteMs) return 'Hace un momento'
+
+    const minutes = Math.floor(diffMs / minuteMs)
+    if (minutes < 60) {
+      return minutes === 1 ? 'Hace 1 minuto' : `Hace ${minutes} minutos`
+    }
+
+    const hours = Math.floor(diffMs / hourMs)
+    if (hours < 24) {
+      return hours === 1 ? 'Hace 1 hora' : `Hace ${hours} horas`
+    }
+
+    const days = Math.floor(diffMs / dayMs)
+    return days === 1 ? 'Hace 1 día' : `Hace ${days} días`
+  }
+
+  return new Intl.DateTimeFormat('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date)
+}
+
+function formatPostDueDateMeta(value?: string | null) {
+  if (!value) return null
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+
+  const datePart = new Intl.DateTimeFormat('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+  }).format(date)
+
+  const timePart = new Intl.DateTimeFormat('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date)
+
+  return `${datePart} · ${timePart}`
+}
+
 function CourseFeedSkeleton() {
   return (
     <article className="overflow-hidden rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90">
-      <div className="p-3.5 sm:p-4">
-        <div className="flex gap-3">
-          <div className="size-10 shrink-0 animate-pulse rounded-full bg-muted/40" />
-          <div className="min-w-0 flex-1 space-y-2.5">
+      <div className="p-3 sm:p-3.5">
+        <div className="flex gap-2.5">
+          <div className="size-9 shrink-0 animate-pulse rounded-full bg-muted/40" />
+          <div className="min-w-0 flex-1 space-y-2">
             <div className="space-y-1.5">
               <div className="h-4 w-32 animate-pulse rounded-md bg-muted/40" />
               <div className="h-3 w-52 animate-pulse rounded-md bg-muted/30" />
@@ -288,7 +392,7 @@ function CourseFeedSkeleton() {
               <div className="h-3 w-full animate-pulse rounded-md bg-muted/25" />
               <div className="h-3 w-3/4 animate-pulse rounded-md bg-muted/20" />
             </div>
-            <div className="flex items-center justify-between gap-3 pt-0.5">
+            <div className="flex items-center justify-between gap-3">
               <div className="h-9 w-32 animate-pulse rounded-lg bg-muted/30" />
               <div className="size-9 animate-pulse rounded-lg bg-muted/25" />
             </div>
@@ -319,14 +423,16 @@ function CourseFeedPost({
   const authorName = getAuthorName(author)
   const preview = getTaskPreview(task, previewOverride)
   const resourceMeta = getTaskResourceMeta(task, resourceMetaOverride)
-  const resourceMetaLabel = resourceMeta ? getResourceMetaLabel(resourceMeta) : null
-  const activityLabels = task.esAnuncio ? [] : getTaskActivityLabels(task)
+  const resourceMetaLabel = resourceMeta ? getPostResourceMetaLabel(resourceMeta) : null
+  const activityLabels = task.esAnuncio ? [] : getPostActivityLabels(task)
   const dueDateMeta = task.esAnuncio
     ? null
-    : formatDueDateMeta(task.fechaEntregaUtc)
-  const authorAction = task.esAnuncio
-    ? 'publicó un anuncio'
-    : 'publicó una tarea'
+    : formatPostDueDateMeta(task.fechaEntregaUtc)
+  const TypeIcon = task.esAnuncio ? Megaphone : ClipboardList
+  const typeLabel = task.esAnuncio ? 'Anuncio' : 'Tarea'
+  const primaryActionLabel = task.esAnuncio ? 'Abrir publicación' : 'Revisar entregas'
+  const hasMetadata =
+    Boolean(dueDateMeta) || Boolean(resourceMetaLabel) || activityLabels.length > 0
 
   return (
     <article className="group overflow-hidden rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.025)] transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-[0_6px_18px_rgba(15,23,42,0.03)] dark:bg-card/90">
@@ -335,7 +441,7 @@ function CourseFeedPost({
           <UserAvatar
             name={authorName}
             avatarUrl={author?.avatarUrl}
-            size={38}
+            size={36}
             className="mt-0.5 shrink-0 bg-primary/5"
             fallbackClassName="bg-primary/10 text-sm text-primary"
           />
@@ -343,13 +449,16 @@ function CourseFeedPost({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2.5">
               <div className="min-w-0">
-                <p className="truncate text-[13px] leading-5 text-foreground">
-                  <span className="font-semibold">{authorName}</span>{' '}
-                  <span className="text-foreground/80">{authorAction}</span>
+                <p className="truncate text-[13px] font-semibold leading-5 text-foreground">
+                  {authorName}
                 </p>
-                <p className="text-[11px] leading-4 text-muted-foreground">
-                  {formatDateTime(task.createdAtUtc)}
-                </p>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] leading-4 text-muted-foreground">
+                  <span>{formatPostDate(task.createdAtUtc)}</span>
+                  <span className="inline-flex items-center gap-1">
+                    <TypeIcon className="size-3" />
+                    {typeLabel}
+                  </span>
+                </div>
               </div>
               {showEstado ? (
                 <span
@@ -363,16 +472,10 @@ function CourseFeedPost({
               ) : null}
             </div>
 
-            <div className="mt-2.5 flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <div className="mt-1.5">
               <h3 className="line-clamp-2 min-w-0 text-base font-semibold leading-5 text-foreground sm:text-[17px]">
                 {task.titulo}
               </h3>
-              {dueDateMeta ? (
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-muted/35 px-2 py-1 text-[11px] font-semibold leading-4 text-foreground/70 shadow-none sm:mt-0.5 dark:bg-muted/20 dark:text-foreground/75">
-                  <CalendarClock className="size-3 text-muted-foreground" />
-                  Vence {dueDateMeta}
-                </span>
-              ) : null}
             </div>
 
             {preview ? (
@@ -381,33 +484,45 @@ function CourseFeedPost({
               </p>
             ) : null}
 
-            {resourceMetaLabel ? (
-              <div className="mt-1.5 flex items-center gap-1.5 text-xs font-medium leading-4 text-muted-foreground">
-                <Paperclip className="size-3.5 shrink-0" />
-                <span>{resourceMetaLabel}</span>
-              </div>
-            ) : null}
+            {hasMetadata ? (
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                {dueDateMeta ? (
+                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/10 bg-primary/5 px-2 py-1 text-[11px] font-semibold leading-4 text-primary/90 shadow-none dark:text-primary/80">
+                    <CalendarClock className="size-3" />
+                    Vence {dueDateMeta}
+                  </span>
+                ) : null}
 
-            {activityLabels.length > 0 ? (
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-medium leading-4 text-muted-foreground">
+                {resourceMetaLabel ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium leading-4 text-muted-foreground">
+                    <Paperclip className="size-3.5 shrink-0" />
+                    {resourceMetaLabel}
+                  </span>
+                ) : null}
+
                 {activityLabels.map((label) => (
-                  <span key={label}>{label}</span>
+                  <span
+                    key={label}
+                    className="text-xs font-medium leading-4 text-muted-foreground"
+                  >
+                    {label}
+                  </span>
                 ))}
               </div>
             ) : null}
 
-            <div className="mt-2.5 flex items-center justify-between gap-2">
+            <div className="mt-2 flex items-center justify-between gap-2">
               <Button
                 asChild
                 variant={task.esAnuncio ? 'outline' : 'default'}
                 className={cn(
-                  'h-9 rounded-lg px-3 text-sm font-semibold shadow-none transition-transform duration-150 ease-out active:scale-[0.98]',
+                  'h-8 rounded-lg px-3 text-sm font-semibold shadow-none transition-transform duration-150 ease-out active:scale-[0.98]',
                   task.esAnuncio &&
                     'border-border/70 bg-background/70 hover:border-primary/25 hover:bg-primary/5 hover:text-primary',
                 )}
               >
                 <Link href={`/teacher/courses/${courseId}/tasks/${task.id}`}>
-                  {task.esAnuncio ? 'Abrir publicación' : 'Revisar entregas'}
+                  {primaryActionLabel}
                 </Link>
               </Button>
 
@@ -417,7 +532,7 @@ function CourseFeedPost({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="size-9 rounded-lg text-muted-foreground transition-transform duration-150 ease-out hover:bg-muted/50 hover:text-foreground active:scale-[0.96]"
+                    className="size-8 rounded-lg text-muted-foreground transition-transform duration-150 ease-out hover:bg-muted/50 hover:text-foreground active:scale-[0.96]"
                     aria-label={`Más acciones para ${task.titulo}`}
                   >
                     <MoreHorizontal className="size-4" />
@@ -647,7 +762,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   }, [pageNumber, totalPages, total])
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5 sm:space-y-3">
       <CourseTabToolbar
         className={cn('mx-auto border-0 bg-transparent p-0', FEED_WIDTH)}
       >
@@ -755,7 +870,7 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
           }
         />
       ) : (
-        <div className={cn('mx-auto space-y-3', FEED_WIDTH)}>
+        <div className={cn('mx-auto space-y-2.5 sm:space-y-3', FEED_WIDTH)}>
           {data.map((task) => (
             <CourseFeedPost
               key={task.id}
@@ -814,3 +929,5 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
     </div>
   )
 }
+
+

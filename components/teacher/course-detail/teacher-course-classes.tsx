@@ -308,12 +308,24 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
       </div>
 
       <CourseTabToolbar>
-        <CourseTabSearchField
-          className="lg:max-w-md"
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar asistencias registradas..."
-        />
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <CourseTabSearchField
+            className="sm:max-w-md"
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar asistencias registradas..."
+          />
+
+          <Button
+            asChild
+            className="h-10 rounded-lg px-3 text-sm font-semibold shadow-none transition-[background-color,transform] duration-150 ease-out active:scale-[0.98] sm:w-fit"
+          >
+            <Link href={`/teacher/courses/${courseId}/classes/take`}>
+              <CheckSquare className="mr-2 size-4" />
+              Tomar asistencia
+            </Link>
+          </Button>
+        </div>
       </CourseTabToolbar>
 
       {filteredData.length === 0 ? (

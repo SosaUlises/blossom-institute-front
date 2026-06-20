@@ -8,6 +8,7 @@ import {
   Users,
 } from 'lucide-react'
 
+import { cn } from '@/lib/utils'
 import type { TeacherCourseDetail } from '@/lib/teacher/course-detail/types'
 import { TeacherCourseClasses } from './teacher-course-classes'
 import { TeacherCourseStudents } from './teacher-course-students'
@@ -72,11 +73,11 @@ export function TeacherCourseTabs({ course }: Props) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3.5 sm:space-y-4">
       <nav
         aria-label="Secciones del curso"
         role="tablist"
-        className="grid grid-cols-4 border-b border-border/60"
+        className="-mx-1 flex overflow-x-auto border-b border-border/60 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {tabs.map((key) => {
           const tabConfig = tabStyles[key]
@@ -92,13 +93,19 @@ export function TeacherCourseTabs({ course }: Props) {
               aria-selected={active}
               aria-controls={`course-panel-${key}`}
               id={`course-tab-${key}`}
-              className={`group -mb-px inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 border-b-2 px-1 py-2 text-xs font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:text-sm ${
+              className={cn(
+                'group -mb-px inline-flex min-h-12 min-w-max items-center justify-center gap-2 border-b-2 px-3.5 text-sm font-medium transition-[border-color,color,background-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 active:scale-[0.99] sm:px-5',
                 active
-                  ? 'border-foreground text-foreground'
-                  : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
-              }`}
+                  ? 'border-foreground font-semibold text-foreground'
+                  : 'border-transparent text-muted-foreground hover:border-border hover:bg-muted/30 hover:text-foreground',
+              )}
             >
-              <Icon className="hidden size-3.5 shrink-0 transition-colors duration-200 ease-out sm:block" />
+              <Icon
+                className={cn(
+                  'size-4 shrink-0 transition-colors duration-150 ease-out',
+                  active ? 'text-foreground' : 'text-muted-foreground/75',
+                )}
+              />
               <span className="truncate">{tabConfig.label}</span>
             </button>
           )
@@ -109,7 +116,7 @@ export function TeacherCourseTabs({ course }: Props) {
         id={`course-panel-${tab}`}
         role="tabpanel"
         aria-labelledby={`course-tab-${tab}`}
-        className="pt-1"
+        className="pt-0"
       >
         {tab === 'tablon' && <TeacherCourseTasks courseId={course.id} />}
         {tab === 'clases' && <TeacherCourseClasses courseId={course.id} />}

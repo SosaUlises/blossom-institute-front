@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, Users } from 'lucide-react'
+import { ArrowRight, ClipboardList, Users } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -238,14 +238,14 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
   return (
     <div className="space-y-3">
       <CourseTabToolbar>
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
           <CourseTabSearchField
             className="max-w-sm"
             value={search}
             onChange={setSearch}
             placeholder="Buscar alumno..."
           />
-          <div className="text-left sm:text-right">
+          <div className="text-left sm:text-right lg:ml-auto">
             <p className="text-xs font-medium text-foreground">
               Estado actual · {currentPeriodLabel}
             </p>
@@ -254,6 +254,20 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
               {filteredStudents.length === 1 ? 'alumno' : 'alumnos'}
             </p>
           </div>
+
+          <Button
+            asChild
+            variant="outline"
+            className="h-9 rounded-lg border-border/65 bg-background/60 px-3 text-sm font-medium text-foreground shadow-none transition-[background-color,border-color,color,transform] duration-150 ease-out hover:border-primary/25 hover:bg-primary/5 hover:text-primary active:scale-[0.98] dark:bg-background/30"
+          >
+            <Link href={`/teacher/courses/${courseId}/grade-templates`}>
+              <ClipboardList className="mr-2 size-4" />
+              <span className="hidden sm:inline">
+                Plantillas de calificación
+              </span>
+              <span className="sm:hidden">Plantillas</span>
+            </Link>
+          </Button>
         </div>
       </CourseTabToolbar>
 
