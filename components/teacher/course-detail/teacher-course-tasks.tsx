@@ -1,18 +1,16 @@
 ﻿'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Archive,
   CalendarClock,
-  ChevronDown,
   ClipboardList,
   Inbox,
   Megaphone,
   MoreHorizontal,
   Paperclip,
   Pencil,
-  Plus,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -33,13 +31,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import type { SessionUser } from '@/lib/auth/session'
 import { formatDateTime } from '@/lib/teacher/course-detail/formatters'
@@ -49,15 +40,11 @@ import type {
 } from '@/lib/teacher/tasks/types'
 import { EstadoTarea } from '@/lib/teacher/tasks/types'
 import { getEstadoTareaConfig } from '@/lib/teacher/tasks/utils'
-import {
-  archiveTeacherTask,
-  getTeacherTaskDetail,
-} from '@/lib/teacher/tasks/task-api'
+import { archiveTeacherTask } from '@/lib/teacher/tasks/task-api'
 import { cn } from '@/lib/utils'
 import {
   CourseTabEmptyState,
   CourseTabErrorState,
-  CourseTabPagination,
   CourseTabSearchField,
   CourseTabSkeletonList,
   CourseTabToolbar,
@@ -71,6 +58,12 @@ type Envelope<T> = {
 const SELECT_ALL = 'all'
 const DEFAULT_ESTADO = String(EstadoTarea.Publicada)
 const FEED_WIDTH = 'max-w-3xl'
+const STATUS_FILTERS = [
+  { value: DEFAULT_ESTADO, label: 'Publicadas' },
+  { value: SELECT_ALL, label: 'Todas' },
+  { value: String(EstadoTarea.Borrador), label: 'Borradores' },
+  { value: String(EstadoTarea.Archivada), label: 'Archivadas' },
+] as const
 
 type FeedAuthor = Pick<
   SessionUser,
@@ -95,6 +88,12 @@ type TaskResourceMeta = {
   links: number
   files: number
   pdfs: number
+  summary?: string | null
+}
+
+type TaskActivityLabel = {
+  text: string
+  tone: 'neutral' | 'attention' | 'complete'
 }
 
 function getAuthorName(author: FeedAuthor | null) {
@@ -117,6 +116,7 @@ function getTaskPreview(task: TeacherTaskListItem, fallback?: string | null) {
   const previewTask = task as TaskPreviewFields
 
   return (
+    normalizePreviewText(previewTask.contentPreview) ||
     normalizePreviewText(previewTask.consigna) ||
     normalizePreviewText(previewTask.descripcion) ||
     normalizePreviewText(previewTask.contenido) ||
@@ -132,6 +132,9 @@ function getTaskResourceCount(
   const previewTask = task as TaskPreviewFields
 
   if (Array.isArray(previewTask.recursos)) return previewTask.recursos.length
+
+  const feedCount = Number(previewTask.resourcesCount)
+  if (Number.isFinite(feedCount) && feedCount >= 0) return feedCount
 
   const count = Number(previewTask.recursosCount)
   if (Number.isFinite(count) && count >= 0) return count
@@ -174,6 +177,18 @@ function getTaskResourceMeta(
   fallback?: TaskResourceMeta | null,
 ) {
   const previewTask = task as TaskPreviewFields
+  const feedCount = getTaskResourceCount(task)
+
+  if (feedCount !== null && previewTask.resourceSummary) {
+    return {
+      total: feedCount,
+      links: 0,
+      files: 0,
+      pdfs: 0,
+      summary: previewTask.resourceSummary,
+    }
+  }
+
   const resourceMeta = getResourceMetaFromResources(previewTask.recursos)
 
   if (resourceMeta) return resourceMeta
@@ -197,6 +212,8 @@ function getTaskResourceMeta(
 function getResourceMetaLabel(meta: TaskResourceMeta) {
   if (meta.total <= 0) return null
 
+  if (meta.summary) return meta.summary
+
   if (meta.links > 0 || meta.files > 0 || meta.pdfs > 0) {
     const parts = []
 
@@ -205,12 +222,16 @@ function getResourceMetaLabel(meta: TaskResourceMeta) {
     }
 
     if (meta.pdfs > 0) {
-      parts.push(`${meta.pdfs} ${meta.pdfs === 1 ? 'archivo PDF' : 'archivos PDF'}`)
+      parts.push(
+        `${meta.pdfs} ${meta.pdfs === 1 ? 'archivo PDF' : 'archivos PDF'}`,
+      )
     }
 
     const otherFiles = Math.max(0, meta.files - meta.pdfs)
     if (otherFiles > 0) {
-      parts.push(`${otherFiles} ${otherFiles === 1 ? 'archivo' : 'archivos'}`)
+      parts.push(
+        `${otherFiles} ${otherFiles === 1 ? 'archivo' : 'archivos'}`,
+      )
     }
 
     if (parts.length > 0) return parts.join(' · ')
@@ -219,38 +240,69 @@ function getResourceMetaLabel(meta: TaskResourceMeta) {
   return getResourceCountLabel(meta.total)
 }
 
-function getNumberField(record: Record<string, unknown>, keys: string[]) {
+function getOptionalNumberField(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
+    if (!(key in record)) continue
+
     const value = Number(record[key])
-    if (Number.isFinite(value) && value > 0) return value
+    if (Number.isFinite(value) && value >= 0) return value
   }
 
-  return 0
+  return null
 }
 
 function getTaskActivityLabels(task: TeacherTaskListItem) {
   const record = task as unknown as Record<string, unknown>
-  const receivedCount = getNumberField(record, [
+  const receivedCount = getOptionalNumberField(record, [
+    'submissionsCount',
     'entregasRecibidasCount',
     'entregasRecibidas',
-    'submissionsCount',
     'totalEntregas',
   ])
-  const pendingReviewCount = getNumberField(record, [
+  const pendingReviewCount = getOptionalNumberField(record, [
+    'pendingReviewsCount',
     'entregasPendientesCorreccionCount',
     'entregasPendientesCorreccion',
     'pendientesCorreccionCount',
     'pendingCorrectionsCount',
   ])
 
-  return [
-    receivedCount > 0
-      ? `${receivedCount} ${receivedCount === 1 ? 'entrega recibida' : 'entregas recibidas'}`
-      : null,
-    pendingReviewCount > 0
-      ? `${pendingReviewCount} ${pendingReviewCount === 1 ? 'pendiente de corrección' : 'pendientes de corrección'}`
-      : null,
-  ].filter(Boolean) as string[]
+  const labels: TaskActivityLabel[] = []
+
+  if (receivedCount === null) return labels
+
+  if (receivedCount === 0) {
+    labels.push({ text: 'Aún sin entregas', tone: 'neutral' })
+    return labels
+  }
+
+  labels.push({
+    text: `${receivedCount} ${receivedCount === 1 ? 'entrega recibida' : 'entregas recibidas'}`,
+    tone: 'neutral',
+  })
+
+  if (pendingReviewCount !== null && pendingReviewCount > 0) {
+    labels.push({
+      text: `${pendingReviewCount} ${pendingReviewCount === 1 ? 'pendiente de corrección' : 'pendientes de corrección'}`,
+      tone: 'attention',
+    })
+  } else if (pendingReviewCount === 0) {
+    labels.push({ text: 'Todo corregido', tone: 'complete' })
+  }
+
+  return labels
+}
+
+function getTaskActivityClassName(tone: TaskActivityLabel['tone']) {
+  if (tone === 'attention') {
+    return 'font-medium text-amber-700 dark:text-amber-300'
+  }
+
+  if (tone === 'complete') {
+    return 'font-medium text-emerald-700 dark:text-emerald-300'
+  }
+
+  return 'text-muted-foreground'
 }
 
 function formatDueDateMeta(value?: string | null) {
@@ -273,54 +325,24 @@ function formatDueDateMeta(value?: string | null) {
   return `${datePart} · ${timePart}`
 }
 
-function getPostResourceMetaLabel(meta: TaskResourceMeta) {
-  if (meta.total <= 0) return null
+function isAnnouncementPost(task: TeacherTaskListItem) {
+  const publicationType = task.publicationType?.toLowerCase()
 
-  if (meta.links > 0 || meta.files > 0 || meta.pdfs > 0) {
-    const parts = []
+  if (publicationType === 'announcement') return true
+  if (publicationType === 'task') return false
 
-    if (meta.links > 0) {
-      parts.push(`${meta.links} ${meta.links === 1 ? 'enlace' : 'enlaces'}`)
-    }
-
-    if (meta.pdfs > 0) {
-      parts.push(`${meta.pdfs} ${meta.pdfs === 1 ? 'archivo PDF' : 'archivos PDF'}`)
-    }
-
-    const otherFiles = Math.max(0, meta.files - meta.pdfs)
-    if (otherFiles > 0) {
-      parts.push(`${otherFiles} ${otherFiles === 1 ? 'archivo' : 'archivos'}`)
-    }
-
-    if (parts.length > 0) return parts.join(' · ')
-  }
-
-  return getResourceCountLabel(meta.total)
+  return task.esAnuncio
 }
 
-function getPostActivityLabels(task: TeacherTaskListItem) {
-  const record = task as unknown as Record<string, unknown>
-  const receivedCount = getNumberField(record, [
-    'entregasRecibidasCount',
-    'entregasRecibidas',
-    'submissionsCount',
-    'totalEntregas',
-  ])
-  const pendingReviewCount = getNumberField(record, [
-    'entregasPendientesCorreccionCount',
-    'entregasPendientesCorreccion',
-    'pendientesCorreccionCount',
-    'pendingCorrectionsCount',
-  ])
+function getDueDateValue(task: TeacherTaskListItem) {
+  return task.dueDateUtc ?? task.fechaEntregaUtc
+}
 
-  return [
-    receivedCount > 0
-      ? `${receivedCount} ${receivedCount === 1 ? 'entrega recibida' : 'entregas recibidas'}`
-      : null,
-    pendingReviewCount > 0
-      ? `${pendingReviewCount} ${pendingReviewCount === 1 ? 'pendiente de corrección' : 'pendientes de corrección'}`
-      : null,
-  ].filter(Boolean) as string[]
+function getTaskAuthor(task: TeacherTaskListItem, fallback: FeedAuthor | null) {
+  return {
+    name: task.authorName || getAuthorName(fallback),
+    avatarUrl: task.authorAvatarUrl ?? fallback?.avatarUrl ?? null,
+  }
 }
 
 function formatPostDate(value: string) {
@@ -356,29 +378,26 @@ function formatPostDate(value: string) {
   }).format(date)
 }
 
-function formatPostDueDateMeta(value?: string | null) {
-  if (!value) return null
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-
-  const datePart = new Intl.DateTimeFormat('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-  }).format(date)
-
-  const timePart = new Intl.DateTimeFormat('es-AR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(date)
-
-  return `${datePart} · ${timePart}`
+function getPublicationConfig(task: TeacherTaskListItem) {
+  return isAnnouncementPost(task)
+    ? {
+        icon: Megaphone,
+        label: 'Anuncio',
+        primaryActionLabel: 'Abrir publicación',
+      }
+    : {
+        icon: ClipboardList,
+        label: 'Tarea',
+        primaryActionLabel: 'Revisar entregas',
+      }
 }
 
 function CourseFeedSkeleton() {
   return (
-    <article className="overflow-hidden rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90">
+    <article
+      aria-hidden="true"
+      className="overflow-hidden rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90"
+    >
       <div className="p-3 sm:p-3.5">
         <div className="flex gap-2.5">
           <div className="size-9 shrink-0 animate-pulse rounded-full bg-muted/40" />
@@ -403,45 +422,112 @@ function CourseFeedSkeleton() {
   )
 }
 
+function CourseFeedComposer({
+  courseId,
+  courseName,
+  author,
+}: {
+  courseId: number
+  courseName: string
+  author: FeedAuthor | null
+}) {
+  const authorName = author ? getAuthorName(author) : 'Docente'
+  const trimmedCourseName = courseName.trim()
+  const prompt = trimmedCourseName
+    ? `¿Qué querés publicar en ${trimmedCourseName}?`
+    : '¿Qué querés publicar en este curso?'
+
+  return (
+    <section
+      className={cn(
+        'mx-auto rounded-2xl border border-border/60 bg-card/95 p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-3',
+        FEED_WIDTH,
+      )}
+      aria-label="Crear publicación para el curso"
+    >
+      <div className="flex gap-2.5">
+        <UserAvatar
+          name={authorName}
+          avatarUrl={author?.avatarUrl}
+          size={38}
+          className="mt-0.5 shrink-0 bg-primary/5"
+          fallbackClassName="bg-primary/10 text-sm text-primary"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="rounded-xl border border-border/50 bg-background/75 px-3 py-2.5 transition-colors duration-200 ease-out dark:bg-background/35">
+            <p className="break-words text-[15px] font-medium leading-5 text-foreground">
+              {prompt}
+            </p>
+          </div>
+
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Button
+              asChild
+              variant="outline"
+              className="h-9 w-full justify-start rounded-lg border-border/70 bg-background/70 px-3 text-sm font-semibold shadow-none transition-[border-color,background-color,transform] duration-150 ease-out hover:border-primary/25 hover:bg-primary/5 hover:text-primary active:scale-[0.98] sm:justify-center"
+            >
+              <Link
+                href={`/teacher/courses/${courseId}/tasks/create?type=announcement`}
+              >
+                <Megaphone className="mr-2 size-4" />
+                Crear anuncio
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="h-9 w-full justify-start rounded-lg px-3 text-sm font-semibold shadow-none transition-transform duration-150 ease-out active:scale-[0.98] sm:justify-center"
+            >
+              <Link href={`/teacher/courses/${courseId}/tasks/create?type=task`}>
+                <ClipboardList className="mr-2 size-4" />
+                Crear tarea
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function CourseFeedPost({
   task,
   courseId,
   onRequestArchive,
   author,
-  previewOverride,
-  resourceMetaOverride,
 }: {
   task: TeacherTaskListItem
   courseId: number
   onRequestArchive: (task: TeacherTaskListItem) => void
   author: FeedAuthor | null
-  previewOverride?: string | null
-  resourceMetaOverride?: TaskResourceMeta | null
 }) {
   const estadoConfig = getEstadoTareaConfig(task.estado)
   const showEstado = task.estado !== EstadoTarea.Publicada
-  const authorName = getAuthorName(author)
-  const preview = getTaskPreview(task, previewOverride)
-  const resourceMeta = getTaskResourceMeta(task, resourceMetaOverride)
-  const resourceMetaLabel = resourceMeta ? getPostResourceMetaLabel(resourceMeta) : null
-  const activityLabels = task.esAnuncio ? [] : getPostActivityLabels(task)
-  const dueDateMeta = task.esAnuncio
+  const postAuthor = getTaskAuthor(task, author)
+  const preview = getTaskPreview(task)
+  const resourceMeta = getTaskResourceMeta(task)
+  const resourceMetaLabel = resourceMeta ? getResourceMetaLabel(resourceMeta) : null
+  const isAnnouncement = isAnnouncementPost(task)
+  const activityLabels = isAnnouncement ? [] : getTaskActivityLabels(task)
+  const dueDateMeta = isAnnouncement
     ? null
-    : formatPostDueDateMeta(task.fechaEntregaUtc)
-  const TypeIcon = task.esAnuncio ? Megaphone : ClipboardList
-  const typeLabel = task.esAnuncio ? 'Anuncio' : 'Tarea'
-  const primaryActionLabel = task.esAnuncio ? 'Abrir publicación' : 'Revisar entregas'
+    : formatDueDateMeta(getDueDateValue(task))
+  const publicationConfig = getPublicationConfig(task)
+  const TypeIcon = publicationConfig.icon
+  const titleId = `course-feed-post-${task.id}-title`
   const hasMetadata =
     Boolean(dueDateMeta) || Boolean(resourceMetaLabel) || activityLabels.length > 0
 
   return (
-    <article className="group overflow-hidden rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.025)] transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-[0_6px_18px_rgba(15,23,42,0.03)] dark:bg-card/90">
-      <div className="p-3 sm:p-3.5">
+    <article
+      aria-labelledby={titleId}
+      className="group overflow-hidden rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.025)] transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-[0_4px_14px_rgba(15,23,42,0.025)] dark:bg-card/90"
+    >
+      <div className="p-2.5 sm:p-3">
         <div className="flex gap-2.5">
           <UserAvatar
-            name={authorName}
-            avatarUrl={author?.avatarUrl}
-            size={36}
+            name={postAuthor.name}
+            avatarUrl={postAuthor.avatarUrl}
+            size={34}
             className="mt-0.5 shrink-0 bg-primary/5"
             fallbackClassName="bg-primary/10 text-sm text-primary"
           />
@@ -450,13 +536,14 @@ function CourseFeedPost({
             <div className="flex items-start justify-between gap-2.5">
               <div className="min-w-0">
                 <p className="truncate text-[13px] font-semibold leading-5 text-foreground">
-                  {authorName}
+                  {postAuthor.name}
                 </p>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] leading-4 text-muted-foreground">
                   <span>{formatPostDate(task.createdAtUtc)}</span>
+                  <span aria-hidden="true">·</span>
                   <span className="inline-flex items-center gap-1">
                     <TypeIcon className="size-3" />
-                    {typeLabel}
+                    {publicationConfig.label}
                   </span>
                 </div>
               </div>
@@ -472,20 +559,23 @@ function CourseFeedPost({
               ) : null}
             </div>
 
-            <div className="mt-1.5">
-              <h3 className="line-clamp-2 min-w-0 text-base font-semibold leading-5 text-foreground sm:text-[17px]">
+            <div className="mt-1">
+              <h3
+                id={titleId}
+                className="line-clamp-2 min-w-0 break-words text-base font-semibold leading-5 text-foreground sm:text-[17px]"
+              >
                 {task.titulo}
               </h3>
             </div>
 
             {preview ? (
-              <p className="mt-1 line-clamp-3 whitespace-pre-line text-sm leading-5 text-foreground/80">
+              <p className="mt-0.5 line-clamp-3 break-words whitespace-pre-line text-sm leading-5 text-foreground/85">
                 {preview}
               </p>
             ) : null}
 
             {hasMetadata ? (
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                 {dueDateMeta ? (
                   <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/10 bg-primary/5 px-2 py-1 text-[11px] font-semibold leading-4 text-primary/90 shadow-none dark:text-primary/80">
                     <CalendarClock className="size-3" />
@@ -502,27 +592,30 @@ function CourseFeedPost({
 
                 {activityLabels.map((label) => (
                   <span
-                    key={label}
-                    className="text-xs font-medium leading-4 text-muted-foreground"
+                    key={label.text}
+                    className={cn(
+                      'text-xs leading-4',
+                      getTaskActivityClassName(label.tone),
+                    )}
                   >
-                    {label}
+                    {label.text}
                   </span>
                 ))}
               </div>
             ) : null}
 
-            <div className="mt-2 flex items-center justify-between gap-2">
+            <div className="mt-1.5 flex items-center justify-between gap-2">
               <Button
                 asChild
-                variant={task.esAnuncio ? 'outline' : 'default'}
+                variant={isAnnouncement ? 'outline' : 'default'}
                 className={cn(
                   'h-8 rounded-lg px-3 text-sm font-semibold shadow-none transition-transform duration-150 ease-out active:scale-[0.98]',
-                  task.esAnuncio &&
+                  isAnnouncement &&
                     'border-border/70 bg-background/70 hover:border-primary/25 hover:bg-primary/5 hover:text-primary',
                 )}
               >
                 <Link href={`/teacher/courses/${courseId}/tasks/${task.id}`}>
-                  {primaryActionLabel}
+                  {publicationConfig.primaryActionLabel}
                 </Link>
               </Button>
 
@@ -533,7 +626,7 @@ function CourseFeedPost({
                     variant="ghost"
                     size="icon"
                     className="size-8 rounded-lg text-muted-foreground transition-transform duration-150 ease-out hover:bg-muted/50 hover:text-foreground active:scale-[0.96]"
-                    aria-label={`Más acciones para ${task.titulo}`}
+                    aria-label={`Más acciones para la publicación ${task.titulo}`}
                   >
                     <MoreHorizontal className="size-4" />
                   </Button>
@@ -569,7 +662,51 @@ function CourseFeedPost({
   )
 }
 
-export function TeacherCourseTasks({ courseId }: { courseId: number }) {
+function FeedStatusFilter({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Filtrar publicaciones por estado"
+      className="-mx-1 flex min-w-0 gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      {STATUS_FILTERS.map((filter) => {
+        const active = value === filter.value
+
+        return (
+          <button
+            key={filter.value}
+            type="button"
+            aria-pressed={active}
+            aria-label={`Mostrar ${filter.label.toLowerCase()}`}
+            onClick={() => onChange(filter.value)}
+            className={cn(
+              'h-8 shrink-0 rounded-lg border px-2.5 text-xs font-medium transition-[background-color,border-color,color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 active:scale-[0.98]',
+              active
+                ? 'border-border/70 bg-card text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/80'
+                : 'border-transparent bg-transparent text-muted-foreground hover:border-border/60 hover:bg-background/55 hover:text-foreground dark:hover:bg-background/30',
+            )}
+          >
+            {filter.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+export function TeacherCourseTasks({
+  courseId,
+  courseName,
+}: {
+  courseId: number
+  courseName: string
+}) {
   const [data, setData] = useState<TeacherTaskListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -583,14 +720,11 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   )
   const [archiving, setArchiving] = useState(false)
   const [author, setAuthor] = useState<FeedAuthor | null>(null)
-  const [previewByTaskId, setPreviewByTaskId] = useState<Record<number, string>>(
-    {},
-  )
-  const [resourceMetaByTaskId, setResourceMetaByTaskId] = useState<
-    Record<number, TaskResourceMeta>
-  >({})
+  const [feedAnnouncement, setFeedAnnouncement] = useState('')
 
   const pageSize = 10
+  const isInitialLoading = loading && pageNumber === 1
+  const isLoadingMore = loading && pageNumber > 1
 
   useEffect(() => {
     let active = true
@@ -621,75 +755,6 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   }, [search])
 
   useEffect(() => {
-    const missingDetailTasks = data.filter(
-      (task) =>
-        (getTaskPreview(task) === null &&
-          previewByTaskId[task.id] === undefined) ||
-        (getTaskResourceMeta(task, resourceMetaByTaskId[task.id]) === null &&
-          resourceMetaByTaskId[task.id] === undefined),
-    )
-
-    if (missingDetailTasks.length === 0) return
-
-    let active = true
-
-    const loadDetails = async () => {
-      const entries = await Promise.all(
-        missingDetailTasks.map(async (task) => {
-          try {
-            const detail = await getTeacherTaskDetail(courseId, task.id)
-            return [
-              task.id,
-              getTaskPreview(detail) ?? '',
-              getResourceMetaFromResources(detail.recursos) ?? {
-                total: 0,
-                links: 0,
-                files: 0,
-                pdfs: 0,
-              },
-            ] as const
-          } catch {
-            return [
-              task.id,
-              '',
-              {
-                total: 0,
-                links: 0,
-                files: 0,
-                pdfs: 0,
-              },
-            ] as const
-          }
-        }),
-      )
-
-      if (!active) return
-
-      setPreviewByTaskId((previous) => {
-        const next = { ...previous }
-        for (const [taskId, preview] of entries) {
-          next[taskId] = preview
-        }
-        return next
-      })
-
-      setResourceMetaByTaskId((previous) => {
-        const next = { ...previous }
-        for (const [taskId, , resourceMeta] of entries) {
-          next[taskId] = resourceMeta
-        }
-        return next
-      })
-    }
-
-    void loadDetails()
-
-    return () => {
-      active = false
-    }
-  }, [courseId, data, previewByTaskId, resourceMetaByTaskId])
-
-  useEffect(() => {
     const load = async () => {
       try {
         setLoading(true)
@@ -714,8 +779,28 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
           throw new Error(result.message || 'No se pudieron obtener las publicaciones.')
         }
 
-        setData(result.data?.items ?? [])
+        const nextItems = result.data?.items ?? []
+
+        setData((prev) => {
+          if (pageNumber === 1) return nextItems
+
+          const seen = new Set(prev.map((item) => item.id))
+          const uniqueNextItems = nextItems.filter((item) => !seen.has(item.id))
+
+          return [...prev, ...uniqueNextItems]
+        })
         setTotal(result.data?.total ?? 0)
+        if (pageNumber > 1) {
+          setFeedAnnouncement(
+            nextItems.length === 1
+              ? 'Se cargó 1 publicación más.'
+              : nextItems.length > 1
+                ? `Se cargaron ${nextItems.length} publicaciones más.`
+                : 'No hay más publicaciones para cargar.',
+          )
+        } else {
+          setFeedAnnouncement('')
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ocurrió un error.')
       } finally {
@@ -754,91 +839,43 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
   }
 
   const hasActiveFilters = !!debouncedSearch || estado !== DEFAULT_ESTADO
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
-
-  const pageLabel = useMemo(() => {
-    if (total === 0) return 'Sin publicaciones'
-    return `Página ${pageNumber} de ${totalPages} · ${total} publicaciones`
-  }, [pageNumber, totalPages, total])
+  const hasMorePosts = data.length < total
+  const visibleCount = Math.min(data.length, total)
+  const feedCountLabel =
+    total === 0
+      ? 'Sin publicaciones'
+      : `Mostrando ${visibleCount} de ${total} publicaciones`
 
   return (
-    <div className="space-y-2.5 sm:space-y-3">
+    <div className="space-y-2.5 sm:space-y-3" aria-busy={loading}>
+      <CourseFeedComposer
+        courseId={courseId}
+        courseName={courseName}
+        author={author}
+      />
+
       <CourseTabToolbar
         className={cn('mx-auto border-0 bg-transparent p-0', FEED_WIDTH)}
       >
-        <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
-          <div className="grid gap-2.5 md:grid-cols-[minmax(260px,1fr)_180px]">
-            <CourseTabSearchField
-              className="min-w-0"
-              placeholder="Buscar en el tablón..."
-              value={search}
-              onChange={(value) => {
-                setSearch(value)
-                setPageNumber(1)
-              }}
-            />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <CourseTabSearchField
+            className="min-w-0 sm:max-w-[320px]"
+            placeholder="Buscar publicaciones..."
+            ariaLabel="Buscar publicaciones del curso"
+            value={search}
+            onChange={(value) => {
+              setSearch(value)
+              setPageNumber(1)
+            }}
+          />
 
-            <Select
-              value={estado}
-              onValueChange={(value) => {
-                setEstado(value)
-                setPageNumber(1)
-              }}
-            >
-              <SelectTrigger className="h-10 rounded-xl border-border/60 bg-background/75 text-sm shadow-none transition-colors duration-200 focus:ring-2 focus:ring-primary/15 dark:bg-background/35">
-                <SelectValue placeholder="Todos los estados" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border-border/60">
-                <SelectItem value={SELECT_ALL}>Todos los estados</SelectItem>
-                <SelectItem value={String(EstadoTarea.Borrador)}>Borrador</SelectItem>
-                <SelectItem value={String(EstadoTarea.Publicada)}>Publicada</SelectItem>
-                <SelectItem value={String(EstadoTarea.Archivada)}>Archivada</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="h-10 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-none transition-[background-color,transform] duration-150 ease-out hover:bg-primary/90 active:scale-[0.98]">
-                <Plus className="size-4" />
-                Crear publicación
-                <ChevronDown className="size-3.5 opacity-75" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-72 rounded-xl border-border/60 p-1.5"
-            >
-              <DropdownMenuItem asChild className="items-start gap-3 rounded-lg p-2.5">
-                <Link href={`/teacher/courses/${courseId}/tasks/create?type=task`}>
-                  <ClipboardList className="mt-0.5 size-4 text-primary" />
-                  <span className="min-w-0">
-                    <span className="block font-medium text-foreground">
-                      Crear tarea
-                    </span>
-                    <span className="mt-0.5 block text-xs leading-4 text-muted-foreground">
-                      Para actividades con fecha de entrega.
-                    </span>
-                  </span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="items-start gap-3 rounded-lg p-2.5">
-                <Link
-                  href={`/teacher/courses/${courseId}/tasks/create?type=announcement`}
-                >
-                  <Megaphone className="mt-0.5 size-4 text-muted-foreground" />
-                  <span className="min-w-0">
-                    <span className="block font-medium text-foreground">
-                      Crear anuncio
-                    </span>
-                    <span className="mt-0.5 block text-xs leading-4 text-muted-foreground">
-                      Para comunicar información sin entregas.
-                    </span>
-                  </span>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <FeedStatusFilter
+            value={estado}
+            onChange={(value) => {
+              setEstado(value)
+              setPageNumber(1)
+            }}
+          />
         </div>
       </CourseTabToolbar>
 
@@ -848,8 +885,15 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
         </CourseTabErrorState>
       ) : null}
 
-      {loading ? (
-        <CourseTabSkeletonList className={cn('mx-auto', FEED_WIDTH)}>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {isLoadingMore ? 'Cargando más publicaciones.' : feedAnnouncement}
+      </p>
+
+      {isInitialLoading ? (
+        <CourseTabSkeletonList
+          className={cn('mx-auto', FEED_WIDTH)}
+          label="Cargando publicaciones del curso."
+        >
           {Array.from({ length: 3 }).map((_, index) => (
             <CourseFeedSkeleton key={index} />
           ))}
@@ -860,17 +904,23 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
           icon={Inbox}
           title={
             hasActiveFilters
-              ? 'No se encontraron publicaciones'
+              ? 'No hay publicaciones con ese filtro'
               : 'Todavía no hay publicaciones activas'
           }
           description={
             hasActiveFilters
-              ? 'Probá con otra búsqueda o cambiá el estado.'
-              : 'Las publicaciones del curso van a aparecer acá.'
+              ? 'Probá con otra búsqueda o cambiá el filtro.'
+              : 'Podés crear un anuncio o una tarea para empezar.'
           }
         />
       ) : (
-        <div className={cn('mx-auto space-y-2.5 sm:space-y-3', FEED_WIDTH)}>
+        <div
+          id="course-feed-posts"
+          role="region"
+          aria-label="Publicaciones del curso"
+          aria-busy={loading}
+          className={cn('mx-auto space-y-2.5 sm:space-y-3', FEED_WIDTH)}
+        >
           {data.map((task) => (
             <CourseFeedPost
               key={task.id}
@@ -878,22 +928,43 @@ export function TeacherCourseTasks({ courseId }: { courseId: number }) {
               courseId={courseId}
               onRequestArchive={setTaskToArchive}
               author={author}
-              previewOverride={previewByTaskId[task.id] ?? null}
-              resourceMetaOverride={resourceMetaByTaskId[task.id] ?? null}
             />
           ))}
         </div>
       )}
 
       {total > 0 ? (
-        <CourseTabPagination
-          className={cn('mx-auto', FEED_WIDTH)}
-          label={pageLabel}
-          page={pageNumber}
-          totalPages={totalPages}
-          onPrevious={() => setPageNumber((prev) => Math.max(1, prev - 1))}
-          onNext={() => setPageNumber((prev) => prev + 1)}
-        />
+        <div
+          className={cn(
+            'mx-auto flex flex-col items-center gap-2 pt-1 sm:flex-row sm:justify-between',
+            FEED_WIDTH,
+          )}
+        >
+          <p className="text-xs text-muted-foreground">{feedCountLabel}</p>
+
+          {hasMorePosts ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 rounded-lg border-border/70 bg-background/70 px-3 text-sm font-semibold shadow-none transition-[border-color,background-color,transform] duration-150 ease-out hover:border-primary/25 hover:bg-primary/5 hover:text-primary active:scale-[0.98]"
+              disabled={isLoadingMore}
+              aria-busy={isLoadingMore}
+              aria-controls="course-feed-posts"
+              aria-label={
+                isLoadingMore
+                  ? 'Cargando más publicaciones'
+                  : 'Ver más publicaciones'
+              }
+              onClick={() => setPageNumber((prev) => prev + 1)}
+            >
+              {isLoadingMore ? 'Cargando...' : 'Ver más publicaciones'}
+            </Button>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              No hay más publicaciones.
+            </p>
+          )}
+        </div>
       ) : null}
 
       <AlertDialog

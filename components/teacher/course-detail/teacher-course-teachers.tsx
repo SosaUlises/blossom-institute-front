@@ -126,7 +126,7 @@ export function TeacherCourseTeachers({ courseId }: { courseId: number }) {
 
   if (loading) {
     return (
-      <CourseTabSkeletonList>
+      <CourseTabSkeletonList label="Cargando equipo docente del curso.">
         <TeacherRosterSkeleton />
       </CourseTabSkeletonList>
     )
@@ -140,8 +140,8 @@ export function TeacherCourseTeachers({ courseId }: { courseId: number }) {
     return (
       <CourseTabEmptyState
         icon={GraduationCap}
-        title="Todavía no hay docentes asignados"
-        description="El equipo docente se verá aquí cuando esté disponible."
+        title="Todavía no hay docentes asignados a este curso"
+        description="Cuando se asigne el equipo docente, va a aparecer acá."
       />
     )
   }

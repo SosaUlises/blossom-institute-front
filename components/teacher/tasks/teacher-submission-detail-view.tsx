@@ -144,9 +144,9 @@ function InlineMetaChip({
   children: React.ReactNode
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/65 px-2.5 py-1 text-xs font-medium text-muted-foreground dark:bg-background/35">
-      <Icon className="size-3.5" />
-      {children}
+    <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-border/60 bg-background/65 px-2.5 py-1 text-xs font-medium text-muted-foreground dark:bg-background/35">
+      <Icon className="size-3.5 shrink-0" />
+      <span className="min-w-0 truncate">{children}</span>
     </span>
   )
 }
@@ -183,7 +183,7 @@ function FeedbackCommentPreview({ comment }: { comment?: string | null }) {
 
   return (
     <div className="space-y-2">
-      <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
+      <p className="break-words whitespace-pre-wrap text-sm leading-6 text-foreground">
         {visibleComment || 'Sin comentario.'}
       </p>
       {isLong ? (
@@ -270,19 +270,24 @@ function FeedbackTimelineItem({
 
 function SubmissionDetailSkeleton() {
   return (
-    <div className="space-y-5">
-      <header className="space-y-3 border-b border-border/60 pb-4">
-        <div className="h-8 w-36 animate-pulse rounded-lg bg-muted/35" />
-        <div className="flex items-center gap-3">
-          <div className="size-10 animate-pulse rounded-full bg-muted/40" />
-          <div className="h-8 w-48 animate-pulse rounded-lg bg-muted/40" />
+    <>
+      <p className="sr-only" role="status" aria-live="polite">
+        Cargando entrega.
+      </p>
+      <div aria-hidden="true" className="space-y-5">
+        <header className="space-y-3 border-b border-border/60 pb-4">
+          <div className="h-8 w-36 animate-pulse rounded-lg bg-muted/35" />
+          <div className="flex items-center gap-3">
+            <div className="size-10 animate-pulse rounded-full bg-muted/40" />
+            <div className="h-8 w-48 animate-pulse rounded-lg bg-muted/40" />
+          </div>
+        </header>
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="h-44 animate-pulse rounded-xl border border-border/60 bg-muted/20" />
+          <div className="h-64 animate-pulse rounded-xl border border-border/60 bg-muted/20" />
         </div>
-      </header>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="h-44 animate-pulse rounded-xl border border-border/60 bg-muted/20" />
-        <div className="h-64 animate-pulse rounded-xl border border-border/60 bg-muted/20" />
       </div>
-    </div>
+    </>
   )
 }
 
@@ -357,9 +362,9 @@ export function TeacherSubmissionDetailView({
               <Inbox />
             </EmptyMedia>
             <EmptyHeader>
-              <EmptyTitle>No se encontró la entrega</EmptyTitle>
+              <EmptyTitle>No se encontró esta entrega</EmptyTitle>
               <EmptyDescription>
-                La entrega del alumno no está disponible.
+                Puede haber cambiado o ya no estar disponible.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -454,7 +459,7 @@ export function TeacherSubmissionDetailView({
                 <p className="text-sm font-medium text-muted-foreground">Texto enviado</p>
                 <div className="border-l-2 border-border/60 pl-4">
                   {detail.texto?.trim() ? (
-                    <p className="max-w-3xl whitespace-pre-wrap text-[15px] leading-7 text-foreground/90">
+                    <p className="max-w-3xl break-words whitespace-pre-wrap text-[15px] leading-7 text-foreground/90">
                       {detail.texto}
                     </p>
                   ) : (

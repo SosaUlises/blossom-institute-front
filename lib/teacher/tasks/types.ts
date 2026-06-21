@@ -176,8 +176,18 @@ export interface TeacherTaskListItem {
   titulo: string
   estado: number
   fechaEntregaUtc: string | null
+  dueDateUtc?: string | null
   esAnuncio: boolean
   createdAtUtc: string
+  updatedAtUtc?: string | null
+  publicationType?: 'task' | 'announcement' | string | null
+  authorName?: string | null
+  authorAvatarUrl?: string | null
+  contentPreview?: string | null
+  resourcesCount?: number | null
+  resourceSummary?: string | null
+  submissionsCount?: number | null
+  pendingReviewsCount?: number | null
 }
 
 export interface TeacherTaskDetailResource {

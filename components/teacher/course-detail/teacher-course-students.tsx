@@ -213,7 +213,7 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
 
   if (loading) {
     return (
-      <CourseTabSkeletonList>
+      <CourseTabSkeletonList label="Cargando alumnos del curso.">
         {Array.from({ length: 5 }).map((_, index) => (
           <StudentRosterSkeleton key={index} />
         ))}
@@ -229,8 +229,8 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
     return (
       <CourseTabEmptyState
         icon={Users}
-        title="Todavía no hay alumnos en este curso"
-        description="Cuando se asignen estudiantes, van a aparecer acá."
+        title="Todavía no hay alumnos asignados a este curso"
+        description="Cuando se asignen alumnos, vas a ver el roster académico acá."
       />
     )
   }
@@ -274,7 +274,7 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
       {filteredStudents.length === 0 ? (
         <CourseTabEmptyState
           icon={Users}
-          title="No se encontraron alumnos"
+          title="No hay alumnos que coincidan"
           description="Probá con otro nombre o correo."
         />
       ) : (

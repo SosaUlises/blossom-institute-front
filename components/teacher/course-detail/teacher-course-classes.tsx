@@ -284,7 +284,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
 
   if (loading) {
     return (
-      <CourseTabSkeletonList>
+      <CourseTabSkeletonList label="Cargando historial de asistencias.">
         {Array.from({ length: 5 }).map((_, i) => (
           <ClassRowSkeleton key={i} />
         ))}
@@ -333,13 +333,13 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
           icon={CheckSquare}
           title={
             search.trim()
-              ? 'No se encontraron asistencias'
-              : 'Todavía no registraste asistencias'
+              ? 'No hay asistencias que coincidan'
+              : 'Todavía no hay asistencias tomadas en este curso'
           }
           description={
             search.trim()
               ? 'Probá con otra fecha o tema de clase.'
-              : 'Las clases con asistencia tomada van a aparecer acá.'
+              : 'Cuando registres asistencia, el historial va a aparecer acá.'
           }
         />
       ) : (
