@@ -13,28 +13,89 @@ import {
 } from '@/components/ui/dialog'
 import type { TeacherCourseDetail } from '@/lib/teacher/course-detail/types'
 import { cn } from '@/lib/utils'
+import {
+  CourseThemeBackground,
+  type CourseThemeGeometry,
+  type CourseThemePalette,
+} from './course-theme-background'
 
 type Props = {
   course: TeacherCourseDetail
 }
 
-const COURSE_THEME_OPTIONS = [
-  'big-ben',
-  'telephone-booth',
-  'bus',
-  'soldado',
-  'te',
-] as const
+const COURSE_THEME_GEOMETRIES: {
+  id: CourseThemeGeometry
+  label: string
+}[] = [
+  { id: 'waves', label: 'Ondas' },
+  { id: 'ribbons', label: 'Cintas' },
+  { id: 'diagonals', label: 'Diagonales' },
+  { id: 'arcs', label: 'Arcos' },
+  { id: 'mosaic', label: 'Mosaico' },
+  { id: 'sunset', label: 'Horizonte' },
+]
+
+const COURSE_THEME_PALETTES: {
+  id: CourseThemePalette
+  label: string
+  swatches: string[]
+}[] = [
+  {
+    id: 'blossom',
+    label: 'Blossom',
+    swatches: ['bg-blue-700', 'bg-red-600', 'bg-blue-900'],
+  },
+  {
+    id: 'royal',
+    label: 'Royal',
+    swatches: ['bg-indigo-700', 'bg-fuchsia-600', 'bg-sky-500'],
+  },
+  {
+    id: 'ember',
+    label: 'Ember',
+    swatches: ['bg-orange-500', 'bg-red-700', 'bg-yellow-400'],
+  },
+  {
+    id: 'electric',
+    label: 'Electric',
+    swatches: ['bg-cyan-500', 'bg-violet-700', 'bg-pink-500'],
+  },
+]
+
+function isCourseThemeGeometry(value: string): value is CourseThemeGeometry {
+  return COURSE_THEME_GEOMETRIES.some((geometry) => geometry.id === value)
+}
+
+function isCourseThemePalette(value: string): value is CourseThemePalette {
+  return COURSE_THEME_PALETTES.some((palette) => palette.id === value)
+}
+
+function getInitialTheme(themeIcon?: string | null) {
+  const [geometry, palette] = themeIcon?.trim().split(':') ?? []
+
+  return {
+    geometry: geometry && isCourseThemeGeometry(geometry) ? geometry : 'waves',
+    palette: palette && isCourseThemePalette(palette) ? palette : 'blossom',
+  }
+}
 
 export function TeacherCourseHero({ course }: Props) {
-  const themeIcon = course.themeIcon?.trim() || 'telephone-booth'
-  const [selectedTheme, setSelectedTheme] = useState(themeIcon)
+  const initialTheme = getInitialTheme(course.themeIcon)
+  const [selectedGeometry, setSelectedGeometry] = useState<CourseThemeGeometry>(
+    initialTheme.geometry,
+  )
+  const [selectedPalette, setSelectedPalette] = useState<CourseThemePalette>(
+    initialTheme.palette,
+  )
   const [themeDialogOpen, setThemeDialogOpen] = useState(false)
 
   return (
     <Dialog open={themeDialogOpen} onOpenChange={setThemeDialogOpen}>
-      <div className="relative mb-6 flex h-32 w-full items-center overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-r from-card via-card/90 to-muted/30 px-6 shadow-sm md:h-36 md:px-8">
-        <div className="pointer-events-none absolute -left-12 -top-12 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
+      <div className="relative mb-6 flex h-32 w-full items-center overflow-hidden rounded-2xl border border-border/40 bg-card px-6 shadow-sm md:h-36 md:px-8">
+        <CourseThemeBackground
+          geometry={selectedGeometry}
+          palette={selectedPalette}
+        />
         <DialogTrigger asChild>
           <Button
             type="button"
@@ -46,7 +107,7 @@ export function TeacherCourseHero({ course }: Props) {
             <Palette className="size-4" />
           </Button>
         </DialogTrigger>
-        <div className="relative z-10 flex flex-col">
+        <div className="relative z-10 flex max-w-[68%] flex-col md:max-w-[56%]">
           <h1 className="break-words text-3xl font-extrabold text-foreground tracking-tight md:text-5xl">
             {course.nombre}
           </h1>
@@ -57,51 +118,82 @@ export function TeacherCourseHero({ course }: Props) {
             </p>
           ) : null}
         </div>
-        <img
-          src={`/assets/course-themes/${selectedTheme}.png`}
-          alt=""
-          aria-hidden="true"
-          className="absolute right-6 md:right-16 top-1/2 -translate-y-1/2 h-[82%] md:h-[92%] w-auto object-contain drop-shadow-xl pointer-events-none z-10"
-        />
       </div>
 
-      <DialogContent className="max-w-2xl rounded-2xl p-0">
+      <DialogContent className="max-w-3xl rounded-2xl p-0">
         <DialogHeader className="px-5 pt-5">
           <DialogTitle>Elegir portada del curso</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-4">
-          {COURSE_THEME_OPTIONS.map((theme) => {
-            const active = selectedTheme === theme
+        <div className="space-y-5 p-4">
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">Geometria</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {COURSE_THEME_GEOMETRIES.map((geometry) => {
+                const active = selectedGeometry === geometry.id
 
-            return (
-              <button
-                key={theme}
-                type="button"
-                aria-label={`Elegir portada ${theme}`}
-                aria-pressed={active}
-                onClick={() => {
-                  setSelectedTheme(theme)
-                  setThemeDialogOpen(false)
-                }}
-                className={cn(
-                  'relative flex aspect-square items-center justify-center rounded-xl border-2 bg-muted/20 transition-all hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25',
-                  active ? 'border-primary' : 'border-border/60',
-                )}
-              >
-                <img
-                  src={`/assets/course-themes/${theme}.png`}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-2/3 object-contain"
-                />
-                {active ? (
-                  <span className="absolute right-2 top-2 inline-flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <Check className="size-4" />
-                  </span>
-                ) : null}
-              </button>
-            )
-          })}
+                return (
+                  <button
+                    key={geometry.id}
+                    type="button"
+                    aria-label={`Elegir geometria ${geometry.label}`}
+                    aria-pressed={active}
+                    onClick={() => setSelectedGeometry(geometry.id)}
+                    className={cn(
+                      'relative h-20 overflow-hidden rounded-xl border-2 bg-card transition-all hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25',
+                      active ? 'border-primary' : 'border-border/60',
+                    )}
+                  >
+                    <CourseThemeBackground
+                      geometry={geometry.id}
+                      palette={selectedPalette}
+                    />
+                    <span className="absolute bottom-2 left-2 z-10 rounded-lg border border-border/60 bg-background/85 px-2 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+                      {geometry.label}
+                    </span>
+                    {active ? (
+                      <span className="absolute right-2 top-2 z-10 inline-flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="size-4" />
+                      </span>
+                    ) : null}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">Paleta</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {COURSE_THEME_PALETTES.map((palette) => {
+                const active = selectedPalette === palette.id
+
+                return (
+                  <button
+                    key={palette.id}
+                    type="button"
+                    aria-label={`Elegir paleta ${palette.label}`}
+                    aria-pressed={active}
+                    onClick={() => setSelectedPalette(palette.id)}
+                    className={cn(
+                      'flex items-center justify-between rounded-xl border-2 bg-card px-3 py-3 text-sm font-medium text-foreground transition-all hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25',
+                      active ? 'border-primary' : 'border-border/60',
+                    )}
+                  >
+                    <span>{palette.label}</span>
+                    <span className="flex items-center gap-1.5">
+                      {palette.swatches.map((swatch) => (
+                        <span
+                          key={swatch}
+                          className={cn('size-4 rounded-full', swatch)}
+                        />
+                      ))}
+                      {active ? <Check className="ml-1 size-4" /> : null}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
