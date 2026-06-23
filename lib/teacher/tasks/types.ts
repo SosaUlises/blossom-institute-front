@@ -168,6 +168,16 @@ export type TeacherSubmissionFeedbacksResponse = {
   items: TeacherSubmissionFeedbackItem[]
 }
 
+export interface TeacherTaskListResource {
+  id: number
+  tipo: number
+  url: string
+  nombre?: string | null
+  storageProvider?: number | null
+  storageKey?: string | null
+  contentType?: string | null
+  sizeBytes?: number | null
+}
 
 export interface TeacherTaskListItem {
   id: number
@@ -188,6 +198,7 @@ export interface TeacherTaskListItem {
   resourceSummary?: string | null
   submissionsCount?: number | null
   pendingReviewsCount?: number | null
+  recursos?: TeacherTaskListResource[] | null
 }
 
 export interface TeacherTaskDetailResource {

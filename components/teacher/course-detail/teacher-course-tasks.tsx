@@ -6,6 +6,7 @@ import {
   Archive,
   CalendarClock,
   ClipboardList,
+  FileText,
   Inbox,
   Megaphone,
   MoreHorizontal,
@@ -28,9 +29,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import type { SessionUser } from '@/lib/auth/session'
 import { formatDateTime } from '@/lib/teacher/course-detail/formatters'
@@ -58,6 +65,22 @@ type Envelope<T> = {
 const SELECT_ALL = 'all'
 const DEFAULT_ESTADO = String(EstadoTarea.Publicada)
 const FEED_WIDTH = 'max-w-3xl'
+const publicationTone = {
+  announcement: {
+    card: 'bg-card border-border/60 hover:border-border transition-colors',
+    rail: 'bg-slate-400/80 dark:bg-slate-500/65',
+    iconBox: 'text-slate-500 dark:text-slate-300',
+    badge: 'bg-muted/40 text-muted-foreground border-border/60',
+    cta: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  },
+  task: {
+    card: 'bg-card border-border/60 hover:border-border transition-colors',
+    rail: 'bg-primary',
+    iconBox: 'text-primary',
+    badge: 'bg-primary/10 text-primary border-primary/20',
+    cta: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  },
+} as const
 const STATUS_FILTERS = [
   { value: DEFAULT_ESTADO, label: 'Publicadas' },
   { value: SELECT_ALL, label: 'Todas' },
@@ -94,6 +117,17 @@ type TaskResourceMeta = {
 type TaskActivityLabel = {
   text: string
   tone: 'neutral' | 'attention' | 'complete'
+}
+
+type PublicationType = keyof typeof publicationTone
+
+type PublicationAttachment = {
+  id?: number | string | null
+  tipo?: number | string | null
+  url: string
+  nombre: string
+  contentType?: string | null
+  sizeBytes?: number | null
 }
 
 function getAuthorName(author: FeedAuthor | null) {
@@ -148,6 +182,53 @@ function getTaskResourceCount(
 
 function getResourceCountLabel(count: number) {
   return `${count} ${count === 1 ? 'recurso adjunto' : 'recursos adjuntos'}`
+}
+
+function formatAttachmentSize(value?: number | null) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    return null
+  }
+
+  if (value < 1024) return `${value} B`
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`
+  return `${(value / 1024 / 1024).toFixed(1)} MB`
+}
+
+function isImageAttachment(attachment: PublicationAttachment) {
+  const contentType = attachment.contentType?.toLowerCase() ?? ''
+  const name = attachment.nombre.toLowerCase()
+
+  return (
+    contentType.startsWith('image/') ||
+    /\.(png|jpe?g|gif|webp|svg)$/.test(name)
+  )
+}
+
+function getPublicationAttachments(task: TeacherTaskListItem) {
+  const previewTask = task as TaskPreviewFields
+  if (!Array.isArray(previewTask.recursos)) return []
+
+  return previewTask.recursos
+    .map((resource): PublicationAttachment | null => {
+      const record = resource as unknown as Record<string, unknown>
+      const url = String(record.url ?? '').trim()
+
+      if (!url) return null
+
+      return {
+        id: (record.id as number | string | null | undefined) ?? url,
+        tipo: (record.tipo as number | string | null | undefined) ?? null,
+        url,
+        nombre: String(record.nombre ?? 'Adjunto').trim() || 'Adjunto',
+        contentType:
+          typeof record.contentType === 'string' ? record.contentType : null,
+        sizeBytes:
+          typeof record.sizeBytes === 'number' ? record.sizeBytes : null,
+      }
+    })
+    .filter(
+      (attachment): attachment is PublicationAttachment => attachment !== null,
+    )
 }
 
 function getResourceMetaFromResources(resources?: unknown[] | null): TaskResourceMeta | null {
@@ -378,18 +459,76 @@ function formatPostDate(value: string) {
   }).format(date)
 }
 
-function getPublicationConfig(task: TeacherTaskListItem) {
-  return isAnnouncementPost(task)
-    ? {
-        icon: Megaphone,
-        label: 'Anuncio',
-        primaryActionLabel: 'Abrir publicación',
-      }
-    : {
-        icon: ClipboardList,
-        label: 'Tarea',
-        primaryActionLabel: 'Revisar entregas',
-      }
+function getTaskCorrectionBadge(task: TeacherTaskListItem) {
+  const record = task as unknown as Record<string, unknown>
+  const receivedCount = getOptionalNumberField(record, [
+    'submissionsCount',
+    'entregasRecibidasCount',
+    'entregasRecibidas',
+    'totalEntregas',
+  ])
+  const pendingReviewCount = getOptionalNumberField(record, [
+    'pendingReviewsCount',
+    'entregasPendientesCorreccionCount',
+    'entregasPendientesCorreccion',
+    'pendientesCorreccionCount',
+    'pendingCorrectionsCount',
+  ])
+
+  if (pendingReviewCount !== null && pendingReviewCount > 0) {
+    return {
+      text: `${pendingReviewCount} ${pendingReviewCount === 1 ? 'pendiente de corrección' : 'pendientes de corrección'}`,
+      className:
+        'border-amber-500/20 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300',
+    }
+  }
+
+  if (receivedCount === 0) {
+    return {
+      text: 'Aún sin entregas',
+      className:
+        'border-border/60 bg-muted/40 text-muted-foreground dark:bg-muted/25',
+    }
+  }
+
+  if (pendingReviewCount === 0 && receivedCount !== null && receivedCount > 0) {
+    return {
+      text: 'Todo corregido',
+      className:
+        'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300',
+    }
+  }
+
+  return null
+}
+
+function getPublicationViewModel(task: TeacherTaskListItem) {
+  const type: PublicationType = isAnnouncementPost(task) ? 'announcement' : 'task'
+  const pendingReviewsCount = Number(task.pendingReviewsCount)
+  const hasPendingReviews =
+    Number.isFinite(pendingReviewsCount) && pendingReviewsCount > 0
+
+  if (type === 'announcement') {
+    return {
+      type,
+      tone: publicationTone.announcement,
+      label: 'Anuncio',
+      icon: Megaphone,
+      primaryActionLabel: 'Ver anuncio',
+      badgeCorreccion: null,
+    }
+  }
+
+  return {
+    type,
+    tone: publicationTone.task,
+    label: 'Tarea',
+    icon: ClipboardList,
+    primaryActionLabel: hasPendingReviews
+      ? 'Corregir entregas'
+      : 'Revisar entregas',
+    badgeCorreccion: getTaskCorrectionBadge(task),
+  }
 }
 
 function CourseFeedSkeleton() {
@@ -489,6 +628,78 @@ function CourseFeedComposer({
   )
 }
 
+function PublicationAttachments({
+  attachments,
+}: {
+  attachments: PublicationAttachment[]
+}) {
+  if (attachments.length === 0) return null
+
+  const images = attachments.filter(isImageAttachment)
+  const documents = attachments.filter((attachment) => !isImageAttachment(attachment))
+
+  return (
+    <div className="mt-3 space-y-2.5">
+      {images.length > 0 ? (
+        <div
+          className={cn(
+            'grid gap-2',
+            images.length === 1 ? 'grid-cols-1' : 'grid-cols-2',
+          )}
+        >
+          {images.slice(0, 4).map((attachment) => (
+            <a
+              key={String(attachment.id ?? attachment.url)}
+              href={attachment.url}
+              target="_blank"
+              rel="noreferrer"
+              className="group overflow-hidden rounded-xl border border-border/60 bg-background/50 transition-colors hover:border-border"
+            >
+              <img
+                src={attachment.url}
+                alt={attachment.nombre}
+                className="w-full max-h-72 object-cover transition-transform duration-200 group-hover:scale-[1.01]"
+                loading="lazy"
+              />
+            </a>
+          ))}
+        </div>
+      ) : null}
+
+      {documents.length > 0 ? (
+        <div className="space-y-2">
+          {documents.map((attachment) => {
+            const size = formatAttachmentSize(attachment.sizeBytes)
+
+            return (
+              <a
+                key={String(attachment.id ?? attachment.url)}
+                href={attachment.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex min-h-14 w-full max-w-md items-center gap-3 rounded-xl border border-border/60 bg-background/50 p-3 transition-colors hover:bg-muted/50"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card text-muted-foreground">
+                  <FileText className="size-4" />
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold leading-5 text-foreground capitalize">
+                    {attachment.nombre}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {size ?? attachment.contentType ?? 'Documento adjunto'}
+                  </span>
+                </span>
+              </a>
+            )
+          })}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function CourseFeedPost({
   task,
   courseId,
@@ -504,140 +715,87 @@ function CourseFeedPost({
   const showEstado = task.estado !== EstadoTarea.Publicada
   const postAuthor = getTaskAuthor(task, author)
   const preview = getTaskPreview(task)
+  const attachments = getPublicationAttachments(task)
   const resourceMeta = getTaskResourceMeta(task)
-  const resourceMetaLabel = resourceMeta ? getResourceMetaLabel(resourceMeta) : null
-  const isAnnouncement = isAnnouncementPost(task)
-  const activityLabels = isAnnouncement ? [] : getTaskActivityLabels(task)
-  const dueDateMeta = isAnnouncement
-    ? null
-    : formatDueDateMeta(getDueDateValue(task))
-  const publicationConfig = getPublicationConfig(task)
-  const TypeIcon = publicationConfig.icon
+  const resourceMetaLabel =
+    attachments.length === 0 && resourceMeta ? getResourceMetaLabel(resourceMeta) : null
+  const viewModel = getPublicationViewModel(task)
+  const TypeIcon = viewModel.icon
+  const isAnnouncement = viewModel.type === 'announcement'
+  const dueDateValue = isAnnouncement ? null : getDueDateValue(task)
+  const dueDateMeta = formatDueDateMeta(dueDateValue)
   const titleId = `course-feed-post-${task.id}-title`
-  const hasMetadata =
-    Boolean(dueDateMeta) || Boolean(resourceMetaLabel) || activityLabels.length > 0
 
   return (
     <article
       aria-labelledby={titleId}
-      className="group overflow-hidden rounded-2xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.025)] transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-[0_4px_14px_rgba(15,23,42,0.025)] dark:bg-card/90"
+      className={cn(
+        'group relative overflow-hidden rounded-2xl border shadow-sm transition-colors duration-200 ease-out',
+        viewModel.tone.card,
+      )}
     >
-      <div className="p-2.5 sm:p-3">
-        <div className="flex gap-2.5">
+      <div
+        aria-hidden="true"
+        className={cn('absolute inset-y-0 left-0 w-1', viewModel.tone.rail)}
+      />
+
+      <div className="p-3 pl-5 sm:p-4 sm:pl-6">
+        <header className="flex items-start gap-3">
           <UserAvatar
             name={postAuthor.name}
             avatarUrl={postAuthor.avatarUrl}
-            size={34}
-            className="mt-0.5 shrink-0 bg-primary/5"
-            fallbackClassName="bg-primary/10 text-sm text-primary"
+            size={38}
+            className="shrink-0 bg-background/80"
+            fallbackClassName="bg-background/90 text-sm text-foreground"
           />
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2.5">
+            <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-[13px] font-semibold leading-5 text-foreground">
+                <p className="truncate text-sm font-semibold leading-5 text-foreground">
                   {postAuthor.name}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] leading-4 text-muted-foreground">
-                  <span>{formatPostDate(task.createdAtUtc)}</span>
-                  <span aria-hidden="true">·</span>
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-4 text-muted-foreground">
+                  <time dateTime={task.createdAtUtc}>
+                    Publicado {formatPostDate(task.createdAtUtc)}
+                  </time>
+                  <span aria-hidden="true">•</span>
                   <span className="inline-flex items-center gap-1">
-                    <TypeIcon className="size-3" />
-                    {publicationConfig.label}
+                    <TypeIcon
+                      className={cn('size-3.5', viewModel.tone.iconBox)}
+                    />
+                    {viewModel.label}
                   </span>
                 </div>
               </div>
-              {showEstado ? (
-                <span
-                  className={cn(
-                    'mt-0.5 inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                    estadoConfig.className,
-                  )}
-                >
-                  {estadoConfig.label}
-                </span>
-              ) : null}
-            </div>
-
-            <div className="mt-1">
-              <h3
-                id={titleId}
-                className="line-clamp-2 min-w-0 break-words text-base font-semibold leading-5 text-foreground sm:text-[17px]"
-              >
-                {task.titulo}
-              </h3>
-            </div>
-
-            {preview ? (
-              <p className="mt-0.5 line-clamp-3 break-words whitespace-pre-line text-sm leading-5 text-foreground/85">
-                {preview}
-              </p>
-            ) : null}
-
-            {hasMetadata ? (
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                {dueDateMeta ? (
-                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/10 bg-primary/5 px-2 py-1 text-[11px] font-semibold leading-4 text-primary/90 shadow-none dark:text-primary/80">
-                    <CalendarClock className="size-3" />
-                    Vence {dueDateMeta}
-                  </span>
-                ) : null}
-
-                {resourceMetaLabel ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium leading-4 text-muted-foreground">
-                    <Paperclip className="size-3.5 shrink-0" />
-                    {resourceMetaLabel}
-                  </span>
-                ) : null}
-
-                {activityLabels.map((label) => (
-                  <span
-                    key={label.text}
-                    className={cn(
-                      'text-xs leading-4',
-                      getTaskActivityClassName(label.tone),
-                    )}
-                  >
-                    {label.text}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-
-            <div className="mt-1.5 flex items-center justify-between gap-2">
-              <Button
-                asChild
-                variant={isAnnouncement ? 'outline' : 'default'}
-                className={cn(
-                  'h-8 rounded-lg px-3 text-sm font-semibold shadow-none transition-transform duration-150 ease-out active:scale-[0.98]',
-                  isAnnouncement &&
-                    'border-border/70 bg-background/70 hover:border-primary/25 hover:bg-primary/5 hover:text-primary',
-                )}
-              >
-                <Link href={`/teacher/courses/${courseId}/tasks/${task.id}`}>
-                  {publicationConfig.primaryActionLabel}
-                </Link>
-              </Button>
 
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 rounded-lg text-muted-foreground transition-transform duration-150 ease-out hover:bg-muted/50 hover:text-foreground active:scale-[0.96]"
-                    aria-label={`Más acciones para la publicación ${task.titulo}`}
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44 rounded-xl">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="size-9 rounded-lg border border-border/60 bg-background/80 text-muted-foreground shadow-none transition-colors hover:bg-muted hover:text-foreground"
+                        aria-label={`Más acciones para la publicación ${task.titulo}`}
+                      >
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Más acciones</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="w-52 rounded-xl">
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">
+                    Acciones de la publicación
+                  </DropdownMenuLabel>
                   <DropdownMenuItem asChild>
                     <Link
                       href={`/teacher/courses/${courseId}/tasks/${task.id}/edit`}
                     >
                       <Pencil className="size-4" />
-                      Editar
+                      Editar publicación
                     </Link>
                   </DropdownMenuItem>
                   {task.estado !== EstadoTarea.Archivada ? (
@@ -648,7 +806,7 @@ function CourseFeedPost({
                         onSelect={() => onRequestArchive(task)}
                       >
                         <Archive className="size-4" />
-                        Archivar
+                        Archivar publicación
                       </DropdownMenuItem>
                     </>
                   ) : null}
@@ -656,7 +814,83 @@ function CourseFeedPost({
               </DropdownMenu>
             </div>
           </div>
+        </header>
+
+        <div className="mt-3 min-w-0">
+          <h3
+            id={titleId}
+            className="line-clamp-2 min-w-0 break-words text-base font-semibold leading-6 text-foreground sm:text-[17px]"
+          >
+            {task.titulo}
+          </h3>
+
+          {preview ? (
+            <p className="mt-1 line-clamp-3 break-words whitespace-pre-line text-sm leading-5 text-foreground/85">
+              {preview}
+            </p>
+          ) : null}
+
+          {attachments.length > 0 ? (
+            <PublicationAttachments attachments={attachments} />
+          ) : resourceMetaLabel ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-border/50 bg-background/70 px-2 py-1 text-xs font-medium leading-4 text-muted-foreground">
+                <Paperclip className="size-3.5 shrink-0" />
+                {resourceMetaLabel}
+              </span>
+            </div>
+          ) : null}
         </div>
+
+        {!isAnnouncement ? (
+          <footer className="mt-3 flex flex-col gap-3 border-t border-border/40 pt-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {showEstado ? (
+              <span
+                className={cn(
+                  'inline-flex shrink-0 items-center rounded-lg border px-2.5 py-1.5 text-xs font-semibold leading-4',
+                  estadoConfig.className,
+                )}
+              >
+                {estadoConfig.label}
+              </span>
+            ) : null}
+
+            {dueDateMeta && dueDateValue ? (
+              <time
+                dateTime={dueDateValue}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2.5 py-1.5 text-xs font-semibold leading-4 text-muted-foreground"
+              >
+                <CalendarClock className="size-3.5" />
+                Vence {dueDateMeta}
+              </time>
+            ) : null}
+
+            {viewModel.badgeCorreccion ? (
+              <span
+                className={cn(
+                  'inline-flex shrink-0 items-center rounded-lg border px-2.5 py-1.5 text-xs font-semibold leading-4',
+                  viewModel.badgeCorreccion.className,
+                )}
+              >
+                {viewModel.badgeCorreccion.text}
+              </span>
+            ) : null}
+          </div>
+
+          <Button
+            asChild
+            className={cn(
+              'h-10 w-full rounded-lg px-4 text-sm font-semibold shadow-none transition-colors active:scale-[0.98] sm:w-auto',
+              viewModel.tone.cta,
+            )}
+          >
+            <Link href={`/teacher/courses/${courseId}/tasks/${task.id}`}>
+              {viewModel.primaryActionLabel}
+            </Link>
+          </Button>
+          </footer>
+        ) : null}
       </div>
     </article>
   )
