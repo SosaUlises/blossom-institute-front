@@ -54,7 +54,6 @@ import {
   CourseTabErrorState,
   CourseTabSearchField,
   CourseTabSkeletonList,
-  CourseTabToolbar,
 } from './course-tab-ui'
 
 type Envelope<T> = {
@@ -561,70 +560,57 @@ function CourseFeedSkeleton() {
   )
 }
 
-function CourseFeedComposer({
+function CourseFeedActionBar({
   courseId,
-  courseName,
-  author,
+  search,
+  onSearchChange,
+  estado,
+  onEstadoChange,
 }: {
   courseId: number
-  courseName: string
-  author: FeedAuthor | null
+  search: string
+  onSearchChange: (value: string) => void
+  estado: string
+  onEstadoChange: (value: string) => void
 }) {
-  const authorName = author ? getAuthorName(author) : 'Docente'
-  const trimmedCourseName = courseName.trim()
-  const prompt = trimmedCourseName
-    ? `¿Qué querés publicar en ${trimmedCourseName}?`
-    : '¿Qué querés publicar en este curso?'
-
   return (
-    <section
-      className={cn(
-        'mx-auto rounded-2xl border border-border/60 bg-card/95 p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-3',
-        FEED_WIDTH,
-      )}
-      aria-label="Crear publicación para el curso"
-    >
-      <div className="flex gap-2.5">
-        <UserAvatar
-          name={authorName}
-          avatarUrl={author?.avatarUrl}
-          size={38}
-          className="mt-0.5 shrink-0 bg-primary/5"
-          fallbackClassName="bg-primary/10 text-sm text-primary"
+    <div className={cn('mx-auto mb-6 flex flex-col border-b border-border/60 pb-4', FEED_WIDTH)}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <CourseTabSearchField
+          className="w-full max-w-sm"
+          placeholder="Buscar publicaciones..."
+          ariaLabel="Buscar publicaciones del curso"
+          value={search}
+          onChange={onSearchChange}
         />
-        <div className="min-w-0 flex-1">
-          <div className="rounded-xl border border-border/50 bg-background/75 px-3 py-2.5 transition-colors duration-200 ease-out dark:bg-background/35">
-            <p className="break-words text-[15px] font-medium leading-5 text-foreground">
-              {prompt}
-            </p>
-          </div>
 
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Button
-              asChild
-              variant="outline"
-              className="h-9 w-full justify-start rounded-lg border-border/70 bg-background/70 px-3 text-sm font-semibold shadow-none transition-[border-color,background-color,transform] duration-150 ease-out hover:border-primary/25 hover:bg-primary/5 hover:text-primary active:scale-[0.98] sm:justify-center"
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+          <Button
+            asChild
+            variant="outline"
+            className="h-10 justify-center rounded-lg border-border/70 bg-background/70 px-3 text-sm font-semibold shadow-none transition-[border-color,background-color,transform] duration-150 ease-out hover:border-primary/25 hover:bg-primary/5 hover:text-primary active:scale-[0.98]"
+          >
+            <Link
+              href={`/teacher/courses/${courseId}/tasks/create?type=announcement`}
             >
-              <Link
-                href={`/teacher/courses/${courseId}/tasks/create?type=announcement`}
-              >
-                <Megaphone className="mr-2 size-4" />
-                Crear anuncio
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="h-9 w-full justify-start rounded-lg px-3 text-sm font-semibold shadow-none transition-transform duration-150 ease-out active:scale-[0.98] sm:justify-center"
-            >
-              <Link href={`/teacher/courses/${courseId}/tasks/create?type=task`}>
-                <ClipboardList className="mr-2 size-4" />
-                Crear tarea
-              </Link>
-            </Button>
-          </div>
+              <Megaphone className="mr-2 size-4" />
+              Crear anuncio
+            </Link>
+          </Button>
+          <Button
+            asChild
+            className="h-10 justify-center rounded-lg px-3 text-sm font-semibold shadow-none transition-transform duration-150 ease-out active:scale-[0.98]"
+          >
+            <Link href={`/teacher/courses/${courseId}/tasks/create?type=task`}>
+              <ClipboardList className="mr-2 size-4" />
+              Crear tarea
+            </Link>
+          </Button>
         </div>
       </div>
-    </section>
+
+      <FeedStatusFilter value={estado} onChange={onEstadoChange} />
+    </div>
   )
 }
 
@@ -907,7 +893,7 @@ function FeedStatusFilter({
     <div
       role="group"
       aria-label="Filtrar publicaciones por estado"
-      className="-mx-1 flex min-w-0 gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="mt-4 flex w-fit max-w-full min-w-0 gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {STATUS_FILTERS.map((filter) => {
         const active = value === filter.value
@@ -920,10 +906,10 @@ function FeedStatusFilter({
             aria-label={`Mostrar ${filter.label.toLowerCase()}`}
             onClick={() => onChange(filter.value)}
             className={cn(
-              'h-8 shrink-0 rounded-lg border px-2.5 text-xs font-medium transition-[background-color,border-color,color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 active:scale-[0.98]',
+              'min-h-10 shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-[background-color,border-color,color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 active:scale-[0.98]',
               active
-                ? 'border-border/70 bg-card text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/80'
-                : 'border-transparent bg-transparent text-muted-foreground hover:border-border/60 hover:bg-background/55 hover:text-foreground dark:hover:bg-background/30',
+                ? 'border-transparent bg-secondary text-foreground font-medium dark:bg-muted/70'
+                : 'border-transparent bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground dark:hover:bg-muted/30',
             )}
           >
             {filter.label}
@@ -936,7 +922,6 @@ function FeedStatusFilter({
 
 export function TeacherCourseTasks({
   courseId,
-  courseName,
 }: {
   courseId: number
   courseName: string
@@ -1082,36 +1067,19 @@ export function TeacherCourseTasks({
 
   return (
     <div className="space-y-2.5 sm:space-y-3" aria-busy={loading}>
-      <CourseFeedComposer
+      <CourseFeedActionBar
         courseId={courseId}
-        courseName={courseName}
-        author={author}
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value)
+          setPageNumber(1)
+        }}
+        estado={estado}
+        onEstadoChange={(value) => {
+          setEstado(value)
+          setPageNumber(1)
+        }}
       />
-
-      <CourseTabToolbar
-        className={cn('mx-auto border-0 bg-transparent p-0', FEED_WIDTH)}
-      >
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <CourseTabSearchField
-            className="min-w-0 sm:max-w-[320px]"
-            placeholder="Buscar publicaciones..."
-            ariaLabel="Buscar publicaciones del curso"
-            value={search}
-            onChange={(value) => {
-              setSearch(value)
-              setPageNumber(1)
-            }}
-          />
-
-          <FeedStatusFilter
-            value={estado}
-            onChange={(value) => {
-              setEstado(value)
-              setPageNumber(1)
-            }}
-          />
-        </div>
-      </CourseTabToolbar>
 
       {error ? (
         <CourseTabErrorState className={cn('mx-auto', FEED_WIDTH)}>

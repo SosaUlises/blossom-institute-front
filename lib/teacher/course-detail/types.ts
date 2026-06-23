@@ -13,6 +13,7 @@ export interface TeacherCourseScheduleItem {
 export interface TeacherCourseDetail {
   id: number
   nombre: string
+  themeIcon?: string | null
   anio: number
   descripcion?: string | null
   estado: EstadoCurso
