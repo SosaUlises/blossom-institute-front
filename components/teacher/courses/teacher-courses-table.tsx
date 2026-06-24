@@ -27,6 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  CourseThemeBackground,
+} from '@/components/teacher/course-detail/course-theme-background'
 import { getTeacherCourses } from '@/lib/teacher/courses/api'
 import type { TeacherCourseListItem } from '@/lib/teacher/courses/types'
 import { EstadoCurso } from '@/lib/teacher/courses/types'
@@ -79,13 +82,16 @@ function formatNextClass(item: ProfesorDashboardProximaClaseItem) {
 
 function CourseCardSkeleton() {
   return (
-    <li className="min-h-36 rounded-2xl border border-border/60 bg-card/90 p-4">
-      <div className="flex h-full flex-col">
-        <div className="space-y-2">
+    <li className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
+      <div className="h-28 border-b border-border/40 bg-muted/20">
+        <div className="h-full w-full animate-pulse bg-muted/35" />
+      </div>
+      <div className="flex min-h-40 flex-col p-5">
+        <div className="space-y-2.5">
           <div className="h-5 w-36 animate-pulse rounded-md bg-muted/50" />
           <div className="h-4 w-48 max-w-full animate-pulse rounded-md bg-muted/35" />
         </div>
-        <div className="mt-auto space-y-2 pt-4">
+        <div className="mt-auto space-y-2 pt-5">
           <div className="h-4 w-40 animate-pulse rounded-md bg-muted/35" />
           <div className="h-4 w-28 animate-pulse rounded-md bg-muted/30" />
         </div>
@@ -97,9 +103,11 @@ function CourseCardSkeleton() {
 function CourseCard({
   course,
   dashboard,
+  theme,
 }: {
   course: TeacherCourseListItem
   dashboard: ProfesorDashboardResponse | null
+  theme?: string | null
 }) {
   const courseContext = dashboard?.cursos.find((item) => item.cursoId === course.id)
   const summary = dashboard?.resumenPorCurso.find(
@@ -120,19 +128,30 @@ function CourseCard({
         aria-label={`Abrir curso ${course.nombre}`}
         className="group block h-full rounded-2xl outline-none transition-transform duration-200 ease-out active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <article className="flex h-full min-h-36 flex-col rounded-2xl border border-border/60 bg-card/95 p-4 transition-[border-color,background-color,box-shadow] duration-200 ease-out group-hover:border-primary/30 group-hover:bg-card group-hover:shadow-[0_6px_18px_rgba(15,23,42,0.05)] dark:bg-card/90 dark:group-hover:shadow-none">
-          <div className="min-w-0">
-            <h2 className="truncate text-lg font-semibold text-foreground transition-colors group-hover:text-primary">
-              {course.nombre}
-            </h2>
-            {description ? (
-              <p className="mt-0.5 line-clamp-1 text-sm leading-5 text-muted-foreground">
-                {description}
-              </p>
-            ) : null}
+        <article className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm transition-all hover:shadow-md">
+          <div className="relative h-28 w-full overflow-hidden border-b border-border/40 bg-muted/20">
+            <CourseThemeBackground
+              theme={theme}
+              variant="card"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/20 to-transparent" />
           </div>
 
-          <div className="mt-auto flex flex-col gap-2.5 pt-4 text-sm">
+          <div className="flex flex-1 flex-col p-5">
+            <div className="min-w-0">
+              <h2 className="truncate text-xl font-bold text-foreground transition-colors group-hover:text-primary">
+                {course.nombre}
+              </h2>
+              {description ? (
+                <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
+                  {description}
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground">{course.anio}</p>
+              )}
+            </div>
+
+          <div className="mt-auto flex flex-col gap-2.5 pt-5 text-sm">
             {nextClass ? (
               <div className="flex items-center gap-2 font-medium text-foreground">
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
@@ -167,6 +186,102 @@ function CourseCard({
               ) : null}
 
               <span className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background/70 text-muted-foreground transition-[border-color,background-color,color,transform] duration-200 group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/8 group-hover:text-primary">
+                <ArrowRight className="size-4" />
+              </span>
+            </div>
+          </div>
+          </div>
+        </article>
+      </Link>
+    </li>
+  )
+}
+
+function CourseCardCompact({
+  course,
+  dashboard,
+  theme,
+}: {
+  course: TeacherCourseListItem
+  dashboard: ProfesorDashboardResponse | null
+  theme?: string | null
+}) {
+  const courseContext = dashboard?.cursos.find((item) => item.cursoId === course.id)
+  const summary = dashboard?.resumenPorCurso.find(
+    (item) => item.cursoId === course.id,
+  )
+  const nextClass = dashboard?.proximasClases
+    .filter(
+      (item) =>
+        item.cursoId === course.id && parseClassDate(item).getTime() > Date.now(),
+    )
+    .sort((a, b) => parseClassDate(a).getTime() - parseClassDate(b).getTime())[0]
+  const description = courseContext?.descripcion?.trim()
+
+  return (
+    <li>
+      <Link
+        href={`/teacher/courses/${course.id}`}
+        aria-label={`Abrir curso ${course.nombre}`}
+        className="group block h-full rounded-2xl outline-none transition-transform duration-200 ease-out active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        <article className="relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm transition-all hover:shadow-md">
+          <div className="relative h-28 w-full overflow-hidden border-b border-border/40 bg-muted/20">
+            <CourseThemeBackground theme={theme} variant="card" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/20 to-transparent" />
+          </div>
+
+          <div className="flex flex-1 flex-col p-5">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h3 className="truncate text-xl font-bold text-foreground transition-colors group-hover:text-primary">
+                  {course.nombre}
+                </h3>
+                {description ? (
+                  <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
+                    {description}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {course.anio}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex shrink-0 justify-end">
+                {summary?.entregasPendientesCorreccion ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/8 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                    <ClipboardCheck className="size-3.5" />
+                    {summary.entregasPendientesCorreccion}{' '}
+                    {summary.entregasPendientesCorreccion === 1
+                      ? 'entrega pendiente'
+                      : 'entregas pendientes'}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mt-auto flex items-end justify-between gap-4">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
+                {nextClass ? (
+                  <div className="flex items-center gap-1.5">
+                    <CalendarClock className="size-4 text-primary" />
+                    <span>{formatNextClass(nextClass)}</span>
+                  </div>
+                ) : null}
+
+                {summary ? (
+                  <div className="flex items-center gap-1.5">
+                    <Users className="size-4" />
+                    <span>
+                      {summary.cantidadAlumnos}{' '}
+                      {summary.cantidadAlumnos === 1 ? 'alumno' : 'alumnos'}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background/70 text-muted-foreground transition-[border-color,background-color,color,transform] duration-200 group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/8 group-hover:text-primary">
                 <ArrowRight className="size-4" />
               </span>
             </div>
@@ -253,15 +368,15 @@ export function TeacherCoursesTable() {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border border-border/60 bg-card/80 p-2.5 dark:bg-card/70">
-        <div className="grid gap-2.5 sm:grid-cols-[1fr_140px] lg:grid-cols-[1fr_140px_180px]">
-          <div className="relative">
+      <section className="mb-5 rounded-2xl border border-border/40 bg-card p-3 shadow-sm sm:p-3.5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_140px] lg:grid-cols-[1fr_140px_180px]">
+          <div className="relative col-span-2 sm:col-span-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input
               placeholder="Buscar curso..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="h-10 rounded-xl border-border/60 bg-background/75 pl-10 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
+              className="h-11 rounded-xl border-border/60 bg-background/75 pl-10 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35 sm:h-10"
             />
           </div>
 
@@ -272,11 +387,11 @@ export function TeacherCoursesTable() {
             min={2000}
             max={2100}
             onChange={(event) => setAnio(event.target.value)}
-            className="h-10 rounded-xl border-border/60 bg-background/75 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
+            className="h-11 rounded-xl border-border/60 bg-background/75 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35 sm:h-10"
           />
 
           <Select value={estado} onValueChange={setEstado}>
-            <SelectTrigger className="h-10 rounded-xl border-border/60 bg-background/75 px-4 text-sm shadow-none focus:ring-2 focus:ring-primary/15 dark:bg-background/35 sm:col-span-2 lg:col-span-1">
+            <SelectTrigger className="h-11 rounded-xl border-border/60 bg-background/75 px-4 text-sm shadow-none focus:ring-2 focus:ring-primary/15 dark:bg-background/35 sm:col-span-2 sm:h-10 lg:col-span-1">
               <SelectValue placeholder="Todos los estados" />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-border/60">
@@ -298,7 +413,7 @@ export function TeacherCoursesTable() {
       ) : null}
 
       {loading ? (
-        <ul className="grid gap-3 md:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 4 }).map((_, index) => (
             <CourseCardSkeleton key={index} />
           ))}
@@ -334,9 +449,14 @@ export function TeacherCoursesTable() {
             ) : null}
           </div>
 
-          <ul className="grid gap-3 md:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {items.map((course) => (
-              <CourseCard key={course.id} course={course} dashboard={dashboard} />
+              <CourseCardCompact
+                key={course.id}
+                course={course}
+                dashboard={dashboard}
+                theme={course.themeIcon}
+              />
             ))}
           </ul>
         </div>

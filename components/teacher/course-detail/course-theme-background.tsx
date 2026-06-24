@@ -12,8 +12,10 @@ export type CourseThemeColors = {
 }
 
 type CourseThemeBackgroundProps = {
+  theme?: string | null
   geometry?: CourseThemeGeometry
   colors?: CourseThemeColors
+  variant?: 'banner' | 'card'
 }
 
 type ThemeColorConfig = CourseThemeColors & {
@@ -24,6 +26,48 @@ export const DEFAULT_COURSE_THEME_COLORS: CourseThemeColors = {
   primary: '#1d4ed8',
   secondary: '#dc2626',
   accent: '#172554',
+}
+
+export function isCourseThemeGeometry(value: string): value is CourseThemeGeometry {
+  return (
+    value === 'waves' ||
+    value === 'ribbons' ||
+    value === 'diagonals' ||
+    value === 'arcs' ||
+    value === 'mosaic' ||
+    value === 'sunset'
+  )
+}
+
+function isHexColor(value: string | undefined): value is string {
+  return /^#[0-9a-fA-F]{6}$/.test(value ?? '')
+}
+
+export function parseCourseTheme(theme?: string | null): {
+  geometry: CourseThemeGeometry
+  colors: CourseThemeColors
+} {
+  const [geometry, primary, secondary, accent] = theme?.trim().split(':') ?? []
+
+  return {
+    geometry: geometry && isCourseThemeGeometry(geometry) ? geometry : 'waves',
+    colors: {
+      primary: isHexColor(primary)
+        ? primary
+        : DEFAULT_COURSE_THEME_COLORS.primary,
+      secondary: isHexColor(secondary)
+        ? secondary
+        : DEFAULT_COURSE_THEME_COLORS.secondary,
+      accent: isHexColor(accent) ? accent : DEFAULT_COURSE_THEME_COLORS.accent,
+    },
+  }
+}
+
+export function serializeCourseTheme(
+  geometry: CourseThemeGeometry,
+  colors: CourseThemeColors,
+) {
+  return `${geometry}:${colors.primary}:${colors.secondary}:${colors.accent}`
 }
 
 function getThemeColorConfig(colors?: CourseThemeColors): ThemeColorConfig {
@@ -223,29 +267,42 @@ function SunsetPattern({ palette }: { palette: ThemeColorConfig }) {
 }
 
 export function CourseThemeBackground({
+  theme,
   geometry = 'waves',
   colors,
+  variant = 'banner',
 }: CourseThemeBackgroundProps) {
-  const paletteConfig = getThemeColorConfig(colors)
+  const parsedTheme = parseCourseTheme(theme)
+  const selectedGeometry = theme ? parsedTheme.geometry : geometry
+  const paletteConfig = getThemeColorConfig(theme ? parsedTheme.colors : colors)
+  const isBanner = variant === 'banner'
 
   return (
     <div className="pointer-events-none absolute inset-0 z-0">
-      <div className="absolute inset-0 [mask-image:linear-gradient(to_right,transparent_0%,transparent_22%,black_54%)] md:[mask-image:linear-gradient(to_right,transparent_0%,transparent_10%,black_42%)]">
-        {geometry === 'ribbons' ? (
+      <div
+        className={`absolute inset-0 ${
+          isBanner
+            ? '[mask-image:linear-gradient(to_right,transparent_0%,transparent_22%,black_54%)] md:[mask-image:linear-gradient(to_right,transparent_0%,transparent_10%,black_42%)]'
+            : ''
+        }`}
+      >
+        {selectedGeometry === 'ribbons' ? (
           <RibbonsPattern palette={paletteConfig} />
-        ) : geometry === 'diagonals' ? (
+        ) : selectedGeometry === 'diagonals' ? (
           <DiagonalsPattern palette={paletteConfig} />
-        ) : geometry === 'arcs' ? (
+        ) : selectedGeometry === 'arcs' ? (
           <ArcsPattern palette={paletteConfig} />
-        ) : geometry === 'mosaic' ? (
+        ) : selectedGeometry === 'mosaic' ? (
           <MosaicPattern palette={paletteConfig} />
-        ) : geometry === 'sunset' ? (
+        ) : selectedGeometry === 'sunset' ? (
           <SunsetPattern palette={paletteConfig} />
         ) : (
           <WavesPattern palette={paletteConfig} />
         )}
       </div>
-      <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-card via-card/95 to-card/0 md:w-[43%]" />
+      {isBanner ? (
+        <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-card via-card/95 to-card/0 md:w-[43%]" />
+      ) : null}
     </div>
   )
 }

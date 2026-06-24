@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, Palette } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -15,10 +15,12 @@ import type { TeacherCourseDetail } from '@/lib/teacher/course-detail/types'
 import { cn } from '@/lib/utils'
 import {
   CourseThemeBackground,
-  DEFAULT_COURSE_THEME_COLORS,
+  parseCourseTheme,
+  serializeCourseTheme,
   type CourseThemeColors,
   type CourseThemeGeometry,
 } from './course-theme-background'
+import { updateTeacherCourseTheme } from '@/lib/teacher/course-detail/api'
 
 type Props = {
   course: TeacherCourseDetail
@@ -45,33 +47,8 @@ const COURSE_THEME_COLOR_FIELDS: {
   { id: 'accent', label: 'Color 3' },
 ]
 
-function isCourseThemeGeometry(value: string): value is CourseThemeGeometry {
-  return COURSE_THEME_GEOMETRIES.some((geometry) => geometry.id === value)
-}
-
-function isHexColor(value: string | undefined): value is string {
-  return /^#[0-9a-fA-F]{6}$/.test(value ?? '')
-}
-
-function getInitialTheme(themeIcon?: string | null) {
-  const [geometry, primary, secondary, accent] = themeIcon?.trim().split(':') ?? []
-
-  return {
-    colors: {
-      primary: isHexColor(primary)
-        ? primary
-        : DEFAULT_COURSE_THEME_COLORS.primary,
-      secondary: isHexColor(secondary)
-        ? secondary
-        : DEFAULT_COURSE_THEME_COLORS.secondary,
-      accent: isHexColor(accent) ? accent : DEFAULT_COURSE_THEME_COLORS.accent,
-    },
-    geometry: geometry && isCourseThemeGeometry(geometry) ? geometry : 'waves',
-  }
-}
-
 export function TeacherCourseHero({ course }: Props) {
-  const initialTheme = getInitialTheme(course.themeIcon)
+  const initialTheme = parseCourseTheme(course.themeIcon)
   const [selectedGeometry, setSelectedGeometry] = useState<CourseThemeGeometry>(
     initialTheme.geometry,
   )
@@ -79,6 +56,39 @@ export function TeacherCourseHero({ course }: Props) {
     initialTheme.colors,
   )
   const [themeDialogOpen, setThemeDialogOpen] = useState(false)
+
+  useEffect(() => {
+    const nextTheme = parseCourseTheme(course.themeIcon)
+    setSelectedGeometry(nextTheme.geometry)
+    setSelectedColors(nextTheme.colors)
+  }, [course.id, course.themeIcon])
+
+  function persistCourseTheme(
+    geometry: CourseThemeGeometry,
+    colors: CourseThemeColors,
+  ) {
+    const theme = serializeCourseTheme(geometry, colors)
+
+    void updateTeacherCourseTheme(course.id, theme).catch(() => undefined)
+  }
+
+  function handleGeometryChange(geometry: CourseThemeGeometry) {
+    setSelectedGeometry(geometry)
+    persistCourseTheme(geometry, selectedColors)
+  }
+
+  function handleColorChange(field: keyof CourseThemeColors, value: string) {
+    setSelectedColors((current) => {
+      const nextColors = {
+        ...current,
+        [field]: value,
+      }
+
+      persistCourseTheme(selectedGeometry, nextColors)
+
+      return nextColors
+    })
+  }
 
   return (
     <Dialog open={themeDialogOpen} onOpenChange={setThemeDialogOpen}>
@@ -128,7 +138,7 @@ export function TeacherCourseHero({ course }: Props) {
                     type="button"
                     aria-label={`Elegir geometria ${geometry.label}`}
                     aria-pressed={active}
-                    onClick={() => setSelectedGeometry(geometry.id)}
+                    onClick={() => handleGeometryChange(geometry.id)}
                     className={cn(
                       'relative h-20 overflow-hidden rounded-xl border-2 bg-card transition-all hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25',
                       active ? 'border-primary' : 'border-border/60',
@@ -175,10 +185,7 @@ export function TeacherCourseHero({ course }: Props) {
                     value={selectedColors[field.id]}
                     aria-label={`Elegir ${field.label}`}
                     onChange={(event) =>
-                      setSelectedColors((current) => ({
-                        ...current,
-                        [field.id]: event.target.value,
-                      }))
+                      handleColorChange(field.id, event.target.value)
                     }
                     className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                   />
