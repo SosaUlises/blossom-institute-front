@@ -1,7 +1,6 @@
 'use client'
 
 import {
-  ArrowLeft,
   CalendarClock,
   Link as LinkIcon,
   Megaphone,
@@ -100,7 +99,7 @@ type Props = {
 }
 
 const fieldClassName =
-  'h-10 w-full rounded-xl border border-border/60 bg-background/75 px-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15'
+  'h-10 w-full rounded-xl border border-border/60 bg-background/75 px-3 text-sm outline-none transition-all focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary'
 
 function EstadoBadge({ estado }: { estado: string }) {
   const config =
@@ -158,7 +157,6 @@ export function TeacherPublicationComposer({
   saving,
   error,
   success,
-  onBack,
   onTituloChange,
   onConsignaChange,
   onFechaEntregaChange,
@@ -188,15 +186,6 @@ export function TeacherPublicationComposer({
   return (
     <div className="space-y-4 pb-24 lg:pb-4">
       <header className="flex flex-col gap-3 border-b border-border/60 pb-4">
-        <Button
-          variant="ghost"
-          className="h-9 w-fit justify-start rounded-lg px-2 text-muted-foreground hover:text-foreground"
-          onClick={onBack}
-        >
-          <ArrowLeft className="mr-2 size-4" />
-          {mode === 'create' ? 'Volver al curso' : 'Volver a la publicación'}
-        </Button>
-
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
@@ -228,10 +217,13 @@ export function TeacherPublicationComposer({
               <Button
                 type="button"
                 size="sm"
-                variant={isTask ? 'secondary' : 'ghost'}
+                variant="ghost"
                 aria-pressed={isTask}
                 onClick={() => onPublicationTypeChange('task')}
-                className="h-8 rounded-lg px-2.5 shadow-none transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98]"
+                className={cn(
+                  'h-8 rounded-lg border border-transparent px-2.5 shadow-none transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.98]',
+                  isTask && 'border-primary/20 bg-primary/10 text-primary',
+                )}
               >
                 <CalendarClock className="size-3.5" />
                 Tarea
@@ -239,10 +231,13 @@ export function TeacherPublicationComposer({
               <Button
                 type="button"
                 size="sm"
-                variant={!isTask ? 'secondary' : 'ghost'}
+                variant="ghost"
                 aria-pressed={!isTask}
                 onClick={() => onPublicationTypeChange('announcement')}
-                className="h-8 rounded-lg px-2.5 shadow-none transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98]"
+                className={cn(
+                  'h-8 rounded-lg border border-transparent px-2.5 shadow-none transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.98]',
+                  !isTask && 'border-primary/20 bg-primary/10 text-primary',
+                )}
               >
                 <Megaphone className="size-3.5" />
                 Anuncio
@@ -254,9 +249,9 @@ export function TeacherPublicationComposer({
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="space-y-4">
-          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+          <section className="rounded-2xl border border-border/40 border-t-4 border-t-blue-600 bg-card p-6 shadow-sm dark:border-t-blue-500">
             <div className="space-y-4">
-              <div className="space-y-2">
+              <div className="space-y-2 [&>label]:mb-2 [&>label]:block">
                 <label className="text-sm font-medium text-foreground">Título</label>
                 <input
                   value={titulo}
@@ -267,14 +262,14 @@ export function TeacherPublicationComposer({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
+                <label className="mb-2 block text-sm font-medium text-foreground">
                   {isTask ? 'Consigna' : 'Contenido del anuncio'}
                 </label>
                 <textarea
                   value={consigna}
                   onChange={(event) => onConsignaChange(event.target.value)}
                   rows={8}
-                  className="min-h-44 w-full rounded-xl border border-border/60 bg-background/75 px-3 py-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15"
+                  className="min-h-44 w-full rounded-xl border border-border/60 bg-background/75 px-3 py-3 text-sm outline-none transition-all focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                   placeholder={
                     isTask
                       ? 'Escribí la consigna de la tarea...'
@@ -285,7 +280,7 @@ export function TeacherPublicationComposer({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+          <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-sm">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold tracking-tight text-foreground">
@@ -327,7 +322,9 @@ export function TeacherPublicationComposer({
 
                   <div className="grid gap-3 md:grid-cols-[140px_minmax(0,1fr)]">
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+                      <label className="mb-2 block text-sm font-medium text-foreground">
+                        Tipo de recurso
+                      </label>
                       <Select
                         value={resource.tipo}
                         onValueChange={(value) =>
@@ -345,7 +342,7 @@ export function TeacherPublicationComposer({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-muted-foreground">
+                      <label className="mb-2 block text-sm font-medium text-foreground">
                         Nombre visible
                       </label>
                       <input
@@ -359,7 +356,7 @@ export function TeacherPublicationComposer({
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-xs font-medium text-muted-foreground">
+                      <label className="mb-2 block text-sm font-medium text-foreground">
                         {resource.tipo === '1' ? 'URL' : 'Archivo'}
                       </label>
 
@@ -404,7 +401,7 @@ export function TeacherPublicationComposer({
         </div>
 
         <aside className="space-y-4">
-          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+          <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-sm">
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-sm font-semibold text-foreground">Publicación</h2>
@@ -425,7 +422,7 @@ export function TeacherPublicationComposer({
           </section>
 
           {mode === 'edit' || isTask ? (
-            <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+            <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-sm">
               <div className="space-y-3">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground">
@@ -470,36 +467,34 @@ export function TeacherPublicationComposer({
         </div>
       )}
 
-      <div className="sticky bottom-3 z-20 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur">
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
-          {mode === 'create' ? (
-            <>
-              <Button
-                variant="outline"
-                onClick={onSaveDraft}
-                disabled={saving}
-                className="h-10 rounded-xl border-border/70 bg-background/75 px-4"
-              >
-                {saving ? 'Guardando...' : 'Guardar borrador'}
-              </Button>
-              <Button
-                onClick={onPublish}
-                disabled={saving}
-                className="h-10 rounded-xl px-4 shadow-none"
-              >
-                {saving ? 'Guardando...' : 'Publicar'}
-              </Button>
-            </>
-          ) : (
+      <div className="mt-8 flex items-center justify-end gap-3 border-t border-border/20 pt-6">
+        {mode === 'create' ? (
+          <>
             <Button
-              onClick={onSave}
+              variant="outline"
+              onClick={onSaveDraft}
+              disabled={saving}
+              className="h-10 rounded-xl border-border/70 bg-background/75 px-4"
+            >
+              {saving ? 'Guardando...' : 'Guardar borrador'}
+            </Button>
+            <Button
+              onClick={onPublish}
               disabled={saving}
               className="h-10 rounded-xl px-4 shadow-none"
             >
-              {saving ? 'Guardando...' : 'Guardar cambios'}
+              {saving ? 'Guardando...' : 'Publicar'}
             </Button>
-          )}
-        </div>
+          </>
+        ) : (
+          <Button
+            onClick={onSave}
+            disabled={saving}
+            className="h-10 rounded-xl px-4 shadow-none"
+          >
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </Button>
+        )}
       </div>
     </div>
   )

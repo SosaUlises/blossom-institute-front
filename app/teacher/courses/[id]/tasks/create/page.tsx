@@ -27,7 +27,7 @@ export default async function TeacherTaskCreatePage({
       <AppHeader title="Crear publicación" />
 
       <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto w-full max-w-5xl">
           <TeacherTaskCreateView
             courseId={Number(id)}
             initialType={initialType}

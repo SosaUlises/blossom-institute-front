@@ -180,8 +180,8 @@ function CourseCard({
                   <ClipboardCheck className="size-3.5" />
                   {summary.entregasPendientesCorreccion}{' '}
                   {summary.entregasPendientesCorreccion === 1
-                    ? 'entrega pendiente'
-                    : 'entregas pendientes'}
+                    ? 'corrección pendiente'
+                    : 'correcciones pendientes'}
                 </span>
               ) : null}
 
@@ -254,8 +254,8 @@ function CourseCardCompact({
                     <ClipboardCheck className="size-3.5" />
                     {summary.entregasPendientesCorreccion}{' '}
                     {summary.entregasPendientesCorreccion === 1
-                      ? 'entrega pendiente'
-                      : 'entregas pendientes'}
+                      ? 'corrección pendiente'
+                      : 'correcciones pendientes'}
                   </span>
                 ) : null}
               </div>
