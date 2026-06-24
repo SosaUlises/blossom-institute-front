@@ -68,9 +68,9 @@ function AttendanceSegmentedControl({
         type="button"
         onClick={() => onChange(EstadoAsistencia.Presente)}
         className={cn(
-          'rounded-lg px-3 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
+          'rounded-lg border border-transparent px-3 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
           value === EstadoAsistencia.Presente
-            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+            ? 'border-green-200 bg-green-500/10 text-green-700 dark:border-green-800 dark:text-green-400'
             : 'text-muted-foreground hover:bg-emerald-500/5 hover:text-emerald-700 dark:hover:text-emerald-300',
         )}
       >
@@ -80,9 +80,9 @@ function AttendanceSegmentedControl({
         type="button"
         onClick={() => onChange(EstadoAsistencia.Ausente)}
         className={cn(
-          'rounded-lg px-3 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
+          'rounded-lg border border-transparent px-3 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
           value === EstadoAsistencia.Ausente
-            ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
+            ? 'border-red-200 bg-red-500/10 text-red-700 dark:border-red-800 dark:text-red-400'
             : 'text-muted-foreground hover:bg-rose-500/5 hover:text-rose-700 dark:hover:text-rose-300',
         )}
       >
@@ -215,7 +215,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
   const unmarkedCount = students.length - presentCount - absentCount
 
   return (
-    <div className="space-y-5 pb-24 md:pb-0">
+    <div className="space-y-5">
       <header className="space-y-3 border-b border-border/60 pb-4">
         <Button
           variant="ghost"
@@ -236,7 +236,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
         </div>
       </header>
 
-      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70 sm:p-5">
+      <section className="mb-6 rounded-2xl border border-border/40 border-t-2 border-t-primary/60 bg-card p-6 shadow-sm dark:border-t-primary/50">
         <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Fecha</label>
@@ -262,7 +262,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70 sm:p-5">
+      <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -304,14 +304,6 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
               Limpiar selección
             </Button>
 
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="h-10 rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
-            >
-              <Save className="mr-2 size-4" />
-              {saving ? 'Guardando...' : 'Guardar asistencia'}
-            </Button>
           </div>
         </div>
 
@@ -389,28 +381,16 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
         )}
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-background/95 px-5 py-3 backdrop-blur dark:bg-background/90 md:hidden">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">
-              {unmarkedCount > 0
-                ? `Faltan ${unmarkedCount} por marcar`
-                : 'Asistencia completa'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {presentCount} presentes · {absentCount} ausentes
-            </p>
-          </div>
-
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="h-10 shrink-0 rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
-          >
-            <Save className="mr-2 size-4" />
-            {saving ? 'Guardando...' : 'Guardar asistencia'}
-          </Button>
-        </div>
+      <div className="w-full flex justify-end mt-6 pt-6 border-t border-border/20">
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          size="lg"
+          className="rounded-xl bg-primary px-5 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
+        >
+          <Save className="mr-2 size-4" />
+          {saving ? 'Guardando...' : 'Guardar asistencia'}
+        </Button>
       </div>
     </div>
   )

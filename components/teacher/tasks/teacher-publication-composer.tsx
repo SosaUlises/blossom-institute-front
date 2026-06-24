@@ -249,7 +249,7 @@ export function TeacherPublicationComposer({
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="space-y-4">
-          <section className="rounded-2xl border border-border/40 border-t-4 border-t-blue-600 bg-card p-6 shadow-sm dark:border-t-blue-500">
+          <section className="rounded-2xl border border-border/40 border-t-2 border-t-primary/60 bg-card p-6 shadow-sm dark:border-t-primary/50">
             <div className="space-y-4">
               <div className="space-y-2 [&>label]:mb-2 [&>label]:block">
                 <label className="text-sm font-medium text-foreground">Título</label>
