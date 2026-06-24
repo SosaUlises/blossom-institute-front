@@ -5,7 +5,14 @@ export type CourseThemeGeometry =
   | 'arcs'
   | 'mosaic'
   | 'sunset'
-export type CourseThemePalette = 'blossom' | 'royal' | 'ember' | 'electric'
+export type CourseThemePalette =
+  | 'blossom'
+  | 'royal'
+  | 'ember'
+  | 'electric'
+  | 'ocean'
+  | 'candy'
+  | 'lime'
 
 type CourseThemeBackgroundProps = {
   geometry?: CourseThemeGeometry
@@ -42,6 +49,24 @@ const PALETTES: Record<CourseThemePalette, PaletteConfig> = {
     primary: 'fill-cyan-500/90 dark:fill-cyan-400/65',
     secondary: 'fill-violet-700/90 dark:fill-violet-500/65',
     accent: 'fill-pink-500/80 dark:fill-pink-400/60',
+    cutout: 'fill-card/95 dark:fill-card/85',
+  },
+  ocean: {
+    primary: 'fill-blue-600/90 dark:fill-blue-400/65',
+    secondary: 'fill-emerald-500/85 dark:fill-emerald-400/60',
+    accent: 'fill-cyan-400/80 dark:fill-cyan-300/55',
+    cutout: 'fill-card/95 dark:fill-card/85',
+  },
+  candy: {
+    primary: 'fill-pink-500/88 dark:fill-pink-400/65',
+    secondary: 'fill-red-500/85 dark:fill-red-400/60',
+    accent: 'fill-amber-400/80 dark:fill-amber-300/55',
+    cutout: 'fill-card/95 dark:fill-card/85',
+  },
+  lime: {
+    primary: 'fill-lime-500/85 dark:fill-lime-400/60',
+    secondary: 'fill-blue-600/88 dark:fill-blue-400/65',
+    accent: 'fill-fuchsia-500/78 dark:fill-fuchsia-400/55',
     cutout: 'fill-card/95 dark:fill-card/85',
   },
 }
@@ -139,39 +164,39 @@ function ArcsPattern({ palette }: { palette: PaletteConfig }) {
       aria-hidden="true"
     >
       <ellipse
-        cx="820"
+        cx="740"
         cy="104"
-        rx="470"
-        ry="160"
+        rx="310"
+        ry="112"
         className={palette.primary}
       />
       <ellipse
-        cx="820"
+        cx="680"
         cy="104"
-        rx="342"
-        ry="112"
+        rx="178"
+        ry="58"
         className={palette.cutout}
       />
       <ellipse
-        cx="900"
-        cy="104"
-        rx="312"
-        ry="104"
+        cx="918"
+        cy="50"
+        rx="176"
+        ry="72"
         className={palette.secondary}
       />
       <ellipse
-        cx="900"
-        cy="104"
-        rx="220"
-        ry="70"
-        className={palette.cutout}
+        cx="936"
+        cy="164"
+        rx="214"
+        ry="78"
+        className={palette.accent}
       />
       <ellipse
-        cx="970"
-        cy="104"
-        rx="180"
-        ry="64"
-        className={palette.accent}
+        cx="880"
+        cy="132"
+        rx="96"
+        ry="34"
+        className={palette.cutout}
       />
     </svg>
   )
@@ -246,7 +271,7 @@ export function CourseThemeBackground({
 
   return (
     <div className="pointer-events-none absolute inset-0 z-0">
-      <div className="absolute inset-0 [mask-image:linear-gradient(to_right,transparent_0%,transparent_22%,black_54%)]">
+      <div className="absolute inset-0 [mask-image:linear-gradient(to_right,transparent_0%,transparent_22%,black_54%)] md:[mask-image:linear-gradient(to_right,transparent_0%,transparent_10%,black_42%)]">
         {geometry === 'ribbons' ? (
           <RibbonsPattern palette={paletteConfig} />
         ) : geometry === 'diagonals' ? (
@@ -261,7 +286,7 @@ export function CourseThemeBackground({
           <WavesPattern palette={paletteConfig} />
         )}
       </div>
-      <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-card via-card/95 to-card/0" />
+      <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-card via-card/95 to-card/0 md:w-[43%]" />
     </div>
   )
 }

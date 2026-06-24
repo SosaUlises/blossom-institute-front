@@ -60,6 +60,21 @@ const COURSE_THEME_PALETTES: {
     label: 'Electric',
     swatches: ['bg-cyan-500', 'bg-violet-700', 'bg-pink-500'],
   },
+  {
+    id: 'ocean',
+    label: 'Ocean',
+    swatches: ['bg-blue-600', 'bg-emerald-500', 'bg-cyan-400'],
+  },
+  {
+    id: 'candy',
+    label: 'Candy',
+    swatches: ['bg-pink-500', 'bg-red-500', 'bg-amber-400'],
+  },
+  {
+    id: 'lime',
+    label: 'Lime',
+    swatches: ['bg-lime-500', 'bg-blue-600', 'bg-fuchsia-500'],
+  },
 ]
 
 function isCourseThemeGeometry(value: string): value is CourseThemeGeometry {
@@ -163,7 +178,7 @@ export function TeacherCourseHero({ course }: Props) {
 
           <div className="space-y-3">
             <p className="text-sm font-medium text-foreground">Paleta</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {COURSE_THEME_PALETTES.map((palette) => {
                 const active = selectedPalette === palette.id
 
@@ -175,20 +190,27 @@ export function TeacherCourseHero({ course }: Props) {
                     aria-pressed={active}
                     onClick={() => setSelectedPalette(palette.id)}
                     className={cn(
-                      'flex items-center justify-between rounded-xl border-2 bg-card px-3 py-3 text-sm font-medium text-foreground transition-all hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25',
+                      'relative flex min-w-0 flex-col items-start gap-2 rounded-xl border-2 bg-card px-3 py-3 text-sm font-medium text-foreground transition-all hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25',
                       active ? 'border-primary' : 'border-border/60',
                     )}
                   >
-                    <span>{palette.label}</span>
-                    <span className="flex items-center gap-1.5">
+                    <span className="max-w-full truncate pr-7">
+                      {palette.label}
+                    </span>
+                    <span className="flex max-w-full items-center gap-1.5">
                       {palette.swatches.map((swatch) => (
                         <span
                           key={swatch}
-                          className={cn('size-4 rounded-full', swatch)}
+                          className={cn(
+                            'size-5 shrink-0 rounded-full border border-background/80',
+                            swatch,
+                          )}
                         />
                       ))}
-                      {active ? <Check className="ml-1 size-4" /> : null}
                     </span>
+                    {active ? (
+                      <Check className="absolute right-3 top-3 size-4" />
+                    ) : null}
                   </button>
                 )
               })}
