@@ -15,8 +15,9 @@ import type { TeacherCourseDetail } from '@/lib/teacher/course-detail/types'
 import { cn } from '@/lib/utils'
 import {
   CourseThemeBackground,
+  DEFAULT_COURSE_THEME_COLORS,
+  type CourseThemeColors,
   type CourseThemeGeometry,
-  type CourseThemePalette,
 } from './course-theme-background'
 
 type Props = {
@@ -35,62 +36,37 @@ const COURSE_THEME_GEOMETRIES: {
   { id: 'sunset', label: 'Horizonte' },
 ]
 
-const COURSE_THEME_PALETTES: {
-  id: CourseThemePalette
+const COURSE_THEME_COLOR_FIELDS: {
+  id: keyof CourseThemeColors
   label: string
-  swatches: string[]
 }[] = [
-  {
-    id: 'blossom',
-    label: 'Blossom',
-    swatches: ['bg-blue-700', 'bg-red-600', 'bg-blue-900'],
-  },
-  {
-    id: 'royal',
-    label: 'Royal',
-    swatches: ['bg-indigo-700', 'bg-fuchsia-600', 'bg-sky-500'],
-  },
-  {
-    id: 'ember',
-    label: 'Ember',
-    swatches: ['bg-orange-500', 'bg-red-700', 'bg-yellow-400'],
-  },
-  {
-    id: 'electric',
-    label: 'Electric',
-    swatches: ['bg-cyan-500', 'bg-violet-700', 'bg-pink-500'],
-  },
-  {
-    id: 'ocean',
-    label: 'Ocean',
-    swatches: ['bg-blue-600', 'bg-emerald-500', 'bg-cyan-400'],
-  },
-  {
-    id: 'candy',
-    label: 'Candy',
-    swatches: ['bg-pink-500', 'bg-red-500', 'bg-amber-400'],
-  },
-  {
-    id: 'lime',
-    label: 'Lime',
-    swatches: ['bg-lime-500', 'bg-blue-600', 'bg-fuchsia-500'],
-  },
+  { id: 'primary', label: 'Color 1' },
+  { id: 'secondary', label: 'Color 2' },
+  { id: 'accent', label: 'Color 3' },
 ]
 
 function isCourseThemeGeometry(value: string): value is CourseThemeGeometry {
   return COURSE_THEME_GEOMETRIES.some((geometry) => geometry.id === value)
 }
 
-function isCourseThemePalette(value: string): value is CourseThemePalette {
-  return COURSE_THEME_PALETTES.some((palette) => palette.id === value)
+function isHexColor(value: string | undefined): value is string {
+  return /^#[0-9a-fA-F]{6}$/.test(value ?? '')
 }
 
 function getInitialTheme(themeIcon?: string | null) {
-  const [geometry, palette] = themeIcon?.trim().split(':') ?? []
+  const [geometry, primary, secondary, accent] = themeIcon?.trim().split(':') ?? []
 
   return {
+    colors: {
+      primary: isHexColor(primary)
+        ? primary
+        : DEFAULT_COURSE_THEME_COLORS.primary,
+      secondary: isHexColor(secondary)
+        ? secondary
+        : DEFAULT_COURSE_THEME_COLORS.secondary,
+      accent: isHexColor(accent) ? accent : DEFAULT_COURSE_THEME_COLORS.accent,
+    },
     geometry: geometry && isCourseThemeGeometry(geometry) ? geometry : 'waves',
-    palette: palette && isCourseThemePalette(palette) ? palette : 'blossom',
   }
 }
 
@@ -99,8 +75,8 @@ export function TeacherCourseHero({ course }: Props) {
   const [selectedGeometry, setSelectedGeometry] = useState<CourseThemeGeometry>(
     initialTheme.geometry,
   )
-  const [selectedPalette, setSelectedPalette] = useState<CourseThemePalette>(
-    initialTheme.palette,
+  const [selectedColors, setSelectedColors] = useState<CourseThemeColors>(
+    initialTheme.colors,
   )
   const [themeDialogOpen, setThemeDialogOpen] = useState(false)
 
@@ -109,7 +85,7 @@ export function TeacherCourseHero({ course }: Props) {
       <div className="relative mb-6 flex h-32 w-full items-center overflow-hidden rounded-2xl border border-border/40 bg-card px-6 shadow-sm md:h-36 md:px-8">
         <CourseThemeBackground
           geometry={selectedGeometry}
-          palette={selectedPalette}
+          colors={selectedColors}
         />
         <DialogTrigger asChild>
           <Button
@@ -160,7 +136,7 @@ export function TeacherCourseHero({ course }: Props) {
                   >
                     <CourseThemeBackground
                       geometry={geometry.id}
-                      palette={selectedPalette}
+                      colors={selectedColors}
                     />
                     <span className="absolute bottom-2 left-2 z-10 rounded-lg border border-border/60 bg-background/85 px-2 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
                       {geometry.label}
@@ -177,43 +153,37 @@ export function TeacherCourseHero({ course }: Props) {
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-medium text-foreground">Paleta</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {COURSE_THEME_PALETTES.map((palette) => {
-                const active = selectedPalette === palette.id
-
-                return (
-                  <button
-                    key={palette.id}
-                    type="button"
-                    aria-label={`Elegir paleta ${palette.label}`}
-                    aria-pressed={active}
-                    onClick={() => setSelectedPalette(palette.id)}
-                    className={cn(
-                      'relative flex min-w-0 flex-col items-start gap-2 rounded-xl border-2 bg-card px-3 py-3 text-sm font-medium text-foreground transition-all hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25',
-                      active ? 'border-primary' : 'border-border/60',
-                    )}
-                  >
-                    <span className="max-w-full truncate pr-7">
-                      {palette.label}
+            <p className="text-sm font-medium text-foreground">Colores</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {COURSE_THEME_COLOR_FIELDS.map((field) => (
+                <label
+                  key={field.id}
+                  className="relative flex min-w-0 cursor-pointer items-center gap-3 rounded-xl border-2 border-border/60 bg-card px-3 py-3 text-sm font-medium text-foreground transition-all hover:border-primary/50 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/25"
+                >
+                  <span
+                    className="size-8 shrink-0 rounded-lg border border-border/60"
+                    style={{ backgroundColor: selectedColors[field.id] }}
+                  />
+                  <span className="flex min-w-0 flex-col items-start">
+                    <span className="max-w-full truncate">{field.label}</span>
+                    <span className="font-mono text-xs uppercase text-muted-foreground">
+                      {selectedColors[field.id]}
                     </span>
-                    <span className="flex max-w-full items-center gap-1.5">
-                      {palette.swatches.map((swatch) => (
-                        <span
-                          key={swatch}
-                          className={cn(
-                            'size-5 shrink-0 rounded-full border border-background/80',
-                            swatch,
-                          )}
-                        />
-                      ))}
-                    </span>
-                    {active ? (
-                      <Check className="absolute right-3 top-3 size-4" />
-                    ) : null}
-                  </button>
-                )
-              })}
+                  </span>
+                  <input
+                    type="color"
+                    value={selectedColors[field.id]}
+                    aria-label={`Elegir ${field.label}`}
+                    onChange={(event) =>
+                      setSelectedColors((current) => ({
+                        ...current,
+                        [field.id]: event.target.value,
+                      }))
+                    }
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  />
+                </label>
+              ))}
             </div>
           </div>
         </div>

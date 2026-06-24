@@ -29,12 +29,13 @@ function TeacherRosterRow({ teacher }: { teacher: Teacher }) {
   const fullName = `${teacher.nombre} ${teacher.apellido}`.trim()
 
   return (
-    <article className="flex min-w-0 flex-col gap-3 px-3 py-3.5 sm:flex-row sm:items-center sm:px-4">
+    <article className="mb-4 flex flex-col items-center justify-between gap-4 rounded-2xl border border-border/40 bg-card p-4 shadow-sm transition-all hover:shadow-md md:flex-row md:p-5">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <PersonAvatar
           name={fullName}
           avatarUrl={teacher.avatarUrl}
           tone="teacher"
+          size={48}
         />
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-semibold text-foreground sm:text-[15px]">
@@ -44,11 +45,13 @@ function TeacherRosterRow({ teacher }: { teacher: Teacher }) {
         </div>
       </div>
 
-      <div className="pl-[52px] sm:w-52 sm:pl-0 sm:text-right">
-        <p className="text-xs font-medium text-foreground">Docente del curso</p>
-        <p className="mt-0.5 text-xs leading-4 text-muted-foreground">
+      <div className="flex w-full flex-col items-center text-center md:w-auto md:items-end md:text-right">
+        <span className="mb-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold tracking-wide text-primary">
+          Docente del curso
+        </span>
+        <span className="text-xs text-muted-foreground">
           Enseñanza y seguimiento académico
-        </p>
+        </span>
       </div>
     </article>
   )
@@ -56,11 +59,11 @@ function TeacherRosterRow({ teacher }: { teacher: Teacher }) {
 
 function TeacherRosterSkeleton({ rows = 2 }: { rows?: number }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card/95">
+    <div className="mx-auto w-full max-w-4xl">
       {Array.from({ length: rows }).map((_, index) => (
         <div
           key={index}
-          className="flex items-center gap-3 border-b border-border/50 px-3 py-3.5 last:border-b-0 sm:px-4"
+          className="mb-4 flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-4 shadow-sm md:p-5"
         >
           <div className="size-10 animate-pulse rounded-full bg-muted/40" />
           <div className="min-w-0 flex-1 space-y-2">
@@ -147,23 +150,10 @@ export function TeacherCourseTeachers({ courseId }: { courseId: number }) {
   }
 
   return (
-    <div className="space-y-3">
-      <div>
-        <h2 className="text-base font-semibold text-foreground">Equipo docente</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          {teachers.length === 1
-            ? 'Docente asignado a este curso.'
-            : `${teachers.length} docentes comparten este curso.`}
-        </p>
-      </div>
-
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90">
-        <div className="divide-y divide-border/50">
-          {teachers.map((teacher) => (
-            <TeacherRosterRow key={teacher.profesorId} teacher={teacher} />
-          ))}
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-4xl">
+      {teachers.map((teacher) => (
+        <TeacherRosterRow key={teacher.profesorId} teacher={teacher} />
+      ))}
     </div>
   )
 }

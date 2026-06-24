@@ -2,47 +2,24 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, ClipboardList, Users } from 'lucide-react'
+import { ChevronRight, ClipboardList, Users } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
   formatQuarterMonthRange,
   getAcademicStatus,
-  getAttendanceTone,
-  getAverageTone,
   getCurrentQuarterSummary,
   getTeacherCourseStudents,
-  type AcademicMetricTone,
   type TeacherCourseStudent,
 } from '@/lib/teacher/course-detail/students'
-import {
-  CoursePeopleSection,
-  PersonAvatar,
-  PersonMeta,
-  PersonRosterSurface,
-} from './course-people-ui'
+import { PersonAvatar, PersonMeta } from './course-people-ui'
 import {
   CourseTabEmptyState,
   CourseTabErrorState,
   CourseTabSearchField,
   CourseTabSkeletonList,
-  CourseTabToolbar,
 } from './course-tab-ui'
-
-function getMetricClass(tone: AcademicMetricTone) {
-  return cn(
-    'inline-flex min-w-14 items-center justify-center rounded-md border px-2 py-1 text-sm font-semibold tabular-nums',
-    tone === 'neutral' &&
-      'border-border/50 bg-background/55 text-muted-foreground',
-    tone === 'healthy' &&
-      'border-border/50 bg-background/55 text-foreground',
-    tone === 'attention' &&
-      'border-amber-500/15 bg-amber-500/[0.08] text-amber-700 dark:text-amber-400',
-    tone === 'critical' &&
-      'border-rose-500/15 bg-rose-500/[0.08] text-rose-700 dark:text-rose-400',
-  )
-}
 
 function getStatusClass(tone: ReturnType<typeof getAcademicStatus>['tone']) {
   return cn(
@@ -68,76 +45,75 @@ function StudentRosterRow({
   const fullName = `${student.nombre} ${student.apellido}`.trim()
   const currentQuarter = getCurrentQuarterSummary(student.promediosTrimestrales)
   const status = getAcademicStatus(currentQuarter)
-  const averageTone = getAverageTone(currentQuarter?.promedio)
-  const attendanceTone = getAttendanceTone(currentQuarter?.asistencia)
   const showAcademicStatus =
     status.tone === 'critical' || status.tone === 'attention'
 
   return (
-    <PersonRosterSurface tone="student">
-      <div className="grid gap-3 lg:grid-cols-[minmax(210px,1.25fr)_minmax(280px,1fr)_auto] lg:items-center">
-        <div className="flex min-w-0 items-center gap-3">
-          <PersonAvatar
-            name={fullName}
-            avatarUrl={student.avatarUrl}
-            tone="student"
-          />
+    <article className="mb-4 flex flex-col items-center justify-between gap-4 rounded-2xl border border-border/40 bg-card p-4 shadow-sm transition-all hover:shadow-md md:flex-row">
+      <div className="flex min-w-0 items-center gap-3 self-stretch md:self-auto">
+        <PersonAvatar
+          name={fullName}
+          avatarUrl={student.avatarUrl}
+          tone="student"
+          size={48}
+        />
 
-          <div className="min-w-0">
-            <h3 className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-[15px]">
-              {fullName}
-            </h3>
-            <PersonMeta email={student.email} />
-          </div>
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-[15px]">
+            {fullName}
+          </h3>
+          <PersonMeta email={student.email} />
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-[auto_auto] sm:justify-start">
-          <div>
-            <p className="mb-1 text-[11px] font-medium text-muted-foreground">
-              Promedio actual
-            </p>
-            <span className={getMetricClass(averageTone)}>
-              {currentQuarter?.promedio?.toFixed(1) ?? '—'}
-            </span>
-          </div>
-          <div>
-            <p className="mb-1 text-[11px] font-medium text-muted-foreground">
-              Asistencia actual
-            </p>
-            <span className={getMetricClass(attendanceTone)}>
-              {currentQuarter?.asistencia != null
-                ? `${currentQuarter.asistencia.toFixed(1)}%`
-                : '—'}
-            </span>
-          </div>
+      <div className="grid w-full grid-cols-2 justify-items-center gap-4 md:w-auto md:min-w-[260px]">
+        <div className="flex w-24 flex-col items-center text-center">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Promedio actual
+          </p>
+          <span className="text-lg font-bold text-foreground">
+            {currentQuarter?.promedio?.toFixed(1) ?? '—'}
+          </span>
           {showAcademicStatus ? (
-            <div className="col-span-2">
-              <span className={getStatusClass(status.tone)}>
-                {status.label}
-              </span>
-            </div>
+            <span className={cn('mt-1', getStatusClass(status.tone))}>
+              {status.label}
+            </span>
           ) : null}
         </div>
 
-        <Button
-          asChild
-          variant="ghost"
-          className="h-9 w-full rounded-lg px-2.5 text-sm font-semibold text-muted-foreground shadow-none transition-[background-color,color,transform] duration-150 ease-out hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.98] sm:w-fit lg:justify-self-end"
-        >
-          <Link href={`/teacher/courses/${courseId}/students/${student.alumnoId}/grades`}>
-            Ver seguimiento
-            <ArrowRight className="ml-1.5 size-3.5" />
-          </Link>
-        </Button>
+        <div className="flex w-24 flex-col items-center text-center">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Asistencia actual
+          </p>
+          <span className="text-lg font-bold text-foreground">
+            {currentQuarter?.asistencia != null
+              ? `${currentQuarter.asistencia.toFixed(1)}%`
+              : '—'}
+          </span>
+        </div>
       </div>
-    </PersonRosterSurface>
+
+      <Button
+        asChild
+        variant="ghost"
+        className="w-full shrink-0 text-primary transition-colors hover:bg-primary/5 hover:text-primary md:w-fit"
+      >
+        <Link
+          href={`/teacher/courses/${courseId}/students/${student.alumnoId}/grades`}
+          className="justify-center"
+        >
+          Ver seguimiento
+          <ChevronRight className="ml-2 h-4 w-4" />
+        </Link>
+      </Button>
+    </article>
   )
 }
 
 function StudentRosterSkeleton() {
   return (
-    <div className="rounded-xl border border-border/60 bg-background/60 px-3 py-3 sm:px-4">
-      <div className="grid gap-3 lg:grid-cols-[minmax(210px,1.25fr)_minmax(280px,1fr)_auto] lg:items-center">
+    <div className="rounded-2xl border border-border/40 bg-card p-4 shadow-sm">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <div className="size-10 animate-pulse rounded-lg bg-muted/40" />
           <div className="min-w-0 flex-1 space-y-2">
@@ -145,12 +121,12 @@ function StudentRosterSkeleton() {
             <div className="h-4 w-56 animate-pulse rounded-lg bg-muted/30" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-4 md:min-w-[260px]">
           {Array.from({ length: 2 }).map((_, index) => (
             <div key={index} className="h-12 animate-pulse rounded-lg bg-muted/30" />
           ))}
         </div>
-        <div className="h-9 w-full animate-pulse rounded-lg bg-muted/35 sm:w-36" />
+        <div className="h-9 w-full animate-pulse rounded-lg bg-muted/35 md:w-36" />
       </div>
     </div>
   )
@@ -169,7 +145,7 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
         setError(null)
         setData(await getTeacherCourseStudents(courseId))
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ocurrió un error.')
+        setError(err instanceof Error ? err.message : 'Ocurrio un error.')
       } finally {
         setLoading(false)
       }
@@ -207,78 +183,91 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
   }, [data, search])
 
   const currentQuarter = getCurrentQuarterSummary(data[0]?.promediosTrimestrales)
-  const currentPeriodLabel = currentQuarter
-    ? `${currentQuarter.label} · ${formatQuarterMonthRange(currentQuarter)}`
-    : 'Sin trimestre académico vigente'
+  const currentPeriodLabel = currentQuarter?.label ?? 'Sin trimestre'
+  const currentPeriodRange = currentQuarter
+    ? formatQuarterMonthRange(currentQuarter)
+    : 'Sin trimestre academico vigente'
 
   if (loading) {
     return (
-      <CourseTabSkeletonList label="Cargando alumnos del curso.">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <StudentRosterSkeleton key={index} />
-        ))}
-      </CourseTabSkeletonList>
+      <div className="mx-auto w-full max-w-4xl">
+        <CourseTabSkeletonList label="Cargando alumnos del curso.">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <StudentRosterSkeleton key={index} />
+          ))}
+        </CourseTabSkeletonList>
+      </div>
     )
   }
 
   if (error) {
-    return <CourseTabErrorState>{error}</CourseTabErrorState>
+    return (
+      <div className="mx-auto w-full max-w-4xl">
+        <CourseTabErrorState>{error}</CourseTabErrorState>
+      </div>
+    )
   }
 
   if (data.length === 0) {
     return (
-      <CourseTabEmptyState
-        icon={Users}
-        title="Todavía no hay alumnos asignados a este curso"
-        description="Cuando se asignen alumnos, vas a ver el roster académico acá."
-      />
+      <div className="mx-auto w-full max-w-4xl">
+        <CourseTabEmptyState
+          icon={Users}
+          title="Todavia no hay alumnos asignados a este curso"
+          description="Cuando se asignen alumnos, vas a ver el roster academico aca."
+        />
+      </div>
     )
   }
 
   return (
-    <div className="space-y-3">
-      <CourseTabToolbar>
-        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-          <CourseTabSearchField
-            className="max-w-sm"
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar alumno..."
-          />
-          <div className="text-left sm:text-right lg:ml-auto">
-            <p className="text-xs font-medium text-foreground">
-              Estado actual · {currentPeriodLabel}
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {filteredStudents.length}{' '}
+    <div className="mx-auto w-full max-w-4xl">
+      <div className="mb-6 flex flex-col items-center justify-between gap-4 md:flex-row">
+        <CourseTabSearchField
+          className="w-full md:max-w-sm"
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar alumno..."
+        />
+
+        <div className="flex w-full flex-col items-start gap-3 md:w-auto md:flex-row md:items-center md:text-right">
+          <div className="flex flex-col items-start gap-1 md:mr-4 md:items-end">
+            <div className="flex items-center gap-2">
+              <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-foreground">
+                {currentPeriodLabel}
+              </span>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {currentPeriodRange} • {filteredStudents.length}{' '}
               {filteredStudents.length === 1 ? 'alumno' : 'alumnos'}
-            </p>
+            </span>
           </div>
 
           <Button
             asChild
             variant="outline"
-            className="h-9 rounded-lg border-border/65 bg-background/60 px-3 text-sm font-medium text-foreground shadow-none transition-[background-color,border-color,color,transform] duration-150 ease-out hover:border-primary/25 hover:bg-primary/5 hover:text-primary active:scale-[0.98] dark:bg-background/30"
+            className="h-10 w-full rounded-lg border-border/65 bg-background/60 px-3 text-sm font-medium text-foreground shadow-none transition-[background-color,border-color,color,transform] duration-150 ease-out hover:border-primary/25 hover:bg-primary/5 hover:text-primary active:scale-[0.98] dark:bg-background/30 md:w-fit"
           >
-            <Link href={`/teacher/courses/${courseId}/grade-templates`}>
+            <Link
+              href={`/teacher/courses/${courseId}/grade-templates`}
+              className="justify-center"
+            >
               <ClipboardList className="mr-2 size-4" />
-              <span className="hidden sm:inline">
-                Plantillas de calificación
-              </span>
+              <span className="hidden sm:inline">Plantillas de calificacion</span>
               <span className="sm:hidden">Plantillas</span>
             </Link>
           </Button>
         </div>
-      </CourseTabToolbar>
+      </div>
 
       {filteredStudents.length === 0 ? (
         <CourseTabEmptyState
           icon={Users}
           title="No hay alumnos que coincidan"
-          description="Probá con otro nombre o correo."
+          description="Proba con otro nombre o correo."
         />
       ) : (
-        <CoursePeopleSection>
+        <div>
           {filteredStudents.map((student) => (
             <StudentRosterRow
               key={student.alumnoId}
@@ -286,7 +275,7 @@ export function TeacherCourseStudents({ courseId }: { courseId: number }) {
               courseId={courseId}
             />
           ))}
-        </CoursePeopleSection>
+        </div>
       )}
     </div>
   )
