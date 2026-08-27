@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ImagePlus, Loader2, Trash2 } from 'lucide-react'
 
+import { AccountFormMessage } from '@/components/account/settings/account-form-message'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import { Button } from '@/components/ui/button'
 import { emitCurrentUserAvatarUpdated } from '@/lib/auth/client-events'
@@ -21,6 +22,8 @@ export function AccountAvatarSection({
   account,
   onUpdated,
   showCopy = true,
+  showAvatarPreview = true,
+  onPreviewUrlChange,
   getAccountSettings = defaultGetMyAccountSettings,
   updateAvatar = defaultUpdateMyAvatar,
   deleteAvatar = defaultDeleteMyAvatar,
@@ -28,6 +31,8 @@ export function AccountAvatarSection({
   account: MyAccountSettings
   onUpdated: (updated: MyAccountSettings) => void
   showCopy?: boolean
+  showAvatarPreview?: boolean
+  onPreviewUrlChange?: (url: string | null) => void
   getAccountSettings?: () => Promise<MyAccountSettings>
   updateAvatar?: (file: File) => Promise<unknown>
   deleteAvatar?: () => Promise<void>
@@ -83,12 +88,14 @@ export function AccountAvatarSection({
 
       localPreviewUrl = URL.createObjectURL(file)
       setPreviewUrl(localPreviewUrl)
+      onPreviewUrlChange?.(localPreviewUrl)
       setUploading(true)
 
       await updateAvatar(file)
       await refreshAccount()
       URL.revokeObjectURL(localPreviewUrl)
       setPreviewUrl(null)
+      onPreviewUrlChange?.(null)
       setSuccess('Foto de perfil actualizada.')
     } catch (err) {
       setError(
@@ -98,6 +105,7 @@ export function AccountAvatarSection({
       if (localPreviewUrl) {
         URL.revokeObjectURL(localPreviewUrl)
         setPreviewUrl(null)
+        onPreviewUrlChange?.(null)
       }
     } finally {
       setUploading(false)
@@ -113,6 +121,7 @@ export function AccountAvatarSection({
 
       await deleteAvatar()
       setPreviewUrl(null)
+      onPreviewUrlChange?.(null)
       await refreshAccount()
       setSuccess('Foto de perfil eliminada.')
     } catch (err) {
@@ -125,16 +134,18 @@ export function AccountAvatarSection({
   }
 
   return (
-    <section className="rounded-xl border border-border/60 bg-background/75 p-3 dark:bg-background/35">
+    <section className="rounded-xl border border-border/50 bg-muted/20 p-3.5 dark:bg-muted/10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          <UserAvatar
-            name={fullName}
-            avatarUrl={avatarUrl}
-            size={64}
-            className="shrink-0"
-            fallbackClassName="bg-primary/10 text-primary dark:bg-primary/15"
-          />
+          {showAvatarPreview ? (
+            <UserAvatar
+              name={fullName}
+              avatarUrl={avatarUrl}
+              size={60}
+              className="shrink-0"
+              fallbackClassName="bg-primary/10 text-primary dark:bg-primary/15"
+            />
+          ) : null}
 
           {showCopy ? (
             <div className="min-w-0">
@@ -162,7 +173,7 @@ export function AccountAvatarSection({
             variant="outline"
             disabled={uploading || removing}
             aria-label="Cambiar foto de perfil"
-            className="h-10 w-full rounded-xl border-border/60 bg-background/75 shadow-none hover:bg-muted/60 dark:bg-background/35 sm:w-auto"
+            className="h-9 w-full rounded-xl border-border/60 bg-background/75 px-3 shadow-none hover:bg-background dark:bg-background/35 sm:w-auto"
             onClick={() => inputRef.current?.click()}
           >
             {uploading ? (
@@ -184,7 +195,7 @@ export function AccountAvatarSection({
               variant="outline"
               disabled={uploading || removing}
               aria-label="Eliminar foto de perfil"
-              className="h-10 w-full rounded-xl border-border/60 bg-background/75 text-destructive shadow-none hover:bg-destructive/5 hover:text-destructive dark:bg-background/35 sm:w-auto"
+              className="h-9 w-full rounded-xl border-border/60 bg-background/75 px-3 text-destructive shadow-none hover:bg-destructive/5 hover:text-destructive dark:bg-background/35 sm:w-auto"
               onClick={() => void handleDelete()}
             >
               {removing ? (
@@ -204,15 +215,15 @@ export function AccountAvatarSection({
       </div>
 
       {error ? (
-        <div className="mt-4 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive dark:bg-destructive/10">
+        <AccountFormMessage variant="error" className="mt-3">
           {error}
-        </div>
+        </AccountFormMessage>
       ) : null}
 
       {success ? (
-        <div className="mt-4 rounded-xl border border-green-500/20 bg-green-500/5 px-3 py-2.5 text-sm text-green-700 dark:bg-green-500/10 dark:text-green-400">
+        <AccountFormMessage variant="success" className="mt-3">
           {success}
-        </div>
+        </AccountFormMessage>
       ) : null}
     </section>
   )

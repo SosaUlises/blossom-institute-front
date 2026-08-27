@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from 'react'
 import { Loader2, Save, UserRound } from 'lucide-react'
 
 import { AccountAvatarSection } from '@/components/account/settings/account-avatar-section'
+import { AccountFormMessage } from '@/components/account/settings/account-form-message'
 import { RoleChipList } from '@/components/account/settings/role-chip-list'
 import { SettingsSection } from '@/components/account/settings/settings-section'
 import { Button } from '@/components/ui/button'
@@ -182,7 +183,7 @@ export function AccountProfileForm({
           className={
             showRoles
               ? 'grid gap-3 md:grid-cols-[180px_minmax(0,1fr)]'
-              : 'grid gap-3 md:grid-cols-[180px]'
+              : 'grid gap-3 md:grid-cols-2'
           }
         >
           <div className="space-y-1.5">
@@ -213,15 +214,15 @@ export function AccountProfileForm({
         </div>
 
         {error && (
-          <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive dark:bg-destructive/10">
+          <AccountFormMessage variant="error">
             {error}
-          </div>
+          </AccountFormMessage>
         )}
 
         {success && (
-          <div className="rounded-xl border border-green-500/20 bg-green-500/5 px-3 py-2.5 text-sm text-green-700 dark:bg-green-500/10 dark:text-green-400">
+          <AccountFormMessage variant="success">
             {success}
-          </div>
+          </AccountFormMessage>
         )}
 
         <div className="flex justify-end">

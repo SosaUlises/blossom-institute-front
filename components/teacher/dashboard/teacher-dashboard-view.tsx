@@ -134,8 +134,8 @@ function SectionHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="flex items-end justify-between gap-4">
-      <div>
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+      <div className="min-w-0">
         <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
           {title}
         </h2>
@@ -145,7 +145,9 @@ function SectionHeader({
           </p>
         ) : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? (
+        <div className="shrink-0 self-start sm:self-auto">{action}</div>
+      ) : null}
     </div>
   )
 }
@@ -160,12 +162,12 @@ function EmptyState({
   description: string
 }) {
   return (
-    <div className="rounded-lg border border-dashed border-border/60 bg-muted/10 px-3.5 py-3.5 text-sm text-muted-foreground dark:bg-muted/5">
+    <div className="rounded-xl border border-dashed border-border/60 bg-muted/10 px-3.5 py-3.5 text-sm text-muted-foreground dark:bg-muted/5">
       <div className="flex items-start gap-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted/50 text-muted-foreground">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground">
           <Icon className="size-3.5" />
         </span>
-        <div>
+        <div className="min-w-0">
           <p className="font-semibold text-foreground">{title}</p>
           <p className="mt-0.5 leading-5">{description}</p>
         </div>
@@ -186,8 +188,8 @@ function DayHeader({
     : false
   const pendingCopy =
     pendingCount === 1
-      ? '1 entrega esperando devolución'
-      : `${pendingCount} entregas esperando devolución`
+      ? '1 entrega para revisar'
+      : `${pendingCount} entregas para revisar`
   const classCopy = nextClass
     ? `Tu próxima clase es ${nextClass.cursoNombre} ${
         nextClassIsToday ? 'hoy' : formatClassDate(nextClass.fecha).toLowerCase()
@@ -200,18 +202,18 @@ function DayHeader({
         ? classCopy
         : pendingCount > 0
           ? `Tenés ${pendingCopy}.`
-          : 'No tenés clases próximas ni entregas esperando devolución.'
+          : 'No tenés clases próximas ni entregas para revisar.'
 
   return (
-    <header className="border-b border-border/60 pb-4">
+    <header className="border-b border-border/60 pb-5 pt-1 sm:pb-6">
       <div className="max-w-3xl">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           Hoy en tus clases
         </h1>
-        <p className="mt-2.5 text-sm leading-6 text-foreground/85 sm:text-[15px]">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground/85 sm:text-[15px]">
           {summary}
         </p>
-        <p className="mt-1.5 text-sm capitalize text-muted-foreground">
+        <p className="mt-2 text-sm text-muted-foreground">
           {formatTodayLabel()}
         </p>
       </div>
@@ -229,26 +231,11 @@ function TodayClassCard({
   const today = isToday(parseLocalDate(item.fecha))
 
   return (
-    <article className="border-t border-border/60 pt-5">
+    <article>
       <div className="max-w-3xl">
         <h3 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           {item.cursoNombre}
         </h3>
-
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
-          <span
-            className={cn(
-              'font-semibold',
-              today ? 'text-primary' : 'text-foreground/80',
-            )}
-          >
-            {formatClassDate(item.fecha)}
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-foreground/80">
-            <Clock3 className="size-4 text-muted-foreground" />
-            {formatTimeRange(item)}
-          </span>
-        </div>
 
         {description?.trim() ? (
           <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-muted-foreground">
@@ -256,7 +243,24 @@ function TodayClassCard({
           </p>
         ) : null}
 
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          <span
+            className={cn(
+              'inline-flex min-h-7 items-center rounded-lg border px-2.5 text-xs font-semibold',
+              today
+                ? 'border-primary/20 bg-primary/10 text-primary'
+                : 'border-border/60 bg-background/70 text-foreground/80',
+            )}
+          >
+            {formatClassDate(item.fecha)}
+          </span>
+          <span className="inline-flex min-h-7 items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2.5 text-xs font-semibold text-foreground/80">
+            <Clock3 className="size-3.5 text-muted-foreground" />
+            {formatTimeRange(item)}
+          </span>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {today ? (
             <>
               <Link
@@ -294,7 +298,7 @@ function NextClass({
   description?: string | null
 }) {
   return (
-    <section className="space-y-3 rounded-xl border border-primary/20 bg-card/95 p-5 shadow-[0_8px_24px_rgba(15,23,42,0.045)] dark:border-primary/25 dark:bg-card/90 sm:p-6">
+    <section className="space-y-4 rounded-2xl border border-primary/20 bg-card/95 p-4 shadow-sm dark:border-primary/25 dark:bg-card/90 sm:p-5">
       <div className="flex items-center gap-2">
         <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <CalendarCheck2 className="size-4" />
@@ -325,10 +329,19 @@ function PendingReviews({
   const pending = getPendingDeliveries(items)
 
   return (
-    <section id="entregas" className="space-y-3 rounded-xl border border-border/60 bg-card/90 p-3.5 dark:bg-card/80 sm:p-4">
+    <section id="entregas" className="space-y-3 rounded-2xl border border-border/60 bg-card/95 p-3.5 shadow-sm dark:bg-card/80 sm:p-4">
       <SectionHeader
         title="Para corregir"
         description="Entregas listas para revisar."
+        action={
+          <Link
+            href="/teacher/courses"
+            className="inline-flex h-8 items-center justify-center rounded-lg border border-border/70 bg-background/70 px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
+          >
+            Ver todas las entregas
+            <ArrowRight className="ml-1.5 size-3.5" />
+          </Link>
+        }
       />
 
       {pending.length === 0 ? (
@@ -338,7 +351,7 @@ function PendingReviews({
           description="La cola de entregas está al día."
         />
       ) : (
-        <div className="divide-y divide-border/50 border-y border-border/60">
+        <div className="space-y-1.5">
           {pending.slice(0, 5).map((item) => {
             const late = item.estadoEntrega === EstadoEntrega.FueraDeTermino
             const alumnoName = `${item.alumnoNombre} ${item.alumnoApellido}`.trim() || 'Alumno'
@@ -347,8 +360,8 @@ function PendingReviews({
               <article
                 key={item.entregaId}
                 className={cn(
-                  'px-1 py-2.5 transition-colors hover:bg-muted/10 sm:px-2',
-                  late && 'bg-rose-500/[0.035]',
+                  'rounded-xl border border-transparent px-2.5 py-2.5 transition-colors hover:border-border/50 hover:bg-muted/15',
+                  late && 'border-rose-500/15 bg-rose-500/[0.035] hover:border-rose-500/20',
                 )}
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -382,7 +395,7 @@ function PendingReviews({
 
                   <Link
                     href={`/teacher/courses/${item.cursoId}/tasks/${item.tareaId}/submissions/${item.alumnoId}`}
-                    className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:text-sm"
+                    className="inline-flex h-9 w-full shrink-0 items-center justify-center rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto sm:text-sm"
                   >
                     Revisar entrega
                     <ArrowRight className="ml-2 size-4" />
@@ -434,26 +447,36 @@ function StudentsRequiringAttention({
 }) {
   if (items.length === 0) return null
 
+  const visibleItems = items.slice(0, 3)
+
   return (
-    <section className="space-y-3 border-t border-border/60 pt-4">
+    <section className="space-y-3 rounded-2xl border border-border/60 bg-card/90 p-3.5 shadow-sm dark:bg-card/70 sm:p-4">
       <SectionHeader
         title="Alumnos que requieren atención"
         description={`Señales del ${items[0].periodoLabel} que conviene revisar.`}
+        action={
+          <span className="inline-flex h-7 items-center rounded-lg border border-border/60 bg-background/70 px-2.5 text-xs font-semibold text-muted-foreground">
+            {visibleItems.length} {visibleItems.length === 1 ? 'alumno' : 'alumnos'}
+          </span>
+        }
       />
 
-      <div className="grid gap-2.5">
-        {items.slice(0, 3).map((item) => {
+      <div className="grid gap-2">
+        {visibleItems.map((item) => {
           const reasons = getStudentAttentionReasons(item)
           const critical = item.severidad === 'critical'
+          const stateLabel = critical
+            ? 'Prioridad académica'
+            : 'Seguimiento sugerido'
 
           return (
             <article
               key={`${item.cursoId}-${item.alumnoId}`}
               className={cn(
-                'grid gap-3 rounded-xl border bg-card/70 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/55 sm:grid-cols-[minmax(180px,0.8fr)_minmax(0,1.4fr)_auto] sm:items-center sm:p-4',
+                'grid gap-3 rounded-xl border bg-background/55 p-3.5 transition-colors hover:bg-background/75 dark:bg-background/25 dark:hover:bg-background/35 sm:grid-cols-[minmax(190px,0.85fr)_minmax(0,1.45fr)_auto] sm:items-center',
                 critical
-                  ? 'border-rose-500/20'
-                  : 'border-amber-500/20',
+                  ? 'border-rose-500/25'
+                  : 'border-amber-500/25',
               )}
             >
               <div className="flex min-w-0 items-start gap-3">
@@ -470,7 +493,7 @@ function StudentsRequiringAttention({
                 />
 
                 <div className="min-w-0">
-                  <h3 className="truncate text-sm font-semibold text-foreground sm:text-[15px]">
+                  <h3 className="truncate text-sm font-semibold leading-5 text-foreground sm:text-[15px]">
                     {item.alumnoNombre}
                   </h3>
                   <p className="mt-1 truncate text-xs font-medium text-muted-foreground">
@@ -479,25 +502,37 @@ function StudentsRequiringAttention({
                 </div>
               </div>
 
-              <div className="flex min-w-0 flex-wrap gap-1.5">
-                {reasons.map((reason) => (
-                  <span
-                    key={reason.label}
-                    className={cn(
-                      'inline-flex max-w-full items-center rounded-md border px-2 py-1 text-xs font-medium',
-                      reason.tone === 'rose'
-                        ? 'border-rose-500/20 bg-rose-500/[0.07] text-rose-700 dark:text-rose-400'
-                        : 'border-amber-500/20 bg-amber-500/[0.07] text-amber-800 dark:text-amber-300',
-                    )}
-                  >
-                    <span className="truncate">{reason.label}</span>
-                  </span>
-                ))}
+              <div className="min-w-0 space-y-2">
+                <p
+                  className={cn(
+                    'text-xs font-semibold',
+                    critical
+                      ? 'text-rose-700 dark:text-rose-400'
+                      : 'text-amber-800 dark:text-amber-300',
+                  )}
+                >
+                  {stateLabel}
+                </p>
+                <div className="flex min-w-0 flex-wrap gap-1.5">
+                  {reasons.map((reason) => (
+                    <span
+                      key={reason.label}
+                      className={cn(
+                        'inline-flex max-w-full items-center rounded-md border px-2 py-1 text-xs font-medium',
+                        reason.tone === 'rose'
+                          ? 'border-rose-500/20 bg-rose-500/[0.07] text-rose-700 dark:text-rose-400'
+                          : 'border-amber-500/20 bg-amber-500/[0.07] text-amber-800 dark:text-amber-300',
+                      )}
+                    >
+                      <span className="truncate">{reason.label}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
 
               <Link
                 href={`/teacher/courses/${item.cursoId}/students/${item.alumnoId}/grades`}
-                className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/[0.06] px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 sm:justify-self-end"
+                className="inline-flex h-9 w-full shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/[0.06] px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 sm:w-auto sm:justify-self-end"
               >
                 Ver calificaciones
                 <ArrowRight className="ml-2 size-3.5" />
@@ -536,7 +571,8 @@ function buildActivity({
     .map((item) => ({
       key: `delivery-${item.entregaId}`,
       title: 'Devolución enviada',
-      description: `${item.alumnoApellido}, ${item.alumnoNombre} · ${item.tituloTarea}`,
+      description: `${item.alumnoApellido}, ${item.alumnoNombre}`,
+      detail: item.tituloTarea,
       meta: `${item.cursoNombre} · ${formatRelative(item.fechaEntregaUtc)}`,
       href: `/teacher/courses/${item.cursoId}/tasks/${item.tareaId}/submissions/${item.alumnoId}`,
       sortTime: new Date(item.fechaEntregaUtc).getTime(),
@@ -563,8 +599,9 @@ function buildActivity({
       title:
         item.estadoClase === EstadoClase.Cancelada
           ? 'Clase cancelada'
-          : 'Clase registrada',
+          : 'Asistencia registrada',
       description: item.descripcion?.trim() || item.cursoNombre,
+      detail: null,
       meta: `${item.cursoNombre} · ${format(parseLocalDate(item.fecha), 'd MMM', { locale: es })}`,
       href: `/teacher/courses/${item.cursoId}/classes/${encodeURIComponent(getDatePart(item.fecha))}`,
       sortTime: parseLocalDate(item.fecha).getTime(),
@@ -595,13 +632,18 @@ function ActivityFeed({
   if (items.length === 0) return null
 
   return (
-    <section className="space-y-3 rounded-xl border border-border/60 bg-card/70 p-3.5 dark:bg-card/50 sm:p-4">
+    <section className="space-y-3 rounded-2xl border border-border/60 bg-card/90 p-3.5 shadow-sm dark:bg-card/65 sm:p-4">
       <SectionHeader
         title="Últimos movimientos"
-        description="Clases registradas y devoluciones recientes."
+        description="Actividad reciente para ubicarte rápido."
+        action={
+          <span className="inline-flex h-7 items-center rounded-lg border border-border/60 bg-background/70 px-2.5 text-xs font-semibold text-muted-foreground">
+            {items.length} {items.length === 1 ? 'movimiento' : 'movimientos'}
+          </span>
+        }
       />
 
-      <div className="divide-y divide-border/50 border-y border-border/55">
+      <div className="grid gap-1.5">
         {visibleItems.map((item) => {
           const Icon = item.icon
           const isStudentActivity = item.actorType === 'student'
@@ -610,35 +652,45 @@ function ActivityFeed({
             <Link
               key={item.key}
               href={item.href}
-              className="group flex gap-3 px-1 py-2.5 transition-colors hover:bg-muted/15 sm:px-2"
+              className="group flex gap-3 rounded-xl border border-transparent px-2.5 py-2.5 transition-colors hover:border-border/50 hover:bg-background/65 dark:hover:bg-background/25"
             >
               {isStudentActivity ? (
                 <UserAvatar
                   name={item.actorName}
                   avatarUrl={item.actorAvatarUrl}
-                  size={28}
+                  size={32}
                   className="mt-0.5 shrink-0"
                   fallbackClassName={toneStyles[item.tone].icon}
                 />
               ) : (
                 <span
                   className={cn(
-                    'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md',
+                    'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg',
                     toneStyles[item.tone].icon,
                   )}
                 >
                   <Icon className="size-3.5" />
                 </span>
               )}
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-foreground">
-                  {item.title}
+              <span className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold leading-5 text-foreground">
+                    {item.title}
+                  </span>
+                  <span className="mt-0.5 block truncate text-sm leading-5 text-muted-foreground">
+                    {item.description}
+                  </span>
+                  {item.detail ? (
+                    <span className="mt-0.5 block truncate text-xs font-medium text-foreground/75">
+                      {item.detail}
+                    </span>
+                  ) : null}
+                  <span className="mt-1 block text-[11px] leading-4 text-muted-foreground/70">
+                    {item.meta}
+                  </span>
                 </span>
-                <span className="mt-0.5 block truncate text-sm text-muted-foreground">
-                  {item.description}
-                </span>
-                <span className="mt-0.5 block text-[11px] text-muted-foreground/70">
-                  {item.meta}
+                <span className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground/55 transition-colors group-hover:bg-muted/45 group-hover:text-foreground">
+                  <ArrowRight className="size-3.5" />
                 </span>
               </span>
             </Link>
@@ -681,13 +733,13 @@ export function TeacherDashboardView({
     : null
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-5">
       <DayHeader
         nextClass={nextClass}
         pendingCount={dashboard.entregasPendientesCorreccionCount}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-start lg:gap-5">
         <NextClass item={nextClass} description={nextClassDescription} />
 
         <PendingReviews items={dashboard.ultimasEntregas} />
