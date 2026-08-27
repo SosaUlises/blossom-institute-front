@@ -182,7 +182,7 @@ export function TeacherClassAttendanceView({ courseId, fecha }: Props) {
   if (!detail) {
     return (
       <div className="rounded-2xl border border-border/60 bg-background/60 px-6 py-10 text-sm text-muted-foreground">
-        No se encontró la asistencia.
+        No se encontró esta asistencia.
       </div>
     )
   }

@@ -32,8 +32,8 @@ export default async function TeacherCourseDetailPage({ params }: PageProps) {
     <>
       <AppHeader title="Curso" />
 
-      <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
-        <div className="mx-auto max-w-7xl space-y-3">
+      <main className="min-w-0 flex-1 overflow-auto overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
+        <div className="mx-auto max-w-7xl space-y-4">
           <TeacherCourseHero course={course} />
           <TeacherCourseTabs course={course} />
         </div>

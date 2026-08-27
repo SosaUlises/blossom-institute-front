@@ -8,6 +8,7 @@ import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { useSidebar } from '@/components/ui/sidebar'
 import { UserAvatar } from '@/components/shared/user-avatar'
+import { Breadcrumbs, type BreadcrumbItem } from '@/components/layout/breadcrumbs'
 import type { SessionUser } from '@/lib/auth/session'
 import { CURRENT_USER_AVATAR_UPDATED_EVENT } from '@/lib/auth/client-events'
 import { cn } from '@/lib/utils'
@@ -71,6 +72,115 @@ function getHeaderSubtitle(pathname: string) {
   }
 
   return 'Blossom Institute'
+}
+
+function getTeacherBreadcrumbs(pathname: string): BreadcrumbItem[] | null {
+  const match = pathname.match(/^\/teacher\/courses\/([^/]+)\/(.+)$/)
+  if (!match) return null
+
+  const [, courseId, rest] = match
+  const parts = rest.split('/')
+  const courseHref = `/teacher/courses/${courseId}`
+  const base: BreadcrumbItem[] = [
+    { label: 'Cursos', href: '/teacher/courses' },
+    { label: 'Curso', href: courseHref },
+  ]
+
+  if (parts[0] === 'classes') {
+    return [
+      ...base,
+      {
+        label:
+          parts[1] === 'take' ? 'Tomar asistencia' : 'Detalle de asistencia',
+      },
+    ]
+  }
+
+  if (parts[0] === 'tasks') {
+    if (parts[1] === 'create') {
+      return [...base, { label: 'Nueva publicación' }]
+    }
+
+    const taskHref = `${courseHref}/tasks/${parts[1]}`
+    const taskBase = [...base, { label: 'Publicación', href: taskHref }]
+
+    if (parts[2] === 'edit') return [...taskBase, { label: 'Editar' }]
+    if (parts[2] === 'submissions') return [...taskBase, { label: 'Entrega' }]
+    return [...base, { label: 'Publicación' }]
+  }
+
+  if (parts[0] === 'students' && parts[2] === 'grades') {
+    const gradesHref = `${courseHref}/students/${parts[1]}/grades`
+
+    if (parts[3] === 'create') {
+      return [
+        ...base,
+        { label: 'Calificaciones', href: gradesHref },
+        { label: 'Nueva calificación' },
+      ]
+    }
+
+    if (parts[3] && parts[4] === 'edit') {
+      return [
+        ...base,
+        { label: 'Calificaciones', href: gradesHref },
+        { label: 'Editar calificación' },
+      ]
+    }
+
+    return [...base, { label: 'Calificaciones' }]
+  }
+
+  if (parts[0] === 'grade-templates') {
+    const templatesHref = `${courseHref}/grade-templates`
+
+    if (parts[1] === 'create') {
+      return [
+        ...base,
+        { label: 'Plantillas', href: templatesHref },
+        { label: 'Nueva plantilla' },
+      ]
+    }
+
+    if (parts[2] === 'apply') {
+      return [
+        ...base,
+        { label: 'Plantillas', href: templatesHref },
+        { label: 'Aplicar plantilla' },
+      ]
+    }
+
+    if (parts[2] === 'edit') {
+      return [
+        ...base,
+        { label: 'Plantillas', href: templatesHref },
+        { label: 'Editar plantilla' },
+      ]
+    }
+
+    return [...base, { label: 'Plantillas' }]
+  }
+
+  return null
+}
+
+function TeacherBreadcrumbTrail() {
+  const pathname = usePathname()
+  const items = getTeacherBreadcrumbs(pathname)
+
+  if (!items) return null
+
+  return (
+    <div className="px-5 pt-4 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <Breadcrumbs
+          items={items}
+          rootHref="/teacher/dashboard"
+          rootLabel="Inicio"
+        />
+      </div>
+    </div>
+  )
 }
 
 function AdminMobileAppBar({ title, subtitle }: AppHeaderProps) {
@@ -257,6 +367,15 @@ export function AppHeader(props: AppHeaderProps) {
 
   if (pathname.startsWith('/admin')) {
     return <AdminMobileAppBar {...props} />
+  }
+
+  if (pathname.startsWith('/teacher')) {
+    return (
+      <>
+        <AdminMobileAppBar {...props} />
+        <TeacherBreadcrumbTrail />
+      </>
+    )
   }
 
   return <WorkspaceAppHeader {...props} />

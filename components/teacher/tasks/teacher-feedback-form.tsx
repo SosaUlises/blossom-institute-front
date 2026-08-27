@@ -139,9 +139,11 @@ export function TeacherFeedbackForm({
     <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90 sm:p-5">
       <div className="space-y-4">
         <div>
-          <p className="text-xs font-medium text-muted-foreground">Corrección</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Acción principal
+          </p>
           <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-            Nueva devolución
+            Feedback y calificación
           </h2>
         </div>
 
@@ -168,7 +170,7 @@ export function TeacherFeedbackForm({
         <div className="space-y-2">
           <label htmlFor="feedback-grade" className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Star className="size-4 text-muted-foreground" />
-            Nota
+            Calificación
           </label>
           <input
             id="feedback-grade"
@@ -246,7 +248,7 @@ export function TeacherFeedbackForm({
           ) : (
             <Send className="mr-2 size-4" />
           )}
-          {saving ? 'Enviando...' : 'Enviar devolución'}
+          {saving ? 'Enviando...' : 'Enviar feedback'}
         </Button>
       </div>
     </section>

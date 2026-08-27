@@ -265,11 +265,12 @@ export function TeacherGradeTemplateApplyView({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <AppHeader title="Aplicar plantilla" />
 
-      <div className="space-y-4 p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8">
-        <header className="space-y-3">
+      <main className="flex-1 overflow-auto px-5 py-5 pb-24 lg:px-8 lg:py-6 lg:pb-8">
+        <div className="mx-auto max-w-7xl space-y-4">
+        <header className="space-y-3 border-b border-border/60 pb-4">
           <Button
             variant="ghost"
             className="h-9 justify-start rounded-xl px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
@@ -290,8 +291,9 @@ export function TeacherGradeTemplateApplyView({
         </header>
 
         {loading ? (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-background/40 px-6 py-12 text-center text-sm text-muted-foreground">
-            Cargando datos...
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="h-72 animate-pulse rounded-xl border border-border/60 bg-muted/20" />
+            <div className="h-64 animate-pulse rounded-xl border border-border/60 bg-muted/20" />
           </div>
         ) : !template ? (
           <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
@@ -525,7 +527,8 @@ export function TeacherGradeTemplateApplyView({
             </div>
           </>
         )}
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   )
 }

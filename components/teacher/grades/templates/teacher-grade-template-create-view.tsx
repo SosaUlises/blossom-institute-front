@@ -31,11 +31,12 @@ export function TeacherGradeTemplateCreateView({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <AppHeader title="Nueva plantilla de calificación" />
 
-      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
-        <header className="space-y-3">
+      <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
+        <div className="mx-auto max-w-5xl space-y-4">
+        <header className="space-y-3 border-b border-border/60 pb-4">
           <Button
             variant="ghost"
             className="h-9 justify-start rounded-xl px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
@@ -60,7 +61,8 @@ export function TeacherGradeTemplateCreateView({
           onSubmit={handleSubmit}
           submitLabel="Crear plantilla"
         />
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   )
 }

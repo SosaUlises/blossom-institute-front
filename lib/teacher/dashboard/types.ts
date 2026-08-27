@@ -71,6 +71,21 @@ export interface ProfesorDashboardResumenCursoItem {
   promedioCurso?: number | null
 }
 
+export interface ProfesorDashboardAlumnoAtencionItem {
+  alumnoId: number
+  alumnoNombre: string
+  alumnoAvatarUrl?: string | null
+  cursoId: number
+  cursoNombre: string
+  periodoLabel: string
+  promedio?: number | null
+  asistencia?: number | null
+  calificacionBajaTitulo?: string | null
+  calificacionBajaTipo?: number | null
+  calificacionBajaNota?: number | null
+  severidad: 'attention' | 'critical'
+}
+
 export interface ProfesorDashboardResponse {
   profesorId: number
   nombre: string
@@ -86,4 +101,5 @@ export interface ProfesorDashboardResponse {
   ultimasClases: ProfesorDashboardUltimaClaseItem[]
   ultimasEntregas: ProfesorDashboardUltimaEntregaItem[]
   resumenPorCurso: ProfesorDashboardResumenCursoItem[]
+  alumnosQueRequierenAtencion: ProfesorDashboardAlumnoAtencionItem[]
 }

@@ -7,6 +7,7 @@ export enum EstadoCurso {
 export interface TeacherCourseListItem {
   id: number
   nombre: string
+  themeIcon?: string | null
   anio: number
   estado: EstadoCurso
   cantidadHorarios: number

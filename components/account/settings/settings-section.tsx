@@ -21,13 +21,13 @@ export function SettingsSection({
 }) {
   return (
     <Card className="min-w-0 rounded-xl border border-border/60 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70 dark:bg-card/90">
-      <CardHeader className="p-4 pb-2">
+      <CardHeader className="p-4 pb-3">
         <div className="flex items-start gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/15">
             <Icon className="size-4" />
           </div>
 
-          <div className="space-y-0.5">
+          <div className="min-w-0 space-y-0.5">
             <CardTitle className="text-base font-semibold tracking-tight text-foreground">
               {title}
             </CardTitle>
@@ -38,7 +38,7 @@ export function SettingsSection({
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 pt-0">
+      <CardContent className="px-4 pb-4 pt-0">
         {children}
       </CardContent>
     </Card>

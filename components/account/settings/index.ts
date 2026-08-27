@@ -1,4 +1,5 @@
 export { AccountAvatarSection } from './account-avatar-section'
+export { AccountFormMessage } from './account-form-message'
 export { AccountProfileForm } from './account-profile-form'
 export { ChangePasswordForm } from './change-password-form'
 export { RoleChipList } from './role-chip-list'

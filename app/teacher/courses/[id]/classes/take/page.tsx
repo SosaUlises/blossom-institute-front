@@ -16,7 +16,7 @@ export default async function TeacherTakeAttendancePage({ params }: PageProps) {
       <AppHeader title="Asistencia" />
 
       <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto w-full max-w-4xl pb-8">
           <TeacherTakeAttendanceView courseId={courseId} />
         </div>
       </main>

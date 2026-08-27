@@ -17,16 +17,18 @@ export function PersonAvatar({
   name,
   avatarUrl,
   tone,
+  size = 40,
 }: {
   name: string
   avatarUrl?: string | null
   tone: Tone
+  size?: number
 }) {
   return (
     <UserAvatar
       name={name}
       avatarUrl={avatarUrl}
-      size={40}
+      size={size}
       className="shrink-0"
       fallbackClassName={toneClasses[tone]}
     />

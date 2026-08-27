@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Eye, EyeOff, KeyRound, Loader2, ShieldCheck } from 'lucide-react'
 
+import { AccountFormMessage } from '@/components/account/settings/account-form-message'
 import { SettingsSection } from '@/components/account/settings/settings-section'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -152,15 +153,15 @@ export function ChangePasswordForm({
         />
 
         {error && (
-          <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive dark:bg-destructive/10">
+          <AccountFormMessage variant="error">
             {error}
-          </div>
+          </AccountFormMessage>
         )}
 
         {success && (
-          <div className="rounded-xl border border-green-500/20 bg-green-500/5 px-3 py-2.5 text-sm text-green-700 dark:bg-green-500/10 dark:text-green-400">
+          <AccountFormMessage variant="success">
             {success}
-          </div>
+          </AccountFormMessage>
         )}
 
         <div className="flex justify-end">

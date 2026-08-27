@@ -1,17 +1,24 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  BookOpen,
-  CalendarRange,
-  Clock,
+  ArrowRight,
+  CalendarClock,
+  ClipboardCheck,
   Inbox,
   Search,
-  ChevronRight,
+  Users,
 } from 'lucide-react'
 
-import { cn } from '@/lib/utils'
+import { Card, CardContent } from '@/components/ui/card'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -20,17 +27,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-  EmptyDescription,
-} from '@/components/ui/empty'
+  CourseThemeBackground,
+} from '@/components/teacher/course-detail/course-theme-background'
 import { getTeacherCourses } from '@/lib/teacher/courses/api'
 import type { TeacherCourseListItem } from '@/lib/teacher/courses/types'
 import { EstadoCurso } from '@/lib/teacher/courses/types'
+import type {
+  ProfesorDashboardProximaClaseItem,
+  ProfesorDashboardResponse,
+} from '@/lib/teacher/dashboard/types'
 
 const SELECT_ALL = 'all'
 
@@ -40,173 +46,280 @@ const ESTADO_OPTIONS = [
   { value: String(EstadoCurso.Archivado), label: 'Archivado' },
 ] as const
 
-const ESTADO_CONFIG: Record<
-  EstadoCurso,
-  { label: string; dot: string; pill: string }
-> = {
-  [EstadoCurso.Activo]: {
-    label: 'Activo',
-    dot: 'bg-emerald-500',
-    pill:
-      'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-  },
-  [EstadoCurso.Inactivo]: {
-    label: 'Inactivo',
-    dot: 'bg-amber-500',
-    pill:
-      'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400',
-  },
-  [EstadoCurso.Archivado]: {
-    label: 'Archivado',
-    dot: 'bg-slate-400',
-    pill:
-      'border-slate-400/20 bg-slate-500/10 text-slate-600 dark:text-slate-400',
-  },
+type DashboardEnvelope = {
+  data?: ProfesorDashboardResponse
 }
 
-function EstadoBadge({ estado }: { estado: EstadoCurso }) {
-  const config = ESTADO_CONFIG[estado] ?? {
-    label: 'Desconocido',
-    dot: 'bg-muted-foreground',
-    pill: 'border-border/60 bg-muted/40 text-muted-foreground',
-  }
-
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
-        config.pill,
-      )}
-    >
-      <span className={cn('size-1.5 rounded-full', config.dot)} />
-      {config.label}
-    </span>
-  )
+function parseClassDate(item: ProfesorDashboardProximaClaseItem) {
+  const [year, month, day] = item.fecha.split('T')[0].split('-').map(Number)
+  const [hours, minutes] = item.horaInicio.slice(0, 5).split(':').map(Number)
+  return new Date(year, month - 1, day, hours, minutes)
 }
 
-function MetaPill({
-  icon: Icon,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  children: React.ReactNode
-}) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/[0.18] px-2.5 py-1 text-xs font-medium text-muted-foreground">
-      <Icon className="size-3.5 shrink-0" />
-      {children}
-    </span>
-  )
-}
+function formatNextClass(item: ProfesorDashboardProximaClaseItem) {
+  const date = parseClassDate(item)
+  const today = new Date()
+  const tomorrow = new Date()
+  tomorrow.setDate(today.getDate() + 1)
 
-function CourseSignalPill({
-  icon: Icon,
-  label,
-  tone,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  tone: string
-}) {
-  return (
-    <span
-      className={cn(
-        'inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold leading-5',
-        tone,
-      )}
-    >
-      <Icon className="size-3.5 shrink-0" />
-      <span className="truncate">{label}</span>
-    </span>
-  )
+  const sameDay = (left: Date, right: Date) =>
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+
+  const dayLabel = sameDay(date, today)
+    ? 'Hoy'
+    : sameDay(date, tomorrow)
+      ? 'Mañana'
+      : new Intl.DateTimeFormat('es-AR', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        }).format(date)
+
+  return `${dayLabel} · ${item.horaInicio.slice(0, 5)}`
 }
 
 function CourseCardSkeleton() {
   return (
-    <li className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="h-11 w-11 animate-pulse rounded-lg bg-muted/60" />
-          <div className="space-y-2">
-            <div className="h-7 w-44 animate-pulse rounded-lg bg-muted/60" />
-            <div className="h-4 w-32 animate-pulse rounded-lg bg-muted/40" />
-          </div>
+    <li className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
+      <div className="h-28 border-b border-border/40 bg-muted/20">
+        <div className="h-full w-full animate-pulse bg-muted/35" />
+      </div>
+      <div className="flex min-h-40 flex-col p-5">
+        <div className="space-y-2.5">
+          <div className="h-5 w-36 animate-pulse rounded-md bg-muted/50" />
+          <div className="h-4 w-48 max-w-full animate-pulse rounded-md bg-muted/35" />
         </div>
-
-        <div className="h-7 w-24 animate-pulse rounded-full bg-muted/50" />
+        <div className="mt-auto space-y-2 pt-5">
+          <div className="h-4 w-40 animate-pulse rounded-md bg-muted/35" />
+          <div className="h-4 w-28 animate-pulse rounded-md bg-muted/30" />
+        </div>
       </div>
-
-      <div className="mt-5 flex gap-2">
-        <div className="h-8 w-24 animate-pulse rounded-full bg-muted/40" />
-        <div className="h-8 w-28 animate-pulse rounded-full bg-muted/40" />
-      </div>
-
-      <div className="mt-5 h-10 animate-pulse rounded-lg bg-muted/40" />
     </li>
   )
 }
 
-function CourseCard({ course }: { course: TeacherCourseListItem }) {
-  const hasSchedules = course.cantidadHorarios > 0
+function CourseCard({
+  course,
+  dashboard,
+  theme,
+}: {
+  course: TeacherCourseListItem
+  dashboard: ProfesorDashboardResponse | null
+  theme?: string | null
+}) {
+  const courseContext = dashboard?.cursos.find((item) => item.cursoId === course.id)
+  const summary = dashboard?.resumenPorCurso.find(
+    (item) => item.cursoId === course.id,
+  )
+  const nextClass = dashboard?.proximasClases
+    .filter(
+      (item) =>
+        item.cursoId === course.id && parseClassDate(item).getTime() > Date.now(),
+    )
+    .sort((a, b) => parseClassDate(a).getTime() - parseClassDate(b).getTime())[0]
+  const description = courseContext?.descripcion?.trim()
 
   return (
     <li>
       <Link
         href={`/teacher/courses/${course.id}`}
-        className="group block rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 dark:bg-card/90 sm:p-5"
+        aria-label={`Abrir curso ${course.nombre}`}
+        className="group block h-full rounded-2xl outline-none transition-transform duration-200 ease-out active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/8 text-primary shadow-[0_1px_1px_rgba(15,23,42,0.04)] transition-colors duration-200 group-hover:bg-primary/10">
-              <BookOpen className="size-5" />
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-2xl">
-                {course.nombre}
-              </h3>
-              <p className="mt-1 text-sm font-medium text-muted-foreground">
-                Aula docente
-              </p>
-            </div>
+        <article className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm transition-all hover:shadow-md">
+          <div className="relative h-28 w-full overflow-hidden border-b border-border/40 bg-muted/20">
+            <CourseThemeBackground
+              theme={theme}
+              variant="card"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/20 to-transparent" />
           </div>
 
-          <EstadoBadge estado={course.estado} />
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <MetaPill icon={CalendarRange}>Año {course.anio}</MetaPill>
-
-        </div>
-
-        <div className="mt-4 rounded-lg border border-border/60 bg-muted/[0.12] px-4 py-3 transition-colors duration-200 ease-out group-hover:border-primary/20 group-hover:bg-primary/[0.05] dark:bg-background/30">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-1 flex-col p-5">
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">
-                Abrir espacio de trabajo
-              </p>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                Gestionar clases, tareas y alumnos
-              </p>
+              <h2 className="truncate text-xl font-bold text-foreground transition-colors group-hover:text-primary">
+                {course.nombre}
+              </h2>
+              {description ? (
+                <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
+                  {description}
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground">{course.anio}</p>
+              )}
             </div>
 
-            <div className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background/80 text-muted-foreground transition-all duration-200 ease-out group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/10 group-hover:text-primary dark:bg-background/35">
-              <ChevronRight className="size-4" />
+          <div className="mt-auto flex flex-col gap-2.5 pt-5 text-sm">
+            {nextClass ? (
+              <div className="flex items-center gap-2 font-medium text-foreground">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+                  <CalendarClock className="size-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="mr-1.5 text-xs font-normal text-muted-foreground">
+                    Próxima clase
+                  </span>
+                  {formatNextClass(nextClass)}
+                </span>
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {summary ? (
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <Users className="size-4" />
+                  {summary.cantidadAlumnos}{' '}
+                  {summary.cantidadAlumnos === 1 ? 'alumno' : 'alumnos'}
+                </span>
+              ) : null}
+
+              {summary?.entregasPendientesCorreccion ? (
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/8 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                  <ClipboardCheck className="size-3.5" />
+                  {summary.entregasPendientesCorreccion}{' '}
+                  {summary.entregasPendientesCorreccion === 1
+                    ? 'corrección pendiente'
+                    : 'correcciones pendientes'}
+                </span>
+              ) : null}
+
+              <span className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background/70 text-muted-foreground transition-[border-color,background-color,color,transform] duration-200 group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/8 group-hover:text-primary">
+                <ArrowRight className="size-4" />
+              </span>
             </div>
           </div>
-        </div>
+          </div>
+        </article>
       </Link>
     </li>
   )
 }
 
+function CourseCardCompact({
+  course,
+  dashboard,
+  theme,
+}: {
+  course: TeacherCourseListItem
+  dashboard: ProfesorDashboardResponse | null
+  theme?: string | null
+}) {
+  const courseContext = dashboard?.cursos.find((item) => item.cursoId === course.id)
+  const summary = dashboard?.resumenPorCurso.find(
+    (item) => item.cursoId === course.id,
+  )
+  const nextClass = dashboard?.proximasClases
+    .filter(
+      (item) =>
+        item.cursoId === course.id && parseClassDate(item).getTime() > Date.now(),
+    )
+    .sort((a, b) => parseClassDate(a).getTime() - parseClassDate(b).getTime())[0]
+  const description = courseContext?.descripcion?.trim()
+
+  return (
+    <li>
+      <Link
+        href={`/teacher/courses/${course.id}`}
+        aria-label={`Abrir curso ${course.nombre}`}
+        className="group block h-full rounded-2xl outline-none transition-transform duration-200 ease-out active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        <article className="relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm transition-all hover:shadow-md">
+          <div className="relative h-28 w-full overflow-hidden border-b border-border/40 bg-muted/20">
+            <CourseThemeBackground theme={theme} variant="card" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/20 to-transparent" />
+          </div>
+
+          <div className="flex flex-1 flex-col p-5">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h3 className="truncate text-xl font-bold text-foreground transition-colors group-hover:text-primary">
+                  {course.nombre}
+                </h3>
+                {description ? (
+                  <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
+                    {description}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {course.anio}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex shrink-0 justify-end">
+                {summary?.entregasPendientesCorreccion ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/8 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                    <ClipboardCheck className="size-3.5" />
+                    {summary.entregasPendientesCorreccion}{' '}
+                    {summary.entregasPendientesCorreccion === 1
+                      ? 'corrección pendiente'
+                      : 'correcciones pendientes'}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mt-auto flex items-end justify-between gap-4">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
+                {nextClass ? (
+                  <div className="flex items-center gap-1.5">
+                    <CalendarClock className="size-4 text-primary" />
+                    <span>{formatNextClass(nextClass)}</span>
+                  </div>
+                ) : null}
+
+                {summary ? (
+                  <div className="flex items-center gap-1.5">
+                    <Users className="size-4" />
+                    <span>
+                      {summary.cantidadAlumnos}{' '}
+                      {summary.cantidadAlumnos === 1 ? 'alumno' : 'alumnos'}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background/70 text-muted-foreground transition-[border-color,background-color,color,transform] duration-200 group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/8 group-hover:text-primary">
+                <ArrowRight className="size-4" />
+              </span>
+            </div>
+          </div>
+        </article>
+      </Link>
+    </li>
+  )
+}
+
+async function getDashboardContext(): Promise<ProfesorDashboardResponse | null> {
+  const response = await fetch('/api/teacher/dashboard', {
+    credentials: 'include',
+    cache: 'no-store',
+  })
+
+  if (!response.ok) return null
+
+  const result = (await response.json()) as
+    | DashboardEnvelope
+    | ProfesorDashboardResponse
+
+  if ('data' in result) {
+    return result.data ?? null
+  }
+
+  return result as ProfesorDashboardResponse
+}
+
 export function TeacherCoursesTable() {
   const [items, setItems] = useState<TeacherCourseListItem[]>([])
+  const [dashboard, setDashboard] = useState<ProfesorDashboardResponse | null>(null)
   const [search, setSearch] = useState('')
   const [anio, setAnio] = useState('')
   const [estado, setEstado] = useState(SELECT_ALL)
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search), 350)
@@ -215,39 +328,55 @@ export function TeacherCoursesTable() {
 
   const loadCourses = useCallback(async () => {
     setLoading(true)
+    setError(null)
 
     try {
-      const data = await getTeacherCourses({
-        pageNumber: 1,
-        pageSize: 50,
-        search: debouncedSearch,
-        anio: anio ? Number(anio) : undefined,
-        estado: estado !== SELECT_ALL ? Number(estado) : undefined,
-      })
+      const [courses, dashboardContext] = await Promise.all([
+        getTeacherCourses({
+          pageNumber: 1,
+          pageSize: 50,
+          search: debouncedSearch,
+          anio: anio ? Number(anio) : undefined,
+          estado: estado !== SELECT_ALL ? Number(estado) : undefined,
+        }),
+        getDashboardContext().catch(() => null),
+      ])
 
-      setItems(data.items)
+      setItems(courses.items)
+      setDashboard(dashboardContext)
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'No se pudieron cargar los cursos.',
+      )
     } finally {
       setLoading(false)
     }
   }, [debouncedSearch, anio, estado])
 
   useEffect(() => {
-    loadCourses()
+    void loadCourses()
   }, [loadCourses])
 
   const hasActiveFilters = !!debouncedSearch || !!anio || estado !== SELECT_ALL
+  const visibleCountLabel = useMemo(
+    () =>
+      `${items.length} ${
+        items.length === 1 ? 'espacio de clase' : 'espacios de clase'
+      }`,
+    [items.length],
+  )
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-border/70 bg-card/80 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] backdrop-blur-sm dark:bg-card/70">
-        <div className="grid gap-2.5 sm:grid-cols-[1fr_140px] lg:grid-cols-[1fr_140px_180px]">
-          <div className="relative">
+    <div className="space-y-4">
+      <section className="mb-5 rounded-2xl border border-border/40 bg-card p-3 shadow-sm sm:p-3.5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_140px] lg:grid-cols-[1fr_140px_180px]">
+          <div className="relative col-span-2 sm:col-span-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input
               placeholder="Buscar curso..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-10 rounded-xl border-border/60 bg-background/75 pl-10 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
+              onChange={(event) => setSearch(event.target.value)}
+              className="h-11 rounded-xl border-border/60 bg-background/75 pl-10 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35 sm:h-10"
             />
           </div>
 
@@ -257,16 +386,15 @@ export function TeacherCoursesTable() {
             value={anio}
             min={2000}
             max={2100}
-            onChange={(e) => setAnio(e.target.value)}
-            className="h-10 rounded-xl border-border/60 bg-background/75 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
+            onChange={(event) => setAnio(event.target.value)}
+            className="h-11 rounded-xl border-border/60 bg-background/75 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35 sm:h-10"
           />
 
           <Select value={estado} onValueChange={setEstado}>
-            <SelectTrigger className="h-10 rounded-xl border-border/60 bg-background/75 px-4 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus:ring-2 focus:ring-primary/15 data-[state=open]:border-primary/30 data-[state=open]:ring-2 data-[state=open]:ring-primary/10 dark:bg-background/35 sm:col-span-2 lg:col-span-1">
+            <SelectTrigger className="h-11 rounded-xl border-border/60 bg-background/75 px-4 text-sm shadow-none focus:ring-2 focus:ring-primary/15 dark:bg-background/35 sm:col-span-2 sm:h-10 lg:col-span-1">
               <SelectValue placeholder="Todos los estados" />
             </SelectTrigger>
-
-            <SelectContent className="rounded-2xl border-border/60 bg-card/98 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+            <SelectContent className="rounded-xl border-border/60">
               <SelectItem value={SELECT_ALL}>Todos los estados</SelectItem>
               {ESTADO_OPTIONS.map(({ value, label }) => (
                 <SelectItem key={value} value={value}>
@@ -276,17 +404,23 @@ export function TeacherCoursesTable() {
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </section>
+
+      {error ? (
+        <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      ) : null}
 
       {loading ? (
-        <ul className="grid gap-5 xl:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <CourseCardSkeleton key={i} />
+        <ul className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <CourseCardSkeleton key={index} />
           ))}
         </ul>
       ) : items.length === 0 ? (
-        <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
-          <CardContent className="px-6 py-14">
+        <Card className="rounded-xl border border-border/60 bg-card/95 shadow-none dark:bg-card/90">
+          <CardContent className="px-6 py-10">
             <Empty className="border-0 p-0">
               <EmptyMedia variant="icon">
                 <Inbox />
@@ -305,11 +439,9 @@ export function TeacherCoursesTable() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center justify-between gap-3 px-1">
-            <p className="text-sm text-muted-foreground">
-              {items.length} {items.length === 1 ? 'curso' : 'cursos'} para revisar
-            </p>
+            <p className="text-sm text-muted-foreground">{visibleCountLabel}</p>
             {hasActiveFilters ? (
               <span className="rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-xs font-semibold text-primary">
                 Filtros activos
@@ -317,9 +449,14 @@ export function TeacherCoursesTable() {
             ) : null}
           </div>
 
-          <ul className="grid gap-5 xl:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {items.map((course) => (
-              <CourseCard key={course.id} course={course} />
+              <CourseCardCompact
+                key={course.id}
+                course={course}
+                dashboard={dashboard}
+                theme={course.themeIcon}
+              />
             ))}
           </ul>
         </div>

@@ -168,6 +168,16 @@ export type TeacherSubmissionFeedbacksResponse = {
   items: TeacherSubmissionFeedbackItem[]
 }
 
+export interface TeacherTaskListResource {
+  id: number
+  tipo: number
+  url: string
+  nombre?: string | null
+  storageProvider?: number | null
+  storageKey?: string | null
+  contentType?: string | null
+  sizeBytes?: number | null
+}
 
 export interface TeacherTaskListItem {
   id: number
@@ -176,8 +186,19 @@ export interface TeacherTaskListItem {
   titulo: string
   estado: number
   fechaEntregaUtc: string | null
+  dueDateUtc?: string | null
   esAnuncio: boolean
   createdAtUtc: string
+  updatedAtUtc?: string | null
+  publicationType?: 'task' | 'announcement' | string | null
+  authorName?: string | null
+  authorAvatarUrl?: string | null
+  contentPreview?: string | null
+  resourcesCount?: number | null
+  resourceSummary?: string | null
+  submissionsCount?: number | null
+  pendingReviewsCount?: number | null
+  recursos?: TeacherTaskListResource[] | null
 }
 
 export interface TeacherTaskDetailResource {
