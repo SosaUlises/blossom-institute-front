@@ -1,16 +1,18 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   AlertCircle,
   BookOpen,
   CalendarCheck2,
+  CalendarClock,
   CheckCircle2,
   ChevronDown,
   ClipboardList,
   Clock3,
+  FileText,
   Megaphone,
-  Paperclip,
   Users,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -18,7 +20,6 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   StudentIconContainer,
-  StudentSecondaryBadge,
   StudentStatusBadge,
   studentUi,
 } from '@/components/student/courses/student-course-ui'
@@ -32,11 +33,31 @@ type Tab =
   | 'attendance'
   | 'people'
 
+const tabSlugs: Record<Tab, string> = {
+  tasks: 'tablon',
+  attendance: 'clases',
+  grades: 'calificaciones',
+  people: 'personas',
+}
+
+function getTabFromSlug(value: string | null): Tab {
+  const entry = Object.entries(tabSlugs).find(([, slug]) => slug === value)
+  return (entry?.[0] as Tab | undefined) ?? 'tasks'
+}
+
 type SectionState = {
   loading: boolean
   loaded: boolean
   items: StudentCourseSectionItem[]
   error: string | null
+}
+
+type StudentPublicationAttachment = {
+  id?: number | string | null
+  url: string
+  nombre: string
+  contentType?: string | null
+  sizeBytes?: number | null
 }
 
 const initialSectionState: SectionState = {
@@ -215,6 +236,16 @@ function formatCompactDate(value: unknown) {
     .replace('.', '')
 }
 
+function formatAttachmentSize(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return null
+  }
+
+  if (value < 1024) return `${value} B`
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`
+  return `${(value / 1024 / 1024).toFixed(1)} MB`
+}
+
 function safeText(value: unknown) {
   return typeof value === 'string' && value.trim() ? value : null
 }
@@ -234,7 +265,70 @@ async function loadSection(courseId: number, section: string) {
 
   const items = asItems(result)
 
-  return items
+  if (section !== 'tasks') return items
+
+  return enrichTaskResources(courseId, items)
+}
+
+function unwrapRecord(value: unknown): StudentCourseSectionItem | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+
+  const record = value as StudentCourseSectionItem
+  const data = record.data
+
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    return data as StudentCourseSectionItem
+  }
+
+  return record
+}
+
+function shouldLoadTaskResources(item: StudentCourseSectionItem) {
+  const taskId = item.tareaId ?? item.id
+
+  return (
+    taskId != null &&
+    !Array.isArray(item.recursos) &&
+    !Array.isArray(item.resources) &&
+    !Array.isArray(item.adjuntos)
+  )
+}
+
+async function enrichTaskResources(
+  courseId: number,
+  items: StudentCourseSectionItem[],
+) {
+  const enriched = await Promise.all(
+    items.map(async (item) => {
+      if (!shouldLoadTaskResources(item)) return item
+
+      const taskId = item.tareaId ?? item.id
+
+      try {
+        const response = await fetch(`/api/student/courses/${courseId}/tasks/${taskId}`, {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+        })
+
+        if (!response.ok) return item
+
+        const detail = unwrapRecord(await response.json().catch(() => null))
+        if (!detail) return item
+
+        return {
+          ...item,
+          recursos: Array.isArray(detail.recursos) ? detail.recursos : item.recursos,
+          resources: Array.isArray(detail.resources) ? detail.resources : item.resources,
+          adjuntos: Array.isArray(detail.adjuntos) ? detail.adjuntos : item.adjuntos,
+        }
+      } catch {
+        return item
+      }
+    }),
+  )
+
+  return enriched
 }
 
 function getValue(item: StudentCourseSectionItem, keys: string[]) {
@@ -662,13 +756,67 @@ function getTeacherAvatarUrl(item: StudentCourseSectionItem) {
   )
 }
 
-function getResourceLabel(item: StudentCourseSectionItem) {
-  if (item.tieneRecursos !== true) return null
+function isImageAttachment(attachment: StudentPublicationAttachment) {
+  const contentType = attachment.contentType?.toLowerCase() ?? ''
+  const name = attachment.nombre.toLowerCase()
+  const url = attachment.url.toLowerCase()
 
-  const count = Number(item.recursosCount)
-  if (!Number.isFinite(count) || count <= 0) return 'Recursos adjuntos'
+  return (
+    contentType.startsWith('image/') ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(name) ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(url)
+  )
+}
 
-  return `${count} ${count === 1 ? 'recurso adjunto' : 'recursos adjuntos'}`
+function getPublicationAttachments(item: StudentCourseSectionItem) {
+  const resources = Array.isArray(item.recursos)
+    ? item.recursos
+    : Array.isArray(item.resources)
+      ? item.resources
+      : Array.isArray(item.adjuntos)
+        ? item.adjuntos
+        : null
+
+  if (!resources) return []
+
+  return resources
+    .map((resource): StudentPublicationAttachment | null => {
+      const record = resource as Record<string, unknown>
+      const url = String(
+        record.url ??
+          record.Url ??
+          record.publicUrl ??
+          record.secureUrl ??
+          record.downloadUrl ??
+          record.archivoUrl ??
+          '',
+      ).trim()
+
+      if (!url) return null
+
+      return {
+        id: (record.id as number | string | null | undefined) ?? url,
+        url,
+        nombre: String(record.nombre ?? record.Nombre ?? record.name ?? record.fileName ?? 'Adjunto').trim() || 'Adjunto',
+        contentType:
+          typeof record.contentType === 'string'
+            ? record.contentType
+            : typeof record.ContentType === 'string'
+              ? record.ContentType
+              : typeof record.mimeType === 'string'
+                ? record.mimeType
+              : null,
+        sizeBytes:
+          typeof record.sizeBytes === 'number'
+            ? record.sizeBytes
+            : typeof record.SizeBytes === 'number'
+              ? record.SizeBytes
+              : null,
+      }
+    })
+    .filter(
+      (attachment): attachment is StudentPublicationAttachment => attachment !== null,
+    )
 }
 
 function getTaskDueMeta(item: StudentCourseSectionItem) {
@@ -725,6 +873,18 @@ function getFullName(item: StudentCourseSectionItem) {
   const firstName = getValue(item, ['nombre'])
   const lastName = getValue(item, ['apellido'])
   return [firstName, lastName].filter(Boolean).join(' ').trim() || null
+}
+
+function getPersonEmail(item: StudentCourseSectionItem) {
+  return (
+    getValue(item, ['email', 'correo', 'mail', 'correoElectronico']) ??
+    getValueFromNestedRecord(item, ['user', 'User', 'usuario', 'Usuario'], [
+      'email',
+      'correo',
+      'mail',
+      'correoElectronico',
+    ])
+  )
 }
 
 function getAvatarUrl(item: StudentCourseSectionItem) {
@@ -860,9 +1020,9 @@ function PostAuthorAvatar({
       <UserAvatar
         name={teacherName}
         avatarUrl={teacherAvatarUrl}
-        size={36}
-        className="mt-1 shrink-0"
-        fallbackClassName="bg-primary/10 text-primary dark:bg-primary/15"
+        size={38}
+        className="shrink-0 bg-background/80"
+        fallbackClassName="bg-background/90 text-sm text-foreground"
       />
     )
   }
@@ -872,6 +1032,78 @@ function PostAuthorAvatar({
       icon={FallbackIcon}
       className={fallbackClassName}
     />
+  )
+}
+
+function PublicationAttachments({
+  attachments,
+}: {
+  attachments: StudentPublicationAttachment[]
+}) {
+  if (attachments.length === 0) return null
+
+  const images = attachments.filter(isImageAttachment)
+  const documents = attachments.filter((attachment) => !isImageAttachment(attachment))
+
+  return (
+    <div className="mt-3 space-y-2.5">
+      {images.length > 0 ? (
+        <div
+          className={cn(
+            'grid gap-2',
+            images.length === 1 ? 'grid-cols-1' : 'grid-cols-2',
+          )}
+        >
+          {images.slice(0, 4).map((attachment) => (
+            <a
+              key={String(attachment.id ?? attachment.url)}
+              href={attachment.url}
+              target="_blank"
+              rel="noreferrer"
+              className="group overflow-hidden rounded-xl border border-border/60 bg-background/50 transition-colors hover:border-border"
+            >
+              <img
+                src={attachment.url}
+                alt={attachment.nombre}
+                className="max-h-72 w-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
+                loading="lazy"
+              />
+            </a>
+          ))}
+        </div>
+      ) : null}
+
+      {documents.length > 0 ? (
+        <div className="space-y-2">
+          {documents.map((attachment) => {
+            const size = formatAttachmentSize(attachment.sizeBytes)
+
+            return (
+              <a
+                key={String(attachment.id ?? attachment.url)}
+                href={attachment.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex min-h-14 w-full max-w-md items-center gap-3 rounded-xl border border-border/60 bg-background/50 p-3 transition-colors hover:bg-muted/50"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card text-muted-foreground">
+                  <FileText className="size-4" />
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold leading-5 text-foreground">
+                    {attachment.nombre}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {size ?? attachment.contentType ?? 'Documento adjunto'}
+                  </span>
+                </span>
+              </a>
+            )
+          })}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -891,97 +1123,100 @@ function TaskPostCard({
   const taskId = item.tareaId ?? item.id
   const status = getTaskStatus(item)
   const StatusIcon = status.icon
+  const TypeIcon = announcement ? Megaphone : ClipboardList
   const dueMeta = getTaskDueMeta(item)
   const createdAt = getTaskCreatedMeta(item)
-  const resourceLabel = getResourceLabel(item)
+  const attachments = getPublicationAttachments(item)
+  const typeLabel = announcement ? 'Anuncio' : 'Tarea'
+  const titleId = `student-course-post-${String(taskId ?? title)}`
+  const railClassName = announcement
+    ? 'bg-slate-400/80 dark:bg-slate-500/65'
+    : 'bg-primary'
+  const typeIconClassName = announcement
+    ? 'text-slate-500 dark:text-slate-300'
+    : 'text-primary'
 
   return (
     <article
+      aria-labelledby={titleId}
       className={cn(
-        'group',
-        studentUi.card.feed,
-        announcement
-          ? 'border-violet-200/60 hover:border-violet-300/60 dark:border-violet-500/15 dark:hover:border-violet-500/25'
-          : 'hover:border-primary/20',
+        'group relative overflow-hidden rounded-2xl border shadow-sm transition-colors duration-200 ease-out',
+        'bg-card border-border/60 hover:border-border',
       )}
     >
-      <div className="grid grid-cols-[auto,minmax(0,1fr)] gap-3 p-4 sm:gap-4 sm:p-5">
-        <PostAuthorAvatar
-          teacherName={teacherName}
-          teacherAvatarUrl={teacherAvatarUrl}
-          fallbackIcon={announcement ? Megaphone : BookOpen}
-          fallbackClassName={
-            announcement
-              ? 'border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300'
-              : 'border-primary/15 bg-primary/10 text-primary'
-          }
-        />
+      <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-1', railClassName)} />
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold leading-5 text-foreground">
-                {hasTeacherName ? teacherName : 'Profesor'}
-              </p>
-              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                {[createdAt, announcement ? 'Anuncio' : 'Tarea']
-                  .filter(Boolean)
-                  .join(' · ')}
-              </p>
-            </div>
+      <div className="p-3 pl-5 sm:p-4 sm:pl-6">
+        <header className="flex items-start gap-3">
+          <PostAuthorAvatar
+            teacherName={teacherName}
+            teacherAvatarUrl={teacherAvatarUrl}
+            fallbackIcon={announcement ? Megaphone : BookOpen}
+            fallbackClassName="border-border/60 bg-background/80 text-muted-foreground"
+          />
 
-            {!announcement && dueMeta ? (
-              <span
-                className={cn(
-                  'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold leading-5',
-                  dueMeta.className,
-                )}
-              >
-                <CalendarCheck2 className="size-3.5" />
-                {dueMeta.label}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold leading-5 text-foreground">
+              {hasTeacherName ? teacherName : 'Profesor'}
+            </p>
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-4 text-muted-foreground">
+              {createdAt ? <time>Publicado {createdAt}</time> : null}
+              {createdAt ? <span aria-hidden="true">•</span> : null}
+              <span className="inline-flex items-center gap-1">
+                <TypeIcon className={cn('size-3.5', typeIconClassName)} />
+                {typeLabel}
               </span>
-            ) : null}
+            </div>
           </div>
+        </header>
 
-          <h3 className="mt-3 line-clamp-3 text-lg font-semibold leading-6 tracking-tight text-foreground sm:line-clamp-2">
+        <div className="mt-3 min-w-0">
+          <h3
+            id={titleId}
+            className="line-clamp-2 min-w-0 break-words text-base font-semibold leading-6 text-foreground sm:text-[17px]"
+          >
             {title}
           </h3>
+
           {description ? (
-            <p className="mt-1.5 line-clamp-3 text-sm leading-6 text-muted-foreground sm:line-clamp-2">
+            <p className="mt-1 line-clamp-3 break-words whitespace-pre-line text-sm leading-5 text-foreground/85">
               {description}
             </p>
           ) : null}
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {!announcement ? (
+          <PublicationAttachments attachments={attachments} />
+        </div>
+
+        {!announcement ? (
+          <footer className="mt-3 flex flex-col gap-3 border-t border-border/40 pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <StudentStatusBadge
                 icon={StatusIcon}
-                className={status.badgeClassName}
+                className={cn('rounded-lg px-2.5 py-1.5 text-xs leading-4', status.badgeClassName)}
               >
                 {status.label}
               </StudentStatusBadge>
-            ) : null}
-            {resourceLabel ? (
-              <StudentSecondaryBadge icon={Paperclip}>
-                {resourceLabel}
-              </StudentSecondaryBadge>
-            ) : null}
-          </div>
 
-          {taskId != null ? (
-            <Link
-              href={`/student/courses/${courseId}/tasks/${taskId}`}
-              className={cn(
-                'mt-3',
-                announcement
-                  ? studentUi.button.violetCta
-                  : studentUi.button.secondaryCta,
-              )}
-            >
-              {status.actionLabel}
-            </Link>
-          ) : null}
-        </div>
+              {dueMeta ? (
+                <span
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2.5 py-1.5 text-xs font-semibold leading-4 text-muted-foreground"
+                >
+                  <CalendarClock className="size-3.5" />
+                  {dueMeta.label}
+                </span>
+              ) : null}
+            </div>
+
+            {taskId != null ? (
+              <Link
+                href={`/student/courses/${courseId}/tasks/${taskId}`}
+                className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-none transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 active:scale-[0.98] sm:w-auto"
+              >
+                {status.actionLabel}
+              </Link>
+            ) : null}
+          </footer>
+        ) : null}
       </div>
     </article>
   )
@@ -999,27 +1234,30 @@ function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
   const description = getValue(item, ['descripcionClase']) ?? 'Clase del curso.'
 
   return (
-    <article className="relative pl-7 sm:pl-9">
+    <article className="relative pl-6 sm:pl-8">
       <span
         className={cn(
-          'absolute left-0 top-5 z-10 flex size-4 items-center justify-center rounded-full ring-4 ring-card',
+          'absolute left-0 top-4 z-10 flex size-3.5 items-center justify-center rounded-full ring-4 ring-card',
           status.dotClassName,
         )}
       >
-        <StatusIcon className="size-2.5 text-white" />
+        <StatusIcon className="size-2 text-white" />
       </span>
 
-      <div className={cn(studentUi.card.item, 'flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between')}>
+      <div className={cn(studentUi.card.item, 'flex flex-col gap-2.5 rounded-xl px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between')}>
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-semibold leading-6 text-foreground">
-            {description}
-          </p>
-          <time className="mt-1 block text-xs font-medium text-muted-foreground">
+          <time className="block text-[15px] font-semibold leading-5 tracking-tight text-foreground">
             {fecha}
           </time>
+          <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
+            {description}
+          </p>
         </div>
 
-        <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
+        <StudentStatusBadge
+          icon={StatusIcon}
+          className={cn('rounded-lg px-2.5 py-1 text-xs', status.badgeClassName)}
+        >
           {status.label}
         </StudentStatusBadge>
       </div>
@@ -1064,16 +1302,16 @@ function AttendanceSummary({
   ]
 
   return (
-    <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-border/60 bg-background/60 dark:bg-background/35">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border/60 bg-card/80 px-3.5 py-2.5 text-sm dark:bg-card/70">
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="border-r border-border/50 px-3 py-3 last:border-r-0 sm:px-4"
+          className="inline-flex items-baseline gap-1.5"
         >
-          <p className={cn('text-xl font-semibold leading-none tracking-tight sm:text-2xl', stat.className)}>
+          <p className={cn('text-sm font-semibold leading-5', stat.className)}>
             {stat.value}
           </p>
-          <p className="mt-1.5 text-[11px] font-medium leading-4 text-muted-foreground sm:text-xs">{stat.label}</p>
+          <p className="text-xs font-medium leading-5 text-muted-foreground">{stat.label}</p>
         </div>
       ))}
     </div>
@@ -1104,9 +1342,10 @@ function AttendanceHistory({
 function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
   const name = getFullName(item) ?? 'Nombre no disponible'
   const avatarUrl = getAvatarUrl(item)
+  const email = getPersonEmail(item)
 
   return (
-    <article className="rounded-xl border border-violet-200/60 bg-violet-50/30 p-4 transition-colors duration-200 ease-out hover:border-violet-300/70 hover:bg-violet-50/45 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
+    <article className="rounded-xl border border-border/60 bg-card/80 p-3.5 transition-colors duration-200 ease-out hover:border-violet-300/50 hover:bg-card dark:bg-card/70 dark:hover:border-violet-500/25">
       <div className="flex items-center gap-3">
         <UserAvatar
           name={name}
@@ -1125,6 +1364,9 @@ function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">Te acompaña en este curso</p>
+          {email ? (
+            <p className="mt-0.5 truncate text-xs text-muted-foreground/80">{email}</p>
+          ) : null}
         </div>
       </div>
     </article>
@@ -1141,11 +1383,12 @@ function ClassmatePersonCard({
   const name = getFullName(item) ?? 'Nombre no disponible'
   const avatarUrl = getAvatarUrl(item)
   const current = isCurrentStudent(item, currentStudentId)
+  const email = getPersonEmail(item)
 
   return (
     <article
       className={cn(
-        'rounded-xl border p-4 transition-colors duration-200 ease-out hover:border-primary/15 hover:bg-card',
+        'rounded-xl border p-3.5 transition-colors duration-200 ease-out hover:border-primary/15 hover:bg-card',
         current
           ? 'border-primary/25 bg-primary/8'
           : 'border-border/60 bg-background/60 dark:bg-background/35',
@@ -1171,6 +1414,9 @@ function ClassmatePersonCard({
           <p className="mt-1 text-xs text-muted-foreground">
             {current ? 'Este sos vos' : 'Aprende con vos'}
           </p>
+          {email ? (
+            <p className="mt-0.5 truncate text-xs text-muted-foreground/80">{email}</p>
+          ) : null}
         </div>
       </div>
     </article>
@@ -1450,11 +1696,11 @@ function AttendanceEmptyState() {
 
 function TaskFeedSkeleton() {
   return (
-    <div className="mx-auto max-w-[900px] space-y-3">
+    <div className="mx-auto max-w-3xl space-y-3">
       {Array.from({ length: 3 }).map((_, index) => (
         <div
           key={index}
-          className="h-36 animate-pulse rounded-xl border border-border/60 bg-muted/25"
+          className="h-32 animate-pulse rounded-2xl border border-border/60 bg-muted/25"
         />
       ))}
     </div>
@@ -1469,7 +1715,7 @@ function TaskFeed({
   courseId: number
 }) {
   return (
-    <div className="mx-auto max-w-[900px] space-y-3">
+    <div className="mx-auto max-w-3xl space-y-3">
       {items.map((item, index) => (
         <TaskPostCard
           key={String(item.id ?? item.tareaId ?? index)}
@@ -1570,7 +1816,10 @@ export function StudentCourseDetail({
   courseId: number
   currentStudentId?: number
 }) {
-  const [tab, setTab] = useState<Tab>('tasks')
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tab = getTabFromSlug(searchParams.get('tab'))
   const [sections, setSections] = useState<Record<string, SectionState>>({})
   const panelHeader = panelHeaders[tab]
   const sectionPath = sectionPaths[tab]
@@ -1610,7 +1859,16 @@ export function StudentCourseDetail({
   )
 
   const selectTab = (nextTab: Tab) => {
-    setTab(nextTab)
+    const nextSearchParams = new URLSearchParams(searchParams.toString())
+
+    if (nextTab === 'tasks') {
+      nextSearchParams.delete('tab')
+    } else {
+      nextSearchParams.set('tab', tabSlugs[nextTab])
+    }
+
+    const query = nextSearchParams.toString()
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false })
   }
 
   const focusTab = (nextTab: Tab) => {
@@ -1677,7 +1935,7 @@ export function StudentCourseDetail({
                     active ? 'text-foreground' : 'text-muted-foreground/75',
                   )}
                 />
-                <span>{tabConfig.label}</span>
+                <span className="truncate">{tabConfig.label}</span>
               </button>
             )
           })}

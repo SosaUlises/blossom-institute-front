@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 
-import { AppHeader } from '@/components/layout/app-header'
 import {
   CourseThemeBackground,
 } from '@/components/teacher/course-detail/course-theme-background'
@@ -42,7 +41,16 @@ function getHeaderSubtitle(course: StudentCourseDetailType) {
 }
 
 function getCourseTheme(course: StudentCourseDetailType) {
-  return getCourseMeta(course, ['themeIcon', 'theme', 'tema', 'themeName'])
+  return getCourseMeta(course, [
+    'themeIcon',
+    'theme',
+    'tema',
+    'themeName',
+    'ThemeIcon',
+    'Theme',
+    'Tema',
+    'ThemeName',
+  ])
 }
 
 export default async function StudentCourseDetailPage({ params }: PageProps) {
@@ -69,22 +77,17 @@ export default async function StudentCourseDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <AppHeader title={courseName} subtitle={headerSubtitle ?? undefined} />
-
       <main className="min-w-0 flex-1 overflow-auto overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
         <div className="mx-auto max-w-7xl space-y-4">
-          <header className="relative flex min-h-32 w-full items-center overflow-hidden rounded-2xl border border-border/40 bg-card px-5 py-5 shadow-sm sm:min-h-36 sm:px-6 md:px-8">
+          <header className="relative mb-2 flex h-32 w-full items-center overflow-hidden rounded-2xl border border-border/40 bg-card px-6 shadow-sm md:h-36 md:px-8">
             <CourseThemeBackground theme={courseTheme} />
 
-            <div className="relative z-10 flex max-w-[72%] flex-col sm:max-w-[62%]">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
-                Aula de aprendizaje
-              </p>
-              <h1 className="mt-2 break-words text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:text-4xl md:text-5xl">
+            <div className="relative z-10 flex max-w-[68%] flex-col md:max-w-[56%]">
+              <h1 className="break-words text-3xl font-extrabold tracking-tight text-foreground md:text-5xl">
                 {courseName}
               </h1>
               {headerSubtitle ? (
-                <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-muted-foreground sm:text-base md:text-lg">
+                <p className="mt-3 line-clamp-2 text-lg font-medium tracking-wide text-muted-foreground/90 md:text-xl">
                   {headerSubtitle}
                 </p>
               ) : null}
