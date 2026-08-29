@@ -34,13 +34,13 @@ export default function StudentSettingsPage() {
 
   return (
     <>
-      <AppHeader title="Configuración" subtitle="Blossom Institute · Alumno" />
+      <AppHeader title="Mi cuenta" subtitle="Blossom Institute · Alumno" />
 
-      <div className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
+      <div className="flex-1 overflow-auto px-5 pb-5 pt-8 sm:pt-9 lg:px-8 lg:pb-6 lg:pt-10">
         <div className="mx-auto max-w-6xl space-y-4">
           <header className="space-y-1 border-b border-border/60 pb-4">
             <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-              Configuración de cuenta
+              Mi cuenta
             </h2>
             <p className="text-sm text-muted-foreground">
               Actualizá tu foto de perfil y la seguridad de acceso.

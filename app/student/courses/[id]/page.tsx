@@ -42,10 +42,10 @@ function getHeaderSubtitle(course: StudentCourseDetailType) {
     course.descripcion?.trim() ||
       getCourseMeta(course, ['turno', 'modalidad', 'shift', 'mode']),
     typeof course.anio === 'number' ? `Año ${course.anio}` : null,
-    estado ? estadoLabels[estado] ?? 'Desconocido' : 'Desconocido',
+    estado ? estadoLabels[estado] ?? null : null,
   ]
 
-  return parts.filter(Boolean).join(' · ')
+  return parts.filter(Boolean).join(' · ') || null
 }
 
 export default async function StudentCourseDetailPage({ params }: PageProps) {
@@ -66,13 +66,31 @@ export default async function StudentCourseDetailPage({ params }: PageProps) {
 
   const session = await getSession()
   const currentStudentId = Number(session?.user.id)
+  const courseName = getCourseName(course)
+  const headerSubtitle = getHeaderSubtitle(course)
 
   return (
     <>
-      <AppHeader title={getCourseName(course)} subtitle={getHeaderSubtitle(course)} />
+      <AppHeader title={courseName} subtitle={headerSubtitle ?? undefined} />
 
-      <main className="flex-1 overflow-auto px-5 py-6 lg:px-8 lg:py-7">
-        <div className="mx-auto max-w-7xl">
+      <main className="flex-1 overflow-auto px-5 pb-6 pt-8 sm:pt-9 lg:px-8 lg:pb-7 lg:pt-10">
+        <div className="mx-auto max-w-7xl space-y-5">
+          <header className="border-b border-border/60 pb-5">
+            <div className="max-w-3xl">
+              <p className="text-xs font-medium text-muted-foreground">
+                Aula del curso
+              </p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                {courseName}
+              </h1>
+              {headerSubtitle ? (
+                <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-[15px]">
+                  {headerSubtitle}
+                </p>
+              ) : null}
+            </div>
+          </header>
+
           <StudentCourseDetail
             courseId={courseId}
             currentStudentId={Number.isFinite(currentStudentId) ? currentStudentId : undefined}
