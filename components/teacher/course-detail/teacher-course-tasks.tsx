@@ -644,7 +644,12 @@ function PublicationAttachments({
               <img
                 src={attachment.url}
                 alt={attachment.nombre}
-                className="w-full max-h-72 object-cover transition-transform duration-200 group-hover:scale-[1.01]"
+                className={cn(
+                  'w-full transition-transform duration-200 group-hover:scale-[1.01]',
+                  images.length === 1
+                    ? 'max-h-[420px] bg-muted/20 object-contain'
+                    : 'h-52 object-cover sm:h-64',
+                )}
                 loading="lazy"
               />
             </a>
