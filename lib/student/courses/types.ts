@@ -12,12 +12,22 @@ export type StudentCourseListItem = Record<string, unknown> & {
   anio?: number
   estado?: EstadoCurso | number
   cantidadHorarios?: number
+  descripcion?: string | null
+  themeIcon?: string | null
+  cantidadAlumnos?: number | null
+  cantidadCompaneros?: number | null
+  proximaClaseFecha?: string | null
+  proximaClaseDia?: number | string | null
+  proximaClaseHoraInicio?: string | null
+  proximaClaseHoraFin?: string | null
+  tareasPendientes?: number | null
 }
 
 export type StudentCourseDetail = StudentCourseListItem & {
   descripcion?: string | null
   cantidadProfesores?: number
   cantidadAlumnos?: number
+  cantidadCompaneros?: number
   horarios?: unknown[] | null
 }
 

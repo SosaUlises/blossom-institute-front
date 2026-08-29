@@ -1,19 +1,20 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  BookOpen,
-  CalendarRange,
+  ArrowRight,
   CalendarClock,
-  ChevronRight,
   ClipboardList,
   Inbox,
-  Megaphone,
   Search,
   UserRound,
+  Users,
 } from 'lucide-react'
 
+import {
+  CourseThemeBackground,
+} from '@/components/teacher/course-detail/course-theme-background'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Empty,
@@ -45,27 +46,20 @@ const ESTADO_OPTIONS = [
   { value: String(EstadoCurso.Archivado), label: 'Finalizado' },
 ] as const
 
-const ESTADO_CONFIG: Record<
-  EstadoCurso,
-  { label: string; dot: string; pill: string }
-> = {
+const ESTADO_CONFIG: Record<EstadoCurso, { label: string; pill: string }> = {
   [EstadoCurso.Activo]: {
     label: 'En curso',
-    dot: 'bg-emerald-500',
-    pill:
-      'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    pill: '',
   },
   [EstadoCurso.Inactivo]: {
     label: 'Pausado',
-    dot: 'bg-amber-500',
     pill:
-      'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400',
+      'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-300',
   },
   [EstadoCurso.Archivado]: {
     label: 'Finalizado',
-    dot: 'bg-slate-400',
     pill:
-      'border-slate-400/20 bg-slate-500/10 text-slate-600 dark:text-slate-400',
+      'border-slate-400/25 bg-slate-500/10 text-slate-700 dark:text-slate-300',
   },
 }
 
@@ -109,160 +103,192 @@ function getTeacherName(course: StudentCourseListItem) {
     'profesorPrincipal',
     'profesorNombreCompleto',
     'teacherName',
+    'ProfesorPrincipal',
+    'ProfesorNombreCompleto',
+    'TeacherName',
   ])
 
   if (fullName) return fullName
 
-  const firstName = getText(course, ['profesorNombre', 'teacherFirstName'])
-  const lastName = getText(course, ['profesorApellido', 'teacherLastName'])
+  const firstName = getText(course, [
+    'profesorNombre',
+    'teacherFirstName',
+    'ProfesorNombre',
+    'TeacherFirstName',
+  ])
+  const lastName = getText(course, [
+    'profesorApellido',
+    'teacherLastName',
+    'ProfesorApellido',
+    'TeacherLastName',
+  ])
 
   return [firstName, lastName].filter(Boolean).join(' ').trim() || null
 }
 
-function getAcademicHighlights(course: StudentCourseListItem) {
-  const pendingTasks = getNumber(course, [
+function getCourseDescription(course: StudentCourseListItem) {
+  return getText(course, [
+    'descripcion',
+    'description',
+    'turno',
+    'cursoDescripcion',
+    'Descripcion',
+    'Description',
+    'Turno',
+    'CursoDescripcion',
+  ])
+}
+
+function getCourseTheme(course: StudentCourseListItem) {
+  return getText(course, [
+    'themeIcon',
+    'theme',
+    'tema',
+    'themeName',
+    'ThemeIcon',
+    'Theme',
+    'Tema',
+    'ThemeName',
+  ])
+}
+
+function getStudentsCount(course: StudentCourseListItem) {
+  return getNumber(course, [
+    'cantidadAlumnos',
+    'alumnosCount',
+    'studentsCount',
+    'studentCount',
+    'CantidadAlumnos',
+    'AlumnosCount',
+    'StudentsCount',
+    'StudentCount',
+  ])
+}
+
+function getCompanionsCount(course: StudentCourseListItem) {
+  const directCount = getNumber(course, [
+    'cantidadCompaneros',
+    'companerosCount',
+    'compañerosCount',
+    'classmatesCount',
+    'CantidadCompaneros',
+    'CompanerosCount',
+    'ClassmatesCount',
+  ])
+
+  if (directCount != null) return directCount
+
+  const studentsCount = getStudentsCount(course)
+  return studentsCount != null ? Math.max(0, studentsCount - 1) : null
+}
+
+function getPendingTasksCount(course: StudentCourseListItem) {
+  return getNumber(course, [
     'tareasPendientes',
     'tareasPendientesCount',
     'pendingTasks',
+    'pendingTasksCount',
+    'TareasPendientes',
+    'TareasPendientesCount',
+    'PendingTasks',
+    'PendingTasksCount',
   ])
-  const nextClass = getText(course, [
-    'proximaClase',
-    'proximaClaseFecha',
-    'nextClass',
-    'nextClassDate',
-  ])
-  const latestPost = getText(course, [
-    'ultimaPublicacion',
-    'ultimaNovedad',
-    'lastPost',
-    'lastAnnouncement',
-  ])
-  const attendance = getText(course, ['asistencia', 'porcentajeAsistencia'])
-
-  const highlights: Array<{
-    icon: React.ComponentType<{ className?: string }>
-    label: string
-    tone: string
-  }> = []
-
-  if (pendingTasks != null) {
-    highlights.push({
-      icon: ClipboardList,
-      label:
-        pendingTasks > 0
-          ? `${pendingTasks} ${pendingTasks === 1 ? 'tarea para entregar' : 'tareas para entregar'}`
-          : 'Sin tareas pendientes',
-      tone:
-        pendingTasks > 0
-          ? 'border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-300'
-          : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-    })
-  }
-
-  if (nextClass) {
-    highlights.push({
-      icon: CalendarClock,
-      label: `Próxima clase: ${nextClass}`,
-      tone: 'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
-    })
-  }
-
-  if (latestPost) {
-    highlights.push({
-      icon: Megaphone,
-      label: `Última novedad: ${latestPost}`,
-      tone: 'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300',
-    })
-  }
-
-  if (highlights.length === 0 && attendance) {
-    highlights.push({
-      icon: CalendarRange,
-      label: `Asistencia: ${attendance}`,
-      tone: 'border-border/60 bg-muted/25 text-muted-foreground',
-    })
-  }
-
-  return highlights.slice(0, 2)
 }
 
-function EstadoBadge({ estado }: { estado?: number }) {
-  const config = ESTADO_CONFIG[estado as EstadoCurso] ?? {
-    label: 'Sin estado',
-    dot: 'bg-muted-foreground',
-    pill: 'border-border/60 bg-muted/40 text-muted-foreground',
-  }
+function parseLocalDate(value: string) {
+  const [year, month, day] = value.split('T')[0].split('-').map(Number)
+
+  if (!year || !month || !day) return null
+
+  return new Date(year, month - 1, day)
+}
+
+function isSameDate(left: Date, right: Date) {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  )
+}
+
+function formatNextClassDate(value: string) {
+  const date = parseLocalDate(value)
+  if (!date) return value
+
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(today.getDate() + 1)
+
+  if (isSameDate(date, today)) return 'Hoy'
+  if (isSameDate(date, tomorrow)) return 'Mañana'
+
+  return new Intl.DateTimeFormat('es-AR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(date)
+}
+
+function getNextClassLabel(course: StudentCourseListItem) {
+  const date = getText(course, [
+    'proximaClaseFecha',
+    'nextClassDate',
+    'ProximaClaseFecha',
+    'NextClassDate',
+  ])
+  const start = getText(course, [
+    'proximaClaseHoraInicio',
+    'nextClassStart',
+    'ProximaClaseHoraInicio',
+    'NextClassStart',
+  ])
+  const fallback = getText(course, [
+    'proximaClase',
+    'nextClass',
+    'ProximaClase',
+    'NextClass',
+  ])
+
+  if (date && start) return `${formatNextClassDate(date)} · ${start.slice(0, 5)}`
+  if (date) return formatNextClassDate(date)
+
+  return fallback
+}
+
+function CourseStateChip({ estado }: { estado?: number }) {
+  if (!estado || estado === EstadoCurso.Activo) return null
+
+  const config = ESTADO_CONFIG[estado as EstadoCurso]
+  if (!config) return null
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+        'absolute right-3 top-3 z-10 rounded-md border px-2 py-1 text-xs font-semibold shadow-[0_1px_2px_rgba(15,23,42,0.04)] backdrop-blur-sm',
         config.pill,
       )}
     >
-      <span className={cn('size-1.5 rounded-full', config.dot)} />
       {config.label}
-    </span>
-  )
-}
-
-function MetaPill({
-  icon: Icon,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  children: React.ReactNode
-}) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/[0.18] px-2.5 py-1 text-xs font-medium text-muted-foreground">
-      <Icon className="size-3.5 shrink-0" />
-      {children}
-    </span>
-  )
-}
-
-function AcademicPill({
-  icon: Icon,
-  label,
-  tone,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  tone: string
-}) {
-  return (
-    <span
-      className={cn(
-        'inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold leading-5',
-        tone,
-      )}
-    >
-      <Icon className="size-3.5 shrink-0" />
-      <span className="truncate">{label}</span>
     </span>
   )
 }
 
 function CourseCardSkeleton() {
   return (
-    <li className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="h-11 w-11 animate-pulse rounded-lg bg-muted/60" />
-          <div className="space-y-2">
-            <div className="h-7 w-44 animate-pulse rounded-lg bg-muted/60" />
-            <div className="h-4 w-32 animate-pulse rounded-lg bg-muted/40" />
-          </div>
+    <li className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
+      <div className="h-24 border-b border-border/40 bg-muted/20 sm:h-28">
+        <div className="h-full w-full animate-pulse bg-muted/35" />
+      </div>
+      <div className="flex min-h-36 flex-col p-4 sm:p-5">
+        <div className="space-y-2.5">
+          <div className="h-5 w-40 animate-pulse rounded-md bg-muted/50" />
+          <div className="h-4 w-48 max-w-full animate-pulse rounded-md bg-muted/35" />
         </div>
-        <div className="h-7 w-24 animate-pulse rounded-full bg-muted/50" />
+        <div className="mt-auto space-y-2 pt-5">
+          <div className="h-4 w-36 animate-pulse rounded-md bg-muted/35" />
+          <div className="h-4 w-28 animate-pulse rounded-md bg-muted/30" />
+        </div>
       </div>
-
-      <div className="mt-5 flex gap-2">
-        <div className="h-8 w-24 animate-pulse rounded-full bg-muted/40" />
-        <div className="h-8 w-28 animate-pulse rounded-full bg-muted/40" />
-      </div>
-
-      <div className="mt-5 h-10 animate-pulse rounded-lg bg-muted/40" />
     </li>
   )
 }
@@ -271,79 +297,88 @@ function CourseCard({ course }: { course: StudentCourseListItem }) {
   const courseId = getCourseId(course)
   const courseName = getCourseName(course)
   const teacherName = getTeacherName(course)
-  const highlights = getAcademicHighlights(course)
+  const description = getCourseDescription(course)
+  const theme = getCourseTheme(course)
+  const nextClass = getNextClassLabel(course)
+  const companionsCount = getCompanionsCount(course)
+  const pendingTasks = getPendingTasksCount(course)
 
   return (
     <li>
       <Link
         href={`/student/courses/${courseId ?? 0}`}
-        className="group block rounded-xl border border-border/70 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 dark:bg-card/90 sm:p-5"
+        aria-label={`Abrir curso ${courseName}`}
+        className="group block h-full rounded-2xl outline-none transition-transform duration-200 ease-out active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/8 text-primary shadow-[0_1px_1px_rgba(15,23,42,0.04)] transition-colors duration-200 group-hover:bg-primary/10">
-              <BookOpen className="size-5" />
-            </div>
+        <article className="relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm transition-all duration-200 ease-out hover:border-border/70 hover:shadow-md">
+          <div className="relative h-24 w-full overflow-hidden border-b border-border/40 bg-muted/20 sm:h-28">
+            <CourseThemeBackground theme={theme} variant="card" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/20 to-transparent" />
+            <CourseStateChip estado={course.estado} />
+          </div>
 
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-2xl">
+          <div className="flex flex-1 flex-col p-4 sm:p-5">
+            <div className="min-w-0">
+              <h3 className="truncate text-xl font-bold leading-tight text-foreground transition-colors duration-200 group-hover:text-primary">
                 {courseName}
               </h3>
-              {teacherName ? (
-                <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                  <UserRound className="size-3.5 shrink-0" />
-                  <span className="truncate">Con {teacherName}</span>
+              {description ? (
+                <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
+                  {description}
                 </p>
               ) : (
-                <p className="mt-1 text-sm font-medium text-muted-foreground">
-                  Tu aula del curso
+                <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
+                  {teacherName ? `Con ${teacherName}` : 'Aula de aprendizaje'}
                 </p>
               )}
             </div>
-          </div>
 
-          <EstadoBadge estado={course.estado} />
-        </div>
+            <div className="mt-auto flex flex-col gap-2.5 pt-5 text-sm">
+              {nextClass ? (
+                <div className="flex items-center gap-2 font-medium text-foreground">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+                    <CalendarClock className="size-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="mr-1.5 text-xs font-normal text-muted-foreground">
+                      Próxima clase
+                    </span>
+                    {nextClass}
+                  </span>
+                </div>
+              ) : null}
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {course.anio != null ? (
-            <MetaPill icon={CalendarRange}>Año {course.anio}</MetaPill>
-          ) : null}
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                {teacherName && description ? (
+                  <span className="inline-flex min-w-0 items-center gap-1.5">
+                    <UserRound className="size-4 shrink-0" />
+                    <span className="truncate">Con {teacherName}</span>
+                  </span>
+                ) : null}
 
-          {highlights.map((highlight) => (
-            <AcademicPill
-              key={highlight.label}
-              icon={highlight.icon}
-              label={highlight.label}
-              tone={highlight.tone}
-            />
-          ))}
+                {companionsCount != null ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Users className="size-4 shrink-0" />
+                    {companionsCount}{' '}
+                    {companionsCount === 1 ? 'compañero' : 'compañeros'}
+                  </span>
+                ) : null}
 
-          {highlights.length === 0 ? (
-            <AcademicPill
-              icon={BookOpen}
-              label="Aula lista para entrar"
-              tone="border-border/60 bg-muted/25 text-muted-foreground"
-            />
-          ) : null}
-        </div>
+                {pendingTasks != null && pendingTasks > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/8 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                    <ClipboardList className="size-3.5 shrink-0" />
+                    {pendingTasks}{' '}
+                    {pendingTasks === 1 ? 'tarea pendiente' : 'tareas pendientes'}
+                  </span>
+                ) : null}
 
-        <div className="mt-4 rounded-lg border border-border/60 bg-muted/[0.12] px-4 py-3 transition-colors duration-200 ease-out group-hover:border-primary/20 group-hover:bg-primary/[0.05] dark:bg-background/30">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">
-                Seguir aprendiendo
-              </p>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                Ver tablón, clases y tareas
-              </p>
+                <span className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background/70 text-muted-foreground transition-[border-color,background-color,color,transform] duration-200 ease-out group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/8 group-hover:text-primary dark:bg-background/35">
+                  <ArrowRight className="size-4" />
+                </span>
+              </div>
             </div>
-
-            <div className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background/80 text-muted-foreground transition-all duration-200 ease-out group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/10 group-hover:text-primary dark:bg-background/35">
-              <ChevronRight className="size-4" />
-            </div>
           </div>
-        </div>
+        </article>
       </Link>
     </li>
   )
@@ -385,18 +420,25 @@ export function StudentCoursesList() {
   }, [loadCourses])
 
   const hasActiveFilters = !!debouncedSearch || !!anio || estado !== SELECT_ALL
+  const visibleCountLabel = useMemo(
+    () =>
+      `${items.length} ${
+        items.length === 1 ? 'aula de aprendizaje' : 'aulas de aprendizaje'
+      }`,
+    [items.length],
+  )
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-border/70 bg-card/80 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.035)] backdrop-blur-sm dark:bg-card/70">
-        <div className="grid gap-2.5 sm:grid-cols-[1fr_140px] lg:grid-cols-[1fr_140px_180px]">
-          <div className="relative">
+    <div className="space-y-4">
+      <section className="mb-5 rounded-2xl border border-border/40 bg-card p-3 shadow-sm sm:p-3.5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_140px] lg:grid-cols-[1fr_140px_180px]">
+          <div className="relative col-span-2 sm:col-span-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input
-              placeholder="Buscar un aula..."
+              placeholder="Buscar curso..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-10 rounded-xl border-border/60 bg-background/75 pl-10 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
+              onChange={(event) => setSearch(event.target.value)}
+              className="h-11 rounded-xl border-border/60 bg-background/75 pl-10 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35 sm:h-10"
             />
           </div>
 
@@ -406,12 +448,12 @@ export function StudentCoursesList() {
             value={anio}
             min={2000}
             max={2100}
-            onChange={(e) => setAnio(e.target.value)}
-            className="h-10 rounded-xl border-border/60 bg-background/75 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35"
+            onChange={(event) => setAnio(event.target.value)}
+            className="h-11 rounded-xl border-border/60 bg-background/75 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus-visible:ring-2 focus-visible:ring-primary/15 dark:bg-background/35 sm:h-10"
           />
 
           <Select value={estado} onValueChange={setEstado}>
-            <SelectTrigger className="h-10 rounded-xl border-border/60 bg-background/75 px-4 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus:ring-2 focus:ring-primary/15 data-[state=open]:border-primary/30 data-[state=open]:ring-2 data-[state=open]:ring-primary/10 dark:bg-background/35 sm:col-span-2 lg:col-span-1">
+            <SelectTrigger className="h-11 rounded-xl border-border/60 bg-background/75 px-4 text-sm shadow-none transition-colors duration-200 hover:border-border/80 focus:ring-2 focus:ring-primary/15 data-[state=open]:border-primary/30 data-[state=open]:ring-2 data-[state=open]:ring-primary/10 dark:bg-background/35 sm:col-span-2 sm:h-10 lg:col-span-1">
               <SelectValue placeholder="Todos los cursos" />
             </SelectTrigger>
 
@@ -425,17 +467,17 @@ export function StudentCoursesList() {
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </section>
 
       {loading ? (
-        <ul className="grid gap-5 xl:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <CourseCardSkeleton key={i} />
+        <ul className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <CourseCardSkeleton key={index} />
           ))}
         </ul>
       ) : items.length === 0 ? (
         <Card className="rounded-xl border border-border/70 bg-card/95 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/90">
-          <CardContent className="px-6 py-14">
+          <CardContent className="px-6 py-10">
             <Empty className="border-0 p-0">
               <EmptyMedia variant="icon">
                 <Inbox />
@@ -454,11 +496,22 @@ export function StudentCoursesList() {
           </CardContent>
         </Card>
       ) : (
-        <ul className="grid gap-5 xl:grid-cols-2">
-          {items.map((course, index) => (
-            <CourseCard key={getCourseId(course) ?? index} course={course} />
-          ))}
-        </ul>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <p className="text-sm text-muted-foreground">{visibleCountLabel}</p>
+            {hasActiveFilters ? (
+              <span className="rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-xs font-semibold text-primary">
+                Filtros activos
+              </span>
+            ) : null}
+          </div>
+
+          <ul className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {items.map((course, index) => (
+              <CourseCard key={getCourseId(course) ?? index} course={course} />
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   )

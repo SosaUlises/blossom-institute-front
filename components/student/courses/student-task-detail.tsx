@@ -575,13 +575,44 @@ function TaskHeroMetaChip({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium leading-5 text-muted-foreground dark:bg-background/35',
+        'inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium leading-5 text-muted-foreground dark:bg-background/35',
         className,
       )}
     >
       <Icon className="size-3.5" />
       {children}
     </span>
+  )
+}
+
+function OpenPostSkeleton() {
+  return (
+    <div className="mx-auto max-w-5xl space-y-4">
+      <div className="h-9 w-36 animate-pulse rounded-lg bg-muted/30" />
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <article
+          aria-hidden="true"
+          className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-6"
+        >
+          <div className="flex gap-3">
+            <div className="size-9 animate-pulse rounded-full bg-muted/45" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-40 animate-pulse rounded-md bg-muted/45" />
+              <div className="h-3 w-28 animate-pulse rounded-md bg-muted/30" />
+            </div>
+          </div>
+          <div className="mt-6 space-y-3">
+            <div className="h-8 w-2/3 animate-pulse rounded-md bg-muted/45" />
+            <div className="h-4 w-full animate-pulse rounded-md bg-muted/25" />
+            <div className="h-4 w-4/5 animate-pulse rounded-md bg-muted/25" />
+          </div>
+        </article>
+        <div
+          aria-hidden="true"
+          className="h-44 animate-pulse rounded-xl border border-border/60 bg-muted/20"
+        />
+      </div>
+    </div>
   )
 }
 
@@ -766,7 +797,6 @@ export function StudentTaskDetail({
               buttonClassName: '',
           }
   const ActionIcon = actionState.icon
-  const courseName = safeText(task?.cursoNombre) ?? 'Curso'
   const heroCtaLabel = actionState.cta ?? 'Leer consigna'
 
   useEffect(() => {
@@ -1144,26 +1174,21 @@ export function StudentTaskDetail({
   }
 
   if (state.loading) {
-    return (
-      <div className={cn('grid min-h-[320px] place-items-center px-6 text-center', studentUi.card.grade)}>
-        <div>
-          <Loader2 className="mx-auto size-8 animate-spin text-primary" />
-          <p className="mt-4 text-sm font-medium text-muted-foreground">
-            Estamos abriendo esta publicación.
-          </p>
-        </div>
-      </div>
-    )
+    return <OpenPostSkeleton />
   }
 
   if (state.error || !task) {
     return (
-      <Card className={studentUi.card.panel}>
-        <CardContent className="px-6 py-14 text-center">
+      <Card className="mx-auto max-w-2xl rounded-xl border border-border/60 bg-card/95 shadow-none dark:bg-card/90">
+        <CardContent className="px-6 py-10 text-center">
+          <StudentIconContainer
+            icon={AlertCircle}
+            className="mx-auto size-10 border-transparent bg-rose-500/10 text-rose-700 dark:text-rose-300"
+          />
           <p className="text-sm font-medium text-muted-foreground">
             No pudimos abrir esta publicación.
           </p>
-          <Button asChild variant="ghost" className={cn('mt-5', studentUi.button.ghost)}>
+          <Button asChild variant="ghost" className={cn('mt-4', studentUi.button.ghost)}>
             <Link href={`/student/courses/${courseId}`}>Volver al tablón</Link>
           </Button>
         </CardContent>
@@ -1171,13 +1196,15 @@ export function StudentTaskDetail({
     )
   }
 
+  const taskContent = safeText(task.consigna) ?? safeText(task.descripcion)
+
   if (isAnnouncement) {
     return (
-    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-5">
+      <div className="mx-auto max-w-3xl space-y-4 sm:space-y-5">
         <Button
           asChild
           variant="ghost"
-          className={cn('mt-5', studentUi.button.ghost)}
+          className={studentUi.button.ghost}
         >
           <Link href={`/student/courses/${courseId}`}>
             <ArrowLeft className="size-4" />
@@ -1185,80 +1212,68 @@ export function StudentTaskDetail({
           </Link>
         </Button>
 
-        <article className={cn(studentUi.card.grade, 'border-violet-500/15 bg-card sm:p-6')}>
-          <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <TeacherAvatarOrIcon
-                name={announcementTeacherName}
-                avatarUrl={teacherAvatarUrl}
-                icon={Megaphone}
-                className="border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300"
-              />
-
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-muted-foreground">
-                  {announcementTeacherName
-                    ? `${announcementTeacherName} compartió un anuncio`
-                    : 'Anuncio del curso'}
-                </p>
-                {createdAt ? (
-                  <time className="mt-0.5 block text-xs text-muted-foreground">
-                    Publicado {createdAt}
-                  </time>
-                ) : null}
-              </div>
-            </div>
-
-            <StudentStatusBadge
+        <article className="rounded-2xl border border-violet-500/15 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-6">
+          <header className="flex min-w-0 items-start gap-3">
+            <TeacherAvatarOrIcon
+              name={announcementTeacherName}
+              avatarUrl={teacherAvatarUrl}
               icon={Megaphone}
               className="border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300"
-            >
-              Anuncio
-            </StudentStatusBadge>
+            />
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold leading-5 text-foreground">
+                {announcementTeacherName ?? 'Profesor'}
+              </p>
+              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                {[createdAt, 'Anuncio'].filter(Boolean).join(' · ')}
+              </p>
+            </div>
           </header>
 
-          <div className="mt-5">
+          <div className="mt-5 space-y-4">
             <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
               {safeText(task.titulo) ?? 'Sin título'}
             </h1>
 
-            <div className="mt-4 text-base leading-7 text-foreground/85">
-              {safeText(task.consigna) ?? safeText(task.descripcion) ? (
+            <div className="text-base leading-7 text-foreground/85">
+              {taskContent ? (
                 <p className="whitespace-pre-wrap">
-                  {safeText(task.consigna) ?? safeText(task.descripcion)}
+                  {taskContent}
                 </p>
               ) : (
-                <p>Este anuncio todavía no tiene texto.</p>
+                <p className="text-muted-foreground">Este anuncio todavía no tiene texto.</p>
               )}
             </div>
+
+            {resources.length > 0 ? (
+              <div className="border-t border-border/60 pt-4">
+                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Paperclip className="size-4 text-muted-foreground" />
+                  Recursos
+                </div>
+                <div className="space-y-2">
+                  {resources.map((resource, index) => (
+                    <AttachmentLink
+                      key={resource.storageKey ?? resource.url ?? index}
+                      attachment={resource}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </article>
-
-        {resources.length > 0 ? (
-          <section className="space-y-3">
-            <h2 className="text-base font-semibold tracking-tight text-foreground">
-              Recursos
-            </h2>
-            <div className="space-y-2">
-              {resources.map((resource, index) => (
-                <AttachmentLink
-                  key={resource.storageKey ?? resource.url ?? index}
-                  attachment={resource}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 sm:space-y-6">
+    <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
       <Button
         asChild
         variant="ghost"
-        className={cn('mt-5', studentUi.button.ghost)}
+        className={studentUi.button.ghost}
       >
         <Link href={`/student/courses/${courseId}`}>
           <ArrowLeft className="size-4" />
@@ -1266,48 +1281,81 @@ export function StudentTaskDetail({
         </Link>
       </Button>
 
-      <header className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-5 shadow-[0_12px_36px_-30px_rgba(15,23,42,0.35)] dark:bg-card/90 sm:p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_92%_8%,rgba(14,165,233,0.11),transparent_30%)] dark:bg-[radial-gradient(circle_at_92%_8%,rgba(56,189,248,0.10),transparent_32%)]" />
-        <div className="relative space-y-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <TaskHeroMetaChip icon={BookOpen}>
-                  {courseName}
-                </TaskHeroMetaChip>
-                <TaskHeroMetaChip icon={FileText}>
-                  Tarea
-                </TaskHeroMetaChip>
-                {dueDate ? (
-                  <TaskHeroMetaChip icon={CalendarCheck2}>
-                    Vence {dueDate}
-                  </TaskHeroMetaChip>
-                ) : null}
-              </div>
+      <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <article
+          id="consigna"
+          className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-6"
+        >
+          <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <TeacherAvatarOrIcon
+                name={teacherName === 'Profesor' ? null : teacherName}
+                avatarUrl={teacherAvatarUrl}
+                icon={BookOpen}
+                className="border-primary/15 bg-primary/10 text-primary"
+              />
 
-              <div>
-                <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
-                  {safeText(task.titulo) ?? 'Sin título'}
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  {actionState.description}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold leading-5 text-foreground">
+                  {teacherName === 'Profesor' ? 'Profesor' : teacherName}
+                </p>
+                <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                  {[createdAt, 'Tarea'].filter(Boolean).join(' · ')}
                 </p>
               </div>
             </div>
 
-            <StudentStatusBadge
-              icon={ActionIcon}
-              className={cn(
-                'rounded-xl px-3 py-1.5 text-sm shadow-[0_1px_1px_rgba(15,23,42,0.04)]',
-                taskStatusClassName,
-              )}
-            >
-              {taskStatusLabel}
-            </StudentStatusBadge>
+            {dueDate ? (
+              <TaskHeroMetaChip
+                icon={CalendarCheck2}
+                className={cn(
+                  task?.vencida && !currentDelivery
+                    ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+                    : 'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+                )}
+              >
+                {task?.vencida && !currentDelivery ? `Venció ${dueDate}` : `Vence ${dueDate}`}
+              </TaskHeroMetaChip>
+            ) : null}
+          </header>
+
+          <div className="mt-5">
+            <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+              {safeText(task.titulo) ?? 'Sin título'}
+            </h1>
+
+            {taskContent ? (
+              <p className="mt-4 whitespace-pre-wrap text-base leading-8 text-foreground/85">
+                {taskContent}
+              </p>
+            ) : (
+              <p className={cn('mt-4', studentUi.card.callout)}>
+                Esta tarea todavía no tiene consigna.
+              </p>
+            )}
           </div>
 
-          <div className="flex flex-col gap-4 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
+          {resources.length > 0 ? (
+            <section className="mt-5 border-t border-border/60 pt-4">
+              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Paperclip className="size-4 text-muted-foreground" />
+                Materiales
+              </div>
+              <div className="space-y-2">
+                {resources.map((resource, index) => (
+                  <AttachmentLink
+                    key={resource.storageKey ?? resource.url ?? index}
+                    attachment={resource}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </article>
+
+        <aside className="space-y-4 lg:sticky lg:top-6">
+          <section className="rounded-xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90">
+            <div className="flex items-start gap-3">
               <StudentIconContainer
                 icon={ActionIcon}
                 size="md"
@@ -1331,10 +1379,17 @@ export function StudentTaskDetail({
               </div>
             </div>
 
+            <StudentStatusBadge
+              icon={ActionIcon}
+              className={cn('mt-4 rounded-lg px-2.5 py-1 text-xs', taskStatusClassName)}
+            >
+              {taskStatusLabel}
+            </StudentStatusBadge>
+
             <Button
               type="button"
               className={cn(
-                'h-10 w-full shrink-0 rounded-lg sm:w-fit',
+                'mt-4 h-10 w-full shrink-0 rounded-lg',
                 actionState.buttonClassName ||
                   'border-border/70 bg-background/75 text-foreground transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-muted/40 hover:text-primary active:scale-[0.99] dark:bg-background/35',
               )}
@@ -1343,51 +1398,8 @@ export function StudentTaskDetail({
             >
               {heroCtaLabel}
             </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-        <div className="space-y-5 sm:space-y-6">
-          <section id="consigna" className={studentUi.card.document}>
-            <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
-              <FileText className="size-4 text-muted-foreground" />
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Consigna
-              </h2>
-            </div>
-            {safeText(task.consigna) ? (
-              <p className="whitespace-pre-wrap text-base leading-8 text-foreground/85">
-                {task.consigna}
-              </p>
-            ) : (
-              <p className={studentUi.card.callout}>
-                Esta tarea todavía no tiene consigna.
-              </p>
-            )}
           </section>
 
-          {resources.length > 0 ? (
-            <section className={studentUi.card.document}>
-              <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
-                <Paperclip className="size-4 text-muted-foreground" />
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                  Materiales
-                </h2>
-              </div>
-              <div className="space-y-2">
-                {resources.map((resource, index) => (
-                  <AttachmentLink
-                    key={resource.storageKey ?? resource.url ?? index}
-                    attachment={resource}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : null}
-        </div>
-
-        <aside className="space-y-4 lg:sticky lg:top-6">
           {renderDeliveryPanel()}
         </aside>
       </div>
