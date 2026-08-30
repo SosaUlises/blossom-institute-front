@@ -398,8 +398,56 @@ function getPluralLabel(count: number, singular: string, plural: string) {
 }
 
 function getFeedbackActionCount(feedbacks: StudentDashboardFeedback[]) {
-  return feedbacks.filter((feedback) => getFeedbackEstado(feedback).tone === 'amber')
-    .length
+  const actionKeys = new Set<string>()
+
+  feedbacks.forEach((feedback, index) => {
+    if (getFeedbackEstado(feedback).tone !== 'amber') return
+
+    const entregaId = getNumberField(feedback.entregaId ?? feedback.EntregaId)
+    const tareaId = getNumberField(feedback.tareaId ?? feedback.TareaId)
+    const feedbackId = getNumberField(feedback.feedbackId ?? feedback.FeedbackId)
+    const key = entregaId
+      ? `entrega-${entregaId}`
+      : tareaId
+        ? `tarea-${tareaId}`
+        : feedbackId
+          ? `feedback-${feedbackId}`
+          : `feedback-${index}`
+
+    actionKeys.add(key)
+  })
+
+  return actionKeys.size
+}
+
+function getMovementIdentity(movement: Movement) {
+  return movement.href ?? movement.key
+}
+
+function getMovementImportance(movement: Movement) {
+  if (movement.priority) return 3
+  if (movement.tone === 'rose' || movement.tone === 'amber') return 2
+  if (movement.actorType === 'teacher') return 1
+  return 0
+}
+
+function compactLearningMovements(movements: Movement[]) {
+  const uniqueMovements = new Map<string, Movement>()
+
+  movements
+    .sort((a, b) => b.sortTime - a.sortTime)
+    .forEach((movement) => {
+      const identity = getMovementIdentity(movement)
+      const current = uniqueMovements.get(identity)
+
+      if (!current || getMovementImportance(movement) > getMovementImportance(current)) {
+        uniqueMovements.set(identity, movement)
+      }
+    })
+
+  return Array.from(uniqueMovements.values())
+    .sort((a, b) => b.sortTime - a.sortTime)
+    .slice(0, MAX_LEARNING_FEED_ITEMS)
 }
 
 function formatStudentSummary({
@@ -687,12 +735,10 @@ function NextStepCard({ step }: { step: NextStep | null }) {
 }
 
 function LearningRhythmInline({
-  entregasRecientesCount,
   tareasPendientesCount,
   promedioGeneral,
   porcentajeAsistenciaGeneral,
 }: {
-  entregasRecientesCount: number
   tareasPendientesCount: number
   promedioGeneral: number | null | undefined
   porcentajeAsistenciaGeneral: number | null | undefined
@@ -735,31 +781,25 @@ function LearningRhythmInline({
     })
   }
 
-  if (entregasRecientesCount > 0) {
-    items.push({
-      label: 'Entregas recientes',
-      value: String(entregasRecientesCount),
-      tone: 'neutral',
-    })
-  }
-
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-border/55 bg-background/45 px-3.5 py-3 text-sm text-muted-foreground dark:bg-background/25">
+      <div className="border-t border-border/55 bg-background/30 px-4 py-3 text-sm text-muted-foreground dark:bg-background/15 sm:px-5">
         Todavía no hay indicadores cargados para este período.
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-border/55 bg-background/45 px-3.5 py-3 dark:bg-background/25">
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5">
+    <div className="border-t border-border/55 bg-background/30 px-4 py-3 dark:bg-background/15 sm:px-5">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         {items.map((item) => (
           <div
             key={item.label}
             className={cn(
-              'flex min-w-[132px] items-center justify-between gap-2 rounded-lg px-2.5 py-1.5',
-              item.tone !== 'neutral' && toneStyles[item.tone].chip,
+              'inline-flex items-center gap-2 rounded-lg text-xs font-medium text-muted-foreground',
+              item.tone !== 'neutral'
+                ? cn('border px-2.5 py-1.5', toneStyles[item.tone].chip)
+                : 'px-0.5 py-1',
             )}
           >
             <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
@@ -782,13 +822,11 @@ function LearningRhythmInline({
 
 function ClassroomRhythmCard({
   course,
-  entregasRecientesCount,
   tareasPendientesCount,
   promedioGeneral,
   porcentajeAsistenciaGeneral,
 }: {
   course: StudentCourseSummary | undefined
-  entregasRecientesCount: number
   tareasPendientesCount: number
   promedioGeneral: number | null | undefined
   porcentajeAsistenciaGeneral: number | null | undefined
@@ -810,11 +848,11 @@ function ClassroomRhythmCard({
       href={getCourseHref(course)}
       aria-label={`Entrar al aula ${course.cursoNombre || 'principal'}`}
       className={cn(
-        'group block rounded-2xl border border-border/65 bg-card/90 p-4 shadow-sm transition-colors hover:border-primary/25 hover:bg-card dark:bg-card/80 sm:p-5',
+        'group block overflow-hidden rounded-2xl border border-border/65 bg-card/95 shadow-sm transition-colors hover:border-primary/25 hover:bg-card dark:bg-card/90',
         studentUi.focus,
       )}
     >
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:items-center">
+      <section className="grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
             <span className="inline-flex items-center gap-1 rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-primary">
@@ -833,23 +871,21 @@ function ClassroomRhythmCard({
                   ? 'Tenés práctica pendiente para continuar.'
                   : 'Entrá para repasar materiales, tareas y novedades.'}
               </p>
-              <span className="mt-3 inline-flex text-sm font-semibold text-primary">
-                Entrar al aula
-              </span>
             </div>
-            <span className="mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background/70 text-muted-foreground transition-colors group-hover:border-primary/25 group-hover:text-primary dark:bg-background/30">
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-            </span>
           </div>
         </div>
 
-        <LearningRhythmInline
-          entregasRecientesCount={entregasRecientesCount}
-          tareasPendientesCount={tareasPendientesCount}
-          promedioGeneral={promedioGeneral}
-          porcentajeAsistenciaGeneral={porcentajeAsistenciaGeneral}
-        />
+        <span className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-primary/20 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground sm:w-auto">
+          Entrar al aula
+          <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+        </span>
       </section>
+
+      <LearningRhythmInline
+        tareasPendientesCount={tareasPendientesCount}
+        promedioGeneral={promedioGeneral}
+        porcentajeAsistenciaGeneral={porcentajeAsistenciaGeneral}
+      />
     </Link>
   )
 }
@@ -1117,15 +1153,13 @@ function buildMovements({
     priority: task.vencida || isTaskDueSoon(task),
   }))
 
-  return [
+  return compactLearningMovements([
     ...announcementMovements,
     ...feedbackMovements,
     ...gradeMovements,
     ...deliveryMovements,
     ...taskMovements,
-  ]
-    .sort((a, b) => b.sortTime - a.sortTime)
-    .slice(0, MAX_LEARNING_FEED_ITEMS)
+  ])
 }
 
 function LearningFeed({ movements }: { movements: Movement[] }) {
@@ -1133,11 +1167,11 @@ function LearningFeed({ movements }: { movements: Movement[] }) {
     <section className="space-y-3 rounded-2xl border border-border/60 bg-card/65 p-4 dark:bg-card/50">
       <SectionHeader
         title="Últimos movimientos"
-        description="Novedades, entregas y devoluciones recientes de tu aula."
+        description="Novedades recientes de tus cursos."
       />
 
       {movements.length > 0 ? (
-        <div className="divide-y divide-border/55 rounded-xl border border-border/55 bg-background/35 dark:bg-background/20">
+        <div className="divide-y divide-border/50 rounded-xl border border-border/55 bg-background/35 dark:bg-background/20">
           {movements.map((movement, index) => (
             <MovementItem key={movement.key} movement={movement} featured={index === 0} />
           ))}
@@ -1146,7 +1180,7 @@ function LearningFeed({ movements }: { movements: Movement[] }) {
         <div>
           <QuietEmptyState
             title="Todavía no hay movimientos recientes."
-            description="Cuando haya anuncios, notas, entregas o devoluciones, van a aparecer acá."
+            description="Cuando haya anuncios, notas o devoluciones, van a aparecer acá."
           />
         </div>
       )}
@@ -1184,11 +1218,15 @@ function StudentDashboardContent({
   const tareasPendientesCount =
     dashboard?.tareasPendientesCount ?? tareasPendientes.length
 
+  const feedbacksPendientesAccionCount =
+    dashboard?.feedbacksPendientesAccionCount ??
+    dashboard?.FeedbacksPendientesAccionCount
+  const feedbacksRehacerCount =
+    dashboard?.feedbacksRehacerCount ?? dashboard?.FeedbacksRehacerCount
   const feedbacksPendientes =
-    (dashboard?.feedbacksPendientesAccionCount ??
-      dashboard?.FeedbacksPendientesAccionCount ??
-      0) +
-    (dashboard?.feedbacksRehacerCount ?? dashboard?.FeedbacksRehacerCount ?? 0)
+    feedbacksPendientesAccionCount ??
+    feedbacksRehacerCount ??
+    getFeedbackActionCount(feedbacksRecientes)
 
   const nextStep = getNextStep({
     tasks: tareasPendientes,
@@ -1197,8 +1235,7 @@ function StudentDashboardContent({
   })
   const summary = formatStudentSummary({
     pendingTasksCount: tareasPendientesCount,
-    feedbackActionCount:
-      feedbacksPendientes || getFeedbackActionCount(feedbacksRecientes),
+    feedbackActionCount: feedbacksPendientes,
   })
 
   return (
@@ -1214,7 +1251,6 @@ function StudentDashboardContent({
 
           <ClassroomRhythmCard
             course={primaryCourse}
-            entregasRecientesCount={ultimasEntregas.length}
             tareasPendientesCount={tareasPendientesCount}
             promedioGeneral={dashboard?.promedioGeneral}
             porcentajeAsistenciaGeneral={dashboard?.porcentajeAsistenciaGeneral}
