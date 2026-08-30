@@ -49,7 +49,32 @@ type SectionState = {
   loading: boolean
   loaded: boolean
   items: StudentCourseSectionItem[]
+  summary?: StudentGradesAcademicSummary | null
   error: string | null
+}
+
+type StudentGradesAcademicSummary = Record<string, unknown> & {
+  averageGrade?: number | null
+  AverageGrade?: number | null
+  academicGradesCount?: number | null
+  AcademicGradesCount?: number | null
+  quizCount?: number | null
+  QuizCount?: number | null
+  testCount?: number | null
+  TestCount?: number | null
+  year?: number | null
+  Year?: number | null
+  quarter?: number | null
+  Quarter?: number | null
+  periodLabel?: string | null
+  PeriodLabel?: string | null
+  periodRangeLabel?: string | null
+  PeriodRangeLabel?: string | null
+}
+
+type SectionPayload = {
+  items: StudentCourseSectionItem[]
+  summary?: StudentGradesAcademicSummary | null
 }
 
 type StudentPublicationAttachment = {
@@ -64,8 +89,11 @@ const initialSectionState: SectionState = {
   loading: false,
   loaded: false,
   items: [],
+  summary: null,
   error: null,
 }
+
+const INITIAL_VISIBLE_GRADES = 8
 
 const tabStyles: Record<
   Tab,
@@ -98,7 +126,7 @@ const tabStyles: Record<
     label: 'Personas',
     icon: Users,
     title: 'Personas',
-    description: 'Tus profes y compañeros.',
+    description: 'Quienes forman parte de tu aula.',
   },
 }
 
@@ -107,21 +135,6 @@ const sectionPaths: Partial<Record<Tab, string>> = {
   grades: 'grades',
   attendance: 'attendance',
   people: 'people',
-}
-
-const panelHeaders: Partial<Record<Tab, { title: string; description: string }>> = {
-  grades: {
-    title: 'Calificaciones',
-    description: 'Tus notas del curso, ordenadas para entender qué seguir practicando.',
-  },
-  attendance: {
-    title: 'Historial de asistencias',
-    description: 'Las clases registradas por tu profe y tu asistencia en cada una.',
-  },
-  people: {
-    title: 'Personas del curso',
-    description: 'Tus profes y compañeros en esta aula.',
-  },
 }
 
 const badgeStyles = {
@@ -180,6 +193,22 @@ function asItems(value: unknown): StudentCourseSectionItem[] {
   }
 
   return []
+}
+
+function asSectionPayload(value: unknown): SectionPayload {
+  const record = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null
+  const data = record?.data && typeof record.data === 'object' && !Array.isArray(record.data)
+    ? record.data as Record<string, unknown>
+    : record
+
+  return {
+    items: asItems(value),
+    summary: data?.summary && typeof data.summary === 'object' && !Array.isArray(data.summary)
+      ? data.summary as StudentGradesAcademicSummary
+      : null,
+  }
 }
 
 function formatDate(value: unknown) {
@@ -263,11 +292,14 @@ async function loadSection(courseId: number, section: string) {
     throw new Error(result?.message || 'No pudimos cargar esta parte del curso.')
   }
 
-  const items = asItems(result)
+  const payload = asSectionPayload(result)
 
-  if (section !== 'tasks') return items
+  if (section !== 'tasks') return payload
 
-  return enrichTaskResources(courseId, items)
+  return {
+    ...payload,
+    items: await enrichTaskResources(courseId, payload.items),
+  }
 }
 
 function unwrapRecord(value: unknown): StudentCourseSectionItem | null {
@@ -442,6 +474,48 @@ function getQualitativeGradeLabel(type: unknown, value: unknown) {
   if (grade === 65) return 'R · A seguir practicando'
 
   return getGradeFeedbackLabel(value)
+}
+
+function formatGradeNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+function sortGradesByRecentDate(items: StudentCourseSectionItem[]) {
+  return [...items].sort((a, b) => {
+    const dateA = parseLocalDate(a.fecha)?.getTime() ?? 0
+    const dateB = parseLocalDate(b.fecha)?.getTime() ?? 0
+
+    if (dateA !== dateB) return dateB - dateA
+
+    return String(safeText(a.titulo) ?? '').localeCompare(String(safeText(b.titulo) ?? ''))
+  })
+}
+
+function getSummaryNumber(summary: StudentGradesAcademicSummary | null | undefined, keys: string[]) {
+  if (!summary) return null
+
+  for (const key of keys) {
+    const value = summary[key]
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+  }
+
+  return null
+}
+
+function getSummaryText(summary: StudentGradesAcademicSummary | null | undefined, keys: string[]) {
+  if (!summary) return null
+
+  for (const key of keys) {
+    const value = summary[key]
+    if (typeof value === 'string' && value.trim()) return value
+  }
+
+  return null
+}
+
+function formatQuarter(value: number | null) {
+  if (!value || !Number.isFinite(value)) return 'trimestre actual'
+  return `${value}º trimestre`
 }
 
 function getGradeTone(value: unknown) {
@@ -1236,29 +1310,33 @@ function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
     formatDate(item.fechaClase) ??
     formatDate(item.claseFecha) ??
     'Fecha sin cargar.'
-  const description = getValue(item, ['descripcionClase']) ?? 'Clase del curso.'
+  const description = getValue(item, ['descripcionClase'])
 
   return (
-    <article className="relative pl-6 sm:pl-8">
-      <span
-        className={cn(
-          'absolute left-0 top-4 z-10 flex size-3.5 items-center justify-center rounded-full ring-4 ring-card',
-          status.dotClassName,
-        )}
-      >
-        <StatusIcon className="size-2 text-white" />
-      </span>
+    <article className={cn(studentUi.card.item, 'flex flex-col gap-3 rounded-xl px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between')}>
+      <div className="flex min-w-0 items-start gap-3">
+        <span
+          className={cn(
+            'mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border',
+            status.iconClassName,
+          )}
+        >
+          <StatusIcon className="size-4" />
+        </span>
 
-      <div className={cn(studentUi.card.item, 'flex flex-col gap-2.5 rounded-xl px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between')}>
         <div className="min-w-0 flex-1">
           <time className="block text-[15px] font-semibold leading-5 tracking-tight text-foreground">
             {fecha}
           </time>
-          <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
-            {description}
-          </p>
+          {description ? (
+            <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
         </div>
+      </div>
 
+      <div className="flex justify-start sm:justify-end">
         <StudentStatusBadge
           icon={StatusIcon}
           className={cn('rounded-lg px-2.5 py-1 text-xs', status.badgeClassName)}
@@ -1287,6 +1365,25 @@ function AttendanceSummary({
     },
     { present: 0, absent: 0 },
   )
+  const countedClasses = summary.present + summary.absent
+  const attendancePercent =
+    countedClasses > 0 ? Math.round((summary.present / countedClasses) * 100) : null
+  const attendanceTone =
+    attendancePercent == null
+      ? 'border-border/60 bg-muted/25 text-muted-foreground'
+      : attendancePercent < 60
+        ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+        : attendancePercent < 75
+          ? 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+          : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+  const attendanceMessage =
+    attendancePercent == null
+      ? 'Todavía no hay registros suficientes.'
+      : attendancePercent < 60
+        ? 'Necesitás recuperar asistencia.'
+        : attendancePercent < 75
+          ? 'Conviene cuidar la asistencia.'
+          : 'Buen recorrido de asistencia.'
 
   const stats = [
     {
@@ -1297,28 +1394,54 @@ function AttendanceSummary({
     {
       label: 'Presentes',
       value: summary.present,
-      className: 'text-emerald-700 dark:text-emerald-300',
+      className: summary.present > 0
+        ? 'text-emerald-700 dark:text-emerald-300'
+        : 'text-muted-foreground',
     },
     {
       label: 'Ausencias',
       value: summary.absent,
-      className: 'text-rose-700 dark:text-rose-300',
+      className: summary.absent > 0
+        ? 'text-rose-700 dark:text-rose-300'
+        : 'text-muted-foreground',
     },
   ]
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border/60 bg-card/80 px-3.5 py-2.5 text-sm dark:bg-card/70">
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="inline-flex items-baseline gap-1.5"
-        >
-          <p className={cn('text-sm font-semibold leading-5', stat.className)}>
-            {stat.value}
+    <div className="rounded-xl border border-border/60 bg-card/80 px-3.5 py-3 dark:bg-card/70">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-medium leading-5 text-muted-foreground">
+            Asistencia actual
           </p>
-          <p className="text-xs font-medium leading-5 text-muted-foreground">{stat.label}</p>
+          <p className="mt-0.5 text-sm font-medium leading-5 text-foreground">
+            {attendanceMessage}
+          </p>
         </div>
-      ))}
+
+        <span
+          className={cn(
+            'inline-flex w-fit items-center rounded-lg border px-2.5 py-1 text-sm font-semibold leading-5',
+            attendanceTone,
+          )}
+        >
+          {attendancePercent == null ? '-' : `${attendancePercent}%`}
+        </span>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border/50 pt-2.5 text-sm">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="inline-flex items-baseline gap-1.5"
+          >
+            <p className={cn('text-sm font-semibold leading-5', stat.className)}>
+              {stat.value}
+            </p>
+            <p className="text-xs font-medium leading-5 text-muted-foreground">{stat.label}</p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -1329,10 +1452,10 @@ function AttendanceHistory({
   items: StudentCourseSectionItem[]
 }) {
   return (
-    <section className="space-y-4">
+    <section className="mx-auto max-w-3xl space-y-4">
       <AttendanceSummary items={items} />
 
-      <div className="relative space-y-2.5 before:absolute before:left-2 before:bottom-5 before:top-5 before:w-px before:bg-border/50 sm:space-y-3">
+      <div className="space-y-2.5 sm:space-y-3">
         {items.map((item, index) => (
           <AttendanceRow
             key={String(item.id ?? item.asistenciaId ?? item.claseId ?? index)}
@@ -1350,27 +1473,27 @@ function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
   const email = getPersonEmail(item)
 
   return (
-    <article className="rounded-xl border border-border/60 bg-card/80 p-3.5 transition-colors duration-200 ease-out hover:border-violet-300/50 hover:bg-card dark:bg-card/70 dark:hover:border-violet-500/25">
-      <div className="flex items-center gap-3">
+    <article className="rounded-2xl border border-violet-200/70 bg-card/95 p-4 shadow-sm transition-colors duration-200 ease-out hover:border-violet-300/70 dark:border-violet-500/20 dark:bg-card/85 dark:hover:border-violet-500/35">
+      <div className="flex items-center gap-3.5">
         <UserAvatar
           name={name}
           avatarUrl={avatarUrl}
-          size={44}
+          size={48}
           fallbackClassName="bg-background/80 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300"
         />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="min-w-0 text-[15px] font-semibold leading-5 tracking-tight text-foreground">
+            <h3 className="min-w-0 text-base font-semibold leading-5 tracking-tight text-foreground">
               {name}
             </h3>
             <span className={cn(studentUi.badge.compact, 'border-violet-200 bg-background/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300')}>
-              Profe
+              Docente del curso
             </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Te acompaña en este curso</p>
+          <p className="mt-1 text-sm leading-5 text-muted-foreground">Te acompaña en este curso</p>
           {email ? (
-            <p className="mt-0.5 truncate text-xs text-muted-foreground/80">{email}</p>
+            <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground/85">{email}</p>
           ) : null}
         </div>
       </div>
@@ -1393,34 +1516,35 @@ function ClassmatePersonCard({
   return (
     <article
       className={cn(
-        'rounded-xl border p-3.5 transition-colors duration-200 ease-out hover:border-primary/15 hover:bg-card',
+        'rounded-xl border px-3 py-2.5 transition-colors duration-200 ease-out hover:border-primary/15 hover:bg-card',
         current
           ? 'border-primary/25 bg-primary/8'
           : 'border-border/60 bg-background/60 dark:bg-background/35',
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <UserAvatar
           name={name}
           avatarUrl={avatarUrl}
-          size={40}
+          size={36}
           fallbackClassName="bg-primary/8 text-primary"
         />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="min-w-0 text-[15px] font-semibold leading-5 tracking-tight text-foreground">
+            <h3 className="min-w-0 truncate text-sm font-semibold leading-5 tracking-tight text-foreground">
               {name}
             </h3>
-            <span className={cn(studentUi.badge.compact, 'border-border/60 bg-muted/30 text-muted-foreground')}>
-              {current ? 'Vos' : 'Compañero'}
-            </span>
+            {current ? (
+              <span className={cn(studentUi.badge.compact, 'border-primary/20 bg-primary/10 text-primary')}>
+                Vos
+              </span>
+            ) : null}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {current ? 'Este sos vos' : 'Aprende con vos'}
-          </p>
           {email ? (
             <p className="mt-0.5 truncate text-xs text-muted-foreground/80">{email}</p>
+          ) : current ? (
+            <p className="mt-0.5 text-xs text-muted-foreground/80">Este sos vos</p>
           ) : null}
         </div>
       </div>
@@ -1430,11 +1554,8 @@ function ClassmatePersonCard({
 
 function PeopleEmptyState({ text }: { text: string }) {
   return (
-    <div className={cn(studentUi.card.empty, 'px-5 py-8 text-center')}>
+    <div className="rounded-xl border border-border/55 bg-background/45 px-4 py-4 text-sm text-muted-foreground dark:bg-background/25">
       <p className="text-sm font-semibold text-foreground">{text}</p>
-      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-        Cuando el curso tenga movimiento, vas a verlo organizado acá.
-      </p>
     </div>
   )
 }
@@ -1449,17 +1570,24 @@ function PeopleCommunity({
   const { teachers, classmates } = getPeopleGroups(items)
 
   if (teachers.length === 0 && classmates.length === 0) {
-    return <PeopleEmptyState text="Todavía no hay personas para mostrar." />
+    return <PeopleEmptyState text="Todavía no hay personas asignadas a este curso." />
   }
 
   return (
-    <section className="space-y-6">
+    <section className="mx-auto max-w-4xl space-y-6">
       <section className="space-y-3" aria-labelledby="course-teachers-title">
-        <h3 id="course-teachers-title" className="text-sm font-semibold text-foreground">
-          Tus profes
-        </h3>
+        <div className="flex items-center justify-between gap-3">
+          <h3 id="course-teachers-title" className="text-sm font-semibold text-foreground">
+            Tus profes
+          </h3>
+          {teachers.length > 0 ? (
+            <span className="text-xs font-medium text-muted-foreground">
+              {teachers.length} {teachers.length === 1 ? 'docente' : 'docentes'}
+            </span>
+          ) : null}
+        </div>
         {teachers.length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className={cn('grid gap-3', teachers.length > 1 && 'md:grid-cols-2')}>
             {teachers.map((item, index) => (
               <TeacherPersonCard
                 key={String(item.id ?? item.profesorId ?? index)}
@@ -1473,11 +1601,18 @@ function PeopleCommunity({
       </section>
 
       <section className="space-y-3" aria-labelledby="course-classmates-title">
-        <h3 id="course-classmates-title" className="text-sm font-semibold text-foreground">
-          Compañeros
-        </h3>
+        <div className="flex items-center justify-between gap-3">
+          <h3 id="course-classmates-title" className="text-sm font-semibold text-foreground">
+            Compañeros
+          </h3>
+          {classmates.length > 0 ? (
+            <span className="text-xs font-medium text-muted-foreground">
+              {classmates.length} {classmates.length === 1 ? 'alumno' : 'alumnos'}
+            </span>
+          ) : null}
+        </div>
         {classmates.length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
             {classmates.map((item, index) => (
               <ClassmatePersonCard
                 key={String(item.id ?? item.alumnoId ?? index)}
@@ -1487,7 +1622,7 @@ function PeopleCommunity({
             ))}
           </div>
         ) : (
-          <PeopleEmptyState text="Todavía no hay compañeros en la lista." />
+          <PeopleEmptyState text="Todavía no hay compañeros asignados." />
         )}
       </section>
     </section>
@@ -1503,6 +1638,7 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
   const description = safeText(item.descripcion)
   const details = getGradeDetails(item)
   const date = formatDate(item.fecha)
+  const dateTime = parseLocalDate(item.fecha)?.toISOString()
   const showSkills =
     isSkillGradeType(item.tipo) &&
     hasGradeSkillDetails(item) &&
@@ -1510,8 +1646,8 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
   const skillPanelId = `grade-skills-${String(item.id ?? item.calificacionId ?? item.titulo ?? 'item')}`
 
   return (
-    <article className={studentUi.card.grade}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <article className="rounded-xl border border-border/60 bg-card/95 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] transition-colors duration-200 ease-out hover:border-primary/20 dark:bg-card/90 sm:p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
             <span
@@ -1522,15 +1658,15 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
             >
               {getGradeTypeLabel(item.tipo)}
             </span>
-            {date ? <time>{date}</time> : null}
+            {date ? <time dateTime={dateTime}>{date}</time> : null}
           </div>
 
-          <h3 className="mt-2.5 text-lg font-semibold leading-6 tracking-tight text-foreground">
+          <h3 className="mt-1.5 line-clamp-2 text-base font-semibold leading-6 tracking-tight text-foreground">
             {safeText(item.titulo) ?? 'Sin título'}
           </h3>
 
           {description ? (
-            <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-muted-foreground">
+            <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-muted-foreground">
               {description}
             </p>
           ) : null}
@@ -1538,43 +1674,44 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
 
         <div
           className={cn(
-            'flex w-full shrink-0 items-center justify-between gap-3 rounded-xl border px-4 py-3 sm:w-36 sm:flex-col sm:items-start sm:justify-center',
+            'flex w-full shrink-0 items-center justify-between gap-3 rounded-lg border px-3 py-2 sm:w-32 sm:flex-col sm:items-start sm:justify-center',
             tone.panelClassName,
           )}
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] opacity-80">
-            Nota final
+          <p className="text-[11px] font-semibold leading-4 opacity-80">
+            Nota
           </p>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 sm:block">
-            <p className="text-2xl font-semibold leading-none tracking-tight sm:text-3xl">
+            <p className="text-xl font-semibold leading-none tracking-tight sm:text-2xl">
               {Number.isFinite(grade) ? gradeDisplay : '-'}
             </p>
-            <p className="text-sm font-semibold sm:mt-1">{feedbackLabel}</p>
+            <p className="text-xs font-semibold sm:mt-1">{feedbackLabel}</p>
           </div>
         </div>
       </div>
 
       {showSkills ? (
-        <div className="mt-5 border-t border-border/60 pt-4">
+        <div className="mt-3 border-t border-border/50 pt-3">
           <button
             type="button"
             aria-expanded={skillsOpen}
             aria-controls={skillPanelId}
             onClick={() => setSkillsOpen((current) => !current)}
-            className={cn('group flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm font-semibold text-foreground transition-colors duration-200 ease-out hover:bg-muted/40', studentUi.focus)}
+            className={cn('group flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left text-sm font-semibold text-foreground transition-colors duration-200 ease-out hover:bg-muted/35', studentUi.focus)}
           >
-            <span>
-              {skillsOpen ? 'Ocultar detalle por habilidades' : 'Ver detalle por habilidades'}
+            <span>Habilidades evaluadas</span>
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <span>{skillsOpen ? 'Ocultar' : 'Ver detalle'}</span>
+              <ChevronDown
+                className={cn(
+                  'size-4 shrink-0 transition-transform duration-200 ease-out group-hover:text-foreground',
+                  skillsOpen && 'rotate-180',
+                )}
+              />
             </span>
-            <ChevronDown
-              className={cn(
-                'size-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-hover:text-foreground',
-                skillsOpen && 'rotate-180',
-              )}
-            />
           </button>
           {skillsOpen ? (
-            <div id={skillPanelId} className="mt-3 space-y-3 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+            <div id={skillPanelId} className="mt-2.5 space-y-3 rounded-xl border border-border/50 bg-muted/15 p-3 animate-in fade-in-0 slide-in-from-top-1 duration-200 dark:bg-muted/10">
             {details.map((detail, index) => {
               const percent = getSkillPercent(detail)
               const clampedPercent = percent == null ? 0 : Math.min(100, Math.max(0, percent))
@@ -1587,10 +1724,10 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
                       {getSkillLabel(detail.skill ?? detail.Skill)}
                     </span>
                     <span className="text-xs font-medium text-muted-foreground">
-                      {[scoreLabel]}
+                      {scoreLabel}
                     </span>
                   </div>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                  <div className="h-2 overflow-hidden rounded-full bg-background/80 dark:bg-background/40">
                     <div
                       className={cn('h-full rounded-full transition-[width] duration-500 ease-out', tone.progressClassName)}
                       style={{ width: `${clampedPercent}%` }}
@@ -1604,6 +1741,109 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
         </div>
       ) : null}
     </article>
+  )
+}
+
+function GradesSummary({
+  items,
+  summary,
+}: {
+  items: StudentCourseSectionItem[]
+  summary?: StudentGradesAcademicSummary | null
+}) {
+  const gradedItems = items.filter((item) => Number.isFinite(Number(item.nota)))
+  const fallbackAcademicItems = gradedItems.filter((item) => {
+    const type = Number(item.tipo)
+    return type === 2 || type === 3
+  })
+  const backendAverage = getSummaryNumber(summary, ['averageGrade', 'AverageGrade'])
+  const quarter = getSummaryNumber(summary, ['quarter', 'Quarter'])
+  const rangeLabel = getSummaryText(summary, ['periodRangeLabel', 'PeriodRangeLabel'])
+  const fallbackAverage =
+    fallbackAcademicItems.length > 0
+      ? fallbackAcademicItems.reduce((total, item) => total + Number(item.nota), 0) / fallbackAcademicItems.length
+      : null
+  const average = backendAverage ?? fallbackAverage
+  const averageTone = getGradeTone(average ?? undefined)
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/80 px-4 py-3.5 dark:bg-card/70">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-medium leading-5 text-muted-foreground">
+            Promedio del trimestre actual
+          </p>
+          <p className="mt-0.5 text-sm font-medium leading-5 text-foreground">
+            {average == null
+              ? 'Todavía no hay Quiz o Test cargados en este trimestre.'
+              : `Calculado con Quiz y Test · ${formatQuarter(quarter)}${rangeLabel ? ` · ${rangeLabel}` : ''}.`}
+          </p>
+        </div>
+
+        <span
+          className={cn(
+            'inline-flex w-fit min-w-20 items-center justify-center rounded-xl border px-3 py-2 text-2xl font-semibold leading-none tracking-tight sm:text-3xl',
+            averageTone.panelClassName,
+          )}
+        >
+          {average == null ? '-' : formatGradeNumber(average)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function GradesHistory({
+  items,
+  summary,
+}: {
+  items: StudentCourseSectionItem[]
+  summary?: StudentGradesAcademicSummary | null
+}) {
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_GRADES)
+  const sortedItems = sortGradesByRecentDate(items)
+  const visibleItems = sortedItems.slice(0, visibleCount)
+  const remainingCount = Math.max(0, sortedItems.length - visibleItems.length)
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE_GRADES)
+  }, [items.length])
+
+  return (
+    <section className="mx-auto max-w-3xl space-y-4">
+      <GradesSummary items={items} summary={summary} />
+
+      <p className="px-0.5 text-xs font-medium leading-5 text-muted-foreground">
+        Ordenadas de más reciente a más antigua.
+      </p>
+
+      <div className="grid gap-3">
+        {visibleItems.map((item, index) => (
+          <GradeCard
+            key={String(item.id ?? item.calificacionId ?? index)}
+            item={item}
+          />
+        ))}
+      </div>
+
+      {remainingCount > 0 ? (
+        <div className="flex justify-center pt-1">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((current) => current + INITIAL_VISIBLE_GRADES)}
+            className={cn(
+              'inline-flex min-h-10 items-center justify-center rounded-xl border border-border/60 bg-background/70 px-4 text-sm font-semibold text-foreground transition-colors duration-200 ease-out hover:border-primary/25 hover:bg-primary/5',
+              studentUi.focus,
+            )}
+          >
+            Ver más calificaciones
+            <span className="ml-1.5 text-xs font-medium text-muted-foreground">
+              ({remainingCount})
+            </span>
+          </button>
+        </div>
+      ) : null}
+    </section>
   )
 }
 
@@ -1663,17 +1903,78 @@ function SectionSkeleton() {
   )
 }
 
+function AttendanceSkeleton() {
+  return (
+    <div className="mx-auto max-w-3xl space-y-4" aria-hidden="true">
+      <div className="rounded-xl border border-border/60 bg-card/80 px-3.5 py-3 dark:bg-card/70">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-2">
+            <div className="h-3 w-28 animate-pulse rounded-md bg-muted/35" />
+            <div className="h-4 w-48 animate-pulse rounded-md bg-muted/30" />
+          </div>
+          <div className="h-7 w-14 animate-pulse rounded-lg bg-muted/35" />
+        </div>
+        <div className="mt-3 flex gap-4 border-t border-border/50 pt-2.5">
+          <div className="h-4 w-20 animate-pulse rounded-md bg-muted/25" />
+          <div className="h-4 w-20 animate-pulse rounded-md bg-muted/25" />
+          <div className="h-4 w-20 animate-pulse rounded-md bg-muted/25" />
+        </div>
+      </div>
+
+      <div className="space-y-2.5 sm:space-y-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-16 animate-pulse rounded-xl border border-border/60 bg-muted/20"
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function GradesSkeleton() {
+  return (
+    <div className="mx-auto max-w-3xl space-y-4" aria-hidden="true">
+      <div className="rounded-xl border border-border/60 bg-card/80 px-3.5 py-3 dark:bg-card/70">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-2">
+            <div className="h-3 w-24 animate-pulse rounded-md bg-muted/35" />
+            <div className="h-4 w-52 animate-pulse rounded-md bg-muted/30" />
+          </div>
+          <div className="h-7 w-12 animate-pulse rounded-lg bg-muted/35" />
+        </div>
+        <div className="mt-3 flex gap-4 border-t border-border/50 pt-2.5">
+          <div className="h-4 w-24 animate-pulse rounded-md bg-muted/25" />
+          <div className="h-4 w-36 animate-pulse rounded-md bg-muted/25" />
+        </div>
+      </div>
+
+      <div className="grid gap-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-24 animate-pulse rounded-xl border border-border/60 bg-muted/20"
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function EmptyPanel({
   text,
   description,
   icon: Icon = BookOpen,
+  className,
 }: {
   text: string
   description?: string
   icon?: React.ComponentType<{ className?: string }>
+  className?: string
 }) {
   return (
-    <Card className="rounded-xl border border-dashed border-border/70 bg-muted/15 shadow-none dark:bg-muted/10">
+    <Card className={cn('rounded-xl border border-dashed border-border/70 bg-muted/15 shadow-none dark:bg-muted/10', className)}>
       <CardContent className="px-5 py-8 text-center">
         <StudentIconContainer icon={Icon} className="mx-auto size-10 rounded-lg border-transparent bg-primary/10 text-primary" />
         <p className="mt-3 text-sm font-semibold text-foreground">{text}</p>
@@ -1687,9 +1988,9 @@ function EmptyPanel({
 
 function AttendanceEmptyState() {
   return (
-    <div className={cn(studentUi.card.empty, 'px-5 py-8 text-center')}>
+    <div className={cn(studentUi.card.empty, 'mx-auto max-w-3xl px-5 py-8 text-center')}>
       <StudentIconContainer icon={CalendarCheck2} className="mx-auto size-10 border-transparent bg-primary/10 text-primary" />
-      <p className="mt-3 text-sm font-medium text-muted-foreground">
+      <p className="mt-3 text-sm font-semibold text-foreground">
         Todavía no hay asistencias registradas en este curso.
       </p>
       <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -1744,7 +2045,14 @@ function SectionList({
   currentStudentId?: number
 }) {
   if (state.loading && tab === 'tasks') return <TaskFeedSkeleton />
+  if (state.loading && tab === 'attendance') return <AttendanceSkeleton />
+  if (state.loading && tab === 'grades') return <GradesSkeleton />
   if (state.loading) return <SectionSkeleton />
+
+  const constrainedPanelClassName =
+    tab === 'tasks' || tab === 'attendance' || tab === 'grades'
+      ? 'mx-auto max-w-3xl'
+      : undefined
 
   if (state.error) {
     return (
@@ -1752,6 +2060,7 @@ function SectionList({
         text={state.error}
         description="Intentá actualizar la página en unos segundos."
         icon={AlertCircle}
+        className={constrainedPanelClassName}
       />
     )
   }
@@ -1778,6 +2087,7 @@ function SectionList({
           text="Todavía no hay calificaciones cargadas."
           description="Cuando tu profe cargue notas, vas a poder revisarlas en esta pestaña."
           icon={CheckCircle2}
+          className="mx-auto max-w-3xl"
         />
       )
     }
@@ -1795,6 +2105,10 @@ function SectionList({
 
   if (tab === 'tasks') {
     return <TaskFeed items={visibleItems} courseId={courseId} />
+  }
+
+  if (tab === 'grades') {
+    return <GradesHistory items={visibleItems} summary={state.summary} />
   }
 
   if (tab === 'people') {
@@ -1826,7 +2140,6 @@ export function StudentCourseDetail({
   const searchParams = useSearchParams()
   const tab = getTabFromSlug(searchParams.get('tab'))
   const [sections, setSections] = useState<Record<string, SectionState>>({})
-  const panelHeader = panelHeaders[tab]
   const sectionPath = sectionPaths[tab]
   const sectionState = sections[tab] ?? initialSectionState
 
@@ -1839,10 +2152,16 @@ export function StudentCourseDetail({
     }))
 
     loadSection(courseId, sectionPath)
-      .then((items) => {
+      .then((payload) => {
         setSections((current) => ({
           ...current,
-          [tab]: { loading: false, loaded: true, items, error: null },
+          [tab]: {
+            loading: false,
+            loaded: true,
+            items: payload.items,
+            summary: payload.summary ?? null,
+            error: null,
+          },
         }))
       })
       .catch((error) => {
@@ -1852,6 +2171,7 @@ export function StudentCourseDetail({
             loading: false,
             loaded: true,
             items: [],
+            summary: null,
             error: error instanceof Error ? error.message : 'No pudimos cargar esta parte.',
           },
         }))
@@ -1953,36 +2273,12 @@ export function StudentCourseDetail({
           tabIndex={0}
           className="pt-0 focus-visible:outline-none"
         >
-          {tab === 'tasks' ? (
-            <SectionList
-              tab={tab}
-              state={sectionState}
-              courseId={courseId}
-              currentStudentId={currentStudentId}
-            />
-          ) : (
-            <div className={studentUi.card.panel}>
-              {panelHeader ? (
-                <div className="border-b border-border/60 px-4 py-4 sm:px-6 sm:py-5">
-                  <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                    {panelHeader.title}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {panelHeader.description}
-                  </p>
-                </div>
-              ) : null}
-
-              <div className="p-4 sm:p-6">
-                <SectionList
-                  tab={tab}
-                  state={sectionState}
-                  courseId={courseId}
-                  currentStudentId={currentStudentId}
-                />
-              </div>
-            </div>
-          )}
+          <SectionList
+            tab={tab}
+            state={sectionState}
+            courseId={courseId}
+            currentStudentId={currentStudentId}
+          />
         </section>
       </div>
     </>

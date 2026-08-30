@@ -252,6 +252,18 @@ function getAttachmentIcon(attachment: StudentAttachment) {
   return FileText
 }
 
+function isImageAttachment(attachment: StudentAttachment) {
+  const contentType = safeText(attachment.contentType)?.toLowerCase() ?? ''
+  const name = safeText(attachment.nombre)?.toLowerCase() ?? ''
+  const url = safeText(attachment.url)?.toLowerCase() ?? ''
+
+  return (
+    contentType.startsWith('image/') ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(name) ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(url)
+  )
+}
+
 function normalizeAttachments(attachments: StudentAttachment[]) {
   return attachments.map((attachment) => ({
     tipo: attachment.tipo ?? UPLOADED_FILE_ATTACHMENT_TYPE,
@@ -497,9 +509,67 @@ function AttachmentLink({
 }) {
   const name = safeText(attachment.nombre) ?? 'Adjunto'
   const size = formatBytes(attachment.sizeBytes)
+  const url = safeText(attachment.url) ?? '#'
+  const isImage = isImageAttachment(attachment)
   const AttachmentIcon = getAttachmentIcon(attachment)
   const rowClassName =
     cn('flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/60 px-3 py-2 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 ease-out hover:border-primary/25 hover:bg-primary/5 dark:bg-background/35 sm:min-h-11', studentUi.focus)
+
+  if (isImage) {
+    const preview = (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className={cn(
+          'group block overflow-hidden rounded-xl border border-border/60 bg-background/50 transition-colors hover:border-primary/25 dark:bg-background/35',
+          studentUi.focus,
+        )}
+      >
+        <img
+          src={url}
+          alt={name}
+          className="max-h-80 w-full bg-muted/20 object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+          loading="lazy"
+        />
+        <span className="flex items-center justify-between gap-3 border-t border-border/55 px-3 py-2">
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold leading-5 text-foreground">
+              {name}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {size ?? attachment.contentType ?? 'Imagen'}
+            </span>
+          </span>
+          <Download className="size-4 shrink-0 text-muted-foreground" />
+        </span>
+      </a>
+    )
+
+    if (!onRemove) return preview
+
+    return (
+      <div className="relative">
+        {preview}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={onRemove}
+          disabled={removing}
+          aria-label={`Quitar ${name}`}
+          className="absolute right-2 top-2 bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors duration-200 ease-out hover:bg-destructive/10 hover:text-destructive dark:bg-background/70"
+        >
+          {removing ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Trash2 className="size-4" />
+          )}
+        </Button>
+      </div>
+    )
+  }
+
   const content = (
     <>
       <StudentIconContainer
@@ -711,7 +781,6 @@ export function StudentTaskDetail({
   const deliveryDate =
     formatDate(currentDelivery?.fechaEntregaUtc)
   const deliveryContent = getDeliveryContent(currentDelivery)
-  const deliveryStatus = displayValue(currentDelivery?.estado)
   const currentFeedback = currentDelivery?.feedbackVigente ?? null
   const feedbackEstado = getFeedbackEstado(currentFeedback)
   const feedbackComment = safeText(currentFeedback?.comentario)
@@ -933,154 +1002,152 @@ export function StudentTaskDetail({
           </div>
 
           {currentDelivery ? (
-            <StudentStatusBadge
-              className={cn(
-                studentUi.badge.compact,
-                currentFeedback ? feedbackEstado.badgeClass : taskStatusClassName,
-              )}
-            >
-              {currentFeedback ? feedbackEstado.label : 'Entregada'}
-            </StudentStatusBadge>
+            <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+              <StudentStatusBadge
+                className={cn(
+                  studentUi.badge.compact,
+                  currentFeedback ? feedbackEstado.badgeClass : taskStatusClassName,
+                )}
+              >
+                {currentFeedback ? feedbackEstado.label : 'Entregada'}
+              </StudentStatusBadge>
+
+              {feedbackApproved && feedbackNote ? (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm font-semibold shadow-[0_1px_1px_rgba(15,23,42,0.04)]',
+                    getGradeBadgeClass(currentFeedback?.nota),
+                  )}
+                >
+                  <span className="text-[11px] font-semibold uppercase tracking-wide opacity-75">
+                    Nota
+                  </span>
+                  <span className="leading-none">{feedbackNote}</span>
+                </span>
+              ) : null}
+            </div>
           ) : null}
         </div>
 
-        {currentDelivery ? (
-          <div className="mt-5 space-y-5">
-            <div className="relative pl-6 before:absolute before:left-2 before:top-2 before:h-full before:w-px before:bg-border">
-              <span className="absolute left-0 top-1 flex size-4 items-center justify-center rounded-full bg-primary">
-                <span className="size-1.5 rounded-full bg-primary-foreground" />
-              </span>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                <h3 className="font-semibold tracking-tight text-foreground">
-                  Entregaste
-                </h3>
-                {deliveryDate ? (
-                  <>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground">{deliveryDate}</span>
-                  </>
-                ) : null}
-                {deliveryStatus ? (
-                  <>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="font-medium text-primary">{deliveryStatus}</span>
-                  </>
-                ) : null}
+        {currentFeedback ? (
+          <div
+            className={cn(
+              'mt-5 rounded-xl border p-4',
+              feedbackNeedsChanges
+                ? 'border-amber-500/25 bg-amber-500/[0.06] dark:bg-amber-500/10'
+                : 'border-emerald-500/20 bg-emerald-500/[0.06] dark:bg-emerald-500/10',
+            )}
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 items-start gap-2.5">
+                <TeacherAvatarOrIcon
+                  name={feedbackTeacherName}
+                  avatarUrl={feedbackTeacherAvatarUrl}
+                  icon={MessageSquareText}
+                  className={feedbackEstado.iconClass}
+                />
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                    {feedbackTeacherName
+                      ? `${feedbackTeacherName} te dejó un mensaje`
+                      : feedbackNeedsChanges
+                        ? 'Tu profe pidió algunos cambios'
+                        : 'Mensaje de tu profe'}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {feedbackDate ?? 'Sin fecha cargada'}
+                  </p>
+                </div>
               </div>
 
-              {deliveryContent ? (
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground/80">
-                  {deliveryContent}
-                </p>
-              ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Entregaste archivos, sin texto escrito.
-                </p>
-              )}
-
-              {currentFile ? (
-                <div className="mt-3">
-                  <AttachmentLink attachment={currentFile} />
-                </div>
-              ) : null}
-
-              {currentAttachments.length > 0 ? (
-                <div className="mt-3 space-y-2">
-                  {currentAttachments.map((attachment, index) => (
-                    <AttachmentLink
-                      key={attachment.storageKey ?? attachment.url ?? index}
-                      attachment={attachment}
-                    />
-                  ))}
-                </div>
+              {feedbackNote && !feedbackApproved ? (
+                <span
+                  className={cn(
+                    'inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 shadow-[0_1px_1px_rgba(15,23,42,0.04)]',
+                    getGradeBadgeClass(currentFeedback?.nota),
+                  )}
+                >
+                  <span className="text-[11px] font-semibold uppercase tracking-wide opacity-75">
+                    Nota
+                  </span>
+                  <span className="text-lg font-semibold leading-none">
+                    {feedbackNote}
+                  </span>
+                </span>
               ) : null}
             </div>
+
+            {feedbackComment ? (
+              <div className="mt-3 rounded-xl border border-background/70 bg-background/65 px-3.5 py-3 dark:border-white/10 dark:bg-background/25">
+                <p className="whitespace-pre-wrap text-sm leading-6 text-foreground/85">
+                  {feedbackComment}
+                </p>
+              </div>
+            ) : null}
+
+            {feedbackAttachments.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {feedbackAttachments.map((attachment, index) => (
+                  <AttachmentLink
+                    key={attachment.storageKey ?? attachment.url ?? index}
+                    attachment={attachment}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : currentDelivery ? (
+          <p className="mt-5 rounded-xl border border-border/55 bg-background/45 px-3.5 py-3 text-sm text-muted-foreground dark:bg-background/25">
+            Tu profe todavía no dejó un mensaje.
+          </p>
+        ) : null}
+
+        {currentDelivery ? (
+          <div className="mt-5 border-t border-border/60 pt-4">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+              <h3 className="font-semibold tracking-tight text-foreground">
+                Tu entrega
+              </h3>
+              {deliveryDate ? (
+                <>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-muted-foreground">{deliveryDate}</span>
+                </>
+              ) : null}
+            </div>
+
+            {deliveryContent ? (
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground/80">
+                {deliveryContent}
+              </p>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Entregaste archivos, sin texto escrito.
+              </p>
+            )}
+
+            {currentFile ? (
+              <div className="mt-3">
+                <AttachmentLink attachment={currentFile} />
+              </div>
+            ) : null}
+
+            {currentAttachments.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {currentAttachments.map((attachment, index) => (
+                  <AttachmentLink
+                    key={attachment.storageKey ?? attachment.url ?? index}
+                    attachment={attachment}
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="mt-5 rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-4 text-sm text-muted-foreground dark:bg-muted/10">
             Cuando entregues, acá vas a ver tu respuesta, tus archivos y el mensaje de tu profe.
           </div>
         )}
-
-        {currentFeedback ? (
-          <div
-            className={cn(
-              'mt-5 border-t pt-5',
-              feedbackNeedsChanges ? 'border-amber-500/20' : 'border-border/60',
-            )}
-          >
-            <div className="relative pl-6 before:absolute before:left-2 before:top-2 before:h-full before:w-px before:bg-border">
-              <span
-                className={cn(
-                  'absolute left-0 top-1 flex size-4 items-center justify-center rounded-full',
-                  feedbackNeedsChanges ? 'bg-amber-500' : 'bg-emerald-600',
-                )}
-              >
-                <span className="size-1.5 rounded-full bg-white" />
-              </span>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex min-w-0 items-start gap-2.5">
-                  <TeacherAvatarOrIcon
-                    name={feedbackTeacherName}
-                    avatarUrl={feedbackTeacherAvatarUrl}
-                    icon={MessageSquareText}
-                    className={feedbackEstado.iconClass}
-                  />
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold tracking-tight text-foreground">
-                      {feedbackTeacherName
-                        ? `${feedbackTeacherName} te dejó una devolución`
-                        : feedbackNeedsChanges
-                          ? 'Tu profe pidió algunos cambios'
-                          : 'Mensaje de tu profe'}
-                    </h3>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {feedbackDate ?? 'Tu profe todavía no puso fecha'}
-                    </p>
-                  </div>
-                </div>
-
-                {feedbackNote ? (
-                  <span
-                    className={cn(
-                      'inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 shadow-[0_1px_1px_rgba(15,23,42,0.04)]',
-                      getGradeBadgeClass(currentFeedback?.nota),
-                    )}
-                  >
-                    <span className="text-[11px] font-semibold uppercase tracking-wide opacity-75">
-                      Nota
-                    </span>
-                    <span className="text-lg font-semibold leading-none">
-                      {feedbackNote}
-                    </span>
-                  </span>
-                ) : null}
-              </div>
-
-              {feedbackComment ? (
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground/85">
-                  {feedbackComment}
-                </p>
-              ) : null}
-
-              {feedbackAttachments.length > 0 ? (
-                <div className="mt-3 space-y-2">
-                  {feedbackAttachments.map((attachment, index) => (
-                    <AttachmentLink
-                      key={attachment.storageKey ?? attachment.url ?? index}
-                      attachment={attachment}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        ) : currentDelivery ? (
-          <p className="mt-5 border-t border-border/60 pt-4 text-sm text-muted-foreground">
-            Tu profe todavía no dejó un mensaje.
-          </p>
-        ) : null}
 
         {currentDelivery ? (
           <Button
@@ -1100,15 +1167,15 @@ export function StudentTaskDetail({
         ) : null}
 
         {showForm ? (
-          <div className="mt-5 space-y-3 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+          <div className="mt-4 space-y-2.5 rounded-xl border border-border/55 bg-background/45 p-3 animate-in fade-in-0 slide-in-from-top-1 duration-200 dark:bg-background/25">
             <Textarea
               value={text}
               onChange={(event) => setText(event.target.value)}
               placeholder="Escribí tu respuesta..."
-              className="min-h-32 rounded-xl border-border/70 bg-background/70 text-base focus-visible:ring-primary/20 dark:bg-background/35"
+              className="min-h-28 rounded-xl border-border/70 bg-card/80 text-base focus-visible:ring-primary/20 dark:bg-card/60"
             />
 
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors duration-200 ease-out hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20 dark:bg-muted/10">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border/70 bg-card/55 px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors duration-200 ease-out hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20 dark:bg-card/35 sm:justify-start">
               {uploading ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
@@ -1135,20 +1202,16 @@ export function StudentTaskDetail({
                   />
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Podés agregar archivos si te ayudan con la tarea.
-              </p>
-            )}
+            ) : null}
 
             {formError ? (
-              <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-700 dark:text-rose-400">
+              <p className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2.5 text-sm font-medium text-rose-700 dark:text-rose-400">
                 {formError}
               </p>
             ) : null}
 
             {success ? (
-              <p className="flex items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
+              <p className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
                 <CheckCircle2 className="size-4" />
                 {success}
               </p>
@@ -1200,19 +1263,19 @@ export function StudentTaskDetail({
 
   if (isAnnouncement) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4 sm:space-y-5">
+      <div className="mx-auto max-w-3xl space-y-3.5 sm:space-y-4">
         <Button
           asChild
           variant="ghost"
-          className={studentUi.button.ghost}
+          className={cn('h-8 px-2 text-sm text-muted-foreground', studentUi.button.ghost)}
         >
           <Link href={`/student/courses/${courseId}`}>
             <ArrowLeft className="size-4" />
-            Volver al tablón
+            Tablón
           </Link>
         </Button>
 
-        <article className="rounded-2xl border border-violet-500/15 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-6">
+        <article className="rounded-2xl border border-violet-500/15 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
           <header className="flex min-w-0 items-start gap-3">
             <TeacherAvatarOrIcon
               name={announcementTeacherName}
@@ -1226,13 +1289,13 @@ export function StudentTaskDetail({
                 {announcementTeacherName ?? 'Profesor'}
               </p>
               <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                {[createdAt, 'Anuncio'].filter(Boolean).join(' · ')}
+                {['Anuncio', createdAt].filter(Boolean).join(' · ')}
               </p>
             </div>
           </header>
 
-          <div className="mt-5 space-y-4">
-            <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+          <div className="mt-4 space-y-3">
+            <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[1.7rem]">
               {safeText(task.titulo) ?? 'Sin título'}
             </h1>
 
@@ -1247,8 +1310,8 @@ export function StudentTaskDetail({
             </div>
 
             {resources.length > 0 ? (
-              <div className="border-t border-border/60 pt-4">
-                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+              <div className="pt-1">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Paperclip className="size-4 text-muted-foreground" />
                   Recursos
                 </div>
@@ -1269,24 +1332,24 @@ export function StudentTaskDetail({
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+    <div className="mx-auto max-w-6xl space-y-3.5 sm:space-y-4">
       <Button
         asChild
         variant="ghost"
-        className={studentUi.button.ghost}
+        className={cn('h-8 px-2 text-sm text-muted-foreground', studentUi.button.ghost)}
       >
         <Link href={`/student/courses/${courseId}`}>
           <ArrowLeft className="size-4" />
-          Volver al tablón
+          Tablón
         </Link>
       </Button>
 
       <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         <article
           id="consigna"
-          className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-6"
+          className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5"
         >
-          <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <header className="flex min-w-0 items-start gap-3">
             <div className="flex min-w-0 items-start gap-3">
               <TeacherAvatarOrIcon
                 name={teacherName === 'Profesor' ? null : teacherName}
@@ -1300,44 +1363,47 @@ export function StudentTaskDetail({
                   {teacherName === 'Profesor' ? 'Profesor' : teacherName}
                 </p>
                 <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                  {[createdAt, 'Tarea'].filter(Boolean).join(' · ')}
+                  {['Tarea', createdAt].filter(Boolean).join(' · ')}
                 </p>
               </div>
             </div>
-
-            {dueDate ? (
-              <TaskHeroMetaChip
-                icon={CalendarCheck2}
-                className={cn(
-                  task?.vencida && !currentDelivery
-                    ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300'
-                    : 'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
-                )}
-              >
-                {task?.vencida && !currentDelivery ? `Venció ${dueDate}` : `Vence ${dueDate}`}
-              </TaskHeroMetaChip>
-            ) : null}
           </header>
 
-          <div className="mt-5">
-            <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
-              {safeText(task.titulo) ?? 'Sin título'}
-            </h1>
+          <div className="mt-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <h1 className="min-w-0 text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[1.7rem]">
+                {safeText(task.titulo) ?? 'Sin título'}
+              </h1>
+
+              {dueDate ? (
+                <TaskHeroMetaChip
+                  icon={CalendarCheck2}
+                  className={cn(
+                    'shrink-0',
+                    task?.vencida && !currentDelivery
+                      ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+                      : 'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+                  )}
+                >
+                  {task?.vencida && !currentDelivery ? `Venció ${dueDate}` : `Vence ${dueDate}`}
+                </TaskHeroMetaChip>
+              ) : null}
+            </div>
 
             {taskContent ? (
-              <p className="mt-4 whitespace-pre-wrap text-base leading-8 text-foreground/85">
+              <p className="mt-3 whitespace-pre-wrap text-base leading-7 text-foreground/85">
                 {taskContent}
               </p>
             ) : (
-              <p className={cn('mt-4', studentUi.card.callout)}>
+              <p className={cn('mt-3', studentUi.card.callout)}>
                 Esta tarea todavía no tiene consigna.
               </p>
             )}
           </div>
 
           {resources.length > 0 ? (
-            <section className="mt-5 border-t border-border/60 pt-4">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <section className="mt-4 pt-1">
+              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Paperclip className="size-4 text-muted-foreground" />
                 Materiales
               </div>
@@ -1353,52 +1419,52 @@ export function StudentTaskDetail({
           ) : null}
         </article>
 
-        <aside className="space-y-4 lg:sticky lg:top-6">
-          <section className="rounded-xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90">
-            <div className="flex items-start gap-3">
-              <StudentIconContainer
-                icon={ActionIcon}
-                size="md"
-                className={actionState.iconClassName}
-              />
-              <div className="min-w-0">
-                <p className="text-sm font-semibold tracking-tight text-foreground">
-                  {actionState.title}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {feedbackNeedsChanges
-                    ? 'Una corrección es parte del aprendizaje: ajustá lo necesario y volvé a enviarla.'
-                    : feedbackApproved
-                      ? 'Podés revisar el mensaje de tu profe o usar este trabajo como referencia.'
+        <aside className="order-first space-y-3.5 lg:order-none lg:sticky lg:top-6">
+          {!feedbackApproved && !feedbackNeedsChanges && (currentDelivery || task?.vencida) ? (
+            <section className="rounded-xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90">
+              <div className="flex items-start gap-3">
+                <StudentIconContainer
+                  icon={ActionIcon}
+                  size="md"
+                  className={actionState.iconClassName}
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold tracking-tight text-foreground">
+                    {actionState.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {feedbackNeedsChanges
+                      ? 'Una corrección es parte del aprendizaje: ajustá lo necesario y volvé a enviarla.'
                       : currentDelivery
                         ? 'Tu avance quedó guardado y podés editarlo si necesitás mejorar algo.'
                         : task?.vencida
                           ? 'Leé la consigna y hablá con tu profe si necesitás ponerte al día.'
                           : 'Leé la consigna, revisá los materiales y prepará tu entrega.'}
-                </p>
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <StudentStatusBadge
-              icon={ActionIcon}
-              className={cn('mt-4 rounded-lg px-2.5 py-1 text-xs', taskStatusClassName)}
-            >
-              {taskStatusLabel}
-            </StudentStatusBadge>
+              <StudentStatusBadge
+                icon={ActionIcon}
+                className={cn('mt-4 rounded-lg px-2.5 py-1 text-xs', taskStatusClassName)}
+              >
+                {taskStatusLabel}
+              </StudentStatusBadge>
 
-            <Button
-              type="button"
-              className={cn(
-                'mt-4 h-10 w-full shrink-0 rounded-lg',
-                actionState.buttonClassName ||
-                  'border-border/70 bg-background/75 text-foreground transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-muted/40 hover:text-primary active:scale-[0.99] dark:bg-background/35',
-              )}
-              variant={actionState.buttonClassName ? 'default' : 'outline'}
-              onClick={handleHeroAction}
-            >
-              {heroCtaLabel}
-            </Button>
-          </section>
+              <Button
+                type="button"
+                className={cn(
+                  'mt-4 h-10 w-full shrink-0 rounded-lg',
+                  actionState.buttonClassName ||
+                    'border-border/70 bg-background/75 text-foreground transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-muted/40 hover:text-primary active:scale-[0.99] dark:bg-background/35',
+                )}
+                variant={actionState.buttonClassName ? 'default' : 'outline'}
+                onClick={handleHeroAction}
+              >
+                {heroCtaLabel}
+              </Button>
+            </section>
+          ) : null}
 
           {renderDeliveryPanel()}
         </aside>

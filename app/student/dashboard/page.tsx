@@ -705,7 +705,7 @@ function LearningRhythmInline({
 
   if (typeof promedioGeneral === 'number' && Number.isFinite(promedioGeneral)) {
     items.push({
-      label: 'Promedio actual',
+      label: 'Promedio trimestre',
       value: formatNumber(promedioGeneral),
       tone: promedioGeneral < 65 ? 'rose' : promedioGeneral < 80 ? 'amber' : 'neutral',
     })
