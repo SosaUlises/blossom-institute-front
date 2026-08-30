@@ -9,7 +9,6 @@ import {
   Inbox,
   Search,
   UserRound,
-  Users,
 } from 'lucide-react'
 
 import {
@@ -152,36 +151,6 @@ function getCourseTheme(course: StudentCourseListItem) {
   ])
 }
 
-function getStudentsCount(course: StudentCourseListItem) {
-  return getNumber(course, [
-    'cantidadAlumnos',
-    'alumnosCount',
-    'studentsCount',
-    'studentCount',
-    'CantidadAlumnos',
-    'AlumnosCount',
-    'StudentsCount',
-    'StudentCount',
-  ])
-}
-
-function getCompanionsCount(course: StudentCourseListItem) {
-  const directCount = getNumber(course, [
-    'cantidadCompaneros',
-    'companerosCount',
-    'compañerosCount',
-    'classmatesCount',
-    'CantidadCompaneros',
-    'CompanerosCount',
-    'ClassmatesCount',
-  ])
-
-  if (directCount != null) return directCount
-
-  const studentsCount = getStudentsCount(course)
-  return studentsCount != null ? Math.max(0, studentsCount - 1) : null
-}
-
 function getPendingTasksCount(course: StudentCourseListItem) {
   return getNumber(course, [
     'tareasPendientes',
@@ -300,7 +269,6 @@ function CourseCard({ course }: { course: StudentCourseListItem }) {
   const description = getCourseDescription(course)
   const theme = getCourseTheme(course)
   const nextClass = getNextClassLabel(course)
-  const companionsCount = getCompanionsCount(course)
   const pendingTasks = getPendingTasksCount(course)
 
   return (
@@ -334,33 +302,36 @@ function CourseCard({ course }: { course: StudentCourseListItem }) {
             </div>
 
             <div className="mt-auto flex flex-col gap-2.5 pt-5 text-sm">
-              {nextClass ? (
-                <div className="flex items-center gap-2 font-medium text-foreground">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
-                    <CalendarClock className="size-4" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="mr-1.5 text-xs font-normal text-muted-foreground">
-                      Próxima clase
+              <div className="flex items-center gap-3">
+                {nextClass ? (
+                  <div className="flex min-w-0 flex-1 items-center gap-2 font-medium text-foreground">
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+                      <CalendarClock className="size-4" />
                     </span>
-                    {nextClass}
+                    <span className="min-w-0 truncate">
+                      <span className="mr-1.5 text-xs font-normal text-muted-foreground">
+                        Próxima clase
+                      </span>
+                      {nextClass}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="min-w-0 truncate text-sm text-muted-foreground">
+                    {teacherName && description ? `Con ${teacherName}` : 'Abrir curso'}
                   </span>
-                </div>
-              ) : null}
+                )}
 
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                {teacherName && description ? (
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background/70 text-muted-foreground transition-[border-color,background-color,color,transform] duration-200 ease-out group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/8 group-hover:text-primary dark:bg-background/35">
+                  <ArrowRight className="size-4" />
+                </span>
+              </div>
+
+              {(teacherName && description && nextClass) || (pendingTasks != null && pendingTasks > 0) ? (
+                <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                  {teacherName && description && nextClass ? (
                   <span className="inline-flex min-w-0 items-center gap-1.5">
                     <UserRound className="size-4 shrink-0" />
                     <span className="truncate">Con {teacherName}</span>
-                  </span>
-                ) : null}
-
-                {companionsCount != null ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Users className="size-4 shrink-0" />
-                    {companionsCount}{' '}
-                    {companionsCount === 1 ? 'compañero' : 'compañeros'}
                   </span>
                 ) : null}
 
@@ -371,11 +342,8 @@ function CourseCard({ course }: { course: StudentCourseListItem }) {
                     {pendingTasks === 1 ? 'tarea pendiente' : 'tareas pendientes'}
                   </span>
                 ) : null}
-
-                <span className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background/70 text-muted-foreground transition-[border-color,background-color,color,transform] duration-200 ease-out group-hover:translate-x-0.5 group-hover:border-primary/25 group-hover:bg-primary/8 group-hover:text-primary dark:bg-background/35">
-                  <ArrowRight className="size-4" />
-                </span>
               </div>
+              ) : null}
             </div>
           </div>
         </article>

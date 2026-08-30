@@ -12,7 +12,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   AlertCircle,
-  ArrowLeft,
   Archive,
   BookOpen,
   CheckCircle2,
@@ -148,6 +147,13 @@ function formatDateTime(value: unknown) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date)
+}
+
+function isPastDate(value: unknown) {
+  if (typeof value !== 'string' || !value.trim()) return false
+
+  const date = new Date(value)
+  return !Number.isNaN(date.getTime()) && date.getTime() < Date.now()
 }
 
 function safeText(value: unknown) {
@@ -794,6 +800,7 @@ export function StudentTaskDetail({
   const feedbackTeacherName = getFeedbackTeacherName(currentFeedback, task)
   const feedbackTeacherAvatarUrl = getFeedbackTeacherAvatarUrl(currentFeedback, task)
   const createdAt = formatDate(task?.createdAtUtc)
+  const taskIsOverdue = task?.vencida === true || isPastDate(task?.fechaEntregaUtc)
   const feedbackNeedsChanges = feedbackEstado.intent === 'redo'
   const feedbackApproved = feedbackEstado.intent === 'approved'
   const taskStatusLabel = feedbackNeedsChanges
@@ -802,7 +809,7 @@ export function StudentTaskDetail({
       ? 'Aprobada'
     : currentDelivery
       ? 'Entregada'
-      : task?.vencida
+      : taskIsOverdue
         ? 'Se venció'
         : 'Para entregar'
   const taskStatusClassName = feedbackNeedsChanges
@@ -811,9 +818,9 @@ export function StudentTaskDetail({
       ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300'
     : currentDelivery
       ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300'
-      : task?.vencida
-        ? 'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300'
-        : 'border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300'
+    : taskIsOverdue
+      ? 'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+      : 'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-300'
   const saveButtonLabel = currentDelivery
     ? feedbackNeedsChanges
       ? 'Enviar corrección'
@@ -848,7 +855,7 @@ export function StudentTaskDetail({
               'border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
             buttonClassName: '',
           }
-        : task?.vencida
+        : taskIsOverdue
           ? {
               title: 'La fecha ya pasó',
               description: 'Repasá la consigna y hablá con tu profe si necesitás ayuda para ponerte al día.',
@@ -862,7 +869,7 @@ export function StudentTaskDetail({
               description: 'Leé la consigna, mirá los materiales y mandá tu trabajo cuando esté listo.',
               cta: 'Empezar entrega',
               icon: Clock3,
-              iconClassName: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
+              iconClassName: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
               buttonClassName: '',
           }
   const ActionIcon = actionState.icon
@@ -959,7 +966,7 @@ export function StudentTaskDetail({
 
   function handleHeroAction() {
     if (actionState.cta) {
-      if (feedbackApproved || (task?.vencida && !currentDelivery)) {
+      if (feedbackApproved || (taskIsOverdue && !currentDelivery)) {
         setShowForm(false)
       } else {
         setShowForm(true)
@@ -1263,18 +1270,7 @@ export function StudentTaskDetail({
 
   if (isAnnouncement) {
     return (
-      <div className="mx-auto max-w-3xl space-y-3.5 sm:space-y-4">
-        <Button
-          asChild
-          variant="ghost"
-          className={cn('h-8 px-2 text-sm text-muted-foreground', studentUi.button.ghost)}
-        >
-          <Link href={`/student/courses/${courseId}`}>
-            <ArrowLeft className="size-4" />
-            Tablón
-          </Link>
-        </Button>
-
+      <div className="mx-auto max-w-3xl">
         <article className="rounded-2xl border border-violet-500/15 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
           <header className="flex min-w-0 items-start gap-3">
             <TeacherAvatarOrIcon
@@ -1332,18 +1328,7 @@ export function StudentTaskDetail({
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-3.5 sm:space-y-4">
-      <Button
-        asChild
-        variant="ghost"
-        className={cn('h-8 px-2 text-sm text-muted-foreground', studentUi.button.ghost)}
-      >
-        <Link href={`/student/courses/${courseId}`}>
-          <ArrowLeft className="size-4" />
-          Tablón
-        </Link>
-      </Button>
-
+    <div className="mx-auto max-w-6xl">
       <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         <article
           id="consigna"
@@ -1380,12 +1365,12 @@ export function StudentTaskDetail({
                   icon={CalendarCheck2}
                   className={cn(
                     'shrink-0',
-                    task?.vencida && !currentDelivery
+                    taskIsOverdue && !currentDelivery
                       ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300'
-                      : 'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+                      : 'border-indigo-500/20 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300',
                   )}
                 >
-                  {task?.vencida && !currentDelivery ? `Venció ${dueDate}` : `Vence ${dueDate}`}
+                  {taskIsOverdue ? `Venció ${dueDate}` : `Vence ${dueDate}`}
                 </TaskHeroMetaChip>
               ) : null}
             </div>
@@ -1420,7 +1405,7 @@ export function StudentTaskDetail({
         </article>
 
         <aside className="order-first space-y-3.5 lg:order-none lg:sticky lg:top-6">
-          {!feedbackApproved && !feedbackNeedsChanges && (currentDelivery || task?.vencida) ? (
+          {!feedbackApproved && !feedbackNeedsChanges && (currentDelivery || taskIsOverdue) ? (
             <section className="rounded-xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90">
               <div className="flex items-start gap-3">
                 <StudentIconContainer
@@ -1437,7 +1422,7 @@ export function StudentTaskDetail({
                       ? 'Una corrección es parte del aprendizaje: ajustá lo necesario y volvé a enviarla.'
                       : currentDelivery
                         ? 'Tu avance quedó guardado y podés editarlo si necesitás mejorar algo.'
-                        : task?.vencida
+                        : taskIsOverdue
                           ? 'Leé la consigna y hablá con tu profe si necesitás ponerte al día.'
                           : 'Leé la consigna, revisá los materiales y prepará tu entrega.'}
                   </p>

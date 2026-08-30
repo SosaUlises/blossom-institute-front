@@ -148,7 +148,7 @@ const badgeStyles = {
   violet:
     'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400',
   sky:
-    'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-400',
+    'border-border/60 bg-muted/45 text-muted-foreground',
 }
 
 function asItems(value: unknown): StudentCourseSectionItem[] {
@@ -719,7 +719,7 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
     }
   }
 
-  if (item.vencida === true && !item.tieneEntrega) {
+  if (isTaskOverdue(item) && !item.tieneEntrega) {
     return {
       label: 'Fecha pasada',
       actionLabel: 'Repasar consigna',
@@ -738,10 +738,10 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
       actionLabel: 'Empezar tarea',
       icon: Clock3,
       badgeClassName:
-        'border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+        'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-300',
       iconClassName:
-        'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
-      accentClassName: 'bg-sky-500',
+        'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+      accentClassName: 'bg-amber-400',
     }
   }
 
@@ -759,6 +759,13 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
 
 function hasTaskDueDate(item: StudentCourseSectionItem) {
   return typeof item.fechaEntregaUtc === 'string' && item.fechaEntregaUtc.trim().length > 0
+}
+
+function isTaskOverdue(item: StudentCourseSectionItem) {
+  if (item.vencida === true) return true
+
+  const dueDate = parseLocalDate(item.fechaEntregaUtc)
+  return dueDate ? dueDate.getTime() < Date.now() : false
 }
 
 function isAnnouncement(item: StudentCourseSectionItem) {
@@ -894,30 +901,26 @@ function getPublicationAttachments(item: StudentCourseSectionItem) {
 }
 
 function getTaskDueMeta(item: StudentCourseSectionItem) {
-  const dueDate = formatCompactDate(item.fechaEntregaUtc)
+  const dueDate = formatDate(item.fechaEntregaUtc) ?? formatCompactDate(item.fechaEntregaUtc)
+  const overdue = isTaskOverdue(item)
+  const delivered = item.tieneEntrega === true
 
   if (!dueDate) return null
 
-  if (item.tieneEntrega === true) {
-    return {
-      label: `Vencía ${dueDate}`,
-      className:
-        'border-emerald-500/15 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300',
-    }
-  }
-
-  if (item.vencida === true) {
+  if (overdue) {
     return {
       label: `Venció ${dueDate}`,
       className:
-        'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300',
+        delivered
+          ? 'border-border/60 bg-muted/45 text-muted-foreground'
+          : 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300',
     }
   }
 
   return {
     label: `Vence ${dueDate}`,
     className:
-      'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+      'border-border/60 bg-muted/45 text-muted-foreground',
   }
 }
 
@@ -1250,12 +1253,26 @@ function TaskPostCard({
         </header>
 
         <div className="mt-3 min-w-0">
-          <h3
-            id={titleId}
-            className="line-clamp-2 min-w-0 break-words text-base font-semibold leading-6 text-foreground sm:text-[17px]"
-          >
-            {title}
-          </h3>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <h3
+              id={titleId}
+              className="line-clamp-2 min-w-0 break-words text-base font-semibold leading-6 text-foreground sm:text-[17px]"
+            >
+              {title}
+            </h3>
+
+            {!announcement && dueMeta ? (
+              <span
+                className={cn(
+                  'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold leading-4',
+                  dueMeta.className,
+                )}
+              >
+                <CalendarClock className="size-3.5" />
+                {dueMeta.label}
+              </span>
+            ) : null}
+          </div>
 
           {description ? (
             <p className="mt-1 line-clamp-3 break-words whitespace-pre-line text-sm leading-5 text-foreground/85">
@@ -1275,15 +1292,6 @@ function TaskPostCard({
               >
                 {status.label}
               </StudentStatusBadge>
-
-              {dueMeta ? (
-                <span
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2.5 py-1.5 text-xs font-semibold leading-4 text-muted-foreground"
-                >
-                  <CalendarClock className="size-3.5" />
-                  {dueMeta.label}
-                </span>
-              ) : null}
             </div>
 
             {taskId != null ? (
