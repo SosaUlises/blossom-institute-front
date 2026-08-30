@@ -1,7 +1,9 @@
 'use client'
 
 import {
+  AlertCircle,
   CalendarClock,
+  CheckCircle2,
   Link as LinkIcon,
   Megaphone,
   Paperclip,
@@ -146,6 +148,44 @@ function ResourceTypeBadge({ tipo }: { tipo: string }) {
   )
 }
 
+function safeText(value?: string | null) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function isImageResource(resource: ResourceDraft) {
+  const contentType = safeText(resource.contentType)?.toLowerCase() ?? ''
+  const name = safeText(resource.nombre)?.toLowerCase() ?? ''
+  const url = safeText(resource.url)?.toLowerCase() ?? ''
+
+  return (
+    contentType.startsWith('image/') ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(name) ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(url)
+  )
+}
+
+function ResourceImagePreview({ resource }: { resource: ResourceDraft }) {
+  const url = safeText(resource.url)
+
+  if (!url || resource.tipo === '1' || !isImageResource(resource)) return null
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="group block overflow-hidden rounded-xl border border-border/60 bg-background/50 transition-colors hover:border-primary/25 dark:bg-background/35"
+    >
+      <img
+        src={url}
+        alt={safeText(resource.nombre) ?? 'Imagen adjunta'}
+        className="max-h-56 w-full bg-muted/20 object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+        loading="lazy"
+      />
+    </a>
+  )
+}
+
 export function TeacherPublicationComposer({
   mode,
   publicationType,
@@ -180,36 +220,40 @@ export function TeacherPublicationComposer({
   const isTask = resolvedPublicationType === 'task'
   const creationTitle = isTask ? 'Crear tarea' : 'Crear anuncio'
   const creationDescription = isTask
-    ? 'Prepará una actividad para que el alumnado la entregue.'
-    : 'Compartí información con el curso sin solicitar una entrega.'
+    ? 'Armá una consigna para que el curso la entregue.'
+    : 'Compartí una novedad o información importante con el curso.'
 
   return (
     <div className="space-y-4 pb-24 lg:pb-4">
-      <header className="flex flex-col gap-3 border-b border-border/60 pb-4">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-              {isTask ? (
-                <CalendarClock className="size-3.5" />
-              ) : (
-                <Megaphone className="size-3.5" />
-              )}
-              {isTask ? 'Tarea' : 'Anuncio'}
-            </span>
-            <EstadoBadge estado={estado} />
-          </div>
+      <header className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                {mode === 'create' ? creationTitle : 'Editar publicación'}
+              </h1>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                {mode === 'create'
+                  ? creationDescription
+                  : isTask
+                    ? 'Ajustá la consigna, los materiales o la fecha de entrega.'
+                    : 'Actualizá el contenido que compartiste con el curso.'}
+              </p>
+            </div>
 
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-              {mode === 'create' ? creationTitle : 'Editar publicación'}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {mode === 'create'
-                ? creationDescription
-                : isTask
-                  ? 'Esta tarea admite entregas del alumnado.'
-                  : 'Este anuncio comunica información sin solicitar entregas.'}
-            </p>
+            {mode !== 'create' ? (
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  {isTask ? (
+                    <CalendarClock className="size-3.5" />
+                  ) : (
+                    <Megaphone className="size-3.5" />
+                  )}
+                  {isTask ? 'Tarea' : 'Anuncio'}
+                </span>
+                <EstadoBadge estado={estado} />
+              </div>
+            ) : null}
           </div>
 
           {mode === 'create' && onPublicationTypeChange ? (
@@ -249,45 +293,51 @@ export function TeacherPublicationComposer({
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="space-y-4">
-          <section className="rounded-2xl border border-border/40 border-t-2 border-t-primary/60 bg-card p-6 shadow-sm dark:border-t-primary/50">
-            <div className="space-y-4">
-              <div className="space-y-2 [&>label]:mb-2 [&>label]:block">
-                <label className="text-sm font-medium text-foreground">Título</label>
+          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">
+                  Título
+                </label>
                 <input
                   value={titulo}
                   onChange={(event) => onTituloChange(event.target.value)}
-                  className={fieldClassName}
-                  placeholder={isTask ? 'Título de la tarea' : 'Título del anuncio'}
+                  className="h-12 w-full rounded-xl border border-border/60 bg-background/70 px-3 text-base font-semibold text-foreground outline-none transition-all placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary dark:bg-background/35"
+                  placeholder={
+                    isTask
+                      ? 'Ej: Homework 25/5'
+                      : 'Ej: Cambio de horario de la clase'
+                  }
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="mb-2 block text-sm font-medium text-foreground">
+                <label className="block text-sm font-medium text-muted-foreground">
                   {isTask ? 'Consigna' : 'Contenido del anuncio'}
                 </label>
                 <textarea
                   value={consigna}
                   onChange={(event) => onConsignaChange(event.target.value)}
-                  rows={8}
-                  className="min-h-44 w-full rounded-xl border border-border/60 bg-background/75 px-3 py-3 text-sm outline-none transition-all focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                  rows={9}
+                  className="min-h-52 w-full resize-y rounded-xl border border-border/60 bg-background/70 px-3 py-3 text-[15px] leading-7 text-foreground outline-none transition-all placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary dark:bg-background/35"
                   placeholder={
                     isTask
-                      ? 'Escribí la consigna de la tarea...'
-                      : 'Escribí el contenido del anuncio...'
+                      ? 'Escribí la consigna, indicaciones o materiales que necesita el curso.'
+                      : 'Escribí el mensaje que querés compartir con el curso.'
                   }
                 />
               </div>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-sm">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold tracking-tight text-foreground">
                   Recursos
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Links y archivos visibles junto a la publicación.
+                  Materiales que acompañan la publicación.
                 </p>
               </div>
 
@@ -305,10 +355,17 @@ export function TeacherPublicationComposer({
               {recursos.map((resource) => (
                 <article
                   key={resource.id}
-                  className="rounded-xl border border-border/60 bg-background/65 p-3"
+                  className="rounded-xl border border-border/60 bg-background/55 p-3 dark:bg-background/30"
                 >
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <ResourceTypeBadge tipo={resource.tipo} />
+                  <div className="mb-2.5 flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <ResourceTypeBadge tipo={resource.tipo} />
+                      <span className="truncate text-xs text-muted-foreground">
+                        {resource.tipo === '1'
+                          ? 'Material enlazado'
+                          : 'Material adjunto'}
+                      </span>
+                    </div>
 
                     <Button
                       variant="ghost"
@@ -320,9 +377,9 @@ export function TeacherPublicationComposer({
                     </Button>
                   </div>
 
-                  <div className="grid gap-3 md:grid-cols-[140px_minmax(0,1fr)]">
+                  <div className="grid gap-2.5 md:grid-cols-[132px_minmax(0,1fr)]">
                     <div className="space-y-2">
-                      <label className="mb-2 block text-sm font-medium text-foreground">
+                      <label className="block text-xs font-medium text-muted-foreground">
                         Tipo de recurso
                       </label>
                       <Select
@@ -342,7 +399,7 @@ export function TeacherPublicationComposer({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="mb-2 block text-sm font-medium text-foreground">
+                      <label className="block text-xs font-medium text-muted-foreground">
                         Nombre visible
                       </label>
                       <input
@@ -356,7 +413,7 @@ export function TeacherPublicationComposer({
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                      <label className="mb-2 block text-sm font-medium text-foreground">
+                      <label className="block text-xs font-medium text-muted-foreground">
                         {resource.tipo === '1' ? 'URL' : 'Archivo'}
                       </label>
 
@@ -393,6 +450,12 @@ export function TeacherPublicationComposer({
                         />
                       )}
                     </div>
+
+                    {resource.tipo !== '1' && isImageResource(resource) ? (
+                      <div className="md:col-span-2">
+                        <ResourceImagePreview resource={resource} />
+                      </div>
+                    ) : null}
                   </div>
                 </article>
               ))}
@@ -400,11 +463,16 @@ export function TeacherPublicationComposer({
           </section>
         </div>
 
-        <aside className="space-y-4">
-          <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-sm">
+        <aside className="space-y-3 lg:sticky lg:top-5">
+          <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90">
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-foreground">Publicación</h2>
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">Estado</h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Controlá cuándo se ve en el tablón.
+                  </p>
+                </div>
                 <EstadoBadge estado={estado} />
               </div>
 
@@ -422,7 +490,7 @@ export function TeacherPublicationComposer({
           </section>
 
           {mode === 'edit' || isTask ? (
-            <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-sm">
+            <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90">
               <div className="space-y-3">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground">
@@ -430,8 +498,8 @@ export function TeacherPublicationComposer({
                   </h2>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     {mode === 'create'
-                      ? 'Indicá cuándo debe entregar el alumnado.'
-                      : 'Agregar una fecha convierte la publicación en tarea.'}
+                      ? 'Indicá cuándo debe entregar el curso.'
+                      : 'Fecha límite para recibir entregas.'}
                   </p>
                 </div>
 
@@ -451,50 +519,56 @@ export function TeacherPublicationComposer({
         </aside>
       </div>
 
-      {(error || success) && (
-        <div className="space-y-3">
+      <div className="mt-6 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:flex sm:items-center sm:justify-between sm:gap-4">
+        <div className="min-w-0 pb-3 sm:pb-0">
           {error ? (
-            <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-600 dark:text-rose-300">
-              {error}
-            </div>
-          ) : null}
-
-          {success ? (
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-300">
-              {success}
-            </div>
-          ) : null}
+            <p className="flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-700 dark:text-rose-300">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" />
+              <span>{error}</span>
+            </p>
+          ) : success ? (
+            <p className="flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+              <span>{success}</span>
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {mode === 'create'
+                ? 'Podés publicarlo ahora o guardarlo como borrador.'
+                : 'Guardá los cambios cuando termines de ajustar la publicación.'}
+            </p>
+          )}
         </div>
-      )}
 
-      <div className="mt-8 flex items-center justify-end gap-3 border-t border-border/20 pt-6">
-        {mode === 'create' ? (
-          <>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+          {mode === 'create' ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={onSaveDraft}
+                disabled={saving}
+                className="h-10 rounded-xl border-border/70 bg-background/75 px-4 shadow-none"
+              >
+                {saving ? 'Guardando...' : 'Guardar borrador'}
+              </Button>
+              <Button
+                onClick={onPublish}
+                disabled={saving}
+                className="h-10 rounded-xl px-4 shadow-none"
+              >
+                {saving ? 'Guardando...' : 'Publicar'}
+              </Button>
+            </>
+          ) : (
             <Button
-              variant="outline"
-              onClick={onSaveDraft}
-              disabled={saving}
-              className="h-10 rounded-xl border-border/70 bg-background/75 px-4"
-            >
-              {saving ? 'Guardando...' : 'Guardar borrador'}
-            </Button>
-            <Button
-              onClick={onPublish}
+              onClick={onSave}
               disabled={saving}
               className="h-10 rounded-xl px-4 shadow-none"
             >
-              {saving ? 'Guardando...' : 'Publicar'}
+              {saving ? 'Guardando...' : 'Guardar cambios'}
             </Button>
-          </>
-        ) : (
-          <Button
-            onClick={onSave}
-            disabled={saving}
-            className="h-10 rounded-xl px-4 shadow-none"
-          >
-            {saving ? 'Guardando...' : 'Guardar cambios'}
-          </Button>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

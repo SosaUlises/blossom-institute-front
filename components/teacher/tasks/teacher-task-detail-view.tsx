@@ -4,17 +4,19 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Archive,
-  ArrowLeft,
   CalendarClock,
+  Download,
+  FileAudio,
+  FileImage,
+  FileText,
+  FileVideo,
   Link as LinkIcon,
   Paperclip,
   Pencil,
   Search,
   ClipboardList,
   Megaphone,
-  MessageSquareText,
   ChevronRight,
-  Inbox,
   MoreHorizontal,
 } from 'lucide-react'
 
@@ -43,7 +45,6 @@ import {
   Empty,
   EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
 import { formatDateTime } from '@/lib/teacher/course-detail/formatters'
@@ -101,6 +102,20 @@ function normalizeDetailContent(value?: string | null) {
   )
 }
 
+function safeText(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function formatBytes(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return null
+  }
+
+  if (value < 1024) return `${value} B`
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`
+  return `${(value / 1024 / 1024).toFixed(1)} MB`
+}
+
 function formatPostDate(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return formatDateTime(value)
@@ -154,44 +169,90 @@ function formatDueDateMeta(value?: string | null) {
   return `${datePart} · ${timePart}`
 }
 
-function getResourceSummary(count: number) {
-  return `${count} ${count === 1 ? 'recurso adjunto' : 'recursos adjuntos'}`
+function getDueDateBadgeMeta(value?: string | null) {
+  const formatted = formatDueDateMeta(value)
+
+  if (!formatted || !value) return null
+
+  const date = new Date(value)
+  const isOverdue = !Number.isNaN(date.getTime()) && date.getTime() < Date.now()
+
+  return {
+    label: `${isOverdue ? 'Venció' : 'Vence'} ${formatted}`,
+    className: 'border-border/60 bg-muted/45 text-muted-foreground',
+  }
+}
+
+function getResourceIcon(resource: TeacherTaskDetail['recursos'][number]) {
+  const contentType = safeText(resource.contentType)?.toLowerCase() ?? ''
+  const name = safeText(resource.nombre)?.toLowerCase() ?? ''
+
+  if (contentType.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/.test(name)) {
+    return FileImage
+  }
+
+  if (contentType.startsWith('video/') || /\.(mp4|mov|webm)$/.test(name)) {
+    return FileVideo
+  }
+
+  if (contentType.startsWith('audio/') || /\.(mp3|wav|ogg)$/.test(name)) {
+    return FileAudio
+  }
+
+  if (
+    contentType.includes('zip') ||
+    contentType.includes('compressed') ||
+    /\.(zip|rar|7z)$/.test(name)
+  ) {
+    return Archive
+  }
+
+  return resource.tipo === 1 ? LinkIcon : FileText
+}
+
+function isImageResource(resource: TeacherTaskDetail['recursos'][number]) {
+  const contentType = safeText(resource.contentType)?.toLowerCase() ?? ''
+  const name = safeText(resource.nombre)?.toLowerCase() ?? ''
+  const url = safeText(resource.url)?.toLowerCase() ?? ''
+
+  return (
+    contentType.startsWith('image/') ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(name) ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(url)
+  )
 }
 
 function getSubmissionSummaryLabels(
   submissions: TeacherSubmissionListItem[],
 ): SubmissionSummaryLabel[] {
   if (submissions.length === 0) {
-    return [{ text: 'Aún sin entregas', tone: 'neutral' }]
+    return []
   }
 
   const pendingReviews = submissions.filter(
     (submission) => !submission.feedbackVigente,
   ).length
 
-  const labels: SubmissionSummaryLabel[] = [
-    {
-      text: `${submissions.length} ${
-        submissions.length === 1 ? 'entrega recibida' : 'entregas recibidas'
-      }`,
-      tone: 'neutral',
-    },
-  ]
-
   if (pendingReviews > 0) {
-    labels.push({
-      text: `${pendingReviews} ${
-        pendingReviews === 1
-          ? 'pendiente de corrección'
-          : 'pendientes de corrección'
-      }`,
-      tone: 'attention',
-    })
-  } else {
-    labels.push({ text: 'Todo corregido', tone: 'complete' })
+    return [
+      {
+        text: `${submissions.length} ${
+          submissions.length === 1 ? 'entrega recibida' : 'entregas recibidas'
+        }`,
+        tone: 'neutral',
+      },
+      {
+        text: `${pendingReviews} ${
+          pendingReviews === 1
+            ? 'pendiente de corrección'
+            : 'pendientes de corrección'
+        }`,
+        tone: 'attention',
+      },
+    ]
   }
 
-  return labels
+  return [{ text: 'Todo corregido', tone: 'complete' }]
 }
 
 function getSubmissionSummaryClassName(tone: SubmissionSummaryLabel['tone']) {
@@ -205,7 +266,39 @@ function ResourceRow({
 }: {
   resource: TeacherTaskDetail['recursos'][number]
 }) {
-  const Icon = resource.tipo === 1 ? LinkIcon : Paperclip
+  const name = safeText(resource.nombre) ?? 'Recurso'
+  const size = formatBytes(resource.sizeBytes)
+  const isImage = isImageResource(resource)
+  const Icon = getResourceIcon(resource)
+
+  if (isImage) {
+    return (
+      <a
+        href={resource.url}
+        target="_blank"
+        rel="noreferrer"
+        className="group block overflow-hidden rounded-xl border border-border/60 bg-background/50 transition-colors hover:border-primary/25 dark:bg-background/35"
+      >
+        <img
+          src={resource.url}
+          alt={name}
+          className="max-h-80 w-full bg-muted/20 object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+          loading="lazy"
+        />
+        <span className="flex items-center justify-between gap-3 border-t border-border/55 px-3 py-2">
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold leading-5 text-foreground">
+              {name}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {size ?? resource.contentType ?? 'Imagen'}
+            </span>
+          </span>
+          <Download className="size-4 shrink-0 text-muted-foreground" />
+        </span>
+      </a>
+    )
+  }
 
   return (
     <a
@@ -221,10 +314,12 @@ function ResourceRow({
 
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold leading-5 text-foreground">
-            {resource.nombre || 'Recurso'}
+            {name}
           </span>
           <span className="block text-xs text-muted-foreground">
-            {resource.tipo === 1 ? 'Link externo' : 'Archivo adjunto'}
+            {resource.tipo === 1
+              ? 'Link externo'
+              : size ?? resource.contentType ?? 'Archivo adjunto'}
           </span>
         </span>
       </span>
@@ -252,16 +347,16 @@ function getSubmissionReviewStatus(submission: TeacherSubmissionListItem) {
       }
     case EstadoCorreccion.Rehacer:
       return {
-        label: 'Pedir cambios',
+        label: 'Necesita cambios',
         className:
           'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
         priority: 2,
       }
     default:
       return {
-        label: 'Sin corregir',
+        label: 'Pendiente de corrección',
         className:
-          'border-border/60 bg-background/70 text-foreground dark:bg-background/35',
+          'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
         priority: 0,
       }
   }
@@ -293,11 +388,11 @@ function SubmissionRow({
   const submittedLabel = submittedOutOfTime
     ? `Entregó fuera de término el ${formatDateTime(submission.fechaEntregaUtc)}`
     : `Entregó el ${formatDateTime(submission.fechaEntregaUtc)}`
-  const actionLabel = hasFeedback ? 'Ver entrega' : 'Corregir entrega'
+  const actionLabel = hasFeedback ? 'Ver corrección' : 'Corregir entrega'
 
   return (
-    <article className="group min-w-0 rounded-xl border border-border/60 bg-background/60 px-3 py-3 transition-[background-color,border-color,box-shadow] duration-200 ease-out hover:border-primary/18 hover:bg-card hover:shadow-[0_3px_12px_rgba(15,23,42,0.025)] dark:bg-background/35 dark:hover:shadow-none sm:px-4">
-      <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+    <article className="group min-w-0 rounded-xl border border-border/60 bg-background/55 px-3 py-3 transition-[background-color,border-color,box-shadow] duration-200 ease-out hover:border-primary/20 hover:bg-card hover:shadow-[0_3px_12px_rgba(15,23,42,0.025)] dark:bg-background/30 dark:hover:shadow-none sm:px-4">
+      <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div className="flex min-w-0 items-start gap-3">
           <PersonAvatar
             name={alumnoName}
@@ -306,18 +401,18 @@ function SubmissionRow({
           />
 
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2.5">
+            <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
               <h3 className="truncate text-sm font-semibold text-foreground">
                 {alumnoName}
               </h3>
               <span
-                className={`inline-flex w-fit items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${reviewStatus.className}`}
+                className={`inline-flex w-fit items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold leading-4 ${reviewStatus.className}`}
               >
                 {reviewStatus.label}
               </span>
             </div>
 
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs leading-4 text-muted-foreground">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4 text-muted-foreground">
               <span
                 className={cn(
                   'inline-flex items-center gap-1.5',
@@ -328,23 +423,18 @@ function SubmissionRow({
                 {submittedLabel}
               </span>
 
-              <span className="inline-flex items-center gap-1.5">
-                <Paperclip className="size-3.5 shrink-0" />
-                {submission.tieneAdjuntos
-                  ? 'Con adjuntos'
-                  : 'Sin adjuntos'}
-              </span>
+              {submission.tieneAdjuntos ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Paperclip className="size-3.5 shrink-0" />
+                  Con adjuntos
+                </span>
+              ) : null}
 
-              <span
-                className={cn(
-                  'font-medium',
-                  submittedOutOfTime
-                    ? 'text-amber-700 dark:text-amber-300'
-                    : 'text-muted-foreground',
-                )}
-              >
-                {entregaEstado.label}
-              </span>
+              {submittedOutOfTime ? (
+                <span className="font-medium text-amber-700 dark:text-amber-300">
+                  {entregaEstado.label}
+                </span>
+              ) : null}
 
               {submission.feedbackVigente?.nota != null ? (
                 <span className="font-semibold text-foreground">
@@ -358,7 +448,7 @@ function SubmissionRow({
         <Button
           variant={hasFeedback ? 'outline' : 'default'}
           className={cn(
-            'h-9 w-full rounded-lg px-3 text-sm font-semibold shadow-none transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.98] sm:w-fit lg:justify-self-end',
+            'h-9 w-full rounded-lg px-3 text-sm font-semibold shadow-none transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.98] sm:w-fit md:justify-self-end',
             hasFeedback
               ? 'border-border/70 bg-background/70 text-foreground hover:border-primary/25 hover:bg-primary/5 hover:text-primary'
               : '',
@@ -379,19 +469,47 @@ function TaskDetailSkeleton() {
         Cargando publicación.
       </p>
       <div aria-hidden="true" className="mx-auto max-w-5xl space-y-4">
-        <header className="space-y-3 border-b border-border/60 pb-4">
-          <div className="h-8 w-32 animate-pulse rounded-lg bg-muted/35" />
-          <div className="h-8 w-3/5 animate-pulse rounded-lg bg-muted/40" />
+        <div className="h-9 w-32 animate-pulse rounded-lg bg-muted/30" />
+
+        <article className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] sm:p-5">
           <div className="flex gap-3">
-            <div className="h-4 w-32 animate-pulse rounded bg-muted/30" />
-            <div className="h-4 w-40 animate-pulse rounded bg-muted/30" />
+            <div className="size-10 shrink-0 animate-pulse rounded-full bg-muted/40" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-2">
+                  <div className="h-4 w-36 animate-pulse rounded bg-muted/45" />
+                  <div className="h-3 w-28 animate-pulse rounded bg-muted/30" />
+                </div>
+                <div className="h-8 w-8 animate-pulse rounded-lg bg-muted/25" />
+              </div>
+
+              <div className="mt-5 flex items-start justify-between gap-3">
+                <div className="h-8 w-2/3 animate-pulse rounded-lg bg-muted/45" />
+                <div className="hidden h-7 w-32 animate-pulse rounded-lg bg-muted/30 sm:block" />
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="h-4 w-full animate-pulse rounded bg-muted/25" />
+                <div className="h-4 w-4/5 animate-pulse rounded bg-muted/25" />
+              </div>
+            </div>
           </div>
-        </header>
-        <section className="rounded-xl border border-border/60 bg-card/95 p-5">
-          <div className="space-y-3">
-            <div className="h-5 w-28 animate-pulse rounded bg-muted/35" />
-            <div className="h-4 w-full animate-pulse rounded bg-muted/25" />
-            <div className="h-4 w-4/5 animate-pulse rounded bg-muted/25" />
+        </article>
+
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <div className="h-5 w-44 animate-pulse rounded bg-muted/40" />
+              <div className="h-4 w-36 animate-pulse rounded bg-muted/25" />
+            </div>
+            <div className="h-10 w-full animate-pulse rounded-xl bg-muted/25 sm:w-64" />
+          </div>
+          <div className="mt-4 space-y-2">
+            {[0, 1, 2].map((item) => (
+              <div
+                key={item}
+                className="h-16 animate-pulse rounded-xl border border-border/50 bg-background/45"
+              />
+            ))}
           </div>
         </section>
       </div>
@@ -626,12 +744,15 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
     if (task?.esAnuncio) return null
     if (submissions.length === 0) return 'Todavía no hay entregas'
     if (filteredSubmissions.length === 0) return 'Sin entregas con ese filtro'
-    return `Página ${pageNumber} de ${totalPages} · ${filteredSubmissions.length} entregas`
+    const start = (pageNumber - 1) * pageSize + 1
+    const end = Math.min(pageNumber * pageSize, filteredSubmissions.length)
+
+    return `Mostrando ${start}-${end} de ${filteredSubmissions.length} entregas`
   }, [
     filteredSubmissions.length,
     pageNumber,
+    pageSize,
     submissions.length,
-    totalPages,
     task?.esAnuncio,
   ])
 
@@ -649,11 +770,8 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
 
   if (!task) {
     return (
-      <div className="mx-auto max-w-3xl rounded-2xl border border-border/60 bg-card/95 px-6 py-12 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-border/60 bg-card/95 px-5 py-7 shadow-[0_1px_2px_rgba(15,23,42,0.025)]">
         <Empty className="border-0 p-0">
-          <EmptyMedia variant="icon">
-            <Inbox />
-          </EmptyMedia>
           <EmptyHeader>
             <EmptyTitle>No se encontró esta publicación</EmptyTitle>
             <EmptyDescription>
@@ -669,12 +787,10 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
   const content = normalizeDetailContent(task.consigna)
   const dueDateMeta = task.esAnuncio
     ? null
-    : formatDueDateMeta(task.fechaEntregaUtc)
+    : getDueDateBadgeMeta(task.fechaEntregaUtc)
   const submissionSummaryLabels = task.esAnuncio
     ? []
     : getSubmissionSummaryLabels(submissions)
-  const resourcesSummary =
-    task.recursos.length > 0 ? getResourceSummary(task.recursos.length) : null
   const TypeIcon = task.esAnuncio ? Megaphone : ClipboardList
 
   return (
@@ -685,15 +801,6 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
           task.esAnuncio ? 'mx-auto max-w-3xl' : 'mx-auto max-w-5xl',
         )}
       >
-        <Button
-          variant="ghost"
-          className="h-9 w-fit justify-start rounded-lg px-2 text-muted-foreground hover:text-foreground"
-          onClick={() => router.push(`/teacher/courses/${courseId}?tab=tablon`)}
-        >
-          <ArrowLeft className="mr-2 size-4" />
-          Volver al tablón
-        </Button>
-
         {actionError ? (
           <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {actionError}
@@ -770,7 +877,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className="text-amber-700 focus:text-amber-700 dark:text-amber-400 dark:focus:text-amber-400"
+                            className="text-destructive focus:text-destructive"
                             onSelect={() => setArchiveDialogOpen(true)}
                           >
                             <Archive className="size-4" />
@@ -789,9 +896,14 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                 </h1>
 
                 {dueDateMeta ? (
-                  <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-primary/10 bg-primary/5 px-2.5 py-1.5 text-xs font-semibold leading-4 text-primary/90 dark:text-primary/80">
+                  <span
+                    className={cn(
+                      'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold leading-4',
+                      dueDateMeta.className,
+                    )}
+                  >
                     <CalendarClock className="size-3.5" />
-                    Vence {dueDateMeta}
+                    {dueDateMeta.label}
                   </span>
                 ) : null}
               </div>
@@ -809,13 +921,6 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
               )}
 
               <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs leading-4">
-                {resourcesSummary ? (
-                  <span className="inline-flex items-center gap-1.5 font-medium text-muted-foreground">
-                    <Paperclip className="size-3.5" />
-                    {resourcesSummary}
-                  </span>
-                ) : null}
-
                 {submissionSummaryLabels.map((label) => (
                   <span
                     key={label.text}
@@ -849,24 +954,24 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
       </div>
 
       {!task.esAnuncio && (
-        <section className="mx-auto max-w-5xl rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
+        <section className="mx-auto max-w-5xl rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] sm:p-5">
           <div className="mb-4 space-y-3">
             <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
               <div className="space-y-1">
                 <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                  Entregas
+                  Entregas para corregir
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   {submissions.length === 1
-                    ? '1 entrega registrada'
-                    : `${submissions.length} entregas registradas`}
+                    ? '1 trabajo recibido en esta tarea'
+                    : `${submissions.length} trabajos recibidos en esta tarea`}
                 </p>
               </div>
 
               <div className="relative w-full xl:max-w-sm">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar alumno..."
+                  placeholder="Buscar por alumno..."
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value)
@@ -877,22 +982,23 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {[
                 { value: 'all', label: 'Todas' },
                 { value: 'uncorrected', label: 'Sin corregir' },
                 { value: 'approved', label: 'Aprobadas' },
-                { value: 'changes', label: 'Pedir cambios' },
+                { value: 'changes', label: 'Necesita cambios' },
                 { value: 'late', label: 'Fuera de término' },
               ].map((filter) => (
-                <Button
+                <button
                   key={filter.value}
                   type="button"
-                  variant={submissionFilter === filter.value ? 'default' : 'outline'}
+                  aria-pressed={submissionFilter === filter.value}
                   className={cn(
-                    'h-9 rounded-lg px-3 text-sm shadow-none',
-                    submissionFilter !== filter.value &&
-                      'border-border/70 bg-background/70 text-muted-foreground hover:border-primary/25 hover:bg-primary/5 hover:text-primary',
+                    'min-h-9 rounded-full border px-3 py-1.5 text-sm font-medium transition-[background-color,border-color,color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 active:scale-[0.98]',
+                    submissionFilter === filter.value
+                      ? 'border-transparent bg-secondary text-foreground dark:bg-muted/70'
+                      : 'border-transparent bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground dark:hover:bg-muted/30',
                   )}
                   onClick={() => {
                     setSubmissionFilter(filter.value as SubmissionFilter)
@@ -900,17 +1006,14 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                   }}
                 >
                   {filter.label}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
 
           {filteredSubmissions.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 px-5 py-7">
+            <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 px-4 py-5">
               <Empty className="border-0 p-0">
-                <EmptyMedia variant="icon">
-                  <MessageSquareText />
-                </EmptyMedia>
                 <EmptyHeader>
                   <EmptyTitle>
                     {submissions.length === 0
@@ -919,7 +1022,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                   </EmptyTitle>
                   <EmptyDescription>
                     {submissions.length === 0
-                      ? 'Cuando los alumnos envíen sus respuestas, vas a poder corregirlas acá.'
+                      ? 'Cuando los alumnos envíen sus trabajos, vas a poder revisarlos acá.'
                       : 'Probá con otra búsqueda o cambiá el filtro.'}
                   </EmptyDescription>
                 </EmptyHeader>
@@ -943,7 +1046,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
             </div>
           )}
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
             <p className="text-sm text-muted-foreground">{pageLabel}</p>
 
             <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex">
@@ -987,7 +1090,7 @@ export function TeacherTaskDetailView({ courseId, taskId }: Props) {
                 event.preventDefault()
                 void handleArchive()
               }}
-              className="bg-amber-600 text-white hover:bg-amber-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {actionLoading === 'archive' ? 'Archivando...' : 'Archivar'}
             </AlertDialogAction>
