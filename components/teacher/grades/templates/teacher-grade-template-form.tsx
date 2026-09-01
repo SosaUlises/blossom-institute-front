@@ -240,9 +240,9 @@ export function TeacherGradeTemplateForm({
   }
 
   return (
-    <div className="space-y-4 pb-24 lg:pb-4">
-      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70 sm:p-5">
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+    <div className="space-y-3 pb-24 lg:pb-4">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:border-border/70">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">
             <TipoIcon className="size-3.5" />
             {tipoVisual.title}
@@ -286,7 +286,7 @@ export function TeacherGradeTemplateForm({
             <textarea
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              rows={4}
+              rows={3}
               className="w-full rounded-xl border border-border/60 bg-background/75 px-3 py-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15 dark:bg-background/35"
               placeholder="Detalle breve para reconocer cuándo conviene usar esta plantilla..."
             />
@@ -295,7 +295,7 @@ export function TeacherGradeTemplateForm({
       </section>
 
       {useSkills && (
-        <section className={`rounded-2xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5 ${tipoVisual.accent}`}>
+        <section className={`rounded-2xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] ${tipoVisual.accent}`}>
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-base font-semibold tracking-tight text-foreground">
@@ -316,7 +316,7 @@ export function TeacherGradeTemplateForm({
             </Button>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {detalles.map((detail, index) => (
               <div
                 key={detail.id}
@@ -385,13 +385,13 @@ export function TeacherGradeTemplateForm({
           <div className="mt-4 grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
             <div className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-sm text-muted-foreground dark:bg-background/25">
               <ClipboardList className="size-4" />
-              {validSkillsCount} completas
+              {validSkillsCount} habilidades completas
             </div>
 
             <div className={`rounded-xl border p-3 transition-colors duration-200 ${calculatedTone.card}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className={`text-sm font-medium ${calculatedTone.label}`}>
-                  Puntaje teórico
+                  Puntaje total
                 </span>
                 <span className={`text-base font-semibold ${calculatedTone.value}`}>
                   {calculatedGrade.toFixed(2)} / 100
