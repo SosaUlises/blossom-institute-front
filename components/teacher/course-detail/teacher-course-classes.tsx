@@ -127,32 +127,32 @@ function ClassRow({
   const date = formatDateParts(item.fecha)
 
   return (
-    <article className="mb-4 flex items-center justify-between rounded-2xl border border-border/40 bg-card p-4 shadow-sm transition-all hover:shadow-md md:p-5">
-      <div className="flex min-w-0 items-center">
+    <article className="grid gap-3 rounded-2xl border border-border/60 bg-card/95 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] transition-colors hover:border-border sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-4 dark:bg-card/90">
+      <div className="flex min-w-0 items-center gap-3">
         <time
           dateTime={item.fecha}
-          className="mr-4 flex h-[60px] min-w-[60px] flex-col items-center justify-center rounded-xl border border-border/50 bg-muted/50 dark:bg-muted/20"
+          className="flex h-14 min-w-14 flex-col items-center justify-center rounded-xl border border-border/60 bg-muted/25 dark:bg-muted/15"
         >
-          <span className="text-xs uppercase text-muted-foreground">
+          <span className="text-[10px] font-medium uppercase text-muted-foreground">
             {date.weekday}
           </span>
-          <span className="text-xl font-bold tabular-nums leading-none text-foreground">
+          <span className="text-lg font-semibold tabular-nums leading-none text-foreground">
             {date.day}
           </span>
-          <span className="text-xs uppercase text-muted-foreground">
+          <span className="text-[10px] font-medium uppercase text-muted-foreground">
             {date.month}
           </span>
         </time>
 
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-foreground">
+          <h3 className="truncate text-[15px] font-semibold tracking-tight text-foreground">
             {item.descripcion?.trim() || 'Sin tema registrado'}
           </h3>
           {item.presentes > 0 || item.ausentes > 0 ? (
-            <div className="mt-1 flex flex-wrap items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {item.presentes > 0 ? (
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-green-500/10 px-2 py-1 text-xs font-medium text-green-600 dark:text-green-400">
-                  <CheckCircle2 className="size-3.5" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/15 bg-emerald-500/[0.07] px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                  <CheckCircle2 className="size-3" />
                   <span className="font-semibold tabular-nums">
                     {item.presentes}
                   </span>
@@ -160,8 +160,8 @@ function ClassRow({
                 </span>
               ) : null}
               {item.ausentes > 0 ? (
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-red-500/10 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400">
-                  <XCircle className="size-3.5" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/15 bg-rose-500/[0.07] px-2 py-0.5 text-xs font-medium text-rose-700 dark:text-rose-300">
+                  <XCircle className="size-3" />
                   <span className="font-semibold tabular-nums">
                     {item.ausentes}
                   </span>
@@ -176,11 +176,11 @@ function ClassRow({
       <Button
         asChild
         variant="ghost"
-        className="shrink-0 text-primary transition-colors hover:bg-primary/5 hover:text-primary"
+        className="h-8 w-fit justify-self-start rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary sm:justify-self-end"
       >
         <Link href={`/teacher/courses/${courseId}/classes/${encodeURIComponent(item.fecha)}`}>
           Ver detalle
-          <ChevronRight className="ml-2 h-4 w-4" />
+          <ChevronRight className="ml-1 size-4" />
         </Link>
       </Button>
     </article>
@@ -189,17 +189,19 @@ function ClassRow({
 
 function ClassRowSkeleton() {
   return (
-    <div className="rounded-xl border border-border/60 bg-card/95 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-4">
-      <div className="grid gap-3 sm:grid-cols-[68px_minmax(0,1fr)_auto] sm:items-center sm:gap-4">
-        <div className="h-16 w-full animate-pulse rounded-lg bg-muted/35 sm:w-[68px]" />
-        <div className="space-y-2">
-          <div className="h-5 w-60 max-w-full animate-pulse rounded bg-muted/40" />
-          <div className="flex gap-1.5">
-            <div className="h-6 w-24 animate-pulse rounded-md bg-muted/30" />
-            <div className="h-6 w-24 animate-pulse rounded-md bg-muted/25" />
+    <div className="rounded-2xl border border-border/60 bg-card/95 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] sm:p-4 dark:bg-card/90">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+        <div className="flex items-center gap-3">
+          <div className="h-14 w-14 animate-pulse rounded-xl bg-muted/35" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-4 w-56 max-w-full animate-pulse rounded bg-muted/45" />
+            <div className="flex gap-1.5">
+              <div className="h-5 w-20 animate-pulse rounded-full bg-muted/30" />
+              <div className="h-5 w-20 animate-pulse rounded-full bg-muted/25" />
+            </div>
           </div>
         </div>
-        <div className="h-8 w-32 animate-pulse rounded-lg bg-muted/30" />
+        <div className="hidden h-8 w-24 animate-pulse rounded-lg bg-muted/30 sm:block" />
       </div>
     </div>
   )
@@ -284,7 +286,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
   if (loading) {
     return (
       <CourseTabSkeletonList label="Cargando historial de asistencias.">
-        {Array.from({ length: 5 }).map((_, i) => (
+        {Array.from({ length: 4 }).map((_, i) => (
           <ClassRowSkeleton key={i} />
         ))}
       </CourseTabSkeletonList>
@@ -295,19 +297,23 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
     return <CourseTabErrorState>{error}</CourseTabErrorState>
   }
 
+  const hasSearch = search.trim().length > 0
+
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <div className="mb-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
-        <CourseTabSearchField
-          className="sm:max-w-md"
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar asistencias registradas..."
-        />
+      <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="w-full sm:max-w-md">
+          <CourseTabSearchField
+            className="w-full"
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar por fecha o tema..."
+          />
+        </div>
 
         <Button
           asChild
-          className="h-10 w-full rounded-lg px-3 text-sm font-semibold shadow-none transition-[background-color,transform] duration-150 ease-out active:scale-[0.98] sm:w-fit"
+          className="h-9 w-full rounded-xl px-3 text-sm font-semibold shadow-none transition-[background-color,transform] duration-150 ease-out active:scale-[0.98] sm:w-auto"
         >
           <Link
             href={`/teacher/courses/${courseId}/classes/take`}
@@ -322,13 +328,14 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
       {filteredData.length === 0 ? (
         <CourseTabEmptyState
           icon={CheckSquare}
+          className="py-3.5"
           title={
-            search.trim()
+            hasSearch
               ? 'No hay asistencias que coincidan'
               : 'Todavía no hay asistencias tomadas en este curso'
           }
           description={
-            search.trim()
+            hasSearch
               ? 'Probá con otra fecha o tema de clase.'
               : 'Cuando registres asistencia, el historial va a aparecer acá.'
           }
@@ -346,6 +353,7 @@ export function TeacherCourseClasses({ courseId }: { courseId: number }) {
           </div>
 
           <CourseTabPagination
+            className="mt-3"
             label={`${filteredData.length} registro${filteredData.length === 1 ? '' : 's'} de asistencia · Página ${page} de ${totalPages}`}
             page={page}
             totalPages={totalPages}

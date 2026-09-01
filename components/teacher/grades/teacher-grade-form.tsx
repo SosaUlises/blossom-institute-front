@@ -24,6 +24,7 @@ import {
   supportsSkills,
   tipoCalificacionOptions,
 } from '@/lib/teacher/grades/utils'
+import { cn } from '@/lib/utils'
 
 type Props = {
   mode: 'create' | 'edit'
@@ -112,7 +113,7 @@ function getTipoVisual(tipo: number) {
 function getCalculatedGradeTone(nota: number) {
   if (nota >= 80) {
     return {
-      card: 'border-emerald-500/20 bg-emerald-500/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.035)] hover:bg-emerald-500/[0.10] hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
+      card: 'border-emerald-500/20 bg-emerald-500/[0.06]',
       label: 'text-emerald-700/80 dark:text-emerald-400/90',
       value: 'text-emerald-700 dark:text-emerald-400',
       suffix: 'text-emerald-700/70 dark:text-emerald-400/70',
@@ -124,7 +125,7 @@ function getCalculatedGradeTone(nota: number) {
 
   if (nota >= 60) {
     return {
-      card: 'border-amber-500/20 bg-amber-500/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.035)] hover:bg-amber-500/[0.10] hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
+      card: 'border-amber-500/20 bg-amber-500/[0.06]',
       label: 'text-amber-700/80 dark:text-amber-400/90',
       value: 'text-amber-700 dark:text-amber-400',
       suffix: 'text-amber-700/70 dark:text-amber-400/70',
@@ -135,7 +136,7 @@ function getCalculatedGradeTone(nota: number) {
   }
 
   return {
-    card: 'border-rose-500/20 bg-rose-500/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.035)] hover:bg-rose-500/[0.10] hover:shadow-[0_1px_2px_rgba(15,23,42,0.035)]',
+    card: 'border-rose-500/20 bg-rose-500/[0.06]',
     label: 'text-rose-700/80 dark:text-rose-400/90',
     value: 'text-rose-700 dark:text-rose-400',
     suffix: 'text-rose-700/70 dark:text-rose-400/70',
@@ -167,8 +168,6 @@ export function TeacherGradeForm({
   const tipoNumber = Number(tipo || 0)
   const useSkills = supportsSkills(tipoNumber)
   const useDirectNote = requiresDirectNote(tipoNumber)
-  const tipoVisual = getTipoVisual(tipoNumber)
-  const TipoIcon = tipoVisual.icon
 
   const calculatedGrade = useMemo(() => {
     const parsed = detalles
@@ -234,7 +233,7 @@ export function TeacherGradeForm({
 
       if (useSkills && hasDuplicateSkills()) {
         throw new Error(
-          'No se puede repetir la misma skill dentro de una misma calificación.',
+          'No se puede repetir la misma habilidad dentro de una misma calificación.',
         )
       }
 
@@ -286,33 +285,71 @@ export function TeacherGradeForm({
 
   return (
     <div className="space-y-4 pb-24 lg:pb-4">
-      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${tipoVisual.badgeClass}`}>
-            <TipoIcon className="size-3.5" />
-            {tipoVisual.title}
-          </span>
-          <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground dark:bg-background/35">
-            {useSkills ? 'Calculada por habilidades' : useDirectNote ? 'Nota directa' : 'Elegí un tipo'}
-          </span>
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold tracking-tight text-foreground">
+              Datos de la evaluación
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Definí qué se evaluó y cuándo se tomó.
+            </p>
+          </div>
+          {tipo ? (
+            <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground dark:bg-background/35">
+              {useSkills ? 'Calculada por habilidades' : 'Nota directa'}
+            </span>
+          ) : null}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Tipo</label>
-            <select
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value)}
-              className={fieldClassName}
-            >
-              <option value="">Seleccionar tipo</option>
-              {tipoCalificacionOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <fieldset className="space-y-2 md:col-span-2">
+            <legend className="text-sm font-medium text-foreground">
+              Tipo de calificación
+            </legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {tipoCalificacionOptions.map((option) => {
+                const optionValue = Number(option.value)
+                const optionVisual = getTipoVisual(optionValue)
+                const OptionIcon = optionVisual.icon
+                const selected = tipo === option.value
+                const helper = supportsSkills(optionValue)
+                  ? 'Detalle por habilidades'
+                  : 'Nota directa'
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setTipo(option.value)}
+                    className={cn(
+                      'flex min-h-[72px] items-start gap-3 rounded-xl border border-border/60 bg-background/55 p-3 text-left transition-colors hover:border-primary/25 hover:bg-background/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 dark:bg-background/25',
+                      selected &&
+                        'border-primary/35 bg-primary/[0.055] dark:bg-primary/[0.08]',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'flex size-9 shrink-0 items-center justify-center rounded-xl',
+                        optionVisual.iconTone,
+                      )}
+                    >
+                      <OptionIcon className="size-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-foreground">
+                        {optionVisual.title}
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                        {helper}
+                      </span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </fieldset>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Fecha</label>
@@ -333,7 +370,7 @@ export function TeacherGradeForm({
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               className={fieldClassName}
-              placeholder="Ej. Quiz Unit 3, Participación marzo..."
+              placeholder="Ej. Quiz Unit 3, Test oral, participación en clase..."
             />
           </div>
 
@@ -342,23 +379,26 @@ export function TeacherGradeForm({
             <textarea
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              rows={4}
-              className="w-full rounded-xl border border-border/60 bg-background/75 px-3 py-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15"
-              placeholder="Detalle opcional de la evaluación..."
+              rows={3}
+              className="min-h-24 w-full resize-y rounded-xl border border-border/60 bg-background/75 px-3 py-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15"
+              placeholder="Comentario opcional para contextualizar la evaluación..."
             />
           </div>
         </div>
       </section>
 
       {useDirectNote && (
-        <section className={`rounded-2xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5 ${tipoVisual.accent}`}>
-          <div className="mb-4">
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+          <div className="mb-3">
             <h2 className="text-base font-semibold tracking-tight text-foreground">
               Nota directa
             </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Seleccioná la escala registrada para esta evaluación.
+            </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Nota</label>
               <div className="relative">
@@ -382,12 +422,14 @@ export function TeacherGradeForm({
                 </select>
               </div>
 
-              <p className="text-xs text-muted-foreground">Máximo permitido: 100.</p>
+              <p className="text-xs text-muted-foreground">
+                Máximo permitido: 100.
+              </p>
             </div>
 
-            <div className="inline-flex items-center gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-primary">
+            <div className="inline-flex w-full items-center justify-between gap-2 rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-foreground dark:bg-background/25 sm:w-auto sm:justify-start">
               <Trophy className="size-4" />
-              <span className="text-sm font-medium">Nota final</span>
+              <span className="text-sm font-medium text-muted-foreground">Nota final</span>
               <span className="text-base font-semibold">
                 {nota.trim() ? Number(nota).toFixed(2) : '--'}
               </span>
@@ -397,20 +439,20 @@ export function TeacherGradeForm({
       )}
 
       {useSkills && (
-        <section className={`rounded-2xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5 ${tipoVisual.accent}`}>
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-base font-semibold tracking-tight text-foreground">
                 Detalle por habilidades
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Cada habilidad solo puede usarse una vez.
+                Cargá los puntajes por área para calcular la nota final.
               </p>
             </div>
 
             <Button
               variant="outline"
-              className="h-9 rounded-lg border-border/70 bg-background/70 px-3 transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              className="h-9 w-full rounded-lg border-border/70 bg-background/70 px-3 transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary sm:w-auto"
               onClick={handleAddDetail}
             >
               <Plus className="mr-2 size-4" />
@@ -422,7 +464,7 @@ export function TeacherGradeForm({
             {detalles.map((detail, index) => (
               <div
                 key={detail.id}
-                className="rounded-xl border border-border/60 bg-background/55 p-3 transition-colors duration-200 hover:border-primary/20 hover:bg-background/75 dark:bg-background/25"
+                className="rounded-xl border border-border/55 bg-background/45 p-3 transition-colors duration-200 hover:border-primary/20 hover:bg-background/70 dark:bg-background/25"
               >
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-foreground">
@@ -431,6 +473,7 @@ export function TeacherGradeForm({
 
                   <Button
                     variant="outline"
+                    aria-label={`Quitar habilidad ${index + 1}`}
                     className="size-9 rounded-lg border-border/70 bg-background/70 p-0 transition-colors duration-200 hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
                     onClick={() => handleRemoveDetail(detail.id)}
                   >
@@ -500,7 +543,7 @@ export function TeacherGradeForm({
           <div className="mt-4 grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
             <div className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-sm text-muted-foreground dark:bg-background/25">
               <ClipboardList className="size-4" />
-              {validSkillsCount} completas
+              {validSkillsCount} {validSkillsCount === 1 ? 'habilidad completa' : 'habilidades completas'}
             </div>
 
             <div className={`rounded-xl border p-3 transition-colors duration-200 ${calculatedTone.card}`}>
@@ -524,22 +567,28 @@ export function TeacherGradeForm({
       )}
 
       {error && (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive"
+        >
           {error}
         </div>
       )}
 
       {success && (
-        <div className="rounded-2xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-600 dark:text-green-400">
+        <div
+          role="status"
+          className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.07] px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300"
+        >
           {success}
         </div>
       )}
 
-      <div className="sticky bottom-0 z-10 -mx-5 flex justify-end border-t border-border/60 bg-background/95 px-5 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0">
+      <div className="sticky bottom-0 z-10 -mx-4 flex justify-end border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur sm:-mx-5 sm:px-5 lg:static lg:mx-0 lg:rounded-2xl lg:border lg:border-border/60 lg:bg-card/80 lg:px-4 lg:py-3">
         <Button
           onClick={handleSubmit}
           disabled={saving}
-          className="h-10 rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
+          className="h-10 w-full rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90 sm:w-auto"
         >
           <Save className="mr-2 size-4" />
           {saving

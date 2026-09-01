@@ -44,23 +44,53 @@ export function getAcademicStatus(summary?: StudentQuarterSummary | null) {
   const averageTone = getAverageTone(summary?.promedio)
   const attendanceTone = getAttendanceTone(summary?.asistencia)
 
+  const baseStatus = {
+    averageTone,
+    attendanceTone,
+  }
+
   if (averageTone === 'neutral' && attendanceTone === 'neutral') {
-    return { label: 'Sin datos actuales', tone: 'neutral' as const, priority: 3 }
+    return {
+      ...baseStatus,
+      label: 'Sin datos actuales',
+      tone: 'neutral' as const,
+      priority: 3,
+    }
   }
 
   if (averageTone === 'critical' && attendanceTone === 'critical') {
-    return { label: 'Riesgo combinado', tone: 'critical' as const, priority: 0 }
+    return {
+      ...baseStatus,
+      label: 'Riesgo combinado',
+      tone: 'critical' as const,
+      priority: 0,
+    }
   }
 
   if (averageTone === 'critical' || attendanceTone === 'critical') {
-    return { label: 'Necesita refuerzo', tone: 'critical' as const, priority: 1 }
+    return {
+      ...baseStatus,
+      label: 'Necesita refuerzo',
+      tone: 'critical' as const,
+      priority: 1,
+    }
   }
 
   if (averageTone === 'attention' || attendanceTone === 'attention') {
-    return { label: 'En seguimiento', tone: 'attention' as const, priority: 2 }
+    return {
+      ...baseStatus,
+      label: 'En seguimiento',
+      tone: 'attention' as const,
+      priority: 2,
+    }
   }
 
-  return { label: 'Sin señales actuales', tone: 'healthy' as const, priority: 3 }
+  return {
+    ...baseStatus,
+    label: 'Sin señales actuales',
+    tone: 'healthy' as const,
+    priority: 3,
+  }
 }
 
 function getLocalDateKey(date: Date) {
