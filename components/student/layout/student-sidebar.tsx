@@ -9,8 +9,13 @@ import {
   ChevronRight,
   LayoutDashboard,
   LogOut,
+  Moon,
+  PanelLeft,
   Settings,
+  Sun,
+  UserCircle,
 } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 import {
   DropdownMenu,
@@ -29,6 +34,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import type { SessionUser } from '@/lib/auth/session'
@@ -36,36 +43,56 @@ import { CURRENT_USER_AVATAR_UPDATED_EVENT } from '@/lib/auth/client-events'
 import { cn } from '@/lib/utils'
 
 const studentNavItems = [
-  { title: 'Dashboard', url: '/student/dashboard', icon: LayoutDashboard },
-  { title: 'Courses', url: '/student/courses', icon: BookOpen },
+  {
+    title: 'Inicio',
+    url: '/student/dashboard',
+    description: 'Tu día de aprendizaje',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'Cursos',
+    url: '/student/courses',
+    description: 'Tus aulas',
+    icon: BookOpen,
+  },
+  {
+    title: 'Mi cuenta',
+    url: '/student/settings',
+    description: 'Perfil y seguridad',
+    icon: Settings,
+  },
 ]
 
-const studentSecondaryNavItems = [
-  { title: 'Configuración', url: '/student/settings', icon: Settings },
-]
+function SidebarCollapseButton() {
+  const { state, toggleSidebar } = useSidebar()
+  const isCollapsed = state === 'collapsed'
 
-function getItemDescription(title: string) {
-  switch (title) {
-    case 'Dashboard':
-      return 'Resumen general'
-    case 'Courses':
-      return 'Cursos asignados'
-    case 'Configuración':
-      return 'Cuenta y seguridad'
-    default:
-      return ''
-  }
+  return (
+    <button
+      type="button"
+      aria-label={isCollapsed ? 'Expandir navegación' : 'Contraer navegación'}
+      title={isCollapsed ? 'Expandir navegación' : 'Contraer navegación'}
+      onClick={toggleSidebar}
+      className={cn(
+        'hidden size-9 shrink-0 items-center justify-center rounded-xl border border-sidebar-border/70 bg-background/65 text-muted-foreground shadow-[0_1px_1px_rgba(15,23,42,0.025)] transition-colors duration-200 hover:border-primary/15 hover:bg-sidebar-accent/60 hover:text-foreground active:scale-[0.98] md:flex dark:bg-background/25',
+        isCollapsed && 'mx-auto',
+      )}
+    >
+      <PanelLeft
+        className={cn(
+          'size-4 transition-transform duration-200',
+          isCollapsed && 'rotate-180',
+        )}
+      />
+    </button>
+  )
 }
 
 function NavItem({
   item,
   pathname,
 }: {
-  item: {
-    title: string
-    url: string
-    icon: React.ComponentType<{ className?: string }>
-  }
+  item: (typeof studentNavItems)[number]
   pathname: string
 }) {
   const isActive =
@@ -74,11 +101,16 @@ function NavItem({
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild tooltip={item.title} className="h-auto rounded-xl p-0 transition-none">
+      <SidebarMenuButton
+        asChild
+        tooltip={item.title}
+        className="h-auto rounded-xl p-0 transition-none group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-0!"
+      >
         <Link
           href={item.url}
+          aria-label={item.title}
           className={cn(
-            'group flex min-h-[48px] w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200',
+            'group flex min-h-[48px] w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors duration-200 group-data-[collapsible=icon]:min-h-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-0',
             isActive
               ? 'border-primary/15 bg-primary/8 text-foreground shadow-[0_1px_1px_rgba(15,23,42,0.04)] hover:bg-primary/10'
               : 'border-transparent bg-transparent text-sidebar-foreground/85 hover:border-sidebar-border/60 hover:bg-sidebar-accent/45 hover:text-sidebar-accent-foreground',
@@ -86,7 +118,7 @@ function NavItem({
         >
           <div
             className={cn(
-              'flex size-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200',
+              'flex size-9 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200 group-data-[collapsible=icon]:size-8',
               isActive
                 ? 'border-primary/15 bg-primary/10 text-primary'
                 : 'border-border/50 bg-background/60 text-muted-foreground group-hover:border-primary/10 group-hover:bg-primary/5 group-hover:text-primary/80',
@@ -95,16 +127,23 @@ function NavItem({
             <item.icon className="size-4.5" />
           </div>
 
-          <div className="min-w-0 flex-1">
-            <p className={cn('truncate text-sm font-semibold leading-tight', isActive ? 'text-foreground' : 'text-sidebar-foreground/90')}>
+          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+            <p className="truncate text-sm font-semibold leading-tight">
               {item.title}
             </p>
             <p className="mt-1 truncate text-[11px] leading-[1.25] text-muted-foreground">
-              {getItemDescription(item.title)}
+              {item.description}
             </p>
           </div>
 
-          <ChevronRight className={cn('size-4 shrink-0 transition-all duration-200', isActive ? 'translate-x-0 text-primary' : 'text-muted-foreground/70 group-hover:translate-x-0.5 group-hover:text-muted-foreground')} />
+          <ChevronRight
+            className={cn(
+              'size-4 shrink-0 transition-all duration-200 group-data-[collapsible=icon]:hidden',
+              isActive
+                ? 'text-primary'
+                : 'text-muted-foreground/70 group-hover:translate-x-0.5 group-hover:text-muted-foreground',
+            )}
+          />
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -114,6 +153,7 @@ function NavItem({
 export function StudentSidebar({ user }: { user: SessionUser }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? null)
 
@@ -153,6 +193,9 @@ export function StudentSidebar({ user }: { user: SessionUser }) {
   }, [])
 
   const fullName = `${user.nombre} ${user.apellido}`.trim()
+  const isDark = mounted && resolvedTheme === 'dark'
+  const ThemeIcon = isDark ? Moon : Sun
+  const themeLabel = isDark ? 'Modo oscuro' : 'Modo claro'
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', {
@@ -165,71 +208,68 @@ export function StudentSidebar({ user }: { user: SessionUser }) {
   }
 
   return (
-    <Sidebar className="border-r border-sidebar-border/70 bg-sidebar/95 text-sidebar-foreground backdrop-blur-2xl">
-      <SidebarHeader className="border-b border-sidebar-border/70 px-4 py-4">
-        <Link
-          href="/student/dashboard"
-          className="group flex items-center justify-center rounded-xl px-2 py-2 transition-all duration-200 hover:bg-sidebar-accent/40"
-        >
-          <div className="flex h-[52px] w-full items-center justify-center overflow-hidden rounded-xl px-3 transition-all duration-200 group-hover:scale-[1.01]">
-            <Image
-              src="/blossom-logo.png"
-              alt="Blossom Institute"
-              width={180}
-              height={54}
-              className="h-auto max-h-[52px] w-auto object-contain"
-              priority
-            />
-          </div>
-        </Link>
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-sidebar-border/70 bg-sidebar/95 text-sidebar-foreground backdrop-blur-2xl"
+    >
+      <SidebarHeader className="border-b border-sidebar-border/70 px-4 py-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3">
+        <div className="flex items-center gap-2 group-data-[collapsible=icon]:flex-col">
+          <Link
+            href="/student/dashboard"
+            aria-label="Blossom Institute"
+            className="group flex min-w-0 flex-1 items-center justify-center rounded-xl px-2 py-2 transition-colors duration-200 hover:bg-sidebar-accent/40 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:p-0"
+          >
+            <div className="flex h-[52px] w-full items-center justify-center overflow-hidden rounded-xl px-3 group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:p-0">
+              <Image
+                src="/blossom-logo.png"
+                alt="Blossom Institute"
+                width={180}
+                height={54}
+                className="h-auto max-h-[52px] w-auto object-contain group-data-[collapsible=icon]:hidden"
+                priority
+              />
+              <Image
+                src="/blossom-bridge-isotype.png"
+                alt=""
+                width={36}
+                height={36}
+                className="hidden size-8 object-contain group-data-[collapsible=icon]:block"
+              />
+            </div>
+          </Link>
+          <SidebarCollapseButton />
+        </div>
       </SidebarHeader>
 
-      <SidebarContent className="flex h-full flex-col px-3 py-4">
-        <div className="flex min-h-0 flex-1 flex-col justify-between">
-          <div className="space-y-5">
-            <SidebarGroup>
-              <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-                Student
-              </SidebarGroupLabel>
+      <SidebarContent className="flex h-full flex-col px-3 py-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-1.5">
+        <div className="flex min-h-0 flex-1 flex-col justify-between group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:items-center">
+          <SidebarGroup className="w-full p-0 group-data-[collapsible=icon]:items-center">
+            <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+              Aprendizaje
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-2 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:space-y-1.5">
+                {studentNavItems.map((item) => (
+                  <NavItem key={item.title} item={item} pathname={pathname} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
-              <SidebarGroupContent>
-                <SidebarMenu className="space-y-2">
-                  {studentNavItems.map((item) => (
-                    <NavItem key={item.title} item={item} pathname={pathname} />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarGroup>
-              <SidebarGroupLabel className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-                Cuenta
-              </SidebarGroupLabel>
-
-              <SidebarGroupContent>
-                <SidebarMenu className="space-y-2">
-                  {studentSecondaryNavItems.map((item) => (
-                    <NavItem key={item.title} item={item} pathname={pathname} />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </div>
-
-          <div className="pt-5">
+          <div className="w-full pt-3 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:pt-2">
             {!mounted ? (
-              <div className="flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/80 px-3 py-3 shadow-[0_1px_1px_rgba(15,23,42,0.03)]">
+              <div className="flex w-full items-center gap-2.5 rounded-xl border border-sidebar-border/60 bg-background/45 px-2 py-2 dark:bg-background/20 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0">
                 <UserAvatar
                   name={fullName}
                   avatarUrl={avatarUrl}
-                  size={40}
+                  size={34}
                   fallbackClassName="bg-primary/10 text-primary"
                 />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-foreground">
+                <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+                  <p className="truncate text-sm font-semibold leading-none text-foreground">
                     {fullName}
                   </p>
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="mt-1 break-all text-[11px] leading-4 text-muted-foreground">
                     {user.email}
                   </p>
                 </div>
@@ -239,52 +279,61 @@ export function StudentSidebar({ user }: { user: SessionUser }) {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="group flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-card/80 px-3 py-3 text-left shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-all duration-200 hover:border-primary/15 hover:bg-sidebar-accent/60"
+                    aria-label="Abrir menú de usuario"
+                    title="Usuario"
+                    className="group flex w-full items-center gap-2.5 rounded-xl border border-sidebar-border/60 bg-background/45 px-2 py-2 text-left transition-colors duration-200 hover:border-primary/15 hover:bg-sidebar-accent/55 active:scale-[0.99] dark:bg-background/20 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0"
                   >
                     <UserAvatar
                       name={fullName}
                       avatarUrl={avatarUrl}
-                      size={40}
+                      size={34}
                       className="transition-transform duration-200 group-hover:scale-[1.02]"
                       fallbackClassName="bg-primary/10 text-primary"
                     />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">
+                    <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+                      <p className="truncate text-sm font-semibold leading-none text-foreground">
                         {fullName}
                       </p>
-                      <p className="truncate text-xs text-muted-foreground">
+                      <p className="mt-1 break-all text-[11px] leading-4 text-muted-foreground">
                         {user.email}
                       </p>
                     </div>
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground group-data-[collapsible=icon]:hidden" />
                   </button>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent
                   align="start"
                   side="top"
-                  className="w-64 rounded-2xl border border-border/70 bg-popover/95 p-2 shadow-[0_18px_38px_-26px_rgba(15,23,42,0.24)] backdrop-blur-xl"
+                  className="w-56 rounded-2xl border border-border/70 bg-popover/95 p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] backdrop-blur-xl"
                 >
-                  <div className="mb-2 rounded-xl border border-border/60 bg-muted/25 px-3 py-3">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {fullName}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {user.email}
-                    </p>
-                    <p className="mt-2 inline-flex rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
-                      {user.roles.join(', ')}
-                    </p>
-                  </div>
-
-                  <DropdownMenuSeparator className="my-2 bg-border" />
-
+                  <DropdownMenuItem
+                    onSelect={() => router.push('/student/settings')}
+                    className="rounded-xl px-3 py-2 text-sm"
+                  >
+                    <UserCircle className="mr-2 size-4" />
+                    Mi cuenta
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={(event) => {
+                      event.preventDefault()
+                      setTheme(isDark ? 'light' : 'dark')
+                    }}
+                    className="rounded-xl px-3 py-2 text-sm"
+                  >
+                    <ThemeIcon className="mr-2 size-4" />
+                    <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                      <span>Apariencia</span>
+                      <span className="text-xs text-muted-foreground">{themeLabel}</span>
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="my-1.5 bg-border" />
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="rounded-xl px-3 py-2 text-sm text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-600 data-[state=open]:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300 dark:focus:bg-red-500/10 dark:focus:text-red-300 dark:data-[state=open]:bg-red-500/10"
+                    className="rounded-xl px-3 py-2 text-sm text-red-600 focus:bg-red-50 focus:text-red-600 dark:text-red-400 dark:focus:bg-red-500/10 dark:focus:text-red-300"
                   >
                     <LogOut className="mr-2 size-4" />
-                    Sign out
+                    Cerrar sesión
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -292,6 +341,8 @@ export function StudentSidebar({ user }: { user: SessionUser }) {
           </div>
         </div>
       </SidebarContent>
+
+      <SidebarRail />
     </Sidebar>
   )
 }

@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Inbox, Pencil } from 'lucide-react'
+import { Inbox } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Empty,
@@ -13,7 +12,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import { TeacherGradeForm } from './teacher-grade-form'
+import { getTeacherCourseDetail } from '@/lib/teacher/course-detail/api'
+import { getTeacherCourseStudents } from '@/lib/teacher/course-detail/students'
 import {
   getTeacherGradeDetail,
   updateTeacherGrade,
@@ -22,6 +22,8 @@ import type {
   GradeFormPayload,
   GradeFormValues,
 } from '@/lib/teacher/grades/types'
+import { TeacherGradeForm } from './teacher-grade-form'
+import { TeacherGradePageHeader } from './teacher-grade-page-header'
 
 type Props = {
   courseId: number
@@ -29,13 +31,21 @@ type Props = {
   gradeId: number
 }
 
+type StudentContext = {
+  name: string
+  email?: string | null
+  avatarUrl?: string | null
+}
+
 function EditViewSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="space-y-3 border-b border-border/60 pb-4">
-        <div className="h-9 w-44 animate-pulse rounded-lg bg-muted/35" />
-        <div className="h-7 w-52 animate-pulse rounded-lg bg-muted/40" />
-        <div className="h-4 w-72 max-w-full animate-pulse rounded-md bg-muted/30" />
+    <div className="rounded-2xl border border-border/60 bg-card/95 p-4 dark:bg-card/90 sm:p-5">
+      <div className="h-4 w-40 animate-pulse rounded-full bg-muted/40" />
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div className="h-20 animate-pulse rounded-xl bg-muted/35 md:col-span-2" />
+        <div className="h-10 animate-pulse rounded-xl bg-muted/35" />
+        <div className="h-10 animate-pulse rounded-xl bg-muted/35" />
+        <div className="h-24 animate-pulse rounded-xl bg-muted/30 md:col-span-2" />
       </div>
     </div>
   )
@@ -49,6 +59,8 @@ export function TeacherGradeEditView({
   const router = useRouter()
 
   const [initialValues, setInitialValues] = useState<GradeFormValues | null>(null)
+  const [studentContext, setStudentContext] = useState<StudentContext | null>(null)
+  const [courseName, setCourseName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -58,7 +70,35 @@ export function TeacherGradeEditView({
         setLoading(true)
         setError(null)
 
-        const grade = await getTeacherGradeDetail(courseId, alumnoId, gradeId)
+        const [gradeResult, courseResult, studentsResult] = await Promise.allSettled([
+          getTeacherGradeDetail(courseId, alumnoId, gradeId),
+          getTeacherCourseDetail(courseId),
+          getTeacherCourseStudents(courseId),
+        ])
+
+        if (gradeResult.status === 'rejected') {
+          throw gradeResult.reason
+        }
+
+        if (courseResult.status === 'fulfilled') {
+          setCourseName(courseResult.value.nombre)
+        }
+
+        if (studentsResult.status === 'fulfilled') {
+          const student = studentsResult.value.find(
+            (item) => item.alumnoId === alumnoId,
+          )
+
+          if (student) {
+            setStudentContext({
+              name: `${student.nombre} ${student.apellido}`.trim(),
+              email: student.email,
+              avatarUrl: student.avatarUrl,
+            })
+          }
+        }
+
+        const grade = gradeResult.value
 
         setInitialValues({
           tipo: String(grade.tipo),
@@ -83,7 +123,7 @@ export function TeacherGradeEditView({
       }
     }
 
-    load()
+    void load()
   }, [courseId, alumnoId, gradeId])
 
   const handleSubmit = async (payload: GradeFormPayload) => {
@@ -95,7 +135,12 @@ export function TeacherGradeEditView({
   }
 
   if (loading) {
-    return <EditViewSkeleton />
+    return (
+      <div className="space-y-5">
+        <TeacherGradePageHeader mode="edit" loading />
+        <EditViewSkeleton />
+      </div>
+    )
   }
 
   if (error || !initialValues) {
@@ -119,29 +164,14 @@ export function TeacherGradeEditView({
   }
 
   return (
-    <div className="space-y-4">
-      <header className="space-y-3 border-b border-border/60 pb-4">
-        <Button
-          variant="ghost"
-          className="-ml-2 h-9 w-fit rounded-lg px-2 text-muted-foreground hover:bg-primary/5 hover:text-primary"
-          onClick={() =>
-            router.push(`/teacher/courses/${courseId}/students/${alumnoId}/grades`)
-          }
-        >
-          <ArrowLeft className="mr-2 size-4" />
-          Volver a calificaciones
-        </Button>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-            Editar calificación
-          </h1>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">
-            <Pencil className="size-3.5" />
-            Edición
-          </span>
-        </div>
-      </header>
+    <div className="space-y-5">
+      <TeacherGradePageHeader
+        mode="edit"
+        studentName={studentContext?.name}
+        studentEmail={studentContext?.email}
+        studentAvatarUrl={studentContext?.avatarUrl}
+        courseName={courseName}
+      />
 
       <TeacherGradeForm
         mode="edit"

@@ -405,6 +405,20 @@ function formatDueDateMeta(value?: string | null) {
   return `${datePart} · ${timePart}`
 }
 
+function getDueDateBadgeMeta(value?: string | null) {
+  const formatted = formatDueDateMeta(value)
+
+  if (!formatted || !value) return null
+
+  const date = new Date(value)
+  const isOverdue = !Number.isNaN(date.getTime()) && date.getTime() < Date.now()
+
+  return {
+    label: `${isOverdue ? 'Venció' : 'Vence'} ${formatted}`,
+    className: 'border-border/60 bg-muted/45 text-muted-foreground',
+  }
+}
+
 function isAnnouncementPost(task: TeacherTaskListItem) {
   const publicationType = task.publicationType?.toLowerCase()
 
@@ -644,7 +658,12 @@ function PublicationAttachments({
               <img
                 src={attachment.url}
                 alt={attachment.nombre}
-                className="w-full max-h-72 object-cover transition-transform duration-200 group-hover:scale-[1.01]"
+                className={cn(
+                  'w-full transition-transform duration-200 group-hover:scale-[1.01]',
+                  images.length === 1
+                    ? 'max-h-[420px] bg-muted/20 object-contain'
+                    : 'h-52 object-cover sm:h-64',
+                )}
                 loading="lazy"
               />
             </a>
@@ -709,7 +728,7 @@ function CourseFeedPost({
   const TypeIcon = viewModel.icon
   const isAnnouncement = viewModel.type === 'announcement'
   const dueDateValue = isAnnouncement ? null : getDueDateValue(task)
-  const dueDateMeta = formatDueDateMeta(dueDateValue)
+  const dueDateMeta = getDueDateBadgeMeta(dueDateValue)
   const titleId = `course-feed-post-${task.id}-title`
 
   return (
@@ -803,12 +822,27 @@ function CourseFeedPost({
         </header>
 
         <div className="mt-3 min-w-0">
-          <h3
-            id={titleId}
-            className="line-clamp-2 min-w-0 break-words text-base font-semibold leading-6 text-foreground sm:text-[17px]"
-          >
-            {task.titulo}
-          </h3>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <h3
+              id={titleId}
+              className="line-clamp-2 min-w-0 break-words text-base font-semibold leading-6 text-foreground sm:text-[17px]"
+            >
+              {task.titulo}
+            </h3>
+
+            {dueDateMeta && dueDateValue ? (
+              <time
+                dateTime={dueDateValue}
+                className={cn(
+                  'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold leading-4',
+                  dueDateMeta.className,
+                )}
+              >
+                <CalendarClock className="size-3.5" />
+                {dueDateMeta.label}
+              </time>
+            ) : null}
+          </div>
 
           {preview ? (
             <p className="mt-1 line-clamp-3 break-words whitespace-pre-line text-sm leading-5 text-foreground/85">
@@ -840,16 +874,6 @@ function CourseFeedPost({
               >
                 {estadoConfig.label}
               </span>
-            ) : null}
-
-            {dueDateMeta && dueDateValue ? (
-              <time
-                dateTime={dueDateValue}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2.5 py-1.5 text-xs font-semibold leading-4 text-muted-foreground"
-              >
-                <CalendarClock className="size-3.5" />
-                Vence {dueDateMeta}
-              </time>
             ) : null}
 
             {viewModel.badgeCorreccion ? (

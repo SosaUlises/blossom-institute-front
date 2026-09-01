@@ -1,16 +1,18 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   AlertCircle,
   BookOpen,
   CalendarCheck2,
+  CalendarClock,
   CheckCircle2,
   ChevronDown,
   ClipboardList,
   Clock3,
+  FileText,
   Megaphone,
-  Paperclip,
   Users,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -18,8 +20,6 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   StudentIconContainer,
-  StudentMetaRow,
-  StudentSecondaryBadge,
   StudentStatusBadge,
   studentUi,
 } from '@/components/student/courses/student-course-ui'
@@ -33,19 +33,67 @@ type Tab =
   | 'attendance'
   | 'people'
 
+const tabSlugs: Record<Tab, string> = {
+  tasks: 'tablon',
+  attendance: 'clases',
+  grades: 'calificaciones',
+  people: 'personas',
+}
+
+function getTabFromSlug(value: string | null): Tab {
+  const entry = Object.entries(tabSlugs).find(([, slug]) => slug === value)
+  return (entry?.[0] as Tab | undefined) ?? 'tasks'
+}
+
 type SectionState = {
   loading: boolean
   loaded: boolean
   items: StudentCourseSectionItem[]
+  summary?: StudentGradesAcademicSummary | null
   error: string | null
+}
+
+type StudentGradesAcademicSummary = Record<string, unknown> & {
+  averageGrade?: number | null
+  AverageGrade?: number | null
+  academicGradesCount?: number | null
+  AcademicGradesCount?: number | null
+  quizCount?: number | null
+  QuizCount?: number | null
+  testCount?: number | null
+  TestCount?: number | null
+  year?: number | null
+  Year?: number | null
+  quarter?: number | null
+  Quarter?: number | null
+  periodLabel?: string | null
+  PeriodLabel?: string | null
+  periodRangeLabel?: string | null
+  PeriodRangeLabel?: string | null
+}
+
+type SectionPayload = {
+  items: StudentCourseSectionItem[]
+  summary?: StudentGradesAcademicSummary | null
+}
+
+type StudentPublicationAttachment = {
+  id?: number | string | null
+  url: string
+  nombre: string
+  contentType?: string | null
+  sizeBytes?: number | null
 }
 
 const initialSectionState: SectionState = {
   loading: false,
   loaded: false,
   items: [],
+  summary: null,
   error: null,
 }
+
+const INITIAL_VISIBLE_GRADES = 8
 
 const tabStyles: Record<
   Tab,
@@ -78,7 +126,7 @@ const tabStyles: Record<
     label: 'Personas',
     icon: Users,
     title: 'Personas',
-    description: 'Tus profes y compañeros.',
+    description: 'Quienes forman parte de tu aula.',
   },
 }
 
@@ -87,21 +135,6 @@ const sectionPaths: Partial<Record<Tab, string>> = {
   grades: 'grades',
   attendance: 'attendance',
   people: 'people',
-}
-
-const panelHeaders: Partial<Record<Tab, { title: string; description: string }>> = {
-  grades: {
-    title: 'Calificaciones',
-    description: 'Acá podés ver cómo vas en quizzes, tests, comportamiento y participación.',
-  },
-  attendance: {
-    title: 'Historial de clases',
-    description: 'Acá ves tus clases y asistencias.',
-  },
-  people: {
-    title: 'Personas del curso',
-    description: 'Acá ves quiénes aprenden con vos y quiénes te acompañan.',
-  },
 }
 
 const badgeStyles = {
@@ -115,7 +148,7 @@ const badgeStyles = {
   violet:
     'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400',
   sky:
-    'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-400',
+    'border-border/60 bg-muted/45 text-muted-foreground',
 }
 
 function asItems(value: unknown): StudentCourseSectionItem[] {
@@ -160,6 +193,22 @@ function asItems(value: unknown): StudentCourseSectionItem[] {
   }
 
   return []
+}
+
+function asSectionPayload(value: unknown): SectionPayload {
+  const record = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null
+  const data = record?.data && typeof record.data === 'object' && !Array.isArray(record.data)
+    ? record.data as Record<string, unknown>
+    : record
+
+  return {
+    items: asItems(value),
+    summary: data?.summary && typeof data.summary === 'object' && !Array.isArray(data.summary)
+      ? data.summary as StudentGradesAcademicSummary
+      : null,
+  }
 }
 
 function formatDate(value: unknown) {
@@ -216,6 +265,16 @@ function formatCompactDate(value: unknown) {
     .replace('.', '')
 }
 
+function formatAttachmentSize(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return null
+  }
+
+  if (value < 1024) return `${value} B`
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`
+  return `${(value / 1024 / 1024).toFixed(1)} MB`
+}
+
 function safeText(value: unknown) {
   return typeof value === 'string' && value.trim() ? value : null
 }
@@ -233,9 +292,75 @@ async function loadSection(courseId: number, section: string) {
     throw new Error(result?.message || 'No pudimos cargar esta parte del curso.')
   }
 
-  const items = asItems(result)
+  const payload = asSectionPayload(result)
 
-  return items
+  if (section !== 'tasks') return payload
+
+  return {
+    ...payload,
+    items: await enrichTaskResources(courseId, payload.items),
+  }
+}
+
+function unwrapRecord(value: unknown): StudentCourseSectionItem | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+
+  const record = value as StudentCourseSectionItem
+  const data = record.data
+
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    return data as StudentCourseSectionItem
+  }
+
+  return record
+}
+
+function shouldLoadTaskResources(item: StudentCourseSectionItem) {
+  const taskId = item.tareaId ?? item.id
+
+  return (
+    taskId != null &&
+    !Array.isArray(item.recursos) &&
+    !Array.isArray(item.resources) &&
+    !Array.isArray(item.adjuntos)
+  )
+}
+
+async function enrichTaskResources(
+  courseId: number,
+  items: StudentCourseSectionItem[],
+) {
+  const enriched = await Promise.all(
+    items.map(async (item) => {
+      if (!shouldLoadTaskResources(item)) return item
+
+      const taskId = item.tareaId ?? item.id
+
+      try {
+        const response = await fetch(`/api/student/courses/${courseId}/tasks/${taskId}`, {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+        })
+
+        if (!response.ok) return item
+
+        const detail = unwrapRecord(await response.json().catch(() => null))
+        if (!detail) return item
+
+        return {
+          ...item,
+          recursos: Array.isArray(detail.recursos) ? detail.recursos : item.recursos,
+          resources: Array.isArray(detail.resources) ? detail.resources : item.resources,
+          adjuntos: Array.isArray(detail.adjuntos) ? detail.adjuntos : item.adjuntos,
+        }
+      } catch {
+        return item
+      }
+    }),
+  )
+
+  return enriched
 }
 
 function getValue(item: StudentCourseSectionItem, keys: string[]) {
@@ -351,6 +476,48 @@ function getQualitativeGradeLabel(type: unknown, value: unknown) {
   return getGradeFeedbackLabel(value)
 }
 
+function formatGradeNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+function sortGradesByRecentDate(items: StudentCourseSectionItem[]) {
+  return [...items].sort((a, b) => {
+    const dateA = parseLocalDate(a.fecha)?.getTime() ?? 0
+    const dateB = parseLocalDate(b.fecha)?.getTime() ?? 0
+
+    if (dateA !== dateB) return dateB - dateA
+
+    return String(safeText(a.titulo) ?? '').localeCompare(String(safeText(b.titulo) ?? ''))
+  })
+}
+
+function getSummaryNumber(summary: StudentGradesAcademicSummary | null | undefined, keys: string[]) {
+  if (!summary) return null
+
+  for (const key of keys) {
+    const value = summary[key]
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+  }
+
+  return null
+}
+
+function getSummaryText(summary: StudentGradesAcademicSummary | null | undefined, keys: string[]) {
+  if (!summary) return null
+
+  for (const key of keys) {
+    const value = summary[key]
+    if (typeof value === 'string' && value.trim()) return value
+  }
+
+  return null
+}
+
+function formatQuarter(value: number | null) {
+  if (!value || !Number.isFinite(value)) return 'trimestre actual'
+  return `${value}º trimestre`
+}
+
 function getGradeTone(value: unknown) {
   const grade = Number(value)
 
@@ -416,7 +583,7 @@ function getSkillLabel(value: unknown) {
     case 5:
       return 'Speaking'
     default:
-      return displayValue(value) ?? 'Skill'
+      return displayValue(value) ?? 'Habilidad'
   }
 }
 
@@ -552,7 +719,7 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
     }
   }
 
-  if (item.vencida === true && !item.tieneEntrega) {
+  if (isTaskOverdue(item) && !item.tieneEntrega) {
     return {
       label: 'Fecha pasada',
       actionLabel: 'Repasar consigna',
@@ -571,10 +738,10 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
       actionLabel: 'Empezar tarea',
       icon: Clock3,
       badgeClassName:
-        'border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+        'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-300',
       iconClassName:
-        'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
-      accentClassName: 'bg-sky-500',
+        'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+      accentClassName: 'bg-amber-400',
     }
   }
 
@@ -592,6 +759,13 @@ function getTaskStatus(item: StudentCourseSectionItem): TaskStatus {
 
 function hasTaskDueDate(item: StudentCourseSectionItem) {
   return typeof item.fechaEntregaUtc === 'string' && item.fechaEntregaUtc.trim().length > 0
+}
+
+function isTaskOverdue(item: StudentCourseSectionItem) {
+  if (item.vencida === true) return true
+
+  const dueDate = parseLocalDate(item.fechaEntregaUtc)
+  return dueDate ? dueDate.getTime() < Date.now() : false
 }
 
 function isAnnouncement(item: StudentCourseSectionItem) {
@@ -663,43 +837,99 @@ function getTeacherAvatarUrl(item: StudentCourseSectionItem) {
   )
 }
 
-function getResourceLabel(item: StudentCourseSectionItem) {
-  if (item.tieneRecursos !== true) return null
+function isImageAttachment(attachment: StudentPublicationAttachment) {
+  const contentType = attachment.contentType?.toLowerCase() ?? ''
+  const name = attachment.nombre.toLowerCase()
+  const url = attachment.url.toLowerCase()
 
-  const count = Number(item.recursosCount)
-  if (!Number.isFinite(count) || count <= 0) return 'Recursos'
+  return (
+    contentType.startsWith('image/') ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(name) ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(url)
+  )
+}
 
-  return `${count} ${count === 1 ? 'recurso' : 'recursos'}`
+function getPublicationAttachments(item: StudentCourseSectionItem) {
+  const resources = Array.isArray(item.recursos)
+    ? item.recursos
+    : Array.isArray(item.resources)
+      ? item.resources
+      : Array.isArray(item.adjuntos)
+        ? item.adjuntos
+        : null
+
+  if (!resources) return []
+
+  return resources
+    .map((resource): StudentPublicationAttachment | null => {
+      const record = resource as Record<string, unknown>
+      const url = String(
+        record.url ??
+          record.Url ??
+          record.publicUrl ??
+          record.secureUrl ??
+          record.downloadUrl ??
+          record.archivoUrl ??
+          '',
+      ).trim()
+
+      if (!url) return null
+
+      return {
+        id: (record.id as number | string | null | undefined) ?? url,
+        url,
+        nombre: String(record.nombre ?? record.Nombre ?? record.name ?? record.fileName ?? 'Adjunto').trim() || 'Adjunto',
+        contentType:
+          typeof record.contentType === 'string'
+            ? record.contentType
+            : typeof record.ContentType === 'string'
+              ? record.ContentType
+              : typeof record.mimeType === 'string'
+                ? record.mimeType
+              : null,
+        sizeBytes:
+          typeof record.sizeBytes === 'number'
+            ? record.sizeBytes
+            : typeof record.SizeBytes === 'number'
+              ? record.SizeBytes
+              : null,
+      }
+    })
+    .filter(
+      (attachment): attachment is StudentPublicationAttachment => attachment !== null,
+    )
 }
 
 function getTaskDueMeta(item: StudentCourseSectionItem) {
-  const dueDate = formatCompactDate(item.fechaEntregaUtc)
+  const dueDate = formatDate(item.fechaEntregaUtc) ?? formatCompactDate(item.fechaEntregaUtc)
+  const overdue = isTaskOverdue(item)
+  const delivered = item.tieneEntrega === true
 
-  if (!dueDate) {
-    return {
-      label: 'Anuncio',
-      className: 'text-muted-foreground',
-    }
-  }
+  if (!dueDate) return null
 
-  if (item.tieneEntrega === true) {
+  if (overdue) {
     return {
-      label: `Vencía ${dueDate}`,
-      className: 'text-emerald-700/75 dark:text-emerald-400/75',
-    }
-  }
-
-  if (item.vencida === true) {
-    return {
-      label: `Venció · ${dueDate}`,
-      className: 'text-rose-700 dark:text-rose-400',
+      label: `Venció ${dueDate}`,
+      className:
+        delivered
+          ? 'border-border/60 bg-muted/45 text-muted-foreground'
+          : 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300',
     }
   }
 
   return {
-    label: `Vence el ${dueDate}`,
-    className: 'text-amber-700 dark:text-amber-400',
+    label: `Vence ${dueDate}`,
+    className:
+      'border-border/60 bg-muted/45 text-muted-foreground',
   }
+}
+
+function getTaskCreatedMeta(item: StudentCourseSectionItem) {
+  return (
+    formatCompactDate(item.createdAtUtc) ??
+    formatCompactDate(item.fechaCreacionUtc) ??
+    formatCompactDate(item.fechaPublicacionUtc)
+  )
 }
 
 function getPersonRole(item: StudentCourseSectionItem): 'teacher' | 'classmate' {
@@ -720,6 +950,18 @@ function getFullName(item: StudentCourseSectionItem) {
   const firstName = getValue(item, ['nombre'])
   const lastName = getValue(item, ['apellido'])
   return [firstName, lastName].filter(Boolean).join(' ').trim() || null
+}
+
+function getPersonEmail(item: StudentCourseSectionItem) {
+  return (
+    getValue(item, ['email', 'correo', 'mail', 'correoElectronico']) ??
+    getValueFromNestedRecord(item, ['user', 'User', 'usuario', 'Usuario'], [
+      'email',
+      'correo',
+      'mail',
+      'correoElectronico',
+    ])
+  )
 }
 
 function getAvatarUrl(item: StudentCourseSectionItem) {
@@ -855,9 +1097,9 @@ function PostAuthorAvatar({
       <UserAvatar
         name={teacherName}
         avatarUrl={teacherAvatarUrl}
-        size={36}
-        className="mt-1 shrink-0"
-        fallbackClassName="bg-primary/10 text-primary dark:bg-primary/15"
+        size={38}
+        className="shrink-0 bg-background/80"
+        fallbackClassName="bg-background/90 text-sm text-foreground"
       />
     )
   }
@@ -867,6 +1109,83 @@ function PostAuthorAvatar({
       icon={FallbackIcon}
       className={fallbackClassName}
     />
+  )
+}
+
+function PublicationAttachments({
+  attachments,
+}: {
+  attachments: StudentPublicationAttachment[]
+}) {
+  if (attachments.length === 0) return null
+
+  const images = attachments.filter(isImageAttachment)
+  const documents = attachments.filter((attachment) => !isImageAttachment(attachment))
+
+  return (
+    <div className="mt-3 space-y-2.5">
+      {images.length > 0 ? (
+        <div
+          className={cn(
+            'grid gap-2',
+            images.length === 1 ? 'grid-cols-1' : 'grid-cols-2',
+          )}
+        >
+          {images.slice(0, 4).map((attachment) => (
+            <a
+              key={String(attachment.id ?? attachment.url)}
+              href={attachment.url}
+              target="_blank"
+              rel="noreferrer"
+              className="group overflow-hidden rounded-xl border border-border/60 bg-background/50 transition-colors hover:border-border"
+            >
+              <img
+                src={attachment.url}
+                alt={attachment.nombre}
+                className={cn(
+                  'w-full transition-transform duration-200 group-hover:scale-[1.01]',
+                  images.length === 1
+                    ? 'max-h-[420px] bg-muted/20 object-contain'
+                    : 'h-52 object-cover sm:h-64',
+                )}
+                loading="lazy"
+              />
+            </a>
+          ))}
+        </div>
+      ) : null}
+
+      {documents.length > 0 ? (
+        <div className="space-y-2">
+          {documents.map((attachment) => {
+            const size = formatAttachmentSize(attachment.sizeBytes)
+
+            return (
+              <a
+                key={String(attachment.id ?? attachment.url)}
+                href={attachment.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex min-h-14 w-full max-w-md items-center gap-3 rounded-xl border border-border/60 bg-background/50 p-3 transition-colors hover:bg-muted/50"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card text-muted-foreground">
+                  <FileText className="size-4" />
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold leading-5 text-foreground">
+                    {attachment.nombre}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {size ?? attachment.contentType ?? 'Documento adjunto'}
+                  </span>
+                </span>
+              </a>
+            )
+          })}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -886,131 +1205,105 @@ function TaskPostCard({
   const taskId = item.tareaId ?? item.id
   const status = getTaskStatus(item)
   const StatusIcon = status.icon
+  const TypeIcon = announcement ? Megaphone : ClipboardList
   const dueMeta = getTaskDueMeta(item)
-  const createdAt = formatCompactDate(item.createdAtUtc)
-  const resourceLabel = getResourceLabel(item)
+  const createdAt = getTaskCreatedMeta(item)
+  const attachments = getPublicationAttachments(item)
+  const typeLabel = announcement ? 'Anuncio' : 'Tarea'
+  const titleId = `student-course-post-${String(taskId ?? title)}`
+  const railClassName = announcement
+    ? 'bg-slate-400/80 dark:bg-slate-500/65'
+    : 'bg-primary'
+  const typeIconClassName = announcement
+    ? 'text-slate-500 dark:text-slate-300'
+    : 'text-primary'
 
-  if (!announcement) {
-    return (
-      <article className={cn('group relative overflow-hidden', studentUi.card.feed)}>
-        <div
-          className={cn(
-            'absolute inset-y-4 left-0 w-1.5 rounded-r-full',
-            status.accentClassName,
-          )}
-        />
+  return (
+    <article
+      aria-labelledby={titleId}
+      className={cn(
+        'group relative overflow-hidden rounded-2xl border shadow-sm transition-colors duration-200 ease-out',
+        'bg-card border-border/60 hover:border-border',
+      )}
+    >
+      <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-1', railClassName)} />
 
-        <div className="grid grid-cols-[auto,minmax(0,1fr)] gap-4 p-4 pl-5 sm:flex sm:items-start sm:gap-4 sm:p-5 sm:pl-6">
-          <StudentIconContainer
-            icon={BookOpen}
-            className="border-primary/15 bg-primary/10 text-primary"
+      <div className="p-3 pl-5 sm:p-4 sm:pl-6">
+        <header className="flex items-start gap-3">
+          <PostAuthorAvatar
+            teacherName={teacherName}
+            teacherAvatarUrl={teacherAvatarUrl}
+            fallbackIcon={announcement ? Megaphone : BookOpen}
+            fallbackClassName="border-border/60 bg-background/80 text-muted-foreground"
           />
 
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium leading-5 text-muted-foreground">
-              {hasTeacherName ? `Tarea de ${teacherName}` : 'Tarea del curso'}
+            <p className="truncate text-sm font-semibold leading-5 text-foreground">
+              {hasTeacherName ? teacherName : 'Profesor'}
             </p>
-            <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-7 tracking-tight text-foreground sm:line-clamp-2">
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-4 text-muted-foreground">
+              {createdAt ? <time>Publicado {createdAt}</time> : null}
+              {createdAt ? <span aria-hidden="true">•</span> : null}
+              <span className="inline-flex items-center gap-1">
+                <TypeIcon className={cn('size-3.5', typeIconClassName)} />
+                {typeLabel}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <div className="mt-3 min-w-0">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <h3
+              id={titleId}
+              className="line-clamp-2 min-w-0 break-words text-base font-semibold leading-6 text-foreground sm:text-[17px]"
+            >
               {title}
             </h3>
-            {description ? (
-              <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground sm:line-clamp-2">
-                {description}
-              </p>
-            ) : null}
 
-            <StudentMetaRow>
-              <StudentSecondaryBadge
-                icon={CalendarCheck2}
+            {!announcement && dueMeta ? (
+              <span
                 className={cn(
+                  'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold leading-4',
                   dueMeta.className,
                 )}
               >
+                <CalendarClock className="size-3.5" />
                 {dueMeta.label}
-              </StudentSecondaryBadge>
-              {resourceLabel ? (
-                <StudentSecondaryBadge icon={Paperclip}>
-                  {resourceLabel}
-                </StudentSecondaryBadge>
-              ) : null}
-              {createdAt ? (
-                <time className={studentUi.meta.time}>
-                  Publicada {createdAt}
-                </time>
-              ) : null}
-            </StudentMetaRow>
-          </div>
-
-        <div className="col-span-full flex shrink-0 flex-col gap-2 sm:col-span-auto sm:min-w-32 sm:items-end">
-            <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
-              {status.label}
-            </StudentStatusBadge>
-
-            {taskId != null ? (
-              <Link
-                href={`/student/courses/${courseId}/tasks/${taskId}`}
-                className={studentUi.button.secondaryCta}
-              >
-                {status.actionLabel}
-              </Link>
+              </span>
             ) : null}
           </div>
-        </div>
-      </article>
-    )
-  }
 
-  return (
-    <article className={cn('group', studentUi.card.feed, 'border-violet-200/70 hover:border-violet-300/70 dark:border-violet-500/15 dark:hover:border-violet-500/25')}>
-      <div className="grid grid-cols-[auto,minmax(0,1fr)] gap-4 p-4 sm:flex sm:items-start sm:gap-4 sm:p-5">
-        <PostAuthorAvatar
-          teacherName={teacherName}
-          teacherAvatarUrl={teacherAvatarUrl}
-          fallbackIcon={Megaphone}
-          fallbackClassName="border-violet-200 bg-violet-50/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300"
-        />
-
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium leading-5 text-muted-foreground">
-            {hasTeacherName ? `Anuncio de ${teacherName}` : 'Anuncio del curso'}
-          </p>
-          <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-7 tracking-tight text-foreground sm:line-clamp-2">
-            {title}
-          </h3>
           {description ? (
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
+            <p className="mt-1 line-clamp-3 break-words whitespace-pre-line text-sm leading-5 text-foreground/85">
               {description}
             </p>
           ) : null}
 
-          <StudentMetaRow>
-            {createdAt ? (
-              <time className={studentUi.meta.time}>
-                Publicado {createdAt}
-              </time>
-            ) : null}
-            {resourceLabel ? (
-              <StudentSecondaryBadge icon={Paperclip}>
-                {resourceLabel}
-              </StudentSecondaryBadge>
-            ) : null}
-          </StudentMetaRow>
+          <PublicationAttachments attachments={attachments} />
         </div>
 
-        <div className="col-span-full flex shrink-0 flex-col gap-2 sm:col-span-auto sm:min-w-28 sm:items-end">
-          <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
-            {status.label}
-          </StudentStatusBadge>
+        {!announcement ? (
+          <footer className="mt-3 flex flex-col gap-3 border-t border-border/40 pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <StudentStatusBadge
+                icon={StatusIcon}
+                className={cn('rounded-lg px-2.5 py-1.5 text-xs leading-4', status.badgeClassName)}
+              >
+                {status.label}
+              </StudentStatusBadge>
+            </div>
 
-          {taskId != null ? (
-            <Link
-              href={`/student/courses/${courseId}/tasks/${taskId}`}
-              className={studentUi.button.violetCta}
-            >
-              {status.actionLabel}
-            </Link>
-          ) : null}
-        </div>
+            {taskId != null ? (
+              <Link
+                href={`/student/courses/${courseId}/tasks/${taskId}`}
+                className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-none transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 active:scale-[0.98] sm:w-auto"
+              >
+                {status.actionLabel}
+              </Link>
+            ) : null}
+          </footer>
+        ) : null}
       </div>
     </article>
   )
@@ -1025,37 +1318,37 @@ function AttendanceRow({ item }: { item: StudentCourseSectionItem }) {
     formatDate(item.fechaClase) ??
     formatDate(item.claseFecha) ??
     'Fecha sin cargar.'
-  const description = getValue(item, ['descripcionClase']) ?? 'Clase del curso.'
+  const description = getValue(item, ['descripcionClase'])
 
   return (
-    <article className="relative pl-7 sm:pl-9">
-      <span
-        className={cn(
-          'absolute left-0 top-5 z-10 flex size-4 items-center justify-center rounded-full ring-4 ring-card',
-          status.dotClassName,
-        )}
-      >
-        <StatusIcon className="size-2.5 text-white" />
-      </span>
+    <article className={cn(studentUi.card.item, 'flex flex-col gap-3 rounded-xl px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between')}>
+      <div className="flex min-w-0 items-start gap-3">
+        <span
+          className={cn(
+            'mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border',
+            status.iconClassName,
+          )}
+        >
+          <StatusIcon className="size-4" />
+        </span>
 
-      <div className={cn(studentUi.card.item, 'flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between')}>
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-semibold leading-6 text-foreground">
-            {description}
-          </p>
-          <time className="mt-2 block text-xs font-medium text-muted-foreground">
+          <time className="block text-[15px] font-semibold leading-5 tracking-tight text-foreground">
             {fecha}
           </time>
-          <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            {status.key === 'present'
-              ? 'Cada clase suma para tu progreso.'
-              : status.key === 'absent'
-                ? 'Podés pedir ayuda para ponerte al día.'
-                : 'Cuando se tome asistencia, vas a ver el registro acá.'}
-          </p>
+          {description ? (
+            <p className="mt-1 line-clamp-1 text-sm leading-5 text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
         </div>
+      </div>
 
-        <StudentStatusBadge icon={StatusIcon} className={status.badgeClassName}>
+      <div className="flex justify-start sm:justify-end">
+        <StudentStatusBadge
+          icon={StatusIcon}
+          className={cn('rounded-lg px-2.5 py-1 text-xs', status.badgeClassName)}
+        >
           {status.label}
         </StudentStatusBadge>
       </div>
@@ -1080,38 +1373,83 @@ function AttendanceSummary({
     },
     { present: 0, absent: 0 },
   )
+  const countedClasses = summary.present + summary.absent
+  const attendancePercent =
+    countedClasses > 0 ? Math.round((summary.present / countedClasses) * 100) : null
+  const attendanceTone =
+    attendancePercent == null
+      ? 'border-border/60 bg-muted/25 text-muted-foreground'
+      : attendancePercent < 60
+        ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+        : attendancePercent < 75
+          ? 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+          : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+  const attendanceMessage =
+    attendancePercent == null
+      ? 'Todavía no hay registros suficientes.'
+      : attendancePercent < 60
+        ? 'Necesitás recuperar asistencia.'
+        : attendancePercent < 75
+          ? 'Conviene cuidar la asistencia.'
+          : 'Buen recorrido de asistencia.'
 
   const stats = [
     {
-      label: 'Clases',
+      label: 'Registradas',
       value: items.length,
-      className: 'border-border/55 bg-background/75 text-foreground',
+      className: 'text-foreground',
     },
     {
-      label: 'Prácticas',
+      label: 'Presentes',
       value: summary.present,
-      className: 'border-emerald-200/50 bg-emerald-50/25 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/5 dark:text-emerald-300',
+      className: summary.present > 0
+        ? 'text-emerald-700 dark:text-emerald-300'
+        : 'text-muted-foreground',
     },
     {
-      label: 'Por recuperar',
+      label: 'Ausencias',
       value: summary.absent,
-      className: 'border-rose-200/50 bg-rose-50/25 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/5 dark:text-rose-300',
+      className: summary.absent > 0
+        ? 'text-rose-700 dark:text-rose-300'
+        : 'text-muted-foreground',
     },
   ]
 
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className={cn(studentUi.card.item, 'flex min-h-20 flex-col justify-center px-3 py-3 sm:min-h-24 sm:px-4', stat.className)}
-        >
-          <p className="text-2xl font-semibold leading-none tracking-tight sm:text-3xl">
-            {stat.value}
+    <div className="rounded-xl border border-border/60 bg-card/80 px-3.5 py-3 dark:bg-card/70">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-medium leading-5 text-muted-foreground">
+            Asistencia actual
           </p>
-          <p className="mt-2 text-[11px] font-medium leading-4 text-muted-foreground sm:text-xs">{stat.label}</p>
+          <p className="mt-0.5 text-sm font-medium leading-5 text-foreground">
+            {attendanceMessage}
+          </p>
         </div>
-      ))}
+
+        <span
+          className={cn(
+            'inline-flex w-fit items-center rounded-lg border px-2.5 py-1 text-sm font-semibold leading-5',
+            attendanceTone,
+          )}
+        >
+          {attendancePercent == null ? '-' : `${attendancePercent}%`}
+        </span>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border/50 pt-2.5 text-sm">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="inline-flex items-baseline gap-1.5"
+          >
+            <p className={cn('text-sm font-semibold leading-5', stat.className)}>
+              {stat.value}
+            </p>
+            <p className="text-xs font-medium leading-5 text-muted-foreground">{stat.label}</p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -1122,10 +1460,10 @@ function AttendanceHistory({
   items: StudentCourseSectionItem[]
 }) {
   return (
-    <section className="space-y-5">
+    <section className="mx-auto max-w-3xl space-y-4">
       <AttendanceSummary items={items} />
 
-      <div className="relative space-y-3 before:absolute before:left-2 before:bottom-5 before:top-5 before:w-px before:bg-border/50 sm:space-y-4">
+      <div className="space-y-2.5 sm:space-y-3">
         {items.map((item, index) => (
           <AttendanceRow
             key={String(item.id ?? item.asistenciaId ?? item.claseId ?? index)}
@@ -1140,27 +1478,31 @@ function AttendanceHistory({
 function TeacherPersonCard({ item }: { item: StudentCourseSectionItem }) {
   const name = getFullName(item) ?? 'Nombre no disponible'
   const avatarUrl = getAvatarUrl(item)
+  const email = getPersonEmail(item)
 
   return (
-    <article className="rounded-xl border border-violet-200/60 bg-violet-50/30 p-4 transition-colors duration-200 ease-out hover:border-violet-300/70 hover:bg-violet-50/45 dark:border-violet-500/15 dark:bg-violet-500/5 dark:hover:border-violet-500/25">
-      <div className="flex items-center gap-3">
+    <article className="rounded-2xl border border-violet-200/70 bg-card/95 p-4 shadow-sm transition-colors duration-200 ease-out hover:border-violet-300/70 dark:border-violet-500/20 dark:bg-card/85 dark:hover:border-violet-500/35">
+      <div className="flex items-center gap-3.5">
         <UserAvatar
           name={name}
           avatarUrl={avatarUrl}
-          size={44}
+          size={48}
           fallbackClassName="bg-background/80 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300"
         />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="min-w-0 text-[15px] font-semibold leading-5 tracking-tight text-foreground">
+            <h3 className="min-w-0 text-base font-semibold leading-5 tracking-tight text-foreground">
               {name}
             </h3>
             <span className={cn(studentUi.badge.compact, 'border-violet-200 bg-background/70 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300')}>
-              Profe
+              Docente del curso
             </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Te acompaña en este curso</p>
+          <p className="mt-1 text-sm leading-5 text-muted-foreground">Te acompaña en este curso</p>
+          {email ? (
+            <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground/85">{email}</p>
+          ) : null}
         </div>
       </div>
     </article>
@@ -1177,36 +1519,41 @@ function ClassmatePersonCard({
   const name = getFullName(item) ?? 'Nombre no disponible'
   const avatarUrl = getAvatarUrl(item)
   const current = isCurrentStudent(item, currentStudentId)
+  const email = getPersonEmail(item)
 
   return (
     <article
       className={cn(
-        'rounded-xl border p-4 transition-colors duration-200 ease-out hover:border-primary/15 hover:bg-card',
+        'rounded-xl border px-3 py-2.5 transition-colors duration-200 ease-out hover:border-primary/15 hover:bg-card',
         current
           ? 'border-primary/25 bg-primary/8'
           : 'border-border/60 bg-background/60 dark:bg-background/35',
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <UserAvatar
           name={name}
           avatarUrl={avatarUrl}
-          size={40}
+          size={36}
           fallbackClassName="bg-primary/8 text-primary"
         />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="min-w-0 text-[15px] font-semibold leading-5 tracking-tight text-foreground">
+            <h3 className="min-w-0 truncate text-sm font-semibold leading-5 tracking-tight text-foreground">
               {name}
             </h3>
-            <span className={cn(studentUi.badge.compact, 'border-border/60 bg-muted/30 text-muted-foreground')}>
-              {current ? 'Vos' : 'Compañero'}
-            </span>
+            {current ? (
+              <span className={cn(studentUi.badge.compact, 'border-primary/20 bg-primary/10 text-primary')}>
+                Vos
+              </span>
+            ) : null}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {current ? 'Este sos vos' : 'Aprende con vos'}
-          </p>
+          {email ? (
+            <p className="mt-0.5 truncate text-xs text-muted-foreground/80">{email}</p>
+          ) : current ? (
+            <p className="mt-0.5 text-xs text-muted-foreground/80">Este sos vos</p>
+          ) : null}
         </div>
       </div>
     </article>
@@ -1215,11 +1562,8 @@ function ClassmatePersonCard({
 
 function PeopleEmptyState({ text }: { text: string }) {
   return (
-    <div className={cn(studentUi.card.empty, 'px-5 py-8 text-center')}>
+    <div className="rounded-xl border border-border/55 bg-background/45 px-4 py-4 text-sm text-muted-foreground dark:bg-background/25">
       <p className="text-sm font-semibold text-foreground">{text}</p>
-      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-        Cuando el curso tenga movimiento, vas a verlo organizado acá.
-      </p>
     </div>
   )
 }
@@ -1234,17 +1578,24 @@ function PeopleCommunity({
   const { teachers, classmates } = getPeopleGroups(items)
 
   if (teachers.length === 0 && classmates.length === 0) {
-    return <PeopleEmptyState text="Todavía no hay personas para mostrar." />
+    return <PeopleEmptyState text="Todavía no hay personas asignadas a este curso." />
   }
 
   return (
-    <section className="space-y-6">
+    <section className="mx-auto max-w-4xl space-y-6">
       <section className="space-y-3" aria-labelledby="course-teachers-title">
-        <h3 id="course-teachers-title" className="text-sm font-semibold text-foreground">
-          Tus profes
-        </h3>
+        <div className="flex items-center justify-between gap-3">
+          <h3 id="course-teachers-title" className="text-sm font-semibold text-foreground">
+            Tus profes
+          </h3>
+          {teachers.length > 0 ? (
+            <span className="text-xs font-medium text-muted-foreground">
+              {teachers.length} {teachers.length === 1 ? 'docente' : 'docentes'}
+            </span>
+          ) : null}
+        </div>
         {teachers.length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className={cn('grid gap-3', teachers.length > 1 && 'md:grid-cols-2')}>
             {teachers.map((item, index) => (
               <TeacherPersonCard
                 key={String(item.id ?? item.profesorId ?? index)}
@@ -1258,11 +1609,18 @@ function PeopleCommunity({
       </section>
 
       <section className="space-y-3" aria-labelledby="course-classmates-title">
-        <h3 id="course-classmates-title" className="text-sm font-semibold text-foreground">
-          Compañeros
-        </h3>
+        <div className="flex items-center justify-between gap-3">
+          <h3 id="course-classmates-title" className="text-sm font-semibold text-foreground">
+            Compañeros
+          </h3>
+          {classmates.length > 0 ? (
+            <span className="text-xs font-medium text-muted-foreground">
+              {classmates.length} {classmates.length === 1 ? 'alumno' : 'alumnos'}
+            </span>
+          ) : null}
+        </div>
         {classmates.length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
             {classmates.map((item, index) => (
               <ClassmatePersonCard
                 key={String(item.id ?? item.alumnoId ?? index)}
@@ -1272,7 +1630,7 @@ function PeopleCommunity({
             ))}
           </div>
         ) : (
-          <PeopleEmptyState text="Todavía no hay compañeros en la lista." />
+          <PeopleEmptyState text="Todavía no hay compañeros asignados." />
         )}
       </section>
     </section>
@@ -1288,6 +1646,7 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
   const description = safeText(item.descripcion)
   const details = getGradeDetails(item)
   const date = formatDate(item.fecha)
+  const dateTime = parseLocalDate(item.fecha)?.toISOString()
   const showSkills =
     isSkillGradeType(item.tipo) &&
     hasGradeSkillDetails(item) &&
@@ -1295,8 +1654,8 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
   const skillPanelId = `grade-skills-${String(item.id ?? item.calificacionId ?? item.titulo ?? 'item')}`
 
   return (
-    <article className={studentUi.card.grade}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <article className="rounded-xl border border-border/60 bg-card/95 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] transition-colors duration-200 ease-out hover:border-primary/20 dark:bg-card/90 sm:p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
             <span
@@ -1307,64 +1666,60 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
             >
               {getGradeTypeLabel(item.tipo)}
             </span>
-            {date ? <time>{date}</time> : null}
+            {date ? <time dateTime={dateTime}>{date}</time> : null}
           </div>
 
-          <h3 className="mt-3 text-lg font-semibold leading-6 tracking-tight text-foreground">
+          <h3 className="mt-1.5 line-clamp-2 text-base font-semibold leading-6 tracking-tight text-foreground">
             {safeText(item.titulo) ?? 'Sin título'}
           </h3>
 
           {description ? (
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-muted-foreground">
               {description}
             </p>
           ) : null}
-          <p className="mt-3 text-xs leading-5 text-muted-foreground">
-            {Number.isFinite(grade)
-              ? 'Usá esta nota para entender qué seguir practicando.'
-              : 'Cuando tu profe cargue la nota, va a aparecer acá.'}
-          </p>
         </div>
 
         <div
           className={cn(
-            'flex w-full shrink-0 flex-col items-start gap-2 rounded-2xl border px-4 py-3 sm:w-36 sm:justify-center',
+            'flex w-full shrink-0 items-center justify-between gap-3 rounded-lg border px-3 py-2 sm:w-32 sm:flex-col sm:items-start sm:justify-center',
             tone.panelClassName,
           )}
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] opacity-80">
-            Nota final
+          <p className="text-[11px] font-semibold leading-4 opacity-80">
+            Nota
           </p>
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 sm:mt-2 sm:block">
-            <p className="text-3xl font-semibold leading-none tracking-tight">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 sm:block">
+            <p className="text-xl font-semibold leading-none tracking-tight sm:text-2xl">
               {Number.isFinite(grade) ? gradeDisplay : '-'}
             </p>
-            <p className="text-sm font-semibold sm:mt-1">{feedbackLabel}</p>
+            <p className="text-xs font-semibold sm:mt-1">{feedbackLabel}</p>
           </div>
         </div>
       </div>
 
       {showSkills ? (
-        <div className="mt-5 border-t border-border/60 pt-4">
+        <div className="mt-3 border-t border-border/50 pt-3">
           <button
             type="button"
             aria-expanded={skillsOpen}
             aria-controls={skillPanelId}
             onClick={() => setSkillsOpen((current) => !current)}
-            className={cn('group flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm font-semibold text-foreground transition-colors duration-200 ease-out hover:bg-muted/40', studentUi.focus)}
+            className={cn('group flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left text-sm font-semibold text-foreground transition-colors duration-200 ease-out hover:bg-muted/35', studentUi.focus)}
           >
-            <span>
-              {skillsOpen ? 'Ocultar detalle por skills' : 'Ver cómo te fue por skill'}
+            <span>Habilidades evaluadas</span>
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <span>{skillsOpen ? 'Ocultar' : 'Ver detalle'}</span>
+              <ChevronDown
+                className={cn(
+                  'size-4 shrink-0 transition-transform duration-200 ease-out group-hover:text-foreground',
+                  skillsOpen && 'rotate-180',
+                )}
+              />
             </span>
-            <ChevronDown
-              className={cn(
-                'size-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-hover:text-foreground',
-                skillsOpen && 'rotate-180',
-              )}
-            />
           </button>
           {skillsOpen ? (
-            <div id={skillPanelId} className="mt-3 space-y-3 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+            <div id={skillPanelId} className="mt-2.5 space-y-3 rounded-xl border border-border/50 bg-muted/15 p-3 animate-in fade-in-0 slide-in-from-top-1 duration-200 dark:bg-muted/10">
             {details.map((detail, index) => {
               const percent = getSkillPercent(detail)
               const clampedPercent = percent == null ? 0 : Math.min(100, Math.max(0, percent))
@@ -1377,10 +1732,10 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
                       {getSkillLabel(detail.skill ?? detail.Skill)}
                     </span>
                     <span className="text-xs font-medium text-muted-foreground">
-                      {[scoreLabel]}
+                      {scoreLabel}
                     </span>
                   </div>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                  <div className="h-2 overflow-hidden rounded-full bg-background/80 dark:bg-background/40">
                     <div
                       className={cn('h-full rounded-full transition-[width] duration-500 ease-out', tone.progressClassName)}
                       style={{ width: `${clampedPercent}%` }}
@@ -1394,6 +1749,109 @@ function GradeCard({ item }: { item: StudentCourseSectionItem }) {
         </div>
       ) : null}
     </article>
+  )
+}
+
+function GradesSummary({
+  items,
+  summary,
+}: {
+  items: StudentCourseSectionItem[]
+  summary?: StudentGradesAcademicSummary | null
+}) {
+  const gradedItems = items.filter((item) => Number.isFinite(Number(item.nota)))
+  const fallbackAcademicItems = gradedItems.filter((item) => {
+    const type = Number(item.tipo)
+    return type === 2 || type === 3
+  })
+  const backendAverage = getSummaryNumber(summary, ['averageGrade', 'AverageGrade'])
+  const quarter = getSummaryNumber(summary, ['quarter', 'Quarter'])
+  const rangeLabel = getSummaryText(summary, ['periodRangeLabel', 'PeriodRangeLabel'])
+  const fallbackAverage =
+    fallbackAcademicItems.length > 0
+      ? fallbackAcademicItems.reduce((total, item) => total + Number(item.nota), 0) / fallbackAcademicItems.length
+      : null
+  const average = backendAverage ?? fallbackAverage
+  const averageTone = getGradeTone(average ?? undefined)
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/80 px-4 py-3.5 dark:bg-card/70">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-medium leading-5 text-muted-foreground">
+            Promedio del trimestre actual
+          </p>
+          <p className="mt-0.5 text-sm font-medium leading-5 text-foreground">
+            {average == null
+              ? 'Todavía no hay Quiz o Test cargados en este trimestre.'
+              : `Calculado con Quiz y Test · ${formatQuarter(quarter)}${rangeLabel ? ` · ${rangeLabel}` : ''}.`}
+          </p>
+        </div>
+
+        <span
+          className={cn(
+            'inline-flex w-fit min-w-20 items-center justify-center rounded-xl border px-3 py-2 text-2xl font-semibold leading-none tracking-tight sm:text-3xl',
+            averageTone.panelClassName,
+          )}
+        >
+          {average == null ? '-' : formatGradeNumber(average)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function GradesHistory({
+  items,
+  summary,
+}: {
+  items: StudentCourseSectionItem[]
+  summary?: StudentGradesAcademicSummary | null
+}) {
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_GRADES)
+  const sortedItems = sortGradesByRecentDate(items)
+  const visibleItems = sortedItems.slice(0, visibleCount)
+  const remainingCount = Math.max(0, sortedItems.length - visibleItems.length)
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE_GRADES)
+  }, [items.length])
+
+  return (
+    <section className="mx-auto max-w-3xl space-y-4">
+      <GradesSummary items={items} summary={summary} />
+
+      <p className="px-0.5 text-xs font-medium leading-5 text-muted-foreground">
+        Ordenadas de más reciente a más antigua.
+      </p>
+
+      <div className="grid gap-3">
+        {visibleItems.map((item, index) => (
+          <GradeCard
+            key={String(item.id ?? item.calificacionId ?? index)}
+            item={item}
+          />
+        ))}
+      </div>
+
+      {remainingCount > 0 ? (
+        <div className="flex justify-center pt-1">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((current) => current + INITIAL_VISIBLE_GRADES)}
+            className={cn(
+              'inline-flex min-h-10 items-center justify-center rounded-xl border border-border/60 bg-background/70 px-4 text-sm font-semibold text-foreground transition-colors duration-200 ease-out hover:border-primary/25 hover:bg-primary/5',
+              studentUi.focus,
+            )}
+          >
+            Ver más calificaciones
+            <span className="ml-1.5 text-xs font-medium text-muted-foreground">
+              ({remainingCount})
+            </span>
+          </button>
+        </div>
+      ) : null}
+    </section>
   )
 }
 
@@ -1439,54 +1897,97 @@ function renderSectionCard(
   )
 }
 
-function InfoStat({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string | number
-}) {
-  return (
-    <div className="rounded-xl border border-border/70 bg-card/90 px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-card/85">
-      <div className="flex items-center gap-3">
-        <StudentIconContainer icon={Icon} size="md" className="border-transparent bg-primary/10 text-primary" />
-
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            {label}
-          </p>
-          <p className="mt-1 text-2xl font-semibold leading-none tracking-tight text-foreground">
-            {value}
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function SectionSkeleton() {
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="h-28 animate-pulse rounded-xl border border-border/60 bg-muted/25"
+          aria-hidden="true"
+          className="h-24 animate-pulse rounded-xl border border-border/60 bg-muted/20"
         />
       ))}
     </div>
   )
 }
 
-function EmptyPanel({ text }: { text: string }) {
+function AttendanceSkeleton() {
   return (
-    <Card className="rounded-xl border border-dashed border-border/70 bg-muted/15 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:bg-muted/10">
-      <CardContent className="px-6 py-14 text-center">
-        <StudentIconContainer icon={BookOpen} className="mx-auto size-11 rounded-lg border-transparent bg-primary/10 text-primary" />
-        <p className="mt-4 text-sm font-semibold text-foreground">{text}</p>
+    <div className="mx-auto max-w-3xl space-y-4" aria-hidden="true">
+      <div className="rounded-xl border border-border/60 bg-card/80 px-3.5 py-3 dark:bg-card/70">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-2">
+            <div className="h-3 w-28 animate-pulse rounded-md bg-muted/35" />
+            <div className="h-4 w-48 animate-pulse rounded-md bg-muted/30" />
+          </div>
+          <div className="h-7 w-14 animate-pulse rounded-lg bg-muted/35" />
+        </div>
+        <div className="mt-3 flex gap-4 border-t border-border/50 pt-2.5">
+          <div className="h-4 w-20 animate-pulse rounded-md bg-muted/25" />
+          <div className="h-4 w-20 animate-pulse rounded-md bg-muted/25" />
+          <div className="h-4 w-20 animate-pulse rounded-md bg-muted/25" />
+        </div>
+      </div>
+
+      <div className="space-y-2.5 sm:space-y-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-16 animate-pulse rounded-xl border border-border/60 bg-muted/20"
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function GradesSkeleton() {
+  return (
+    <div className="mx-auto max-w-3xl space-y-4" aria-hidden="true">
+      <div className="rounded-xl border border-border/60 bg-card/80 px-3.5 py-3 dark:bg-card/70">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-2">
+            <div className="h-3 w-24 animate-pulse rounded-md bg-muted/35" />
+            <div className="h-4 w-52 animate-pulse rounded-md bg-muted/30" />
+          </div>
+          <div className="h-7 w-12 animate-pulse rounded-lg bg-muted/35" />
+        </div>
+        <div className="mt-3 flex gap-4 border-t border-border/50 pt-2.5">
+          <div className="h-4 w-24 animate-pulse rounded-md bg-muted/25" />
+          <div className="h-4 w-36 animate-pulse rounded-md bg-muted/25" />
+        </div>
+      </div>
+
+      <div className="grid gap-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-24 animate-pulse rounded-xl border border-border/60 bg-muted/20"
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function EmptyPanel({
+  text,
+  description,
+  icon: Icon = BookOpen,
+  className,
+}: {
+  text: string
+  description?: string
+  icon?: React.ComponentType<{ className?: string }>
+  className?: string
+}) {
+  return (
+    <Card className={cn('rounded-xl border border-dashed border-border/70 bg-muted/15 shadow-none dark:bg-muted/10', className)}>
+      <CardContent className="px-5 py-8 text-center">
+        <StudentIconContainer icon={Icon} className="mx-auto size-10 rounded-lg border-transparent bg-primary/10 text-primary" />
+        <p className="mt-3 text-sm font-semibold text-foreground">{text}</p>
         <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-muted-foreground">
-          Cuando tu profe publique algo nuevo, lo vas a encontrar en esta sección.
+          {description ?? 'Cuando haya novedades, las vas a ver organizadas acá.'}
         </p>
       </CardContent>
     </Card>
@@ -1495,13 +1996,13 @@ function EmptyPanel({ text }: { text: string }) {
 
 function AttendanceEmptyState() {
   return (
-    <div className={cn(studentUi.card.empty, 'px-5 py-10 text-center')}>
-      <StudentIconContainer icon={CalendarCheck2} className="mx-auto border-transparent bg-primary/10 text-primary" />
-      <p className="mt-3 text-sm font-medium text-muted-foreground">
-        Todavía no hay clases para mostrar en este curso.
+    <div className={cn(studentUi.card.empty, 'mx-auto max-w-3xl px-5 py-8 text-center')}>
+      <StudentIconContainer icon={CalendarCheck2} className="mx-auto size-10 border-transparent bg-primary/10 text-primary" />
+      <p className="mt-3 text-sm font-semibold text-foreground">
+        Todavía no hay asistencias registradas en este curso.
       </p>
       <p className="mt-1 text-xs leading-5 text-muted-foreground">
-        Cuando empiece el registro de clases, vas a poder seguir tu recorrido.
+        Cuando tu profe tome asistencia, vas a poder seguir tu recorrido.
       </p>
     </div>
   )
@@ -1509,11 +2010,11 @@ function AttendanceEmptyState() {
 
 function TaskFeedSkeleton() {
   return (
-    <div className="mx-auto max-w-[900px] space-y-3">
+    <div className="mx-auto max-w-3xl space-y-3">
       {Array.from({ length: 3 }).map((_, index) => (
         <div
           key={index}
-          className="h-36 animate-pulse rounded-xl border border-border/60 bg-muted/25"
+          className="h-32 animate-pulse rounded-2xl border border-border/60 bg-muted/25"
         />
       ))}
     </div>
@@ -1528,7 +2029,7 @@ function TaskFeed({
   courseId: number
 }) {
   return (
-    <div className="mx-auto max-w-[900px] space-y-3">
+    <div className="mx-auto max-w-3xl space-y-3">
       {items.map((item, index) => (
         <TaskPostCard
           key={String(item.id ?? item.tareaId ?? index)}
@@ -1552,10 +2053,24 @@ function SectionList({
   currentStudentId?: number
 }) {
   if (state.loading && tab === 'tasks') return <TaskFeedSkeleton />
+  if (state.loading && tab === 'attendance') return <AttendanceSkeleton />
+  if (state.loading && tab === 'grades') return <GradesSkeleton />
   if (state.loading) return <SectionSkeleton />
 
+  const constrainedPanelClassName =
+    tab === 'tasks' || tab === 'attendance' || tab === 'grades'
+      ? 'mx-auto max-w-3xl'
+      : undefined
+
   if (state.error) {
-    return <EmptyPanel text={state.error} />
+    return (
+      <EmptyPanel
+        text={state.error}
+        description="Intentá actualizar la página en unos segundos."
+        icon={AlertCircle}
+        className={constrainedPanelClassName}
+      />
+    )
   }
 
   const visibleItems = tab === 'grades'
@@ -1565,11 +2080,24 @@ function SectionList({
   if (visibleItems.length === 0) {
     if (tab === 'attendance') return <AttendanceEmptyState />
     if (tab === 'tasks') {
-      return <EmptyPanel text="Todavía no hay actividades en el tablón." />
+      return (
+        <EmptyPanel
+          text="Todavía no hay publicaciones en el tablón."
+          description="Cuando tu profe publique una tarea o anuncio, va a aparecer acá."
+          icon={ClipboardList}
+        />
+      )
     }
 
     if (tab === 'grades') {
-      return <EmptyPanel text="Todavía no hay calificaciones para aprender de ellas." />
+      return (
+        <EmptyPanel
+          text="Todavía no hay calificaciones cargadas."
+          description="Cuando tu profe cargue notas, vas a poder revisarlas en esta pestaña."
+          icon={CheckCircle2}
+          className="mx-auto max-w-3xl"
+        />
+      )
     }
 
     if (tab === 'people') {
@@ -1585,6 +2113,10 @@ function SectionList({
 
   if (tab === 'tasks') {
     return <TaskFeed items={visibleItems} courseId={courseId} />
+  }
+
+  if (tab === 'grades') {
+    return <GradesHistory items={visibleItems} summary={state.summary} />
   }
 
   if (tab === 'people') {
@@ -1611,9 +2143,11 @@ export function StudentCourseDetail({
   courseId: number
   currentStudentId?: number
 }) {
-  const [tab, setTab] = useState<Tab>('tasks')
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tab = getTabFromSlug(searchParams.get('tab'))
   const [sections, setSections] = useState<Record<string, SectionState>>({})
-  const panelHeader = panelHeaders[tab]
   const sectionPath = sectionPaths[tab]
   const sectionState = sections[tab] ?? initialSectionState
 
@@ -1626,10 +2160,16 @@ export function StudentCourseDetail({
     }))
 
     loadSection(courseId, sectionPath)
-      .then((items) => {
+      .then((payload) => {
         setSections((current) => ({
           ...current,
-          [tab]: { loading: false, loaded: true, items, error: null },
+          [tab]: {
+            loading: false,
+            loaded: true,
+            items: payload.items,
+            summary: payload.summary ?? null,
+            error: null,
+          },
         }))
       })
       .catch((error) => {
@@ -1639,6 +2179,7 @@ export function StudentCourseDetail({
             loading: false,
             loaded: true,
             items: [],
+            summary: null,
             error: error instanceof Error ? error.message : 'No pudimos cargar esta parte.',
           },
         }))
@@ -1650,12 +2191,33 @@ export function StudentCourseDetail({
     []
   )
 
+  const selectTab = (nextTab: Tab) => {
+    const nextSearchParams = new URLSearchParams(searchParams.toString())
+
+    if (nextTab === 'tasks') {
+      nextSearchParams.delete('tab')
+    } else {
+      nextSearchParams.set('tab', tabSlugs[nextTab])
+    }
+
+    const query = nextSearchParams.toString()
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }
+
+  const focusTab = (nextTab: Tab) => {
+    window.requestAnimationFrame(() => {
+      document.getElementById(`student-course-tab-${nextTab}`)?.focus()
+    })
+  }
+
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-3.5 sm:space-y-4">
         <nav
           aria-label="Secciones del curso"
-          className="flex max-w-full flex-wrap gap-4 border-b border-border/70"
+          role="tablist"
+          aria-orientation="horizontal"
+          className="-mx-1 flex overflow-x-auto border-b border-border/60 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {tabs.map((key) => {
             const tabConfig = tabStyles[key]
@@ -1666,51 +2228,66 @@ export function StudentCourseDetail({
               <button
                 key={key}
                 type="button"
-                onClick={() => setTab(key)}
+                onClick={() => selectTab(key)}
+                onKeyDown={(event) => {
+                  const currentIndex = tabs.indexOf(key)
+                  let nextIndex = currentIndex
+
+                  if (event.key === 'ArrowRight') {
+                    nextIndex = (currentIndex + 1) % tabs.length
+                  } else if (event.key === 'ArrowLeft') {
+                    nextIndex = (currentIndex - 1 + tabs.length) % tabs.length
+                  } else if (event.key === 'Home') {
+                    nextIndex = 0
+                  } else if (event.key === 'End') {
+                    nextIndex = tabs.length - 1
+                  } else {
+                    return
+                  }
+
+                  event.preventDefault()
+                  const nextTab = tabs[nextIndex]
+                  selectTab(nextTab)
+                  focusTab(nextTab)
+                }}
+                role="tab"
+                aria-selected={active}
+                aria-controls={`student-course-panel-${key}`}
+                id={`student-course-tab-${key}`}
+                tabIndex={active ? 0 : -1}
                 className={cn(
-                  'group -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-0.5 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:px-1',
+                  'group -mb-px inline-flex min-h-12 min-w-max items-center justify-center gap-2 border-b-2 px-3.5 text-sm font-medium transition-[border-color,color,background-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 active:scale-[0.99] sm:px-5',
                   active
-                    ? 'border-foreground text-foreground'
-                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
+                    ? 'border-foreground font-semibold text-foreground'
+                    : 'border-transparent text-muted-foreground hover:border-border hover:bg-muted/30 hover:text-foreground',
                 )}
               >
-                <Icon className="size-4 transition-colors duration-200 ease-out" />
-                <span>{tabConfig.label}</span>
+                <Icon
+                  className={cn(
+                    'size-4 shrink-0 transition-colors duration-150 ease-out',
+                    active ? 'text-foreground' : 'text-muted-foreground/75',
+                  )}
+                />
+                <span className="truncate">{tabConfig.label}</span>
               </button>
             )
           })}
         </nav>
 
-        {tab === 'tasks' ? (
+        <section
+          id={`student-course-panel-${tab}`}
+          role="tabpanel"
+          aria-labelledby={`student-course-tab-${tab}`}
+          tabIndex={0}
+          className="pt-0 focus-visible:outline-none"
+        >
           <SectionList
             tab={tab}
             state={sectionState}
             courseId={courseId}
             currentStudentId={currentStudentId}
           />
-        ) : (
-          <div className={studentUi.card.panel}>
-            {panelHeader ? (
-              <div className="border-b border-border/60 px-4 py-4 sm:px-6 sm:py-5">
-                <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-                  {panelHeader.title}
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {panelHeader.description}
-                </p>
-              </div>
-            ) : null}
-
-            <div className="p-4 sm:p-6">
-            <SectionList
-              tab={tab}
-              state={sectionState}
-              courseId={courseId}
-              currentStudentId={currentStudentId}
-            />
-            </div>
-          </div>
-        )}
+        </section>
       </div>
     </>
   )

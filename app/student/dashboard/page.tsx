@@ -12,10 +12,7 @@ import Link from 'next/link'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { UserAvatar } from '@/components/shared/user-avatar'
-import {
-  StudentIconContainer,
-  studentUi,
-} from '@/components/student/courses/student-course-ui'
+import { studentUi } from '@/components/student/courses/student-course-ui'
 import { getSession } from '@/lib/auth/session'
 import { getStudentDashboard } from '@/lib/student/dashboard/server-api'
 import type {
@@ -47,7 +44,18 @@ type Movement = {
   actorType?: 'teacher' | 'system'
 }
 
-const MAX_LEARNING_FEED_ITEMS = 6
+type NextStep = {
+  title: string
+  description: string
+  course: string
+  meta?: string
+  href: string
+  cta: string
+  tone: SemanticTone
+  icon: ComponentType<{ className?: string }>
+}
+
+const MAX_LEARNING_FEED_ITEMS = 4
 
 const toneStyles: Record<SemanticTone, { badge: string; icon: string; chip: string }> = {
   neutral: {
@@ -286,15 +294,15 @@ function getGradeTypeLabel(value: unknown) {
 
   switch (type) {
     case 1:
-      return 'Homework'
+      return 'Tarea'
     case 2:
       return 'Quiz'
     case 3:
       return 'Test'
     case 4:
-      return 'Participation'
+      return 'Participación'
     case 5:
-      return 'Behaviour'
+      return 'Conducta'
     default:
       return 'Nota'
   }
@@ -335,6 +343,40 @@ function getCourseHref(course: StudentCourseSummary | null | undefined) {
   return course?.cursoId ? `/student/courses/${course.cursoId}` : '/student/courses'
 }
 
+function getCourseTeacherName(course: StudentCourseSummary | null | undefined) {
+  if (!course) return null
+
+  const directName = getRecordText(course, [
+    'profesorNombreCompleto',
+    'ProfesorNombreCompleto',
+    'docenteNombreCompleto',
+    'DocenteNombreCompleto',
+    'teacherName',
+    'TeacherName',
+  ])
+
+  if (directName) return directName
+
+  const firstName = getRecordText(course, [
+    'profesorNombre',
+    'ProfesorNombre',
+    'docenteNombre',
+    'DocenteNombre',
+    'teacherFirstName',
+    'TeacherFirstName',
+  ])
+  const lastName = getRecordText(course, [
+    'profesorApellido',
+    'ProfesorApellido',
+    'docenteApellido',
+    'DocenteApellido',
+    'teacherLastName',
+    'TeacherLastName',
+  ])
+
+  return [firstName, lastName].filter(Boolean).join(' ').trim() || null
+}
+
 function getTaskDueTime(task: StudentDashboardTask) {
   if (!task.fechaEntregaUtc) return Number.POSITIVE_INFINITY
   const dueTime = new Date(task.fechaEntregaUtc).getTime()
@@ -349,6 +391,221 @@ function isTaskDueSoon(task: StudentDashboardTask) {
   const threeDays = 1000 * 60 * 60 * 24 * 3
 
   return dueTime >= now && dueTime - now <= threeDays
+}
+
+function getPluralLabel(count: number, singular: string, plural: string) {
+  return count === 1 ? `1 ${singular}` : `${count} ${plural}`
+}
+
+function getFeedbackActionCount(feedbacks: StudentDashboardFeedback[]) {
+  const actionKeys = new Set<string>()
+
+  feedbacks.forEach((feedback, index) => {
+    if (getFeedbackEstado(feedback).tone !== 'amber') return
+
+    const entregaId = getNumberField(feedback.entregaId ?? feedback.EntregaId)
+    const tareaId = getNumberField(feedback.tareaId ?? feedback.TareaId)
+    const feedbackId = getNumberField(feedback.feedbackId ?? feedback.FeedbackId)
+    const key = entregaId
+      ? `entrega-${entregaId}`
+      : tareaId
+        ? `tarea-${tareaId}`
+        : feedbackId
+          ? `feedback-${feedbackId}`
+          : `feedback-${index}`
+
+    actionKeys.add(key)
+  })
+
+  return actionKeys.size
+}
+
+function getMovementIdentity(movement: Movement) {
+  return movement.href ?? movement.key
+}
+
+function getMovementImportance(movement: Movement) {
+  if (movement.priority) return 3
+  if (movement.tone === 'rose' || movement.tone === 'amber') return 2
+  if (movement.actorType === 'teacher') return 1
+  return 0
+}
+
+function compactLearningMovements(movements: Movement[]) {
+  const uniqueMovements = new Map<string, Movement>()
+
+  movements
+    .sort((a, b) => b.sortTime - a.sortTime)
+    .forEach((movement) => {
+      const identity = getMovementIdentity(movement)
+      const current = uniqueMovements.get(identity)
+
+      if (!current || getMovementImportance(movement) > getMovementImportance(current)) {
+        uniqueMovements.set(identity, movement)
+      }
+    })
+
+  return Array.from(uniqueMovements.values())
+    .sort((a, b) => b.sortTime - a.sortTime)
+    .slice(0, MAX_LEARNING_FEED_ITEMS)
+}
+
+function formatStudentSummary({
+  pendingTasksCount,
+  feedbackActionCount,
+}: {
+  pendingTasksCount: number
+  feedbackActionCount: number
+}) {
+  if (pendingTasksCount > 0 && feedbackActionCount > 0) {
+    return `Tenés ${getPluralLabel(
+      pendingTasksCount,
+      'tarea para entregar',
+      'tareas para entregar',
+    )} y ${getPluralLabel(
+      feedbackActionCount,
+      'devolución para revisar',
+      'devoluciones para revisar',
+    )}.`
+  }
+
+  if (pendingTasksCount > 0) {
+    return `Tenés ${getPluralLabel(
+      pendingTasksCount,
+      'tarea para entregar',
+      'tareas para entregar',
+    )}.`
+  }
+
+  if (feedbackActionCount > 0) {
+    return `Tenés ${getPluralLabel(
+      feedbackActionCount,
+      'devolución para revisar',
+      'devoluciones para revisar',
+    )}.`
+  }
+
+  return 'Sin pendientes importantes para hoy.'
+}
+
+function getNextStep({
+  tasks,
+  feedbacks,
+  primaryCourse,
+}: {
+  tasks: StudentDashboardTask[]
+  feedbacks: StudentDashboardFeedback[]
+  primaryCourse: StudentCourseSummary | undefined
+}): NextStep | null {
+  const orderedTasks = [...tasks].sort(
+    (a, b) => getTaskDueTime(a) - getTaskDueTime(b),
+  )
+  const urgentTask = orderedTasks.find((task) => task.vencida || isTaskDueSoon(task))
+  const feedbackToReview = feedbacks.find(
+    (feedback) => getFeedbackEstado(feedback).tone === 'amber',
+  )
+  const nextTask = urgentTask ?? orderedTasks[0]
+
+  if (nextTask) {
+    const href = getTaskHref(nextTask)
+
+    if (href) {
+      return {
+        title: nextTask.titulo || 'Próxima tarea',
+        description: nextTask.vencida
+          ? 'La fecha ya pasó. Revisá la consigna y completala cuando puedas.'
+          : isTaskDueSoon(nextTask)
+            ? 'Está cerca de vencer. Conviene resolverla primero.'
+            : 'Tenés una práctica pendiente para avanzar.',
+        course: nextTask.cursoNombre || 'Curso',
+        meta: `Entrega ${formatDate(nextTask.fechaEntregaUtc)}`,
+        href,
+        cta: 'Ver tarea',
+        tone: nextTask.vencida ? 'rose' : 'amber',
+        icon: Clock3,
+      }
+    }
+  }
+
+  if (feedbackToReview) {
+    const href = getFeedbackHref(feedbackToReview)
+
+    if (href) {
+      return {
+        title:
+          getTextField(feedbackToReview.tituloTarea ?? feedbackToReview.TituloTarea) ??
+          'Devolución para revisar',
+        description:
+          getTextField(feedbackToReview.comentario ?? feedbackToReview.Comentario) ??
+          'Tu profe dejó una devolución que necesita una nueva revisión.',
+        course:
+          getTextField(feedbackToReview.cursoNombre ?? feedbackToReview.CursoNombre) ??
+          'Curso',
+        meta: formatDate(
+          getTextField(
+            feedbackToReview.fechaCorreccionUtc ??
+              feedbackToReview.FechaCorreccionUtc,
+          ),
+        ),
+        href,
+        cta: 'Revisar devolución',
+        tone: 'amber',
+        icon: MessageSquareText,
+      }
+    }
+  }
+
+  const latestFeedback = [...feedbacks]
+    .sort(
+      (a, b) =>
+        getTimeValue(
+          getTextField(b.fechaCorreccionUtc ?? b.FechaCorreccionUtc),
+        ) -
+        getTimeValue(
+          getTextField(a.fechaCorreccionUtc ?? a.FechaCorreccionUtc),
+        ),
+    )[0]
+
+  if (latestFeedback) {
+    const href = getFeedbackHref(latestFeedback)
+
+    if (href) {
+      return {
+        title:
+          getTextField(latestFeedback.tituloTarea ?? latestFeedback.TituloTarea) ??
+          'Última devolución',
+        description:
+          getTextField(latestFeedback.comentario ?? latestFeedback.Comentario) ??
+          'Hay feedback reciente para leer con calma.',
+        course:
+          getTextField(latestFeedback.cursoNombre ?? latestFeedback.CursoNombre) ??
+          'Curso',
+        meta: formatDate(
+          getTextField(
+            latestFeedback.fechaCorreccionUtc ?? latestFeedback.FechaCorreccionUtc,
+          ),
+        ),
+        href,
+        cta: 'Ver devolución',
+        tone: 'blue',
+        icon: MessageSquareText,
+      }
+    }
+  }
+
+  if (primaryCourse) {
+    return {
+      title: primaryCourse.cursoNombre || 'Tu aula',
+      description: 'Entrá al aula para repasar materiales, tareas y novedades.',
+      course: 'Aula principal',
+      href: getCourseHref(primaryCourse),
+      cta: 'Entrar al aula',
+      tone: 'blue',
+      icon: BookOpen,
+    }
+  }
+
+  return null
 }
 
 function SectionHeader({
@@ -392,137 +649,190 @@ function QuietEmptyState({
   )
 }
 
-function CompactDashboardHero({
+function StudentDayHeader({
   studentName,
-  hasAction,
-  primaryCourse,
+  summary,
 }: {
   studentName: string
-  hasAction: boolean
-  primaryCourse: StudentCourseSummary | undefined
+  summary: string
 }) {
-  const href = getCourseHref(primaryCourse)
+  return (
+    <header className="border-b border-border/60 pb-5 pt-1 sm:pb-6">
+      <div className="max-w-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          {studentName}, hoy en tu aprendizaje
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground/85 sm:text-[15px]">
+          {summary}
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {formatTodayLabel()}
+        </p>
+      </div>
+    </header>
+  )
+}
+
+function NextStepCard({ step }: { step: NextStep | null }) {
+  if (!step) {
+    return (
+      <section className="space-y-3 rounded-2xl border border-border/65 bg-card/95 p-4 shadow-sm dark:bg-card/90 sm:p-5">
+        <SectionHeader
+          title="Próximo paso"
+          description="Tu actividad principal aparece acá cuando tengas cursos o tareas."
+        />
+        <QuietEmptyState
+          title="Todavía no hay próximos pasos."
+          description="Cuando se active tu aula o recibas una tarea, la vas a ver acá."
+        />
+      </section>
+    )
+  }
+
+  const Icon = step.icon
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border/65 bg-card/85 shadow-[0_12px_36px_-28px_rgba(15,23,42,0.28)] dark:bg-card/65">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_92%_20%,rgba(16,185,129,0.12),transparent_28%)]" />
-      <div className="absolute inset-y-0 left-0 z-0 w-[78%] bg-gradient-to-r from-background via-background/96 to-transparent dark:from-background dark:via-background/92" />
-
-
-      <div className="relative z-10 flex min-h-[168px] flex-col justify-between gap-5 p-5 sm:min-h-[176px] sm:p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-xs font-medium capitalize text-muted-foreground">
-            {formatTodayLabel()}
-          </p>
-          <span
-            className={cn(
-              studentUi.badge.compact,
-              hasAction ? toneStyles.amber.badge : toneStyles.emerald.badge,
-            )}
-          >
-            {hasAction ? 'Hay próximos pasos' : 'Buen ritmo'}
-          </span>
-        </div>
-
-        <div className="max-w-2xl">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            Hola, {studentName}
-          </h1>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-            {hasAction ? 'Tenés algo para revisar hoy.' : 'Sin pendientes importantes.'}{' '}
-            Podés entrar a tu aula para repasar o seguir avanzando.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href={href}
-            className={cn(
-              studentUi.button.secondaryCta,
-              'h-10 rounded-full gap-1 border-border/70 bg-background/85 px-4 backdrop-blur-md transition-all hover:border-primary/25 hover:bg-background hover:text-primary sm:w-auto',
-            )}
-          >
-            Ingresar a tu aula
-            <ArrowRight className="size-4" />
-          </Link>
-
-        </div>
+    <section className="space-y-4 rounded-2xl border border-primary/20 bg-card/95 p-4 shadow-sm dark:border-primary/25 dark:bg-card/90 sm:p-5">
+      <div className="flex items-center gap-2">
+        <span className={cn('flex size-8 items-center justify-center rounded-lg', toneStyles[step.tone].icon)}>
+          <Icon className="size-4" />
+        </span>
+        <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+          Próximo paso
+        </h2>
       </div>
+
+      <article className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              {step.course}
+            </p>
+            {step.meta ? (
+              <span className={cn(studentUi.badge.compact, toneStyles[step.tone].badge)}>
+                {step.meta}
+              </span>
+            ) : null}
+          </div>
+          <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            {step.title}
+          </h3>
+          <p className="mt-1.5 line-clamp-2 max-w-2xl text-sm leading-5 text-muted-foreground">
+            {step.description}
+          </p>
+        </div>
+
+        <Link
+          href={step.href}
+          className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 active:scale-[0.99] sm:w-auto"
+        >
+          {step.cta}
+          <ArrowRight className="ml-2 size-4" />
+        </Link>
+      </article>
     </section>
   )
 }
 
 function LearningRhythmInline({
-  entregasRecientesCount,
   tareasPendientesCount,
   promedioGeneral,
   porcentajeAsistenciaGeneral,
 }: {
-  entregasRecientesCount: number
   tareasPendientesCount: number
   promedioGeneral: number | null | undefined
   porcentajeAsistenciaGeneral: number | null | undefined
 }) {
-  const items = [
-    {
-      label: 'Promedio',
+  const items: Array<{
+    label: string
+    value: string
+    tone: SemanticTone
+  }> = []
+
+  if (typeof promedioGeneral === 'number' && Number.isFinite(promedioGeneral)) {
+    items.push({
+      label: 'Promedio trimestre',
       value: formatNumber(promedioGeneral),
-      tone: getAverageTone(promedioGeneral),
-    },
-    {
-      label: 'Asistencia',
+      tone: promedioGeneral < 65 ? 'rose' : promedioGeneral < 80 ? 'amber' : 'neutral',
+    })
+  }
+
+  if (
+    typeof porcentajeAsistenciaGeneral === 'number' &&
+    Number.isFinite(porcentajeAsistenciaGeneral)
+  ) {
+    items.push({
+      label: 'Asistencia actual',
       value: formatNumber(porcentajeAsistenciaGeneral, '%'),
-      tone: getAttendanceTone(porcentajeAsistenciaGeneral),
-    },
-    {
-      label: 'Tareas entregadas',
-      value: String(entregasRecientesCount),
-      tone: entregasRecientesCount > 0 ? ('blue' as const) : ('neutral' as const),
-    },
-    {
+      tone:
+        porcentajeAsistenciaGeneral < 70
+          ? 'rose'
+          : porcentajeAsistenciaGeneral < 85
+            ? 'amber'
+            : 'neutral',
+    })
+  }
+
+  if (tareasPendientesCount > 0) {
+    items.push({
       label: 'Tareas pendientes',
       value: String(tareasPendientesCount),
       tone: getCountTone(tareasPendientesCount),
-    },
-  ]
+    })
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="border-t border-border/55 bg-background/30 px-4 py-3 text-sm text-muted-foreground dark:bg-background/15 sm:px-5">
+        Todavía no hay indicadores cargados para este período.
+      </div>
+    )
+  }
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-2">
-      {items.map((item) => (
-        <div
-          key={item.label}
-          className={cn(
-            'rounded-xl border px-4 py-3 transition-colors duration-200 ease-out hover:bg-card',
-            toneStyles[item.tone].chip,
-          )}
-        >
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <span className={cn('size-2 rounded-full', toneStyles[item.tone].icon)} />
-            {item.label}
+    <div className="border-t border-border/55 bg-background/30 px-4 py-3 dark:bg-background/15 sm:px-5">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className={cn(
+              'inline-flex items-center gap-2 rounded-lg text-xs font-medium text-muted-foreground',
+              item.tone !== 'neutral'
+                ? cn('border px-2.5 py-1.5', toneStyles[item.tone].chip)
+                : 'px-0.5 py-1',
+            )}
+          >
+            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              {item.tone !== 'neutral' ? (
+                <span
+                  className={cn('size-1.5 rounded-full', toneStyles[item.tone].icon)}
+                />
+              ) : null}
+              {item.label}
+            </div>
+            <p className="text-sm font-semibold tabular-nums text-foreground">
+              {item.value}
+            </p>
           </div>
-          <p className="mt-1.5 text-lg font-semibold leading-none">
-            {item.value}
-          </p>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }
 
 function ClassroomRhythmCard({
   course,
-  entregasRecientesCount,
   tareasPendientesCount,
   promedioGeneral,
   porcentajeAsistenciaGeneral,
 }: {
   course: StudentCourseSummary | undefined
-  entregasRecientesCount: number
   tareasPendientesCount: number
   promedioGeneral: number | null | undefined
   porcentajeAsistenciaGeneral: number | null | undefined
 }) {
   const pendingTasks = formatInt(course?.tareasPendientes)
+  const teacherName = getCourseTeacherName(course)
 
   if (!course) {
     return (
@@ -534,46 +844,49 @@ function ClassroomRhythmCard({
   }
 
   return (
-    <section className="rounded-2xl border border-border/65 bg-card/75 p-4 transition-colors hover:border-primary/20 dark:bg-card/55">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center">
-        <Link href={getCourseHref(course)} className="group block min-w-0">
-          <div className="flex items-start justify-between gap-3">
+    <Link
+      href={getCourseHref(course)}
+      aria-label={`Entrar al aula ${course.cursoNombre || 'principal'}`}
+      className={cn(
+        'group block overflow-hidden rounded-2xl border border-border/65 bg-card/95 shadow-sm transition-colors hover:border-primary/25 hover:bg-card dark:bg-card/90',
+        studentUi.focus,
+      )}
+    >
+      <section className="grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-primary">
+              <BookOpen className="size-3.5" />
+              Aula principal
+            </span>
+            {teacherName ? <span>Con {teacherName}</span> : null}
+          </div>
+          <div className="mt-3 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-medium text-muted-foreground">
-                Tu aula de este año
-              </p>
-              <h2 className="mt-1 truncate text-xl font-semibold tracking-tight text-foreground">
+              <h2 className="truncate text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
                 {course.cursoNombre || 'Curso'}
               </h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 {pendingTasks > 0
-                  ? 'Entrá y seguí con la práctica pendiente.'
-                  : 'Aula lista para repasar o avanzar.'}
+                  ? 'Tenés práctica pendiente para continuar.'
+                  : 'Entrá para repasar materiales, tareas y novedades.'}
               </p>
             </div>
-            <StudentIconContainer
-              icon={BookOpen}
-              size="sm"
-              className="border-transparent bg-primary/10 text-primary"
-            />
           </div>
+        </div>
 
-          <div className="mt-3">
-            <span className="inline-flex h-9 items-center gap-1 rounded-full border border-primary/15 bg-primary/10 px-3 text-sm font-semibold text-primary transition-colors group-hover:border-primary/25 group-hover:bg-primary/15">
-              Abrir aula
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-            </span>
-          </div>
-        </Link>
+        <span className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-primary/20 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground sm:w-auto">
+          Entrar al aula
+          <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </section>
 
-        <LearningRhythmInline
-          entregasRecientesCount={entregasRecientesCount}
-          tareasPendientesCount={tareasPendientesCount}
-          promedioGeneral={promedioGeneral}
-          porcentajeAsistenciaGeneral={porcentajeAsistenciaGeneral}
-        />
-      </div>
-    </section>
+      <LearningRhythmInline
+        tareasPendientesCount={tareasPendientesCount}
+        promedioGeneral={promedioGeneral}
+        porcentajeAsistenciaGeneral={porcentajeAsistenciaGeneral}
+      />
+    </Link>
   )
 }
 
@@ -593,8 +906,8 @@ function MovementItem({
   const content = (
     <article
       className={cn(
-        'group rounded-xl px-2 py-3 transition-colors hover:bg-muted/20',
-        isPriority && 'bg-primary/[0.045] px-3 py-4 dark:bg-primary/5',
+        'group rounded-xl px-2.5 py-3 transition-colors hover:bg-muted/20',
+        isPriority && 'bg-primary/[0.04] dark:bg-primary/5',
       )}
     >
       <div className="flex gap-3">
@@ -622,7 +935,7 @@ function MovementItem({
             <p
               className={cn(
                 'min-w-0 truncate font-semibold text-foreground',
-                isPriority ? 'text-base' : 'text-sm',
+                isPriority ? 'text-[15px]' : 'text-sm',
               )}
             >
               {movement.title}
@@ -643,7 +956,7 @@ function MovementItem({
             {movement.description}
           </p>
 
-          <p className="mt-1 text-xs text-muted-foreground/80">
+          <p className="mt-1.5 text-xs text-muted-foreground/80">
             {movement.actorName ? `${movement.actorName} · ` : ''}
             {movement.course} · {movement.when}
           </p>
@@ -652,7 +965,17 @@ function MovementItem({
     </article>
   )
 
-  return movement.href ? <Link href={movement.href}>{content}</Link> : content
+  return movement.href ? (
+    <Link
+      href={movement.href}
+      aria-label={`Abrir ${movement.title} en ${movement.course}`}
+      className={cn('block rounded-xl', studentUi.focus)}
+    >
+      {content}
+    </Link>
+  ) : (
+    content
+  )
 }
 
 function buildMovements({
@@ -830,27 +1153,25 @@ function buildMovements({
     priority: task.vencida || isTaskDueSoon(task),
   }))
 
-  return [
+  return compactLearningMovements([
     ...announcementMovements,
     ...feedbackMovements,
     ...gradeMovements,
     ...deliveryMovements,
     ...taskMovements,
-  ]
-    .sort((a, b) => b.sortTime - a.sortTime)
-    .slice(0, MAX_LEARNING_FEED_ITEMS)
+  ])
 }
 
 function LearningFeed({ movements }: { movements: Movement[] }) {
   return (
-    <section className="space-y-4 rounded-2xl border border-border/65 bg-card/70 p-4 dark:bg-card/55">
+    <section className="space-y-3 rounded-2xl border border-border/60 bg-card/65 p-4 dark:bg-card/50">
       <SectionHeader
-        title="Lo que está pasando en tu aprendizaje"
-        description="Movimientos recientes de tus aulas."
+        title="Últimos movimientos"
+        description="Novedades recientes de tus cursos."
       />
 
       {movements.length > 0 ? (
-        <div className="divide-y divide-border/60 border-y border-border/70 bg-background/35 dark:bg-background/20">
+        <div className="divide-y divide-border/50 rounded-xl border border-border/55 bg-background/35 dark:bg-background/20">
           {movements.map((movement, index) => (
             <MovementItem key={movement.key} movement={movement} featured={index === 0} />
           ))}
@@ -858,8 +1179,8 @@ function LearningFeed({ movements }: { movements: Movement[] }) {
       ) : (
         <div>
           <QuietEmptyState
-            title="Sin movimientos recientes."
-            description="Cuando haya anuncios, notas, entregas o feedback, van a aparecer acá."
+            title="Todavía no hay movimientos recientes."
+            description="Cuando haya anuncios, notas o devoluciones, van a aparecer acá."
           />
         </div>
       )}
@@ -897,27 +1218,39 @@ function StudentDashboardContent({
   const tareasPendientesCount =
     dashboard?.tareasPendientesCount ?? tareasPendientes.length
 
+  const feedbacksPendientesAccionCount =
+    dashboard?.feedbacksPendientesAccionCount ??
+    dashboard?.FeedbacksPendientesAccionCount
+  const feedbacksRehacerCount =
+    dashboard?.feedbacksRehacerCount ?? dashboard?.FeedbacksRehacerCount
   const feedbacksPendientes =
-    (dashboard?.feedbacksPendientesAccionCount ??
-      dashboard?.FeedbacksPendientesAccionCount ??
-      0) +
-    (dashboard?.feedbacksRehacerCount ?? dashboard?.FeedbacksRehacerCount ?? 0)
+    feedbacksPendientesAccionCount ??
+    feedbacksRehacerCount ??
+    getFeedbackActionCount(feedbacksRecientes)
 
-  const hasAction = tareasPendientesCount > 0 || feedbacksPendientes > 0
+  const nextStep = getNextStep({
+    tasks: tareasPendientes,
+    feedbacks: feedbacksRecientes,
+    primaryCourse,
+  })
+  const summary = formatStudentSummary({
+    pendingTasksCount: tareasPendientesCount,
+    feedbackActionCount: feedbacksPendientes,
+  })
 
   return (
-    <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
+    <main className="flex-1 overflow-auto px-5 pb-5 pt-8 sm:pt-9 lg:px-8 lg:pb-6 lg:pt-10">
       <div className="mx-auto max-w-4xl space-y-5">
-        <CompactDashboardHero
+        <StudentDayHeader
           studentName={studentName}
-          hasAction={hasAction}
-          primaryCourse={primaryCourse}
+          summary={summary}
         />
 
         <div className="space-y-5">
+          <NextStepCard step={nextStep} />
+
           <ClassroomRhythmCard
             course={primaryCourse}
-            entregasRecientesCount={ultimasEntregas.length}
             tareasPendientesCount={tareasPendientesCount}
             promedioGeneral={dashboard?.promedioGeneral}
             porcentajeAsistenciaGeneral={dashboard?.porcentajeAsistenciaGeneral}

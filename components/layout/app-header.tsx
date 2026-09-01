@@ -183,6 +183,54 @@ function TeacherBreadcrumbTrail() {
   )
 }
 
+function getStudentBreadcrumbs(
+  pathname: string,
+  currentTitle: string,
+): BreadcrumbItem[] | null {
+  const match = pathname.match(/^\/student\/courses\/([^/]+)(?:\/(.+))?$/)
+  if (!match) return null
+
+  const [, courseId, rest] = match
+  const courseHref = `/student/courses/${courseId}`
+  const courseLabel = titleLabels[currentTitle] ?? currentTitle
+  const base: BreadcrumbItem[] = [{ label: 'Cursos', href: '/student/courses' }]
+
+  if (!rest) {
+    return [...base, { label: courseLabel || 'Aula' }]
+  }
+
+  const parts = rest.split('/')
+
+  if (parts[0] === 'tasks') {
+    return [
+      ...base,
+      { label: courseLabel === 'Tarea' ? 'Aula' : courseLabel, href: courseHref },
+      { label: 'Tarea' },
+    ]
+  }
+
+  return [...base, { label: courseLabel || 'Aula', href: courseHref }]
+}
+
+function StudentBreadcrumbTrail({ title }: AppHeaderProps) {
+  const pathname = usePathname()
+  const items = getStudentBreadcrumbs(pathname, title)
+
+  if (!items) return null
+
+  return (
+    <div className="px-5 pt-4 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <Breadcrumbs
+          items={items}
+          rootHref="/student/dashboard"
+          rootLabel="Inicio"
+        />
+      </div>
+    </div>
+  )
+}
+
 function AdminMobileAppBar({ title, subtitle }: AppHeaderProps) {
   const { toggleSidebar } = useSidebar()
   const pathname = usePathname()
@@ -374,6 +422,15 @@ export function AppHeader(props: AppHeaderProps) {
       <>
         <AdminMobileAppBar {...props} />
         <TeacherBreadcrumbTrail />
+      </>
+    )
+  }
+
+  if (pathname.startsWith('/student')) {
+    return (
+      <>
+        <AdminMobileAppBar {...props} />
+        <StudentBreadcrumbTrail {...props} />
       </>
     )
   }

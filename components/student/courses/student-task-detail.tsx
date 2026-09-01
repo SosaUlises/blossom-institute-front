@@ -12,7 +12,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   AlertCircle,
-  ArrowLeft,
   Archive,
   BookOpen,
   CheckCircle2,
@@ -150,6 +149,13 @@ function formatDateTime(value: unknown) {
   }).format(date)
 }
 
+function isPastDate(value: unknown) {
+  if (typeof value !== 'string' || !value.trim()) return false
+
+  const date = new Date(value)
+  return !Number.isNaN(date.getTime()) && date.getTime() < Date.now()
+}
+
 function safeText(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : null
 }
@@ -250,6 +256,18 @@ function getAttachmentIcon(attachment: StudentAttachment) {
   }
 
   return FileText
+}
+
+function isImageAttachment(attachment: StudentAttachment) {
+  const contentType = safeText(attachment.contentType)?.toLowerCase() ?? ''
+  const name = safeText(attachment.nombre)?.toLowerCase() ?? ''
+  const url = safeText(attachment.url)?.toLowerCase() ?? ''
+
+  return (
+    contentType.startsWith('image/') ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(name) ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/.test(url)
+  )
 }
 
 function normalizeAttachments(attachments: StudentAttachment[]) {
@@ -497,9 +515,67 @@ function AttachmentLink({
 }) {
   const name = safeText(attachment.nombre) ?? 'Adjunto'
   const size = formatBytes(attachment.sizeBytes)
+  const url = safeText(attachment.url) ?? '#'
+  const isImage = isImageAttachment(attachment)
   const AttachmentIcon = getAttachmentIcon(attachment)
   const rowClassName =
     cn('flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/60 px-3 py-2 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors duration-200 ease-out hover:border-primary/25 hover:bg-primary/5 dark:bg-background/35 sm:min-h-11', studentUi.focus)
+
+  if (isImage) {
+    const preview = (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className={cn(
+          'group block overflow-hidden rounded-xl border border-border/60 bg-background/50 transition-colors hover:border-primary/25 dark:bg-background/35',
+          studentUi.focus,
+        )}
+      >
+        <img
+          src={url}
+          alt={name}
+          className="max-h-80 w-full bg-muted/20 object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+          loading="lazy"
+        />
+        <span className="flex items-center justify-between gap-3 border-t border-border/55 px-3 py-2">
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold leading-5 text-foreground">
+              {name}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {size ?? attachment.contentType ?? 'Imagen'}
+            </span>
+          </span>
+          <Download className="size-4 shrink-0 text-muted-foreground" />
+        </span>
+      </a>
+    )
+
+    if (!onRemove) return preview
+
+    return (
+      <div className="relative">
+        {preview}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={onRemove}
+          disabled={removing}
+          aria-label={`Quitar ${name}`}
+          className="absolute right-2 top-2 bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors duration-200 ease-out hover:bg-destructive/10 hover:text-destructive dark:bg-background/70"
+        >
+          {removing ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Trash2 className="size-4" />
+          )}
+        </Button>
+      </div>
+    )
+  }
+
   const content = (
     <>
       <StudentIconContainer
@@ -575,13 +651,44 @@ function TaskHeroMetaChip({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium leading-5 text-muted-foreground dark:bg-background/35',
+        'inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium leading-5 text-muted-foreground dark:bg-background/35',
         className,
       )}
     >
       <Icon className="size-3.5" />
       {children}
     </span>
+  )
+}
+
+function OpenPostSkeleton() {
+  return (
+    <div className="mx-auto max-w-5xl space-y-4">
+      <div className="h-9 w-36 animate-pulse rounded-lg bg-muted/30" />
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <article
+          aria-hidden="true"
+          className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-6"
+        >
+          <div className="flex gap-3">
+            <div className="size-9 animate-pulse rounded-full bg-muted/45" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-40 animate-pulse rounded-md bg-muted/45" />
+              <div className="h-3 w-28 animate-pulse rounded-md bg-muted/30" />
+            </div>
+          </div>
+          <div className="mt-6 space-y-3">
+            <div className="h-8 w-2/3 animate-pulse rounded-md bg-muted/45" />
+            <div className="h-4 w-full animate-pulse rounded-md bg-muted/25" />
+            <div className="h-4 w-4/5 animate-pulse rounded-md bg-muted/25" />
+          </div>
+        </article>
+        <div
+          aria-hidden="true"
+          className="h-44 animate-pulse rounded-xl border border-border/60 bg-muted/20"
+        />
+      </div>
+    </div>
   )
 }
 
@@ -680,7 +787,6 @@ export function StudentTaskDetail({
   const deliveryDate =
     formatDate(currentDelivery?.fechaEntregaUtc)
   const deliveryContent = getDeliveryContent(currentDelivery)
-  const deliveryStatus = displayValue(currentDelivery?.estado)
   const currentFeedback = currentDelivery?.feedbackVigente ?? null
   const feedbackEstado = getFeedbackEstado(currentFeedback)
   const feedbackComment = safeText(currentFeedback?.comentario)
@@ -694,6 +800,7 @@ export function StudentTaskDetail({
   const feedbackTeacherName = getFeedbackTeacherName(currentFeedback, task)
   const feedbackTeacherAvatarUrl = getFeedbackTeacherAvatarUrl(currentFeedback, task)
   const createdAt = formatDate(task?.createdAtUtc)
+  const taskIsOverdue = task?.vencida === true || isPastDate(task?.fechaEntregaUtc)
   const feedbackNeedsChanges = feedbackEstado.intent === 'redo'
   const feedbackApproved = feedbackEstado.intent === 'approved'
   const taskStatusLabel = feedbackNeedsChanges
@@ -702,7 +809,7 @@ export function StudentTaskDetail({
       ? 'Aprobada'
     : currentDelivery
       ? 'Entregada'
-      : task?.vencida
+      : taskIsOverdue
         ? 'Se venció'
         : 'Para entregar'
   const taskStatusClassName = feedbackNeedsChanges
@@ -711,9 +818,9 @@ export function StudentTaskDetail({
       ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300'
     : currentDelivery
       ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300'
-      : task?.vencida
-        ? 'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300'
-        : 'border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300'
+    : taskIsOverdue
+      ? 'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+      : 'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-300'
   const saveButtonLabel = currentDelivery
     ? feedbackNeedsChanges
       ? 'Enviar corrección'
@@ -748,7 +855,7 @@ export function StudentTaskDetail({
               'border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300',
             buttonClassName: '',
           }
-        : task?.vencida
+        : taskIsOverdue
           ? {
               title: 'La fecha ya pasó',
               description: 'Repasá la consigna y hablá con tu profe si necesitás ayuda para ponerte al día.',
@@ -762,11 +869,10 @@ export function StudentTaskDetail({
               description: 'Leé la consigna, mirá los materiales y mandá tu trabajo cuando esté listo.',
               cta: 'Empezar entrega',
               icon: Clock3,
-              iconClassName: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
+              iconClassName: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
               buttonClassName: '',
           }
   const ActionIcon = actionState.icon
-  const courseName = safeText(task?.cursoNombre) ?? 'Curso'
   const heroCtaLabel = actionState.cta ?? 'Leer consigna'
 
   useEffect(() => {
@@ -860,7 +966,7 @@ export function StudentTaskDetail({
 
   function handleHeroAction() {
     if (actionState.cta) {
-      if (feedbackApproved || (task?.vencida && !currentDelivery)) {
+      if (feedbackApproved || (taskIsOverdue && !currentDelivery)) {
         setShowForm(false)
       } else {
         setShowForm(true)
@@ -903,154 +1009,152 @@ export function StudentTaskDetail({
           </div>
 
           {currentDelivery ? (
-            <StudentStatusBadge
-              className={cn(
-                studentUi.badge.compact,
-                currentFeedback ? feedbackEstado.badgeClass : taskStatusClassName,
-              )}
-            >
-              {currentFeedback ? feedbackEstado.label : 'Entregada'}
-            </StudentStatusBadge>
+            <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+              <StudentStatusBadge
+                className={cn(
+                  studentUi.badge.compact,
+                  currentFeedback ? feedbackEstado.badgeClass : taskStatusClassName,
+                )}
+              >
+                {currentFeedback ? feedbackEstado.label : 'Entregada'}
+              </StudentStatusBadge>
+
+              {feedbackApproved && feedbackNote ? (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm font-semibold shadow-[0_1px_1px_rgba(15,23,42,0.04)]',
+                    getGradeBadgeClass(currentFeedback?.nota),
+                  )}
+                >
+                  <span className="text-[11px] font-semibold uppercase tracking-wide opacity-75">
+                    Nota
+                  </span>
+                  <span className="leading-none">{feedbackNote}</span>
+                </span>
+              ) : null}
+            </div>
           ) : null}
         </div>
 
-        {currentDelivery ? (
-          <div className="mt-5 space-y-5">
-            <div className="relative pl-6 before:absolute before:left-2 before:top-2 before:h-full before:w-px before:bg-border">
-              <span className="absolute left-0 top-1 flex size-4 items-center justify-center rounded-full bg-primary">
-                <span className="size-1.5 rounded-full bg-primary-foreground" />
-              </span>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                <h3 className="font-semibold tracking-tight text-foreground">
-                  Entregaste
-                </h3>
-                {deliveryDate ? (
-                  <>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground">{deliveryDate}</span>
-                  </>
-                ) : null}
-                {deliveryStatus ? (
-                  <>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="font-medium text-primary">{deliveryStatus}</span>
-                  </>
-                ) : null}
+        {currentFeedback ? (
+          <div
+            className={cn(
+              'mt-5 rounded-xl border p-4',
+              feedbackNeedsChanges
+                ? 'border-amber-500/25 bg-amber-500/[0.06] dark:bg-amber-500/10'
+                : 'border-emerald-500/20 bg-emerald-500/[0.06] dark:bg-emerald-500/10',
+            )}
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 items-start gap-2.5">
+                <TeacherAvatarOrIcon
+                  name={feedbackTeacherName}
+                  avatarUrl={feedbackTeacherAvatarUrl}
+                  icon={MessageSquareText}
+                  className={feedbackEstado.iconClass}
+                />
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                    {feedbackTeacherName
+                      ? `${feedbackTeacherName} te dejó un mensaje`
+                      : feedbackNeedsChanges
+                        ? 'Tu profe pidió algunos cambios'
+                        : 'Mensaje de tu profe'}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {feedbackDate ?? 'Sin fecha cargada'}
+                  </p>
+                </div>
               </div>
 
-              {deliveryContent ? (
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground/80">
-                  {deliveryContent}
-                </p>
-              ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Entregaste archivos, sin texto escrito.
-                </p>
-              )}
-
-              {currentFile ? (
-                <div className="mt-3">
-                  <AttachmentLink attachment={currentFile} />
-                </div>
-              ) : null}
-
-              {currentAttachments.length > 0 ? (
-                <div className="mt-3 space-y-2">
-                  {currentAttachments.map((attachment, index) => (
-                    <AttachmentLink
-                      key={attachment.storageKey ?? attachment.url ?? index}
-                      attachment={attachment}
-                    />
-                  ))}
-                </div>
+              {feedbackNote && !feedbackApproved ? (
+                <span
+                  className={cn(
+                    'inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 shadow-[0_1px_1px_rgba(15,23,42,0.04)]',
+                    getGradeBadgeClass(currentFeedback?.nota),
+                  )}
+                >
+                  <span className="text-[11px] font-semibold uppercase tracking-wide opacity-75">
+                    Nota
+                  </span>
+                  <span className="text-lg font-semibold leading-none">
+                    {feedbackNote}
+                  </span>
+                </span>
               ) : null}
             </div>
+
+            {feedbackComment ? (
+              <div className="mt-3 rounded-xl border border-background/70 bg-background/65 px-3.5 py-3 dark:border-white/10 dark:bg-background/25">
+                <p className="whitespace-pre-wrap text-sm leading-6 text-foreground/85">
+                  {feedbackComment}
+                </p>
+              </div>
+            ) : null}
+
+            {feedbackAttachments.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {feedbackAttachments.map((attachment, index) => (
+                  <AttachmentLink
+                    key={attachment.storageKey ?? attachment.url ?? index}
+                    attachment={attachment}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : currentDelivery ? (
+          <p className="mt-5 rounded-xl border border-border/55 bg-background/45 px-3.5 py-3 text-sm text-muted-foreground dark:bg-background/25">
+            Tu profe todavía no dejó un mensaje.
+          </p>
+        ) : null}
+
+        {currentDelivery ? (
+          <div className="mt-5 border-t border-border/60 pt-4">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+              <h3 className="font-semibold tracking-tight text-foreground">
+                Tu entrega
+              </h3>
+              {deliveryDate ? (
+                <>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-muted-foreground">{deliveryDate}</span>
+                </>
+              ) : null}
+            </div>
+
+            {deliveryContent ? (
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground/80">
+                {deliveryContent}
+              </p>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Entregaste archivos, sin texto escrito.
+              </p>
+            )}
+
+            {currentFile ? (
+              <div className="mt-3">
+                <AttachmentLink attachment={currentFile} />
+              </div>
+            ) : null}
+
+            {currentAttachments.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {currentAttachments.map((attachment, index) => (
+                  <AttachmentLink
+                    key={attachment.storageKey ?? attachment.url ?? index}
+                    attachment={attachment}
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="mt-5 rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-4 text-sm text-muted-foreground dark:bg-muted/10">
             Cuando entregues, acá vas a ver tu respuesta, tus archivos y el mensaje de tu profe.
           </div>
         )}
-
-        {currentFeedback ? (
-          <div
-            className={cn(
-              'mt-5 border-t pt-5',
-              feedbackNeedsChanges ? 'border-amber-500/20' : 'border-border/60',
-            )}
-          >
-            <div className="relative pl-6 before:absolute before:left-2 before:top-2 before:h-full before:w-px before:bg-border">
-              <span
-                className={cn(
-                  'absolute left-0 top-1 flex size-4 items-center justify-center rounded-full',
-                  feedbackNeedsChanges ? 'bg-amber-500' : 'bg-emerald-600',
-                )}
-              >
-                <span className="size-1.5 rounded-full bg-white" />
-              </span>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex min-w-0 items-start gap-2.5">
-                  <TeacherAvatarOrIcon
-                    name={feedbackTeacherName}
-                    avatarUrl={feedbackTeacherAvatarUrl}
-                    icon={MessageSquareText}
-                    className={feedbackEstado.iconClass}
-                  />
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold tracking-tight text-foreground">
-                      {feedbackTeacherName
-                        ? `${feedbackTeacherName} te dejó una devolución`
-                        : feedbackNeedsChanges
-                          ? 'Tu profe pidió algunos cambios'
-                          : 'Mensaje de tu profe'}
-                    </h3>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {feedbackDate ?? 'Tu profe todavía no puso fecha'}
-                    </p>
-                  </div>
-                </div>
-
-                {feedbackNote ? (
-                  <span
-                    className={cn(
-                      'inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 shadow-[0_1px_1px_rgba(15,23,42,0.04)]',
-                      getGradeBadgeClass(currentFeedback?.nota),
-                    )}
-                  >
-                    <span className="text-[11px] font-semibold uppercase tracking-wide opacity-75">
-                      Nota
-                    </span>
-                    <span className="text-lg font-semibold leading-none">
-                      {feedbackNote}
-                    </span>
-                  </span>
-                ) : null}
-              </div>
-
-              {feedbackComment ? (
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground/85">
-                  {feedbackComment}
-                </p>
-              ) : null}
-
-              {feedbackAttachments.length > 0 ? (
-                <div className="mt-3 space-y-2">
-                  {feedbackAttachments.map((attachment, index) => (
-                    <AttachmentLink
-                      key={attachment.storageKey ?? attachment.url ?? index}
-                      attachment={attachment}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        ) : currentDelivery ? (
-          <p className="mt-5 border-t border-border/60 pt-4 text-sm text-muted-foreground">
-            Tu profe todavía no dejó un mensaje.
-          </p>
-        ) : null}
 
         {currentDelivery ? (
           <Button
@@ -1070,15 +1174,15 @@ export function StudentTaskDetail({
         ) : null}
 
         {showForm ? (
-          <div className="mt-5 space-y-3 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+          <div className="mt-4 space-y-2.5 rounded-xl border border-border/55 bg-background/45 p-3 animate-in fade-in-0 slide-in-from-top-1 duration-200 dark:bg-background/25">
             <Textarea
               value={text}
               onChange={(event) => setText(event.target.value)}
               placeholder="Escribí tu respuesta..."
-              className="min-h-32 rounded-xl border-border/70 bg-background/70 text-base focus-visible:ring-primary/20 dark:bg-background/35"
+              className="min-h-28 rounded-xl border-border/70 bg-card/80 text-base focus-visible:ring-primary/20 dark:bg-card/60"
             />
 
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors duration-200 ease-out hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20 dark:bg-muted/10">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border/70 bg-card/55 px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors duration-200 ease-out hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20 dark:bg-card/35 sm:justify-start">
               {uploading ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
@@ -1105,20 +1209,16 @@ export function StudentTaskDetail({
                   />
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Podés agregar archivos si te ayudan con la tarea.
-              </p>
-            )}
+            ) : null}
 
             {formError ? (
-              <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-700 dark:text-rose-400">
+              <p className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2.5 text-sm font-medium text-rose-700 dark:text-rose-400">
                 {formError}
               </p>
             ) : null}
 
             {success ? (
-              <p className="flex items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
+              <p className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
                 <CheckCircle2 className="size-4" />
                 {success}
               </p>
@@ -1144,26 +1244,21 @@ export function StudentTaskDetail({
   }
 
   if (state.loading) {
-    return (
-      <div className={cn('grid min-h-[320px] place-items-center px-6 text-center', studentUi.card.grade)}>
-        <div>
-          <Loader2 className="mx-auto size-8 animate-spin text-primary" />
-          <p className="mt-4 text-sm font-medium text-muted-foreground">
-            Estamos abriendo esta publicación.
-          </p>
-        </div>
-      </div>
-    )
+    return <OpenPostSkeleton />
   }
 
   if (state.error || !task) {
     return (
-      <Card className={studentUi.card.panel}>
-        <CardContent className="px-6 py-14 text-center">
+      <Card className="mx-auto max-w-2xl rounded-xl border border-border/60 bg-card/95 shadow-none dark:bg-card/90">
+        <CardContent className="px-6 py-10 text-center">
+          <StudentIconContainer
+            icon={AlertCircle}
+            className="mx-auto size-10 border-transparent bg-rose-500/10 text-rose-700 dark:text-rose-300"
+          />
           <p className="text-sm font-medium text-muted-foreground">
             No pudimos abrir esta publicación.
           </p>
-          <Button asChild variant="ghost" className={cn('mt-5', studentUi.button.ghost)}>
+          <Button asChild variant="ghost" className={cn('mt-4', studentUi.button.ghost)}>
             <Link href={`/student/courses/${courseId}`}>Volver al tablón</Link>
           </Button>
         </CardContent>
@@ -1171,209 +1266,131 @@ export function StudentTaskDetail({
     )
   }
 
+  const taskContent = safeText(task.consigna) ?? safeText(task.descripcion)
+
   if (isAnnouncement) {
     return (
-    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-5">
-        <Button
-          asChild
-          variant="ghost"
-          className={cn('mt-5', studentUi.button.ghost)}
-        >
-          <Link href={`/student/courses/${courseId}`}>
-            <ArrowLeft className="size-4" />
-            Volver al tablón
-          </Link>
-        </Button>
-
-        <article className={cn(studentUi.card.grade, 'border-violet-500/15 bg-card sm:p-6')}>
-          <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <TeacherAvatarOrIcon
-                name={announcementTeacherName}
-                avatarUrl={teacherAvatarUrl}
-                icon={Megaphone}
-                className="border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300"
-              />
-
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-muted-foreground">
-                  {announcementTeacherName
-                    ? `${announcementTeacherName} compartió un anuncio`
-                    : 'Anuncio del curso'}
-                </p>
-                {createdAt ? (
-                  <time className="mt-0.5 block text-xs text-muted-foreground">
-                    Publicado {createdAt}
-                  </time>
-                ) : null}
-              </div>
-            </div>
-
-            <StudentStatusBadge
+      <div className="mx-auto max-w-3xl">
+        <article className="rounded-2xl border border-violet-500/15 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+          <header className="flex min-w-0 items-start gap-3">
+            <TeacherAvatarOrIcon
+              name={announcementTeacherName}
+              avatarUrl={teacherAvatarUrl}
               icon={Megaphone}
               className="border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300"
-            >
-              Anuncio
-            </StudentStatusBadge>
+            />
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold leading-5 text-foreground">
+                {announcementTeacherName ?? 'Profesor'}
+              </p>
+              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                {['Anuncio', createdAt].filter(Boolean).join(' · ')}
+              </p>
+            </div>
           </header>
 
-          <div className="mt-5">
-            <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+          <div className="mt-4 space-y-3">
+            <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[1.7rem]">
               {safeText(task.titulo) ?? 'Sin título'}
             </h1>
 
-            <div className="mt-4 text-base leading-7 text-foreground/85">
-              {safeText(task.consigna) ?? safeText(task.descripcion) ? (
+            <div className="text-base leading-7 text-foreground/85">
+              {taskContent ? (
                 <p className="whitespace-pre-wrap">
-                  {safeText(task.consigna) ?? safeText(task.descripcion)}
+                  {taskContent}
                 </p>
               ) : (
-                <p>Este anuncio todavía no tiene texto.</p>
+                <p className="text-muted-foreground">Este anuncio todavía no tiene texto.</p>
               )}
             </div>
+
+            {resources.length > 0 ? (
+              <div className="pt-1">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Paperclip className="size-4 text-muted-foreground" />
+                  Recursos
+                </div>
+                <div className="space-y-2">
+                  {resources.map((resource, index) => (
+                    <AttachmentLink
+                      key={resource.storageKey ?? resource.url ?? index}
+                      attachment={resource}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </article>
-
-        {resources.length > 0 ? (
-          <section className="space-y-3">
-            <h2 className="text-base font-semibold tracking-tight text-foreground">
-              Recursos
-            </h2>
-            <div className="space-y-2">
-              {resources.map((resource, index) => (
-                <AttachmentLink
-                  key={resource.storageKey ?? resource.url ?? index}
-                  attachment={resource}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 sm:space-y-6">
-      <Button
-        asChild
-        variant="ghost"
-        className={cn('mt-5', studentUi.button.ghost)}
-      >
-        <Link href={`/student/courses/${courseId}`}>
-          <ArrowLeft className="size-4" />
-          Volver al tablón
-        </Link>
-      </Button>
-
-      <header className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-5 shadow-[0_12px_36px_-30px_rgba(15,23,42,0.35)] dark:bg-card/90 sm:p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_92%_8%,rgba(14,165,233,0.11),transparent_30%)] dark:bg-[radial-gradient(circle_at_92%_8%,rgba(56,189,248,0.10),transparent_32%)]" />
-        <div className="relative space-y-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <TaskHeroMetaChip icon={BookOpen}>
-                  {courseName}
-                </TaskHeroMetaChip>
-                <TaskHeroMetaChip icon={FileText}>
-                  Tarea
-                </TaskHeroMetaChip>
-                {dueDate ? (
-                  <TaskHeroMetaChip icon={CalendarCheck2}>
-                    Vence {dueDate}
-                  </TaskHeroMetaChip>
-                ) : null}
-              </div>
-
-              <div>
-                <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
-                  {safeText(task.titulo) ?? 'Sin título'}
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  {actionState.description}
-                </p>
-              </div>
-            </div>
-
-            <StudentStatusBadge
-              icon={ActionIcon}
-              className={cn(
-                'rounded-xl px-3 py-1.5 text-sm shadow-[0_1px_1px_rgba(15,23,42,0.04)]',
-                taskStatusClassName,
-              )}
-            >
-              {taskStatusLabel}
-            </StudentStatusBadge>
-          </div>
-
-          <div className="flex flex-col gap-4 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <StudentIconContainer
-                icon={ActionIcon}
-                size="md"
-                className={actionState.iconClassName}
-              />
-              <div className="min-w-0">
-                <p className="text-sm font-semibold tracking-tight text-foreground">
-                  {actionState.title}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {feedbackNeedsChanges
-                    ? 'Una corrección es parte del aprendizaje: ajustá lo necesario y volvé a enviarla.'
-                    : feedbackApproved
-                      ? 'Podés revisar el mensaje de tu profe o usar este trabajo como referencia.'
-                      : currentDelivery
-                        ? 'Tu avance quedó guardado y podés editarlo si necesitás mejorar algo.'
-                        : task?.vencida
-                          ? 'Leé la consigna y hablá con tu profe si necesitás ponerte al día.'
-                          : 'Leé la consigna, revisá los materiales y prepará tu entrega.'}
-                </p>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              className={cn(
-                'h-10 w-full shrink-0 rounded-lg sm:w-fit',
-                actionState.buttonClassName ||
-                  'border-border/70 bg-background/75 text-foreground transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-muted/40 hover:text-primary active:scale-[0.99] dark:bg-background/35',
-              )}
-              variant={actionState.buttonClassName ? 'default' : 'outline'}
-              onClick={handleHeroAction}
-            >
-              {heroCtaLabel}
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <div className="mx-auto max-w-6xl">
       <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-        <div className="space-y-5 sm:space-y-6">
-          <section id="consigna" className={studentUi.card.document}>
-            <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
-              <FileText className="size-4 text-muted-foreground" />
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Consigna
-              </h2>
+        <article
+          id="consigna"
+          className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5"
+        >
+          <header className="flex min-w-0 items-start gap-3">
+            <div className="flex min-w-0 items-start gap-3">
+              <TeacherAvatarOrIcon
+                name={teacherName === 'Profesor' ? null : teacherName}
+                avatarUrl={teacherAvatarUrl}
+                icon={BookOpen}
+                className="border-primary/15 bg-primary/10 text-primary"
+              />
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold leading-5 text-foreground">
+                  {teacherName === 'Profesor' ? 'Profesor' : teacherName}
+                </p>
+                <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                  {['Tarea', createdAt].filter(Boolean).join(' · ')}
+                </p>
+              </div>
             </div>
-            {safeText(task.consigna) ? (
-              <p className="whitespace-pre-wrap text-base leading-8 text-foreground/85">
-                {task.consigna}
+          </header>
+
+          <div className="mt-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <h1 className="min-w-0 text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-[1.7rem]">
+                {safeText(task.titulo) ?? 'Sin título'}
+              </h1>
+
+              {dueDate ? (
+                <TaskHeroMetaChip
+                  icon={CalendarCheck2}
+                  className={cn(
+                    'shrink-0',
+                    taskIsOverdue && !currentDelivery
+                      ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+                      : 'border-indigo-500/20 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300',
+                  )}
+                >
+                  {taskIsOverdue ? `Venció ${dueDate}` : `Vence ${dueDate}`}
+                </TaskHeroMetaChip>
+              ) : null}
+            </div>
+
+            {taskContent ? (
+              <p className="mt-3 whitespace-pre-wrap text-base leading-7 text-foreground/85">
+                {taskContent}
               </p>
             ) : (
-              <p className={studentUi.card.callout}>
+              <p className={cn('mt-3', studentUi.card.callout)}>
                 Esta tarea todavía no tiene consigna.
               </p>
             )}
-          </section>
+          </div>
 
           {resources.length > 0 ? (
-            <section className={studentUi.card.document}>
-              <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
+            <section className="mt-4 pt-1">
+              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Paperclip className="size-4 text-muted-foreground" />
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                  Materiales
-                </h2>
+                Materiales
               </div>
               <div className="space-y-2">
                 {resources.map((resource, index) => (
@@ -1385,9 +1402,55 @@ export function StudentTaskDetail({
               </div>
             </section>
           ) : null}
-        </div>
+        </article>
 
-        <aside className="space-y-4 lg:sticky lg:top-6">
+        <aside className="order-first space-y-3.5 lg:order-none lg:sticky lg:top-6">
+          {!feedbackApproved && !feedbackNeedsChanges && (currentDelivery || taskIsOverdue) ? (
+            <section className="rounded-xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90">
+              <div className="flex items-start gap-3">
+                <StudentIconContainer
+                  icon={ActionIcon}
+                  size="md"
+                  className={actionState.iconClassName}
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold tracking-tight text-foreground">
+                    {actionState.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {feedbackNeedsChanges
+                      ? 'Una corrección es parte del aprendizaje: ajustá lo necesario y volvé a enviarla.'
+                      : currentDelivery
+                        ? 'Tu avance quedó guardado y podés editarlo si necesitás mejorar algo.'
+                        : taskIsOverdue
+                          ? 'Leé la consigna y hablá con tu profe si necesitás ponerte al día.'
+                          : 'Leé la consigna, revisá los materiales y prepará tu entrega.'}
+                  </p>
+                </div>
+              </div>
+
+              <StudentStatusBadge
+                icon={ActionIcon}
+                className={cn('mt-4 rounded-lg px-2.5 py-1 text-xs', taskStatusClassName)}
+              >
+                {taskStatusLabel}
+              </StudentStatusBadge>
+
+              <Button
+                type="button"
+                className={cn(
+                  'mt-4 h-10 w-full shrink-0 rounded-lg',
+                  actionState.buttonClassName ||
+                    'border-border/70 bg-background/75 text-foreground transition-colors duration-200 ease-out hover:border-primary/20 hover:bg-muted/40 hover:text-primary active:scale-[0.99] dark:bg-background/35',
+                )}
+                variant={actionState.buttonClassName ? 'default' : 'outline'}
+                onClick={handleHeroAction}
+              >
+                {heroCtaLabel}
+              </Button>
+            </section>
+          ) : null}
+
           {renderDeliveryPanel()}
         </aside>
       </div>

@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft,
+  AlertCircle,
+  Loader2,
   Save,
   CheckCircle2,
   RotateCcw,
@@ -88,6 +89,50 @@ function AttendanceSegmentedControl({
       >
         Ausente
       </button>
+    </div>
+  )
+}
+
+function TeacherTakeAttendanceSkeleton() {
+  return (
+    <div aria-busy="true" className="space-y-5">
+      <p className="sr-only">Cargando asistencia.</p>
+
+      <header className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+        <div className="h-7 w-44 rounded-lg bg-muted/70" />
+        <div className="mt-2 h-4 w-36 rounded-lg bg-muted/55" />
+      </header>
+
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+        <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+          <div className="space-y-2">
+            <div className="h-4 w-14 rounded-lg bg-muted/60" />
+            <div className="h-10 rounded-xl bg-muted/50" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 w-28 rounded-lg bg-muted/60" />
+            <div className="h-10 rounded-xl bg-muted/50" />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-5 w-40 rounded-lg bg-muted/70" />
+            <div className="h-4 w-52 rounded-lg bg-muted/50" />
+          </div>
+          <div className="hidden h-9 w-44 rounded-xl bg-muted/45 sm:block" />
+        </div>
+        <div className="space-y-2">
+          {[0, 1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="h-16 rounded-xl border border-border/45 bg-background/55 dark:bg-background/30"
+            />
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
@@ -199,11 +244,7 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
   }
 
   if (loading) {
-    return (
-      <div className="rounded-xl border border-border/60 bg-background/60 px-5 py-6 text-sm text-muted-foreground dark:bg-background/35">
-        Cargando alumnos...
-      </div>
-    )
+    return <TeacherTakeAttendanceSkeleton />
   }
 
   const presentCount = students.filter(
@@ -212,34 +253,24 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
   const absentCount = students.filter(
     (student) => student.estado === EstadoAsistencia.Ausente,
   ).length
+  const markedCount = presentCount + absentCount
   const unmarkedCount = students.length - presentCount - absentCount
 
   return (
     <div className="space-y-5">
-      <header className="space-y-3 border-b border-border/60 pb-4">
-        <Button
-          variant="ghost"
-          className="-ml-2 h-9 w-fit rounded-lg px-2 text-muted-foreground hover:bg-primary/5 hover:text-primary"
-          onClick={() => router.push(`/teacher/courses/${courseId}`)}
-        >
-          <ArrowLeft className="mr-2 size-4" />
-          Volver al curso
-        </Button>
-
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-            Tomar asistencia
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Nuevo registro de clase · {formatDisplayDate(fecha)}
-          </p>
-        </div>
+      <header className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          Tomar asistencia
+        </h1>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          Nuevo registro · {formatDisplayDate(fecha)}
+        </p>
       </header>
 
-      <section className="mb-6 rounded-2xl border border-border/40 border-t-2 border-t-primary/60 bg-card p-6 shadow-sm dark:border-t-primary/50">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
         <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Fecha</label>
+            <label className="text-sm font-medium text-muted-foreground">Fecha</label>
             <input
               type="date"
               value={fecha}
@@ -249,98 +280,89 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              Tema de la clase
+            <label className="text-sm font-medium text-muted-foreground">
+              Tema trabajado
             </label>
             <input
               value={descripcionClase}
               onChange={(e) => setDescripcionClase(e.target.value)}
               className="h-10 w-full rounded-xl border border-border/60 bg-background/75 px-3 text-sm outline-none transition-colors focus:border-primary/35 focus:ring-2 focus:ring-primary/15 dark:bg-background/35"
-              placeholder="Temas vistos, contenido trabajado..."
+              placeholder="Ej: Past simple, conversación o repaso de unidad"
             />
           </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-sm">
+      <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Alumnos
-            </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
               Registro por alumno
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {students.length} alumnos · {presentCount} presentes · {absentCount}{' '}
               ausentes
             </p>
-            {unmarkedCount > 0 ? (
-              <p className="mt-1 text-sm font-medium text-amber-700 dark:text-amber-300">
-                Faltan {unmarkedCount}{' '}
-                {unmarkedCount === 1 ? 'alumno' : 'alumnos'} por marcar
-              </p>
-            ) : null}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border/60 bg-muted/25 p-1">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={handleMarkAllPresent}
-              className="h-10 rounded-xl border-border/70 bg-background/70 px-3 text-foreground transition-colors duration-200 hover:border-emerald-500/20 hover:bg-emerald-500/8 hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500/20 dark:bg-background/35 dark:hover:text-emerald-300"
+              className="h-8 rounded-lg px-2.5 text-sm font-medium text-muted-foreground shadow-none transition-colors duration-200 hover:bg-emerald-500/10 hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500/20 dark:hover:text-emerald-300"
             >
-              <CheckCircle2 className="mr-2 size-4" />
-              Marcar todos presentes
+              <CheckCircle2 className="mr-1.5 size-4" />
+              Todos presentes
             </Button>
 
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={handleClearSelection}
-              className="h-10 rounded-xl border-border/70 bg-background/70 px-3 transition-colors duration-200 hover:border-primary/25 hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:bg-background/35"
+              className="h-8 rounded-lg px-2.5 text-sm font-medium text-muted-foreground shadow-none transition-colors duration-200 hover:bg-muted/50 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/20"
             >
-              <RotateCcw className="mr-2 size-4" />
-              Limpiar selección
+              <RotateCcw className="mr-1.5 size-4" />
+              Limpiar
             </Button>
 
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-600 dark:text-rose-400">
-            {error}
+          <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2.5 text-sm font-medium text-rose-700 dark:text-rose-300">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
-            {success}
+          <div className="mb-4 flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>{success}</span>
           </div>
         )}
 
         {students.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-6 text-center dark:bg-muted/10">
+          <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 px-4 py-4 dark:bg-muted/10">
             <p className="text-sm font-medium text-foreground">
               Todavía no hay alumnos asignados a este curso.
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Cuando el curso tenga alumnos, vas a poder tomar asistencia desde acá.
             </p>
           </div>
         ) : (
           <div className="space-y-2">
             {students.map((student) => {
+            const hasStatus = student.estado != null
             const statusLabel =
-              student.estado === EstadoAsistencia.Presente
-                ? 'Presente'
-                : student.estado === EstadoAsistencia.Ausente
-                  ? 'Ausente'
-                  : 'Sin marcar'
+              student.estado === EstadoAsistencia.Presente ? 'Presente' : 'Ausente'
 
             const statusClass =
               student.estado === EstadoAsistencia.Presente
                 ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                : student.estado === EstadoAsistencia.Ausente
-                  ? 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
-                  : 'border-border/60 bg-muted/40 text-muted-foreground'
+                : 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
 
               return (
                 <PersonRosterSurface key={student.alumnoId} tone="student">
@@ -356,14 +378,16 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
                       <p className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-[15px]">
                         {student.nombreCompleto}
                       </p>
-                      <span
-                        className={cn(
-                          'mt-1 inline-flex rounded-full border px-2.5 py-1 text-xs font-medium',
-                          statusClass,
-                        )}
-                      >
-                        {statusLabel}
-                      </span>
+                      {hasStatus ? (
+                        <span
+                          className={cn(
+                            'mt-1 inline-flex rounded-full border px-2.5 py-1 text-xs font-medium',
+                            statusClass,
+                          )}
+                        >
+                          {statusLabel}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
 
@@ -381,16 +405,40 @@ export function TeacherTakeAttendanceView({ courseId }: { courseId: number }) {
         )}
       </section>
 
-      <div className="w-full flex justify-end mt-6 pt-6 border-t border-border/20">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          size="lg"
-          className="rounded-xl bg-primary px-5 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90"
-        >
-          <Save className="mr-2 size-4" />
-          {saving ? 'Guardando...' : 'Guardar asistencia'}
-        </Button>
+      <div className="sticky bottom-3 z-10 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-[0_14px_32px_rgba(15,23,42,0.10)] backdrop-blur dark:bg-card/90 dark:shadow-black/20">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              {markedCount} de {students.length} alumnos marcados
+            </p>
+            <p
+              className={cn(
+                'mt-0.5 text-sm',
+                unmarkedCount > 0
+                  ? 'text-amber-700 dark:text-amber-300'
+                  : 'text-muted-foreground',
+              )}
+            >
+              {unmarkedCount > 0
+                ? `Faltan ${unmarkedCount} ${unmarkedCount === 1 ? 'alumno' : 'alumnos'} por marcar`
+                : 'Registro listo para guardar'}
+            </p>
+          </div>
+
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            size="lg"
+            className="w-full rounded-xl bg-primary px-5 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90 sm:w-auto"
+          >
+            {saving ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 size-4" />
+            )}
+            {saving ? 'Guardando...' : 'Guardar asistencia'}
+          </Button>
+        </div>
       </div>
     </div>
   )

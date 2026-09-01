@@ -15,8 +15,8 @@ export default async function TeacherGradeCreatePage({ params }: PageProps) {
     <>
       <AppHeader title="Crear calificación" />
 
-      <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
-        <div className="mx-auto max-w-5xl">
+      <main className="flex-1 overflow-auto px-4 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-4xl">
           <TeacherGradeCreateView
             courseId={Number(id)}
             alumnoId={Number(alumnoId)}

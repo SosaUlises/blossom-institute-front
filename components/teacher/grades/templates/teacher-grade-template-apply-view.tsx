@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft,
   CalendarDays,
   CheckCircle2,
   Loader2,
@@ -83,7 +82,6 @@ export function TeacherGradeTemplateApplyView({
   courseId,
   templateId,
   courseName,
-  courseYear,
 }: Props) {
   const router = useRouter()
 
@@ -268,30 +266,26 @@ export function TeacherGradeTemplateApplyView({
     <>
       <AppHeader title="Aplicar plantilla" />
 
-      <main className="flex-1 overflow-auto px-5 py-5 pb-24 lg:px-8 lg:py-6 lg:pb-8">
-        <div className="mx-auto max-w-7xl space-y-4">
-        <header className="space-y-3 border-b border-border/60 pb-4">
-          <Button
-            variant="ghost"
-            className="h-9 justify-start rounded-xl px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
-            onClick={() => router.push(`/teacher/courses/${courseId}/grade-templates`)}
-          >
-            <ArrowLeft className="mr-2 size-4" />
-            Volver a plantillas
-          </Button>
-
+      <main className="flex-1 overflow-auto px-4 py-5 pb-24 sm:px-5 sm:py-6 lg:px-8 lg:py-8 lg:pb-8">
+        <div className="mx-auto max-w-6xl space-y-4">
+        <header className="space-y-1.5">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            {courseName}
+          </p>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Aplicar plantilla
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {template?.titulo ?? 'Cargando plantilla...'} · {courseName} · {courseYear}
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+              {template?.titulo
+                ? `Cargá calificaciones usando “${template.titulo}”.`
+                : 'Cargando plantilla...'}
             </p>
           </div>
         </header>
 
         {loading ? (
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
             <div className="h-72 animate-pulse rounded-xl border border-border/60 bg-muted/20" />
             <div className="h-64 animate-pulse rounded-xl border border-border/60 bg-muted/20" />
           </div>
@@ -301,22 +295,26 @@ export function TeacherGradeTemplateApplyView({
           </div>
         ) : (
           <>
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-              <section className="min-w-0 rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70 sm:p-5">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+              <section className="min-w-0 rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:border-border/70">
                 <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div>
                     <h2 className="text-lg font-semibold tracking-tight text-foreground">
                       Alumnos
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Seleccioná a quiénes querés calificar y completá sus puntajes.
+                      Elegí alumnos y cargá sus puntajes.
                     </p>
                   </div>
 
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <div className="relative w-full sm:w-64">
                       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <label htmlFor="student-template-search" className="sr-only">
+                        Buscar alumno
+                      </label>
                       <Input
+                        id="student-template-search"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Buscar alumno..."
@@ -328,6 +326,7 @@ export function TeacherGradeTemplateApplyView({
                       variant="outline"
                       className="h-10 rounded-xl border-border/70 bg-background/70 px-3 shadow-none transition-colors hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
                       onClick={handleToggleAllVisible}
+                      disabled={filteredStudents.length === 0}
                     >
                       {filteredStudents.length > 0 &&
                       filteredStudents.every((student) => student.selected)
@@ -447,23 +446,25 @@ export function TeacherGradeTemplateApplyView({
               </section>
 
               <aside className="xl:sticky xl:top-6 xl:self-start">
-                <div className="space-y-4 rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] dark:border-border/70 sm:p-5">
+                <div className="space-y-3 rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:border-border/70">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <TemplateTypeBadge tipo={template.tipo} />
                       <span className="inline-flex rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                        {template.detalles.length} habilidades
+                        {template.detalles.length
+                          ? `${template.detalles.length} habilidades`
+                          : 'Nota directa'}
                       </span>
                     </div>
 
                     <h2 className="mt-3 text-base font-semibold tracking-tight text-foreground">
                       {template.titulo}
                     </h2>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      {template.descripcion?.trim()
-                        ? template.descripcion
-                        : 'Sin descripción adicional.'}
-                    </p>
+                    {template.descripcion?.trim() && (
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {template.descripcion}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -484,11 +485,13 @@ export function TeacherGradeTemplateApplyView({
                       {selectedCount} {selectedCount === 1 ? 'alumno seleccionado' : 'alumnos seleccionados'}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Se crearán calificaciones solo para los alumnos seleccionados.
+                      Solo se cargarán notas para quienes estén seleccionados.
                     </p>
                   </div>
 
-                  <TemplateSkillRows detalles={template.detalles} />
+                  {template.detalles.length > 0 && (
+                    <TemplateSkillRows detalles={template.detalles} />
+                  )}
 
                   <Button
                     onClick={handleSubmit}
@@ -512,7 +515,7 @@ export function TeacherGradeTemplateApplyView({
             </div>
 
             <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur dark:bg-background/90 xl:hidden">
-              <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+              <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground">
                   {selectedCount} {selectedCount === 1 ? 'seleccionado' : 'seleccionados'}
                 </p>

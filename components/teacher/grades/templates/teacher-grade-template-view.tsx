@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft,
   Plus,
   Search,
   Archive,
@@ -47,7 +46,6 @@ import type {
   GradeTemplateDetail,
   GradeTemplateListItem,
 } from '@/lib/teacher/grade-templates/types'
-import { getTipoCalificacionLabel } from '@/lib/teacher/grade-templates/utils'
 
 type Props = {
   courseId: number
@@ -60,21 +58,6 @@ function formatTemplateDate(template: GradeTemplateListItem) {
   const label = template.updatedAtUtc ? 'Editada' : 'Creada'
 
   return `${label} ${new Date(rawDate).toLocaleDateString('es-AR')}`
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-border/50 py-3 last:border-b-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-right text-sm font-medium text-foreground">{value}</span>
-    </div>
-  )
 }
 
 function TemplateDetailsModal({
@@ -90,11 +73,11 @@ function TemplateDetailsModal({
 }) {
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto rounded-2xl border-border/60 bg-card p-4 sm:p-5">
-        <DialogHeader className="border-b border-border/60 pb-4 text-left">
+      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto rounded-2xl border-border/60 bg-card p-4 sm:p-5">
+        <DialogHeader className="text-left">
           <DialogTitle>Detalle de plantilla</DialogTitle>
           <DialogDescription>
-            Configuración reutilizable para cargar calificaciones.
+            Estructura reutilizable para cargar calificaciones.
           </DialogDescription>
         </DialogHeader>
 
@@ -110,80 +93,67 @@ function TemplateDetailsModal({
               No se pudo obtener el detalle de la plantilla.
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+            <div className="space-y-3">
+              <section className="rounded-xl border border-border/60 bg-background/60 p-4 dark:bg-background/35">
                 <div className="flex flex-wrap items-center gap-2">
                   <TemplateTypeBadge tipo={template.tipo} />
-                  {template.tieneDetalleSkills && (
+                  {template.detalles.length > 0 ? (
                     <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
                       {template.detalles.length} habilidades
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                      Nota directa
+                    </span>
+                  )}
+                  {template.puntajeMaximoTotal != null && (
+                    <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                      {template.puntajeMaximoTotal} puntos
                     </span>
                   )}
                 </div>
 
-                <h4 className="mt-3 text-lg font-semibold tracking-tight text-foreground">
+                <h3 className="mt-3 text-lg font-semibold tracking-tight text-foreground">
                   {template.titulo}
-                </h4>
+                </h3>
 
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {template.descripcion?.trim()
-                    ? template.descripcion
-                    : 'Sin descripción adicional.'}
-                </p>
+                {template.descripcion?.trim() && (
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {template.descripcion}
+                  </p>
+                )}
 
                 <p className="mt-3 text-xs text-muted-foreground">
-                  {template.detalles.length} habilidades ·{' '}
-                  {template.puntajeMaximoTotal != null
-                    ? `${template.puntajeMaximoTotal} puntos`
-                    : 'Sin puntaje total'}{' '}
-                  · Creada {new Date(template.createdAtUtc).toLocaleDateString('es-AR')}
+                  Creada {new Date(template.createdAtUtc).toLocaleDateString('es-AR')}
+                  {template.updatedAtUtc
+                    ? ` · Editada ${new Date(template.updatedAtUtc).toLocaleDateString(
+                        'es-AR'
+                      )}`
+                    : ''}
                 </p>
-              </div>
-
-              <section className="rounded-xl border border-border/60 bg-background/40 p-4">
-                <div>
-                  <DetailRow
-                    label="Tipo"
-                    value={getTipoCalificacionLabel(template.tipo)}
-                  />
-                  <DetailRow
-                    label="Detalle por habilidades"
-                    value={template.tieneDetalleSkills ? 'Sí' : 'No'}
-                  />
-                  <DetailRow
-                    label="Puntaje máximo total"
-                    value={
-                      template.puntajeMaximoTotal != null
-                        ? String(template.puntajeMaximoTotal)
-                        : '—'
-                    }
-                  />
-                  <DetailRow
-                    label="Última actualización"
-                    value={
-                      template.updatedAtUtc
-                        ? new Date(template.updatedAtUtc).toLocaleDateString('es-AR')
-                        : 'Sin cambios posteriores'
-                    }
-                  />
-                </div>
               </section>
 
-              <section className="rounded-xl border border-border/60 bg-background/40 p-4">
-                <h5 className="text-base font-semibold tracking-tight text-foreground">
-                  Habilidades
-                </h5>
-
-                {template.detalles?.length ? (
+              {template.detalles?.length ? (
+                <section className="rounded-xl border border-border/60 bg-background/40 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className="text-base font-semibold tracking-tight text-foreground">
+                      Habilidades
+                    </h4>
+                    {template.puntajeMaximoTotal != null && (
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {template.puntajeMaximoTotal} puntos en total
+                      </span>
+                    )}
+                  </div>
                   <div className="mt-3">
                     <TemplateSkillRows detalles={template.detalles} />
                   </div>
-                ) : (
-                  <div className="mt-3 rounded-xl border border-dashed border-border/70 bg-background/40 px-4 py-5 text-center text-sm text-muted-foreground">
-                    Sin habilidades configuradas.
-                  </div>
-                )}
-              </section>
+                </section>
+              ) : (
+                <div className="rounded-xl border border-border/60 bg-background/40 px-4 py-3 text-sm text-muted-foreground">
+                  Esta plantilla usa una nota directa, sin desglose por habilidades.
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -279,25 +249,19 @@ export function TeacherGradeTemplateView({
     <>
       <AppHeader title="Evaluaciones" />
 
-      <main className="flex-1 overflow-auto px-5 py-5 lg:px-8 lg:py-6">
-        <div className="mx-auto max-w-7xl space-y-4">
+      <main className="flex-1 overflow-auto px-4 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-5xl space-y-4">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 space-y-3">
-            <Button
-              variant="ghost"
-              className="h-9 justify-start rounded-xl px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
-              onClick={() => router.push(`/teacher/courses/${courseId}`)}
-            >
-              <ArrowLeft className="mr-2 size-4" />
-              Volver al curso
-            </Button>
-
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              {courseName}
+            </p>
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
                 Plantillas de calificación
               </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {courseName} · {templates.length} plantillas
+              <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Guardá estructuras de evaluación para reutilizarlas al cargar notas.
               </p>
             </div>
           </div>
@@ -313,11 +277,15 @@ export function TeacherGradeTemplateView({
           </Button>
         </header>
 
-        <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.035)] sm:p-5">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section className="rounded-2xl border border-border/60 bg-card/95 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.025)] sm:p-4">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative w-full sm:max-w-sm">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <label htmlFor="template-search" className="sr-only">
+                Buscar plantilla
+              </label>
               <Input
+                id="template-search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar plantilla..."
@@ -326,7 +294,7 @@ export function TeacherGradeTemplateView({
             </div>
 
             <p className="text-sm text-muted-foreground">
-              {visibleTemplates.length} {visibleTemplates.length === 1 ? 'plantilla' : 'plantillas'}
+              {visibleTemplates.length} {visibleTemplates.length === 1 ? 'plantilla disponible' : 'plantillas disponibles'}
             </p>
           </div>
 
@@ -371,40 +339,44 @@ export function TeacherGradeTemplateView({
           ) : (
             <div className="space-y-3">
               {visibleTemplates.map((template) => {
+                const skillsCount = template.cantidadSkills ?? 0
+                const hasSkills = skillsCount > 0
+
                 return (
                   <article
                     key={template.id}
-                    className="group rounded-2xl border border-border/60 bg-background/55 p-4 transition-colors hover:border-primary/20 hover:bg-background/75"
+                    className="group rounded-xl border border-border/60 bg-background/55 p-3.5 transition-colors hover:border-primary/20 hover:bg-background/75 sm:p-4"
                   >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <TemplateTypeBadge tipo={template.tipo} />
-                          <span>{template.cantidadSkills ?? 0} habilidades</span>
-                          <span className="hidden sm:inline">·</span>
-                          <span>
-                            {template.puntajeMaximoTotal != null
-                              ? `${template.puntajeMaximoTotal} puntos`
-                              : 'Sin puntaje total'}
-                          </span>
-                          <span className="hidden sm:inline">·</span>
-                          <span>{formatTemplateDate(template)}</span>
-                        </div>
-
-                        <h3 className="mt-2 truncate text-base font-semibold tracking-tight text-foreground">
+                        <h3 className="truncate text-base font-semibold tracking-tight text-foreground">
                           {template.titulo}
                         </h3>
 
-                        <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                          {template.descripcion?.trim()
-                            ? template.descripcion
-                            : 'Sin descripción adicional.'}
-                        </p>
+                        {template.descripcion?.trim() && (
+                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                            {template.descripcion}
+                          </p>
+                        )}
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          <TemplateTypeBadge tipo={template.tipo} />
+                          <span className="inline-flex items-center rounded-full border border-border/60 bg-background/65 px-2.5 py-1 font-medium">
+                            {hasSkills ? `${skillsCount} habilidades` : 'Nota directa'}
+                          </span>
+                          {template.puntajeMaximoTotal != null && (
+                            <span className="inline-flex items-center rounded-full border border-border/60 bg-background/65 px-2.5 py-1 font-medium">
+                              {template.puntajeMaximoTotal} puntos
+                            </span>
+                          )}
+                          <span>{formatTemplateDate(template)}</span>
+                        </div>
+
                       </div>
 
-                      <div className="flex w-full shrink-0 items-center gap-2 lg:w-auto">
+                      <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
                         <Button
-                          className="h-10 w-full rounded-xl px-4 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20 sm:w-auto"
+                          className="h-9 w-full rounded-xl px-3.5 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20 sm:w-auto"
                           onClick={() =>
                             router.push(
                               `/teacher/courses/${courseId}/grade-templates/${template.id}/apply`
