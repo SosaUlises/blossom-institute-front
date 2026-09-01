@@ -1,18 +1,75 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { TeacherGradeForm } from './teacher-grade-form'
+import { getTeacherCourseDetail } from '@/lib/teacher/course-detail/api'
+import { getTeacherCourseStudents } from '@/lib/teacher/course-detail/students'
 import { createTeacherGrade } from '@/lib/teacher/grades/api'
 import type { GradeFormPayload } from '@/lib/teacher/grades/types'
+import { TeacherGradePageHeader } from './teacher-grade-page-header'
+import { TeacherGradeForm } from './teacher-grade-form'
 
 type Props = {
   courseId: number
   alumnoId: number
 }
 
+type StudentContext = {
+  name: string
+  email?: string | null
+  avatarUrl?: string | null
+}
+
 export function TeacherGradeCreateView({ courseId, alumnoId }: Props) {
   const router = useRouter()
+  const [loadingContext, setLoadingContext] = useState(true)
+  const [studentContext, setStudentContext] = useState<StudentContext | null>(null)
+  const [courseName, setCourseName] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadContext() {
+      try {
+        setLoadingContext(true)
+        const [courseResult, studentsResult] = await Promise.allSettled([
+          getTeacherCourseDetail(courseId),
+          getTeacherCourseStudents(courseId),
+        ])
+
+        if (!active) return
+
+        if (courseResult.status === 'fulfilled') {
+          setCourseName(courseResult.value.nombre)
+        }
+
+        if (studentsResult.status === 'fulfilled') {
+          const student = studentsResult.value.find(
+            (item) => item.alumnoId === alumnoId,
+          )
+
+          if (student) {
+            setStudentContext({
+              name: `${student.nombre} ${student.apellido}`.trim(),
+              email: student.email,
+              avatarUrl: student.avatarUrl,
+            })
+          }
+        }
+      } finally {
+        if (active) {
+          setLoadingContext(false)
+        }
+      }
+    }
+
+    void loadContext()
+
+    return () => {
+      active = false
+    }
+  }, [alumnoId, courseId])
 
   const handleSubmit = async (payload: GradeFormPayload) => {
     await createTeacherGrade(courseId, alumnoId, payload)
@@ -24,19 +81,14 @@ export function TeacherGradeCreateView({ courseId, alumnoId }: Props) {
 
   return (
     <div className="space-y-5">
-      <header className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
-        <div className="max-w-2xl">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Seguimiento académico
-          </p>
-          <h1 className="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-            Crear calificación
-          </h1>
-          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-            Registrá una evaluación para el seguimiento del alumno.
-          </p>
-        </div>
-      </header>
+      <TeacherGradePageHeader
+        mode="create"
+        loading={loadingContext}
+        studentName={studentContext?.name}
+        studentEmail={studentContext?.email}
+        studentAvatarUrl={studentContext?.avatarUrl}
+        courseName={courseName}
+      />
 
       <TeacherGradeForm
         mode="create"

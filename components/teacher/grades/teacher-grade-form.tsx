@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { type FormEvent, useMemo, useState } from 'react'
 import {
   CalendarDays,
   Percent,
@@ -8,6 +8,7 @@ import {
   Save,
   Trash2,
   Trophy,
+  CheckCircle2,
   ClipboardList,
   FileCheck2,
   Users,
@@ -181,8 +182,6 @@ export function TeacherGradeForm({
     return calculateGradeFromSkills(parsed)
   }, [detalles])
 
-  const calculatedTone = getCalculatedGradeTone(calculatedGrade)
-
   const validSkillsCount = useMemo(() => {
     return detalles.filter(
       (item) =>
@@ -191,6 +190,11 @@ export function TeacherGradeForm({
         item.puntajeMaximo !== '',
     ).length
   }, [detalles])
+
+  const calculatedTone =
+    validSkillsCount > 0 ? getCalculatedGradeTone(calculatedGrade) : null
+  const directGrade = nota.trim() && Number.isFinite(Number(nota)) ? Number(nota) : null
+  const directTone = directGrade == null ? null : getCalculatedGradeTone(directGrade)
 
   const getSelectedSkills = (currentId?: string) => {
     return detalles
@@ -221,7 +225,10 @@ export function TeacherGradeForm({
     )
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault()
+    if (saving) return
+
     try {
       setSaving(true)
       setError(null)
@@ -284,22 +291,21 @@ export function TeacherGradeForm({
   }
 
   return (
-    <div className="space-y-4 pb-24 lg:pb-4">
+    <form
+      className="space-y-4 pb-24 lg:pb-4"
+      aria-busy={saving}
+      onSubmit={handleSubmit}
+    >
       <section className="rounded-2xl border border-border/60 bg-card/95 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:bg-card/90 sm:p-5">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="mb-4">
           <div>
             <h2 className="text-base font-semibold tracking-tight text-foreground">
-              Datos de la evaluación
+              Qué evaluaste
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Definí qué se evaluó y cuándo se tomó.
+              Elegí el tipo, nombrá la evaluación y registrá la fecha.
             </p>
           </div>
-          {tipo ? (
-            <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground dark:bg-background/35">
-              {useSkills ? 'Calculada por habilidades' : 'Nota directa'}
-            </span>
-          ) : null}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -324,7 +330,7 @@ export function TeacherGradeForm({
                     aria-pressed={selected}
                     onClick={() => setTipo(option.value)}
                     className={cn(
-                      'flex min-h-[72px] items-start gap-3 rounded-xl border border-border/60 bg-background/55 p-3 text-left transition-colors hover:border-primary/25 hover:bg-background/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 dark:bg-background/25',
+                      'relative flex min-h-[88px] items-start gap-3 rounded-xl border border-border/60 bg-background/55 p-3 pr-9 text-left transition-colors hover:border-primary/25 hover:bg-background/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 dark:bg-background/25',
                       selected &&
                         'border-primary/35 bg-primary/[0.055] dark:bg-primary/[0.08]',
                     )}
@@ -342,14 +348,30 @@ export function TeacherGradeForm({
                         {optionVisual.title}
                       </span>
                       <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                        {optionVisual.description}
+                      </span>
+                      <span className="mt-1 block text-xs font-medium text-muted-foreground">
                         {helper}
                       </span>
                     </span>
+                    {selected ? (
+                      <CheckCircle2 className="absolute right-3 top-3 size-4 text-primary" />
+                    ) : null}
                   </button>
                 )
               })}
             </div>
           </fieldset>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Título</label>
+            <input
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              className={fieldClassName}
+              placeholder="Ej. Quiz Unit 3"
+            />
+          </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Fecha</label>
@@ -362,16 +384,6 @@ export function TeacherGradeForm({
                 className={`${fieldClassName} pl-10`}
               />
             </div>
-          </div>
-
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-foreground">Título</label>
-            <input
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              className={fieldClassName}
-              placeholder="Ej. Quiz Unit 3, Test oral, participación en clase..."
-            />
           </div>
 
           <div className="space-y-2 md:col-span-2">
@@ -394,11 +406,11 @@ export function TeacherGradeForm({
               Nota directa
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Seleccioná la escala registrada para esta evaluación.
+              Cargá la nota final tal como quedó registrada.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-end">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Nota</label>
               <div className="relative">
@@ -423,15 +435,32 @@ export function TeacherGradeForm({
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Máximo permitido: 100.
+                La nota máxima permitida es 100.
               </p>
             </div>
 
-            <div className="inline-flex w-full items-center justify-between gap-2 rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-foreground dark:bg-background/25 sm:w-auto sm:justify-start">
-              <Trophy className="size-4" />
-              <span className="text-sm font-medium text-muted-foreground">Nota final</span>
-              <span className="text-base font-semibold">
-                {nota.trim() ? Number(nota).toFixed(2) : '--'}
+            <div
+              className={cn(
+                'rounded-xl border border-border/60 bg-background/55 px-3 py-2.5 text-foreground dark:bg-background/25',
+                directTone?.card,
+              )}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Trophy className="size-4" />
+                  Nota final
+                </span>
+                <span
+                  className={cn(
+                    'text-xl font-semibold tracking-tight text-foreground',
+                    directTone?.value,
+                  )}
+                >
+                  {directGrade == null ? '--' : directGrade.toFixed(2)}
+                </span>
+              </div>
+              <span className="mt-1 block text-xs text-muted-foreground">
+                Resultado registrado
               </span>
             </div>
           </div>
@@ -443,17 +472,19 @@ export function TeacherGradeForm({
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-base font-semibold tracking-tight text-foreground">
-                Detalle por habilidades
+                Habilidades evaluadas
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Cargá los puntajes por área para calcular la nota final.
+                Cargá los puntajes por área y Blossom calcula la nota final.
               </p>
             </div>
 
             <Button
+              type="button"
               variant="outline"
               className="h-9 w-full rounded-lg border-border/70 bg-background/70 px-3 transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary sm:w-auto"
               onClick={handleAddDetail}
+              disabled={saving}
             >
               <Plus className="mr-2 size-4" />
               Agregar habilidad
@@ -461,21 +492,28 @@ export function TeacherGradeForm({
           </div>
 
           <div className="space-y-3">
-            {detalles.map((detail, index) => (
+            {detalles.map((detail, index) => {
+              const selectedSkillLabel =
+                skillOptions.find((option) => option.value === detail.skill)?.label ??
+                `Habilidad ${index + 1}`
+
+              return (
               <div
                 key={detail.id}
                 className="rounded-xl border border-border/55 bg-background/45 p-3 transition-colors duration-200 hover:border-primary/20 hover:bg-background/70 dark:bg-background/25"
               >
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-foreground">
-                    Habilidad {index + 1}
-                  </p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {selectedSkillLabel}
+                    </p>
 
                   <Button
+                    type="button"
                     variant="outline"
                     aria-label={`Quitar habilidad ${index + 1}`}
                     className="size-9 rounded-lg border-border/70 bg-background/70 p-0 transition-colors duration-200 hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
                     onClick={() => handleRemoveDetail(detail.id)}
+                    disabled={saving}
                   >
                     <Trash2 className="size-4" />
                   </Button>
@@ -508,7 +546,7 @@ export function TeacherGradeForm({
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">
-                      Puntaje obtenido
+                      Obtenido
                     </label>
                     <input
                       type="number"
@@ -523,7 +561,7 @@ export function TeacherGradeForm({
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">
-                      Puntaje máximo
+                      Máximo
                     </label>
                     <input
                       type="number"
@@ -537,28 +575,57 @@ export function TeacherGradeForm({
                   </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+          <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center">
             <div className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-sm text-muted-foreground dark:bg-background/25">
               <ClipboardList className="size-4" />
               {validSkillsCount} {validSkillsCount === 1 ? 'habilidad completa' : 'habilidades completas'}
             </div>
 
-            <div className={`rounded-xl border p-3 transition-colors duration-200 ${calculatedTone.card}`}>
+            <div
+              className={cn(
+                'rounded-xl border border-border/60 bg-background/55 p-3 transition-colors duration-200 dark:bg-background/25',
+                calculatedTone?.card,
+              )}
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className={`text-sm font-medium ${calculatedTone.label}`}>
+                <span
+                  className={cn(
+                    'text-sm font-medium text-muted-foreground',
+                    calculatedTone?.label,
+                  )}
+                >
                   Nota calculada
                 </span>
-                <span className={`text-base font-semibold ${calculatedTone.value}`}>
-                  {calculatedGrade.toFixed(2)} / 100
+                <span
+                  className={cn(
+                    'text-xl font-semibold tracking-tight text-foreground',
+                    calculatedTone?.value,
+                  )}
+                >
+                  {validSkillsCount > 0 ? `${calculatedGrade.toFixed(2)} / 100` : '--'}
                 </span>
               </div>
-              <div className={`mt-2 h-2 overflow-hidden rounded-full ${calculatedTone.barBg}`}>
+              <div
+                className={cn(
+                  'mt-2 h-2 overflow-hidden rounded-full bg-muted',
+                  calculatedTone?.barBg,
+                )}
+              >
                 <div
-                  className={`h-full rounded-full transition-all duration-300 ${calculatedTone.barFill}`}
-                  style={{ width: `${Math.max(0, Math.min(100, calculatedGrade))}%` }}
+                  className={cn(
+                    'h-full rounded-full transition-all duration-300',
+                    calculatedTone?.barFill,
+                  )}
+                  style={{
+                    width:
+                      validSkillsCount > 0
+                        ? `${Math.max(0, Math.min(100, calculatedGrade))}%`
+                        : '0%',
+                  }}
                 />
               </div>
             </div>
@@ -569,6 +636,7 @@ export function TeacherGradeForm({
       {error && (
         <div
           role="alert"
+          aria-live="assertive"
           className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive"
         >
           {error}
@@ -578,6 +646,7 @@ export function TeacherGradeForm({
       {success && (
         <div
           role="status"
+          aria-live="polite"
           className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.07] px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300"
         >
           {success}
@@ -586,8 +655,9 @@ export function TeacherGradeForm({
 
       <div className="sticky bottom-0 z-10 -mx-4 flex justify-end border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur sm:-mx-5 sm:px-5 lg:static lg:mx-0 lg:rounded-2xl lg:border lg:border-border/60 lg:bg-card/80 lg:px-4 lg:py-3">
         <Button
-          onClick={handleSubmit}
+          type="submit"
           disabled={saving}
+          aria-busy={saving}
           className="h-10 w-full rounded-xl bg-primary px-4 text-primary-foreground shadow-none transition-colors duration-200 hover:bg-primary/90 sm:w-auto"
         >
           <Save className="mr-2 size-4" />
@@ -598,6 +668,6 @@ export function TeacherGradeForm({
               : 'Actualizar calificación')}
         </Button>
       </div>
-    </div>
+    </form>
   )
 }
